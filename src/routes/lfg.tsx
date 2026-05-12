@@ -162,15 +162,19 @@ function LfgPage() {
           {posts.map((p) => (
             <li
               key={p.id}
-              className="rounded-lg border border-border bg-card p-4"
+              className="rounded-lg border border-border bg-card p-4 transition hover:border-primary/40"
             >
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
+                <Link
+                  to="/lfg/$id"
+                  params={{ id: p.id }}
+                  className="min-w-0 flex-1"
+                >
                   <div className="flex items-center gap-2">
                     <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                       {GAME_LABEL[p.game]}
                     </span>
-                    <h3 className="truncate text-sm font-semibold">{p.title}</h3>
+                    <h3 className="truncate text-sm font-semibold hover:underline">{p.title}</h3>
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                     {p.location && (
@@ -193,7 +197,7 @@ function LfgPage() {
                     </span>
                   </div>
                   {p.body && (
-                    <p className="mt-2 whitespace-pre-wrap text-sm text-foreground/90">
+                    <p className="mt-2 line-clamp-2 whitespace-pre-wrap text-sm text-foreground/90">
                       {p.body}
                     </p>
                   )}
@@ -202,10 +206,12 @@ function LfgPage() {
                       연락: <span className="text-foreground">{p.contact}</span>
                     </p>
                   )}
-                </div>
+                </Link>
                 {user?.id === p.user_id && (
                   <button
-                    onClick={async () => {
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
                       if (!confirm("이 글을 삭제할까요?")) return;
                       const { error } = await supabase
                         .from("lfg_posts")

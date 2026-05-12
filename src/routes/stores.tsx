@@ -96,20 +96,22 @@ function StoresPage() {
       ) : (
         <ul className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2">
           {filtered.map((s) => (
-            <li key={s.id} className="rounded-lg border border-border bg-card p-4">
+            <li key={s.id} className="rounded-lg border border-border bg-card p-4 transition hover:border-primary/40">
               <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <h3 className="text-sm font-semibold">{s.name}</h3>
+                <Link to="/stores/$id" params={{ id: s.id }} className="min-w-0 flex-1">
+                  <h3 className="text-sm font-semibold hover:underline">{s.name}</h3>
                   {s.region && (
                     <p className="mt-0.5 inline-flex items-center gap-1 text-xs text-muted-foreground">
                       <MapPin className="h-3 w-3" />
                       {s.region}
                     </p>
                   )}
-                </div>
+                </Link>
                 {user?.id === s.user_id && (
                   <button
-                    onClick={async () => {
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
                       if (!confirm("매장을 삭제할까요?")) return;
                       const { error } = await supabase
                         .from("stores")
@@ -152,15 +154,23 @@ function StoresPage() {
                     href={s.url}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
                     className="inline-flex items-center gap-1 text-foreground hover:underline"
                   >
                     <ExternalLink className="h-3 w-3" />
                     링크
                   </a>
                 )}
+                <Link
+                  to="/stores/$id"
+                  params={{ id: s.id }}
+                  className="ml-auto text-primary hover:underline"
+                >
+                  상세 →
+                </Link>
               </div>
               {s.notes && (
-                <p className="mt-2 whitespace-pre-wrap text-xs text-foreground/80">
+                <p className="mt-2 line-clamp-3 whitespace-pre-wrap text-xs text-foreground/80">
                   {s.notes}
                 </p>
               )}
