@@ -1,16 +1,23 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Shield, UserPlus, UserMinus, Crown } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
+import { UserPlus, UserMinus, Crown, Lock, LogIn } from "lucide-react";
 import { z } from "zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { PageHeader } from "@/components/page-header";
-import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import {
+  anyAdminExists,
+  checkIsAdmin,
+  claimFirstAdmin,
+  grantAdmin,
+  listAdmins,
+  revokeAdmin,
+} from "@/lib/admin.functions";
 
 const emailSchema = z
   .string()
@@ -29,45 +36,31 @@ export const Route = createFileRoute("/admin")({
 });
 
 function AdminPage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const qc = useQueryClient();
+
+  const fnAnyAdmin = useServerFn(anyAdminExists);
+  const fnIsAdmin = useServerFn(checkIsAdmin);
+  const fnClaim = useServerFn(claimFirstAdmin);
+  const fnGrant = useServerFn(grantAdmin);
+  const fnRevoke = useServerFn(revokeAdmin);
+  const fnList = useServerFn(listAdmins);
 
   const { data: anyAdmin, isLoading: l1 } = useQuery({
     queryKey: ["any-admin"],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("any_admin_exists");
-      if (error) throw error;
-      return !!data;
-    },
+    queryFn: () => fnAnyAdmin().then((r) => r.exists),
   });
 
   const { data: amAdmin, isLoading: l2 } = useQuery({
     queryKey: ["am-admin", user?.id],
     enabled: !!user,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user!.id)
-        .eq("role", "admin")
-        .maybeSingle();
-      return !!data;
-    },
+    queryFn: () => fnIsAdmin().then((r) => r.isAdmin),
   });
 
   const { data: admins = [], refetch: refetchAdmins } = useQuery({
     queryKey: ["admins-list"],
     enabled: !!amAdmin,
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("list_admins");
-      if (error) throw error;
-      return (data ?? []) as Array<{
-        user_id: string;
-        email: string;
-        display_name: string | null;
-        granted_at: string;
-      }>;
-    },
+    queryFn: () => fnList().then((r) => r.admins),
   });
 
   const [grantEmail, setGrantEmail] = useState("");
@@ -77,30 +70,37 @@ function AdminPage() {
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["any-admin"] });
     qc.invalidateQueries({ queryKey: ["am-admin"] });
+    qc.invalidateQueries({ queryKey: ["is-admin"] });
     refetchAdmins();
   };
 
   const claim = async () => {
     setBusy(true);
-    const { error } = await supabase.rpc("claim_admin_if_none");
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success("첫 관리자로 등록됐어요");
-    refresh();
+    try {
+      await fnClaim();
+      toast.success("첫 관리자로 등록됐어요");
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
   };
 
   const grant = async () => {
     const parsed = emailSchema.safeParse(grantEmail);
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
     setBusy(true);
-    const { error } = await supabase.rpc("grant_admin_by_email", {
-      _email: parsed.data,
-    });
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success(`${parsed.data} 에게 관리자 권한을 부여했어요`);
-    setGrantEmail("");
-    refresh();
+    try {
+      await fnGrant({ data: { email: parsed.data } });
+      toast.success(`${parsed.data} 에게 관리자 권한을 부여했어요`);
+      setGrantEmail("");
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
   };
 
   const revoke = async () => {
@@ -108,43 +108,70 @@ function AdminPage() {
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
     if (!confirm(`${parsed.data} 의 관리자 권한을 해제할까요?`)) return;
     setBusy(true);
-    const { error } = await supabase.rpc("revoke_admin_by_email", {
-      _email: parsed.data,
-    });
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success("관리자 권한을 해제했어요");
-    setRevokeEmail("");
-    refresh();
+    try {
+      await fnRevoke({ data: { email: parsed.data } });
+      toast.success("관리자 권한을 해제했어요");
+      setRevokeEmail("");
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
   };
+
+  // ---- Guard screens ----
+  if (loading) {
+    return <GuardLayout>불러오는 중…</GuardLayout>;
+  }
 
   if (!user) {
     return (
-      <div className="mx-auto w-full max-w-3xl px-6 py-8">
-        <PageHeader title="관리자" description="권한을 관리합니다" />
-        <div className="mt-6">
-          <EmptyState
-            icon={Shield}
-            title="로그인이 필요합니다"
-            description="관리자 페이지에 접근하려면 먼저 로그인하세요."
-          />
-        </div>
-      </div>
+      <GuardLayout>
+        <GuardCard
+          icon={LogIn}
+          title="로그인이 필요합니다"
+          description="관리자 콘솔은 로그인한 사용자만 접근할 수 있어요. 로그인 후 다시 시도해 주세요."
+          action={
+            <Button asChild>
+              <Link to="/login">로그인하러 가기</Link>
+            </Button>
+          }
+        />
+      </GuardLayout>
     );
   }
 
   if (l1 || l2) {
+    return <GuardLayout>권한을 확인하는 중…</GuardLayout>;
+  }
+
+  // 비관리자 + 이미 다른 관리자가 존재 → 안내 화면
+  if (!amAdmin && anyAdmin) {
     return (
-      <div className="mx-auto w-full max-w-3xl px-6 py-8">
-        <PageHeader title="관리자" description="권한을 관리합니다" />
-        <p className="mt-6 text-sm text-muted-foreground">불러오는 중…</p>
-      </div>
+      <GuardLayout>
+        <GuardCard
+          icon={Lock}
+          title="관리자 전용 페이지입니다"
+          description="이 페이지는 관리자 권한이 있는 계정만 사용할 수 있어요. 권한이 필요하면 기존 관리자에게 본인의 가입 이메일을 전달해 부여를 요청하세요."
+          action={
+            <div className="flex gap-2">
+              <Button variant="outline" asChild>
+                <Link to="/">대시보드로</Link>
+              </Button>
+              <Button asChild>
+                <Link to="/profile">내 프로필 보기</Link>
+              </Button>
+            </div>
+          }
+        />
+      </GuardLayout>
     );
   }
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">
-      <PageHeader title="관리자" description="관리자 권한 부여·해제 및 목록 관리" />
+      <PageHeader title="관리자 콘솔" description="관리자 권한 부여·해제 및 목록 관리" />
 
       {!anyAdmin && (
         <section className="mt-6 rounded-lg border-2 border-primary/40 bg-primary/5 p-4">
@@ -154,7 +181,6 @@ function AdminPage() {
               <h2 className="text-sm font-semibold">첫 관리자 등록</h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 아직 관리자가 없어요. 지금 로그인된 본인 계정을 첫 관리자로 등록할 수 있습니다.
-                이후에는 다른 사용자에게 관리자 권한을 이메일로 부여할 수 있어요.
               </p>
               <Button onClick={claim} disabled={busy} className="mt-3">
                 <Crown className="mr-1 h-4 w-4" />
@@ -165,28 +191,16 @@ function AdminPage() {
         </section>
       )}
 
-      {anyAdmin && !amAdmin && (
-        <section className="mt-6">
-          <EmptyState
-            icon={Shield}
-            title="관리자 권한이 없습니다"
-            description="이미 다른 계정이 관리자입니다. 권한이 필요하면 기존 관리자에게 이메일로 부여를 요청하세요."
-          />
-        </section>
-      )}
-
       {amAdmin && (
         <>
           <section className="mt-6 rounded-lg border border-border bg-card p-4">
             <h2 className="text-sm font-semibold">관리자 권한 부여</h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              해당 이메일로 가입된 사용자에게 admin 역할을 추가합니다.
+              해당 이메일로 가입된 사용자에게 admin 역할을 추가합니다. (서버에서 권한 재검증)
             </p>
             <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
               <div className="space-y-1">
-                <Label htmlFor="grant-email" className="sr-only">
-                  이메일
-                </Label>
+                <Label htmlFor="grant-email" className="sr-only">이메일</Label>
                 <Input
                   id="grant-email"
                   type="email"
@@ -197,17 +211,14 @@ function AdminPage() {
                 />
               </div>
               <Button onClick={grant} disabled={busy} className="gap-1">
-                <UserPlus className="h-4 w-4" />
-                부여
+                <UserPlus className="h-4 w-4" /> 부여
               </Button>
             </div>
           </section>
 
           <section className="mt-4 rounded-lg border border-border bg-card p-4">
             <h2 className="text-sm font-semibold">관리자 권한 해제</h2>
-            <p className="mt-1 text-xs text-muted-foreground">
-              본인 계정은 해제할 수 없습니다.
-            </p>
+            <p className="mt-1 text-xs text-muted-foreground">본인 계정은 해제할 수 없습니다.</p>
             <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
               <Input
                 type="email"
@@ -216,14 +227,8 @@ function AdminPage() {
                 placeholder="user@example.com"
                 maxLength={255}
               />
-              <Button
-                onClick={revoke}
-                disabled={busy}
-                variant="outline"
-                className="gap-1"
-              >
-                <UserMinus className="h-4 w-4" />
-                해제
+              <Button onClick={revoke} disabled={busy} variant="outline" className="gap-1">
+                <UserMinus className="h-4 w-4" /> 해제
               </Button>
             </div>
           </section>
@@ -235,14 +240,9 @@ function AdminPage() {
             ) : (
               <ul className="mt-3 divide-y divide-border rounded-lg border border-border bg-card">
                 {admins.map((a) => (
-                  <li
-                    key={a.user_id}
-                    className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
-                  >
+                  <li key={a.user_id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
                     <div className="min-w-0">
-                      <p className="truncate font-medium">
-                        {a.display_name ?? a.email}
-                      </p>
+                      <p className="truncate font-medium">{a.display_name ?? a.email}</p>
                       <p className="truncate text-xs text-muted-foreground">
                         {a.email} · {new Date(a.granted_at).toLocaleDateString()}
                       </p>
@@ -262,3 +262,36 @@ function AdminPage() {
     </div>
   );
 }
+
+function GuardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mx-auto w-full max-w-3xl px-6 py-8">
+      <PageHeader title="관리자 콘솔" description="관리자 권한 부여·해제 및 목록 관리" />
+      <div className="mt-6">{children}</div>
+    </div>
+  );
+}
+
+function GuardCard({
+  icon: Icon,
+  title,
+  description,
+  action,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-3 rounded-lg border-2 border-dashed border-border bg-card px-6 py-12 text-center">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+        <Icon className="h-6 w-6 text-muted-foreground" />
+      </div>
+      <h2 className="text-base font-semibold">{title}</h2>
+      <p className="max-w-md text-sm text-muted-foreground">{description}</p>
+      {action && <div className="mt-2">{action}</div>}
+    </div>
+  );
+}
+
