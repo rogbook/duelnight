@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Swords, Trash2, Plus, Wand2, Pencil, Download, Upload, X } from "lucide-react";
+import { Swords, Trash2, Plus, Wand2, Pencil, Download, Upload, X, Eye } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -504,6 +504,7 @@ function RecentList({
   onDeleted: () => void;
 }) {
   const [editing, setEditing] = useState<Match | null>(null);
+  const [viewing, setViewing] = useState<Match | null>(null);
   const [page, setPage] = useState(1);
   const PAGE = 30;
   const totalPages = Math.max(1, Math.ceil(rows.length / PAGE));
@@ -552,7 +553,11 @@ function RecentList({
           </thead>
           <tbody>
             {pageRows.map((m) => (
-              <tr key={m.id} className="border-b border-border last:border-0">
+              <tr
+                key={m.id}
+                onClick={() => setViewing(m)}
+                className="cursor-pointer border-b border-border transition hover:bg-muted/30 last:border-0"
+              >
                 <td className="px-3 py-2 text-muted-foreground">
                   {new Date(m.played_at).toLocaleDateString("ko-KR")}
                 </td>
@@ -568,8 +573,15 @@ function RecentList({
                 <td className="px-3 py-2">
                   <ResultBadge r={m.result} />
                 </td>
-                <td className="px-3 py-2 text-right">
+                <td className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => setViewing(m)}
+                      className="text-muted-foreground hover:text-foreground"
+                      aria-label="보기"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
                     <button
                       onClick={() => setEditing(m)}
                       className="text-muted-foreground hover:text-foreground"
@@ -616,6 +628,18 @@ function RecentList({
           </div>
         </div>
       )}
+      <ViewMatchDialog
+        match={viewing}
+        onOpenChange={(o) => !o && setViewing(null)}
+        onEdit={(m) => {
+          setViewing(null);
+          setEditing(m);
+        }}
+        onDelete={(id) => {
+          setViewing(null);
+          onDelete(id);
+        }}
+      />
       <EditMatchDialog
         match={editing}
         onOpenChange={(o) => !o && setEditing(null)}
@@ -625,6 +649,82 @@ function RecentList({
         }}
       />
     </section>
+  );
+}
+
+function ViewMatchDialog({
+  match,
+  onOpenChange,
+  onEdit,
+  onDelete,
+}: {
+  match: Match | null;
+  onOpenChange: (open: boolean) => void;
+  onEdit: (m: Match) => void;
+  onDelete: (id: string) => void;
+}) {
+  return (
+    <Dialog open={!!match} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        {match && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                전적 상세
+                <ResultBadge r={match.result} />
+              </DialogTitle>
+            </DialogHeader>
+            <dl className="grid grid-cols-3 gap-x-3 gap-y-3 text-sm">
+              <Row label="일시" value={new Date(match.played_at).toLocaleString("ko-KR")} />
+              <Row label="게임" value={GAME_LABEL[match.game]} />
+              <Row label="이벤트" value={EVENT_LABEL[match.event]} />
+              <Row label="내 덱" value={match.my_deck} />
+              <Row
+                label="상대"
+                value={
+                  match.opp_leader || match.opp_deck
+                    ? `${match.opp_leader ?? ""}${
+                        match.opp_leader && match.opp_deck ? " · " : ""
+                      }${match.opp_deck ?? ""}`
+                    : "—"
+                }
+              />
+              <Row label="선/후공" value={match.went_first ? "선공" : "후공"} />
+              {match.notes && (
+                <div className="col-span-3">
+                  <dt className="text-xs text-muted-foreground">메모</dt>
+                  <dd className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-3 text-sm leading-relaxed">
+                    {match.notes}
+                  </dd>
+                </div>
+              )}
+            </dl>
+            <div className="mt-2 flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onDelete(match.id)}
+                className="text-destructive hover:text-destructive"
+              >
+                <Trash2 className="mr-1 h-4 w-4" /> 삭제
+              </Button>
+              <Button size="sm" onClick={() => onEdit(match)}>
+                <Pencil className="mr-1 h-4 w-4" /> 수정
+              </Button>
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="mt-0.5 text-sm">{value}</dd>
+    </div>
   );
 }
 
