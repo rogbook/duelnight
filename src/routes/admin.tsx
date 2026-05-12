@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Shield, UserPlus, UserMinus, Crown, Lock, LogIn } from "lucide-react";
+import { UserPlus, UserMinus, Crown, Lock, LogIn } from "lucide-react";
 import { z } from "zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
