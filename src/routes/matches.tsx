@@ -492,6 +492,14 @@ function RecentList({
   onDeleted: () => void;
 }) {
   const [editing, setEditing] = useState<Match | null>(null);
+  const [page, setPage] = useState(1);
+  const PAGE = 30;
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE));
+  const safePage = Math.min(page, totalPages);
+  const pageRows = rows.slice((safePage - 1) * PAGE, safePage * PAGE);
+  useEffect(() => {
+    setPage(1);
+  }, [rows.length]);
 
   if (rows.length === 0) {
     return (
