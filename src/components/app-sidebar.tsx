@@ -69,6 +69,7 @@ export function AppSidebar() {
   const currentPath = useRouterState({
     select: (router) => router.location.pathname,
   });
+  const { isAdmin } = useIsAdmin();
 
   const renderGroup = (
     label: string,
