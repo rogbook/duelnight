@@ -224,7 +224,7 @@ function LfgPage() {
   );
 }
 
-function InlineLfgForm({ onCreated }: { onCreated: () => void }) {
+function InlineLfgForm({ onCreated, onCancel }: { onCreated: () => void; onCancel: () => void }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [submitting, setSubmitting] = useState(false);
