@@ -21,6 +21,24 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const forgotPassword = async () => {
+    const target = email.trim();
+    if (!target) {
+      toast.error("먼저 이메일을 입력해 주세요.");
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(target, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("비밀번호 재설정 이메일을 보냈어요. 받은 편지함을 확인해 주세요.");
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
