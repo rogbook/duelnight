@@ -63,8 +63,9 @@ export const Route = createFileRoute("/matches")({
 function MatchesPage() {
   const { user, loading } = useAuth();
   const [game, setGame] = useState<Game | "all">("all");
+  const [period, setPeriod] = useState<Period>("30");
 
-  const { data: rows = [], refetch } = useQuery({
+  const { data: allRows = [], refetch } = useQuery({
     queryKey: ["matches", user?.id, game],
     enabled: !!user,
     queryFn: async () => {
@@ -78,6 +79,13 @@ function MatchesPage() {
       return data as Match[];
     },
   });
+
+  const rows = useMemo(() => {
+    const days = PERIOD_DAYS[period];
+    if (days == null) return allRows;
+    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+    return allRows.filter((m) => new Date(m.played_at).getTime() >= cutoff);
+  }, [allRows, period]);
 
   const stats = useMemo(() => computeStats(rows), [rows]);
 
@@ -116,17 +124,61 @@ function MatchesPage() {
         description="대전 결과를 기록하면 덱·선후공·매치업 통계가 자동 갱신됩니다"
       >
         <GameTabs value={game} onChange={setGame} />
+        <PeriodTabs value={period} onChange={setPeriod} />
         <NewMatchDialog onCreated={() => refetch()} />
       </PageHeader>
 
       <StatGrid stats={stats} />
 
-      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <section className="mt-6 rounded-lg border border-border bg-card">
+        <div className="border-b border-border px-4 py-3">
+          <h3 className="text-sm font-medium">승률 추이</h3>
+          <p className="text-xs text-muted-foreground">
+            누적 승률(%) — 전체 및 사용량 상위 덱 3개
+          </p>
+        </div>
+        <WinRateChart rows={rows} />
+      </section>
+
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <DeckTable rows={stats.byDeck} />
         <MatchupTable rows={stats.matchups} />
       </div>
 
       <RecentList rows={rows} onDeleted={() => refetch()} />
+    </div>
+  );
+}
+
+function PeriodTabs({
+  value,
+  onChange,
+}: {
+  value: Period;
+  onChange: (v: Period) => void;
+}) {
+  const items: { id: Period; label: string }[] = [
+    { id: "7", label: "7일" },
+    { id: "30", label: "30일" },
+    { id: "90", label: "90일" },
+    { id: "all", label: "전체" },
+  ];
+  return (
+    <div className="inline-flex items-center gap-1 rounded-lg border border-border bg-card p-1">
+      {items.map((p) => (
+        <button
+          key={p.id}
+          onClick={() => onChange(p.id)}
+          className={
+            "rounded-md px-3 py-1.5 text-xs font-medium transition-colors " +
+            (value === p.id
+              ? "bg-foreground text-background"
+              : "text-muted-foreground hover:text-foreground")
+          }
+        >
+          {p.label}
+        </button>
+      ))}
     </div>
   );
 }
