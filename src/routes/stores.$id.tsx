@@ -94,7 +94,7 @@ function StoreDetailPage() {
           <p className="mt-2 text-sm text-foreground/90">{store.address}</p>
         )}
         <div className="mt-3 flex flex-wrap gap-1">
-          {store.games.map((g) => (
+          {store.games.map((g: Store["games"][number]) => (
             <span
               key={g}
               className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
