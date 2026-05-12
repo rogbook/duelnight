@@ -17,6 +17,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { GAME_LABEL } from "@/lib/match-stats";
 import type { Database } from "@/integrations/supabase/types";
@@ -237,6 +247,20 @@ function InlineLfgForm({ onCreated, onCancel }: { onCreated: () => void; onCance
     body: "",
   };
   const [form, setForm] = useState(empty);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const isDirty =
+    form.title.trim() !== "" ||
+    form.location.trim() !== "" ||
+    form.meet_at !== "" ||
+    form.contact.trim() !== "" ||
+    form.body.trim() !== "" ||
+    form.game !== "optcg";
+
+  const handleCancel = () => {
+    if (isDirty) setConfirmOpen(true);
+    else onCancel();
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -343,7 +367,7 @@ function InlineLfgForm({ onCreated, onCancel }: { onCreated: () => void; onCance
         <Button
           type="button"
           variant="ghost"
-          onClick={onCancel}
+          onClick={handleCancel}
           disabled={submitting}
         >
           취소
@@ -352,6 +376,27 @@ function InlineLfgForm({ onCreated, onCancel }: { onCreated: () => void; onCance
           {submitting ? "등록 중…" : "등록"}
         </Button>
       </div>
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>정말 취소할까요?</AlertDialogTitle>
+            <AlertDialogDescription>
+              작성 중인 내용이 모두 사라집니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>계속 작성</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setConfirmOpen(false);
+                onCancel();
+              }}
+            >
+              취소하기
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </form>
   );
 }
