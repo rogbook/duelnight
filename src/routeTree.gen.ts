@@ -27,6 +27,8 @@ import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AnnouncementsRouteImport } from './routes/announcements'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as StoresIdRouteImport } from './routes/stores.$id'
+import { Route as LfgIdRouteImport } from './routes/lfg.$id'
 import { Route as DecksIdRouteImport } from './routes/decks.$id'
 import { Route as CardsCodeRouteImport } from './routes/cards.$code'
 import { Route as ApiCoachRouteImport } from './routes/api/coach'
@@ -125,6 +127,16 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StoresIdRoute = StoresIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => StoresRoute,
+} as any)
+const LfgIdRoute = LfgIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => LfgRoute,
+} as any)
 const DecksIdRoute = DecksIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -170,7 +182,7 @@ export interface FileRoutesByFullPath {
   '/collection': typeof CollectionRoute
   '/decks': typeof DecksRouteWithChildren
   '/leaderboard': typeof LeaderboardRoute
-  '/lfg': typeof LfgRoute
+  '/lfg': typeof LfgRouteWithChildren
   '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
   '/packs': typeof PacksRoute
@@ -178,7 +190,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/sandbox': typeof SandboxRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/stores': typeof StoresRoute
+  '/stores': typeof StoresRouteWithChildren
   '/tier': typeof TierRoute
   '/admin/card-generator': typeof AdminCardGeneratorRoute
   '/admin/inspect': typeof AdminInspectRoute
@@ -187,6 +199,8 @@ export interface FileRoutesByFullPath {
   '/api/coach': typeof ApiCoachRoute
   '/cards/$code': typeof CardsCodeRoute
   '/decks/$id': typeof DecksIdRoute
+  '/lfg/$id': typeof LfgIdRoute
+  '/stores/$id': typeof StoresIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -197,7 +211,7 @@ export interface FileRoutesByTo {
   '/collection': typeof CollectionRoute
   '/decks': typeof DecksRouteWithChildren
   '/leaderboard': typeof LeaderboardRoute
-  '/lfg': typeof LfgRoute
+  '/lfg': typeof LfgRouteWithChildren
   '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
   '/packs': typeof PacksRoute
@@ -205,7 +219,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/sandbox': typeof SandboxRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/stores': typeof StoresRoute
+  '/stores': typeof StoresRouteWithChildren
   '/tier': typeof TierRoute
   '/admin/card-generator': typeof AdminCardGeneratorRoute
   '/admin/inspect': typeof AdminInspectRoute
@@ -214,6 +228,8 @@ export interface FileRoutesByTo {
   '/api/coach': typeof ApiCoachRoute
   '/cards/$code': typeof CardsCodeRoute
   '/decks/$id': typeof DecksIdRoute
+  '/lfg/$id': typeof LfgIdRoute
+  '/stores/$id': typeof StoresIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -225,7 +241,7 @@ export interface FileRoutesById {
   '/collection': typeof CollectionRoute
   '/decks': typeof DecksRouteWithChildren
   '/leaderboard': typeof LeaderboardRoute
-  '/lfg': typeof LfgRoute
+  '/lfg': typeof LfgRouteWithChildren
   '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
   '/packs': typeof PacksRoute
@@ -233,7 +249,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/sandbox': typeof SandboxRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/stores': typeof StoresRoute
+  '/stores': typeof StoresRouteWithChildren
   '/tier': typeof TierRoute
   '/admin/card-generator': typeof AdminCardGeneratorRoute
   '/admin/inspect': typeof AdminInspectRoute
@@ -242,6 +258,8 @@ export interface FileRoutesById {
   '/api/coach': typeof ApiCoachRoute
   '/cards/$code': typeof CardsCodeRoute
   '/decks/$id': typeof DecksIdRoute
+  '/lfg/$id': typeof LfgIdRoute
+  '/stores/$id': typeof StoresIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -271,6 +289,8 @@ export interface FileRouteTypes {
     | '/api/coach'
     | '/cards/$code'
     | '/decks/$id'
+    | '/lfg/$id'
+    | '/stores/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -298,6 +318,8 @@ export interface FileRouteTypes {
     | '/api/coach'
     | '/cards/$code'
     | '/decks/$id'
+    | '/lfg/$id'
+    | '/stores/$id'
   id:
     | '__root__'
     | '/'
@@ -325,6 +347,8 @@ export interface FileRouteTypes {
     | '/api/coach'
     | '/cards/$code'
     | '/decks/$id'
+    | '/lfg/$id'
+    | '/stores/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -336,7 +360,7 @@ export interface RootRouteChildren {
   CollectionRoute: typeof CollectionRoute
   DecksRoute: typeof DecksRouteWithChildren
   LeaderboardRoute: typeof LeaderboardRoute
-  LfgRoute: typeof LfgRoute
+  LfgRoute: typeof LfgRouteWithChildren
   LoginRoute: typeof LoginRoute
   MatchesRoute: typeof MatchesRoute
   PacksRoute: typeof PacksRoute
@@ -344,7 +368,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SandboxRoute: typeof SandboxRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  StoresRoute: typeof StoresRoute
+  StoresRoute: typeof StoresRouteWithChildren
   TierRoute: typeof TierRoute
   ApiCoachRoute: typeof ApiCoachRoute
 }
@@ -477,6 +501,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/stores/$id': {
+      id: '/stores/$id'
+      path: '/$id'
+      fullPath: '/stores/$id'
+      preLoaderRoute: typeof StoresIdRouteImport
+      parentRoute: typeof StoresRoute
+    }
+    '/lfg/$id': {
+      id: '/lfg/$id'
+      path: '/$id'
+      fullPath: '/lfg/$id'
+      preLoaderRoute: typeof LfgIdRouteImport
+      parentRoute: typeof LfgRoute
+    }
     '/decks/$id': {
       id: '/decks/$id'
       path: '/$id'
@@ -575,6 +613,27 @@ const DecksRouteChildren: DecksRouteChildren = {
 
 const DecksRouteWithChildren = DecksRoute._addFileChildren(DecksRouteChildren)
 
+interface LfgRouteChildren {
+  LfgIdRoute: typeof LfgIdRoute
+}
+
+const LfgRouteChildren: LfgRouteChildren = {
+  LfgIdRoute: LfgIdRoute,
+}
+
+const LfgRouteWithChildren = LfgRoute._addFileChildren(LfgRouteChildren)
+
+interface StoresRouteChildren {
+  StoresIdRoute: typeof StoresIdRoute
+}
+
+const StoresRouteChildren: StoresRouteChildren = {
+  StoresIdRoute: StoresIdRoute,
+}
+
+const StoresRouteWithChildren =
+  StoresRoute._addFileChildren(StoresRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
@@ -584,7 +643,7 @@ const rootRouteChildren: RootRouteChildren = {
   CollectionRoute: CollectionRoute,
   DecksRoute: DecksRouteWithChildren,
   LeaderboardRoute: LeaderboardRoute,
-  LfgRoute: LfgRoute,
+  LfgRoute: LfgRouteWithChildren,
   LoginRoute: LoginRoute,
   MatchesRoute: MatchesRoute,
   PacksRoute: PacksRoute,
@@ -592,10 +651,20 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SandboxRoute: SandboxRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  StoresRoute: StoresRoute,
+  StoresRoute: StoresRouteWithChildren,
   TierRoute: TierRoute,
   ApiCoachRoute: ApiCoachRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
