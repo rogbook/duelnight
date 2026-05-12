@@ -1,4 +1,5 @@
 import type { Tables } from "@/integrations/supabase/types";
+import { normalizeDeckName, deckKey } from "@/lib/normalize-deck";
 
 export type Match = Tables<"matches">;
 
