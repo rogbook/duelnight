@@ -633,11 +633,22 @@ function NewMatchDialog({ onCreated }: { onCreated: () => void }) {
               </SelectContent>
             </Select>
           </div>
-          <div className="col-span-2 mt-2 flex justify-end gap-2">
-            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
-              취소
-            </Button>
-            <Button type="submit">저장</Button>
+          <div className="col-span-2 mt-2 flex items-center justify-between gap-2">
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                className="h-3.5 w-3.5"
+                checked={keepRaw}
+                onChange={(e) => setKeepRaw(e.target.checked)}
+              />
+              원문 그대로 저장
+            </label>
+            <div className="flex gap-2">
+              <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+                취소
+              </Button>
+              <Button type="submit">저장</Button>
+            </div>
           </div>
         </form>
       </DialogContent>
