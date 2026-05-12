@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Swords, Trash2, Plus, Wand2, Pencil, Download, Upload, X } from "lucide-react";
+import { Swords, Trash2, Plus, Wand2, Pencil, Download, Upload, X, Eye } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -504,6 +504,7 @@ function RecentList({
   onDeleted: () => void;
 }) {
   const [editing, setEditing] = useState<Match | null>(null);
+  const [viewing, setViewing] = useState<Match | null>(null);
   const [page, setPage] = useState(1);
   const PAGE = 30;
   const totalPages = Math.max(1, Math.ceil(rows.length / PAGE));
@@ -552,7 +553,11 @@ function RecentList({
           </thead>
           <tbody>
             {pageRows.map((m) => (
-              <tr key={m.id} className="border-b border-border last:border-0">
+              <tr
+                key={m.id}
+                onClick={() => setViewing(m)}
+                className="cursor-pointer border-b border-border transition hover:bg-muted/30 last:border-0"
+              >
                 <td className="px-3 py-2 text-muted-foreground">
                   {new Date(m.played_at).toLocaleDateString("ko-KR")}
                 </td>
@@ -568,8 +573,15 @@ function RecentList({
                 <td className="px-3 py-2">
                   <ResultBadge r={m.result} />
                 </td>
-                <td className="px-3 py-2 text-right">
+                <td className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => setViewing(m)}
+                      className="text-muted-foreground hover:text-foreground"
+                      aria-label="보기"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
                     <button
                       onClick={() => setEditing(m)}
                       className="text-muted-foreground hover:text-foreground"
