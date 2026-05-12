@@ -56,7 +56,11 @@ const communityItems = [
 
 const accountItems = [
   { title: "프로필", url: "/profile", icon: User },
-  { title: "관리자", url: "/admin", icon: Shield },
+];
+
+const adminItems = [
+  { title: "관리자 콘솔", url: "/admin", icon: Shield },
+  { title: "공지 관리", url: "/announcements", icon: Megaphone },
 ];
 
 export function AppSidebar() {
