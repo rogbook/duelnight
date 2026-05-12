@@ -101,7 +101,19 @@ function LfgPage() {
           </SelectContent>
         </Select>
         {user ? (
-          <NewLfgDialog onCreated={() => refetch()} />
+          <Button size="sm" onClick={() => setShowForm((v) => !v)}>
+            {showForm ? (
+              <>
+                <X className="mr-1 h-4 w-4" />
+                작성 닫기
+              </>
+            ) : (
+              <>
+                <Plus className="mr-1 h-4 w-4" />
+                모집 글 작성
+              </>
+            )}
+          </Button>
         ) : (
           <Button asChild size="sm">
             <Link to="/login">로그인하고 작성</Link>
@@ -109,9 +121,15 @@ function LfgPage() {
         )}
       </PageHeader>
 
-      {user ? (
-        <InlineLfgForm onCreated={() => refetch()} />
-      ) : (
+      {user && showForm && (
+        <InlineLfgForm
+          onCreated={() => {
+            refetch();
+            setShowForm(false);
+          }}
+        />
+      )}
+      {!user && (
         <div className="mt-6 rounded-lg border border-dashed border-border bg-card/50 p-4 text-center text-sm text-muted-foreground">
           글을 작성하려면{" "}
           <Link to="/login" className="font-medium text-primary underline">
