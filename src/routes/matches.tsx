@@ -126,6 +126,7 @@ function MatchesPage() {
       >
         <GameTabs value={game} onChange={setGame} />
         <PeriodTabs value={period} onChange={setPeriod} />
+        <NormalizeButton onDone={() => refetch()} />
         <NewMatchDialog onCreated={() => refetch()} />
       </PageHeader>
 
