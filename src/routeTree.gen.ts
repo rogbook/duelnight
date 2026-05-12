@@ -27,6 +27,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiCoachRouteImport } from './routes/api/coach'
 import { Route as AdminSeedRouteImport } from './routes/admin.seed'
+import { Route as AdminInspectRouteImport } from './routes/admin.inspect'
 import { Route as AdminCardGeneratorRouteImport } from './routes/admin.card-generator'
 
 const TierRoute = TierRouteImport.update({
@@ -119,6 +120,11 @@ const AdminSeedRoute = AdminSeedRouteImport.update({
   path: '/seed',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminInspectRoute = AdminInspectRouteImport.update({
+  id: '/inspect',
+  path: '/inspect',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCardGeneratorRoute = AdminCardGeneratorRouteImport.update({
   id: '/card-generator',
   path: '/card-generator',
@@ -143,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/stores': typeof StoresRoute
   '/tier': typeof TierRoute
   '/admin/card-generator': typeof AdminCardGeneratorRoute
+  '/admin/inspect': typeof AdminInspectRoute
   '/admin/seed': typeof AdminSeedRoute
   '/api/coach': typeof ApiCoachRoute
 }
@@ -164,6 +171,7 @@ export interface FileRoutesByTo {
   '/stores': typeof StoresRoute
   '/tier': typeof TierRoute
   '/admin/card-generator': typeof AdminCardGeneratorRoute
+  '/admin/inspect': typeof AdminInspectRoute
   '/admin/seed': typeof AdminSeedRoute
   '/api/coach': typeof ApiCoachRoute
 }
@@ -186,6 +194,7 @@ export interface FileRoutesById {
   '/stores': typeof StoresRoute
   '/tier': typeof TierRoute
   '/admin/card-generator': typeof AdminCardGeneratorRoute
+  '/admin/inspect': typeof AdminInspectRoute
   '/admin/seed': typeof AdminSeedRoute
   '/api/coach': typeof ApiCoachRoute
 }
@@ -209,6 +218,7 @@ export interface FileRouteTypes {
     | '/stores'
     | '/tier'
     | '/admin/card-generator'
+    | '/admin/inspect'
     | '/admin/seed'
     | '/api/coach'
   fileRoutesByTo: FileRoutesByTo
@@ -230,6 +240,7 @@ export interface FileRouteTypes {
     | '/stores'
     | '/tier'
     | '/admin/card-generator'
+    | '/admin/inspect'
     | '/admin/seed'
     | '/api/coach'
   id:
@@ -251,6 +262,7 @@ export interface FileRouteTypes {
     | '/stores'
     | '/tier'
     | '/admin/card-generator'
+    | '/admin/inspect'
     | '/admin/seed'
     | '/api/coach'
   fileRoutesById: FileRoutesById
@@ -403,6 +415,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSeedRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/inspect': {
+      id: '/admin/inspect'
+      path: '/inspect'
+      fullPath: '/admin/inspect'
+      preLoaderRoute: typeof AdminInspectRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/card-generator': {
       id: '/admin/card-generator'
       path: '/card-generator'
@@ -415,11 +434,13 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminCardGeneratorRoute: typeof AdminCardGeneratorRoute
+  AdminInspectRoute: typeof AdminInspectRoute
   AdminSeedRoute: typeof AdminSeedRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminCardGeneratorRoute: AdminCardGeneratorRoute,
+  AdminInspectRoute: AdminInspectRoute,
   AdminSeedRoute: AdminSeedRoute,
 }
 
