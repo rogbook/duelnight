@@ -53,6 +53,101 @@ export type Database = {
         }
         Relationships: []
       }
+      events: {
+        Row: {
+          created_at: string
+          ends_at: string | null
+          game: Database["public"]["Enums"]["tcg_game"]
+          id: string
+          location: string | null
+          notes: string | null
+          starts_at: string
+          store_id: string | null
+          title: string
+          updated_at: string
+          url: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ends_at?: string | null
+          game: Database["public"]["Enums"]["tcg_game"]
+          id?: string
+          location?: string | null
+          notes?: string | null
+          starts_at: string
+          store_id?: string | null
+          title: string
+          updated_at?: string
+          url?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string | null
+          game?: Database["public"]["Enums"]["tcg_game"]
+          id?: string
+          location?: string | null
+          notes?: string | null
+          starts_at?: string
+          store_id?: string | null
+          title?: string
+          updated_at?: string
+          url?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lfg_posts: {
+        Row: {
+          body: string | null
+          contact: string | null
+          created_at: string
+          game: Database["public"]["Enums"]["tcg_game"]
+          id: string
+          location: string | null
+          meet_at: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          contact?: string | null
+          created_at?: string
+          game: Database["public"]["Enums"]["tcg_game"]
+          id?: string
+          location?: string | null
+          meet_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          contact?: string | null
+          created_at?: string
+          game?: Database["public"]["Enums"]["tcg_game"]
+          id?: string
+          location?: string | null
+          meet_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       matches: {
         Row: {
           created_at: string
@@ -139,12 +234,72 @@ export type Database = {
         }
         Relationships: []
       }
+      stores: {
+        Row: {
+          address: string | null
+          created_at: string
+          games: Database["public"]["Enums"]["tcg_game"][]
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          region: string | null
+          updated_at: string
+          url: string | null
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          games?: Database["public"]["Enums"]["tcg_game"][]
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          region?: string | null
+          updated_at?: string
+          url?: string | null
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          games?: Database["public"]["Enums"]["tcg_game"][]
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          region?: string | null
+          updated_at?: string
+          url?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_leaderboard: {
+        Args: {
+          p_days?: number
+          p_game?: Database["public"]["Enums"]["tcg_game"]
+          p_limit?: number
+          p_min_total?: number
+        }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          draws: number
+          losses: number
+          total: number
+          user_id: string
+          username: string
+          win_rate: number
+          wins: number
+        }[]
+      }
     }
     Enums: {
       match_event: "friendly" | "shop" | "official"
