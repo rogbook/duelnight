@@ -141,13 +141,25 @@ function MatchesPage() {
       <PageHeader
         title="전적 기록"
         description="대전 결과를 기록하면 덱·선후공·매치업 통계가 자동 갱신됩니다"
-      >
-        <GameTabs value={game} onChange={setGame} />
-        <PeriodTabs value={period} onChange={setPeriod} />
-        <ImportExportButton rows={allRows} onImported={() => refetch()} />
-        <NormalizeButton onDone={() => refetch()} />
-        <NewMatchDialog onCreated={() => refetch()} lastMatch={allRows[0]} />
-      </PageHeader>
+      />
+
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">게임</span>
+            <GameTabs value={game} onChange={setGame} />
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">기간</span>
+            <PeriodTabs value={period} onChange={setPeriod} />
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <ImportExportButton rows={allRows} onImported={() => refetch()} />
+          <NormalizeButton onDone={() => refetch()} />
+          <NewMatchDialog onCreated={() => refetch()} lastMatch={allRows[0]} />
+        </div>
+      </div>
 
       <FilterBar
         rows={periodRows}
