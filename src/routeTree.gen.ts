@@ -29,6 +29,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as StoresIdRouteImport } from './routes/stores.$id'
 import { Route as LfgIdRouteImport } from './routes/lfg.$id'
+import { Route as EventsIdRouteImport } from './routes/events.$id'
 import { Route as DecksIdRouteImport } from './routes/decks.$id'
 import { Route as CardsCodeRouteImport } from './routes/cards.$code'
 import { Route as ApiCoachRouteImport } from './routes/api/coach'
@@ -137,6 +138,11 @@ const LfgIdRoute = LfgIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => LfgRoute,
 } as any)
+const EventsIdRoute = EventsIdRouteImport.update({
+  id: '/events/$id',
+  path: '/events/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DecksIdRoute = DecksIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -199,6 +205,7 @@ export interface FileRoutesByFullPath {
   '/api/coach': typeof ApiCoachRoute
   '/cards/$code': typeof CardsCodeRoute
   '/decks/$id': typeof DecksIdRoute
+  '/events/$id': typeof EventsIdRoute
   '/lfg/$id': typeof LfgIdRoute
   '/stores/$id': typeof StoresIdRoute
 }
@@ -228,6 +235,7 @@ export interface FileRoutesByTo {
   '/api/coach': typeof ApiCoachRoute
   '/cards/$code': typeof CardsCodeRoute
   '/decks/$id': typeof DecksIdRoute
+  '/events/$id': typeof EventsIdRoute
   '/lfg/$id': typeof LfgIdRoute
   '/stores/$id': typeof StoresIdRoute
 }
@@ -258,6 +266,7 @@ export interface FileRoutesById {
   '/api/coach': typeof ApiCoachRoute
   '/cards/$code': typeof CardsCodeRoute
   '/decks/$id': typeof DecksIdRoute
+  '/events/$id': typeof EventsIdRoute
   '/lfg/$id': typeof LfgIdRoute
   '/stores/$id': typeof StoresIdRoute
 }
@@ -289,6 +298,7 @@ export interface FileRouteTypes {
     | '/api/coach'
     | '/cards/$code'
     | '/decks/$id'
+    | '/events/$id'
     | '/lfg/$id'
     | '/stores/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -318,6 +328,7 @@ export interface FileRouteTypes {
     | '/api/coach'
     | '/cards/$code'
     | '/decks/$id'
+    | '/events/$id'
     | '/lfg/$id'
     | '/stores/$id'
   id:
@@ -347,6 +358,7 @@ export interface FileRouteTypes {
     | '/api/coach'
     | '/cards/$code'
     | '/decks/$id'
+    | '/events/$id'
     | '/lfg/$id'
     | '/stores/$id'
   fileRoutesById: FileRoutesById
@@ -371,6 +383,7 @@ export interface RootRouteChildren {
   StoresRoute: typeof StoresRouteWithChildren
   TierRoute: typeof TierRoute
   ApiCoachRoute: typeof ApiCoachRoute
+  EventsIdRoute: typeof EventsIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -515,6 +528,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LfgIdRouteImport
       parentRoute: typeof LfgRoute
     }
+    '/events/$id': {
+      id: '/events/$id'
+      path: '/events/$id'
+      fullPath: '/events/$id'
+      preLoaderRoute: typeof EventsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/decks/$id': {
       id: '/decks/$id'
       path: '/$id'
@@ -654,7 +674,18 @@ const rootRouteChildren: RootRouteChildren = {
   StoresRoute: StoresRouteWithChildren,
   TierRoute: TierRoute,
   ApiCoachRoute: ApiCoachRoute,
+  EventsIdRoute: EventsIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
