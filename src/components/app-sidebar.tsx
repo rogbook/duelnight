@@ -53,7 +53,10 @@ const communityItems = [
   { title: "공지사항", url: "/announcements", icon: Megaphone },
 ];
 
-const accountItems = [{ title: "프로필", url: "/profile", icon: User }];
+const accountItems = [
+  { title: "프로필", url: "/profile", icon: User },
+  { title: "관리자", url: "/admin", icon: Shield },
+];
 
 export function AppSidebar() {
   const { state } = useSidebar();
