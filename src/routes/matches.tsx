@@ -302,15 +302,12 @@ function StatGrid({ stats }: { stats: ReturnType<typeof computeStats> }) {
   );
 }
 
-function DeckTable({
-  rows,
-}: {
-  rows: Array<{ deck: string; stats: RatePack }>;
-}) {
+function DeckTable({ rows }: { rows: DeckStat[] }) {
   return (
     <div className="rounded-lg border border-border bg-card">
       <div className="border-b border-border px-4 py-3">
         <h3 className="text-sm font-medium">덱별 승률</h3>
+        <p className="text-[11px] text-muted-foreground">선/후공 분리 · 신뢰하한(95%)</p>
       </div>
       {rows.length === 0 ? (
         <p className="px-4 py-8 text-center text-xs text-muted-foreground">
@@ -319,15 +316,87 @@ function DeckTable({
       ) : (
         <ul className="divide-y divide-border">
           {rows.map((r) => (
-            <li
-              key={r.deck}
-              className="flex items-center justify-between px-4 py-3"
-            >
-              <span className="truncate text-sm">{r.deck}</span>
-              <span className="text-xs text-muted-foreground">
-                <span className="mr-2 font-medium text-foreground">
-                  {fmtPct(r.stats)}
+            <li key={r.deck} className="px-4 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <span className="truncate text-sm">{r.deck}</span>
+                <span className="text-xs text-muted-foreground">
+                  <span className="mr-2 font-medium text-foreground">
+                    {fmtPct(r.stats)}
+                  </span>
+                  {r.stats.wins}-{r.stats.losses}
+                  {r.stats.draws ? `-${r.stats.draws}` : ""}
                 </span>
+              </div>
+              <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
+                <span>선공 {fmtPct(r.first)} ({r.first.total})</span>
+                <span>후공 {fmtPct(r.second)} ({r.second.total})</span>
+                <span>신뢰하한 {fmtPctVal(r.stats.wilsonLow)}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function MatchupTable({ rows }: { rows: MatchupStat[] }) {
+  return (
+    <div className="rounded-lg border border-border bg-card">
+      <div className="border-b border-border px-4 py-3">
+        <h3 className="text-sm font-medium">매치업 (내 덱 × 상대)</h3>
+        <p className="text-[11px] text-muted-foreground">선/후공 · 신뢰하한 표시</p>
+      </div>
+      {rows.length === 0 ? (
+        <p className="px-4 py-8 text-center text-xs text-muted-foreground">
+          상대 덱/리더를 입력한 전적이 필요합니다
+        </p>
+      ) : (
+        <ul className="divide-y divide-border">
+          {rows.slice(0, 12).map((r) => (
+            <li key={`${r.deck}-${r.opponent}`} className="px-4 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <span className="truncate text-sm">
+                  <span className="text-foreground">{r.deck}</span>
+                  <span className="mx-1.5 text-muted-foreground">vs</span>
+                  <span className="text-muted-foreground">{r.opponent}</span>
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  <span className="mr-2 font-medium text-foreground">
+                    {fmtPct(r.stats)}
+                  </span>
+                  {r.stats.wins}-{r.stats.losses}
+                  {r.stats.draws ? `-${r.stats.draws}` : ""}
+                </span>
+              </div>
+              <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
+                <span>선공 {fmtPct(r.first)} ({r.first.total})</span>
+                <span>후공 {fmtPct(r.second)} ({r.second.total})</span>
+                <span>신뢰하한 {fmtPctVal(r.stats.wilsonLow)}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function EventTable({ rows }: { rows: EventStat[] }) {
+  return (
+    <div className="rounded-lg border border-border bg-card">
+      <div className="border-b border-border px-4 py-3">
+        <h3 className="text-sm font-medium">이벤트별 승률</h3>
+      </div>
+      {rows.length === 0 ? (
+        <p className="px-4 py-8 text-center text-xs text-muted-foreground">데이터 없음</p>
+      ) : (
+        <ul className="divide-y divide-border">
+          {rows.map((r) => (
+            <li key={r.event} className="flex items-center justify-between px-4 py-3">
+              <span className="text-sm">{EVENT_LABEL[r.event]}</span>
+              <span className="text-xs text-muted-foreground">
+                <span className="mr-2 font-medium text-foreground">{fmtPct(r.stats)}</span>
                 {r.stats.wins}-{r.stats.losses}
                 {r.stats.draws ? `-${r.stats.draws}` : ""}
               </span>
@@ -339,39 +408,32 @@ function DeckTable({
   );
 }
 
-function MatchupTable({
-  rows,
-}: {
-  rows: Array<{ deck: string; opponent: string; stats: RatePack }>;
-}) {
+function OpponentTable({ rows }: { rows: OpponentFreq[] }) {
   return (
     <div className="rounded-lg border border-border bg-card">
       <div className="border-b border-border px-4 py-3">
-        <h3 className="text-sm font-medium">매치업 (내 덱 × 상대)</h3>
+        <h3 className="text-sm font-medium">상대 메타 Top</h3>
+        <p className="text-[11px] text-muted-foreground">자주 만난 상대 · 그 상대 대상 내 승률</p>
       </div>
       {rows.length === 0 ? (
-        <p className="px-4 py-8 text-center text-xs text-muted-foreground">
-          상대 덱/리더를 입력한 전적이 필요합니다
-        </p>
+        <p className="px-4 py-8 text-center text-xs text-muted-foreground">데이터 없음</p>
       ) : (
         <ul className="divide-y divide-border">
-          {rows.slice(0, 12).map((r) => (
-            <li
-              key={`${r.deck}-${r.opponent}`}
-              className="flex items-center justify-between px-4 py-3"
-            >
-              <span className="truncate text-sm">
-                <span className="text-foreground">{r.deck}</span>
-                <span className="mx-1.5 text-muted-foreground">vs</span>
-                <span className="text-muted-foreground">{r.opponent}</span>
-              </span>
-              <span className="text-xs text-muted-foreground">
-                <span className="mr-2 font-medium text-foreground">
-                  {fmtPct(r.stats)}
+          {rows.map((r) => (
+            <li key={r.opponent} className="px-4 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <span className="truncate text-sm">{r.opponent}</span>
+                <span className="text-xs text-muted-foreground">
+                  <span className="mr-2 font-medium text-foreground">{fmtPct(r.stats)}</span>
+                  {r.count}회 · {fmtPctVal(r.share)}
                 </span>
-                {r.stats.wins}-{r.stats.losses}
-                {r.stats.draws ? `-${r.stats.draws}` : ""}
-              </span>
+              </div>
+              <div className="mt-1 h-1.5 w-full overflow-hidden rounded bg-muted">
+                <div
+                  className="h-full bg-foreground/70"
+                  style={{ width: `${Math.round(r.share * 100)}%` }}
+                />
+              </div>
             </li>
           ))}
         </ul>
