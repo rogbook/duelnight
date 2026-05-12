@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { Swords, Trash2, Plus, Wand2, Pencil } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Swords, Trash2, Plus, Wand2, Pencil, Download, Upload, X } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
