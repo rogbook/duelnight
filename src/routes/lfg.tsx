@@ -376,23 +376,20 @@ function InlineLfgForm({ onCreated, onCancel }: { onCreated: () => void; onCance
           {submitting ? "등록 중…" : "등록"}
         </Button>
       </div>
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent
-          onEscapeKeyDown={() => setConfirmOpen(false)}
-          onPointerDownOutside={(e) => {
-            e.preventDefault();
-            setConfirmOpen(false);
-          }}
-        >
-          <AlertDialogHeader>
-            <AlertDialogTitle>정말 취소할까요?</AlertDialogTitle>
-            <AlertDialogDescription>
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>정말 취소할까요?</DialogTitle>
+            <DialogDescription>
               작성 중인 내용이 모두 사라집니다.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>계속 작성</AlertDialogCancel>
-            <AlertDialogAction
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setConfirmOpen(false)}>
+              계속 작성
+            </Button>
+            <Button
+              variant="destructive"
               onClick={() => {
                 setConfirmOpen(false);
                 onCancel();
@@ -400,10 +397,10 @@ function InlineLfgForm({ onCreated, onCancel }: { onCreated: () => void; onCance
               }}
             >
               취소하기
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </form>
   );
 }
