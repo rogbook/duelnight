@@ -128,6 +128,7 @@ function LfgPage() {
             refetch();
             setShowForm(false);
           }}
+          onCancel={() => setShowForm(false)}
         />
       )}
       {!user && (
