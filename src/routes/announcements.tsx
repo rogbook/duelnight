@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Megaphone, Pin, Plus, Eye, Trash2, Pencil } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
