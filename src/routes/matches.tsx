@@ -449,6 +449,8 @@ function RecentList({
   rows: Match[];
   onDeleted: () => void;
 }) {
+  const [editing, setEditing] = useState<Match | null>(null);
+
   if (rows.length === 0) {
     return (
       <div className="mt-8">
@@ -505,20 +507,203 @@ function RecentList({
                   <ResultBadge r={m.result} />
                 </td>
                 <td className="px-3 py-2 text-right">
-                  <button
-                    onClick={() => onDelete(m.id)}
-                    className="text-muted-foreground hover:text-destructive"
-                    aria-label="삭제"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => setEditing(m)}
+                      className="text-muted-foreground hover:text-foreground"
+                      aria-label="수정"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => onDelete(m.id)}
+                      className="text-muted-foreground hover:text-destructive"
+                      aria-label="삭제"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      <EditMatchDialog
+        match={editing}
+        onOpenChange={(o) => !o && setEditing(null)}
+        onSaved={() => {
+          setEditing(null);
+          onDeleted();
+        }}
+      />
     </section>
+  );
+}
+
+function EditMatchDialog({
+  match,
+  onOpenChange,
+  onSaved,
+}: {
+  match: Match | null;
+  onOpenChange: (open: boolean) => void;
+  onSaved: () => void;
+}) {
+  const qc = useQueryClient();
+  const [form, setForm] = useState<{
+    event: EventT;
+    my_deck: string;
+    opp_leader: string;
+    opp_deck: string;
+    went_first: string;
+    result: Result;
+    notes: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!match) {
+      setForm(null);
+      return;
+    }
+    setForm({
+      event: match.event,
+      my_deck: match.my_deck,
+      opp_leader: match.opp_leader ?? "",
+      opp_deck: match.opp_deck ?? "",
+      went_first: String(match.went_first),
+      result: match.result,
+      notes: match.notes ?? "",
+    });
+  }, [match]);
+
+  if (!match || !form) {
+    return (
+      <Dialog open={false} onOpenChange={onOpenChange}>
+        <DialogContent />
+      </Dialog>
+    );
+  }
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const myDeck = normalizeDeckName(form.my_deck, match.game) || form.my_deck.trim();
+    if (!myDeck) {
+      toast.error("내 덱 이름을 입력해 주세요");
+      return;
+    }
+    const oppLeader = form.opp_leader
+      ? normalizeDeckName(form.opp_leader, match.game) || form.opp_leader.trim()
+      : "";
+    const oppDeck = form.opp_deck
+      ? normalizeDeckName(form.opp_deck, match.game) || form.opp_deck.trim()
+      : "";
+    const { error } = await supabase
+      .from("matches")
+      .update({
+        event: form.event,
+        my_deck: myDeck,
+        opp_leader: oppLeader || null,
+        opp_deck: oppDeck || null,
+        went_first: form.went_first === "true",
+        result: form.result,
+        notes: form.notes.trim() || null,
+      })
+      .eq("id", match.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("수정됨");
+    qc.invalidateQueries({ queryKey: ["matches"] });
+    onSaved();
+  };
+
+  return (
+    <Dialog open={!!match} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>전적 수정</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={submit} className="grid grid-cols-2 gap-3">
+          <div className="col-span-2 flex flex-col gap-1.5">
+            <Label>이벤트</Label>
+            <Select
+              value={form.event}
+              onValueChange={(v) => setForm({ ...form, event: v as EventT })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="friendly">친선</SelectItem>
+                <SelectItem value="shop">매장 대회</SelectItem>
+                <SelectItem value="official">공식 대회</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="col-span-2 flex flex-col gap-1.5">
+            <Label>내 덱</Label>
+            <Input
+              value={form.my_deck}
+              onChange={(e) => setForm({ ...form, my_deck: e.target.value })}
+              required
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label>상대 리더</Label>
+            <Input
+              value={form.opp_leader}
+              onChange={(e) => setForm({ ...form, opp_leader: e.target.value })}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label>상대 덱</Label>
+            <Input
+              value={form.opp_deck}
+              onChange={(e) => setForm({ ...form, opp_deck: e.target.value })}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label>선/후</Label>
+            <Select
+              value={form.went_first}
+              onValueChange={(v) => setForm({ ...form, went_first: v })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="true">선공</SelectItem>
+                <SelectItem value="false">후공</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label>결과</Label>
+            <Select
+              value={form.result}
+              onValueChange={(v) => setForm({ ...form, result: v as Result })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="win">승</SelectItem>
+                <SelectItem value="loss">패</SelectItem>
+                <SelectItem value="draw">무</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="col-span-2 mt-2 flex justify-end gap-2">
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+              취소
+            </Button>
+            <Button type="submit">저장</Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -586,8 +771,24 @@ function NewMatchDialog({
     went_first: String(lastMatch?.went_first ?? true),
     result: "win" as Result,
     notes: "",
+    deck_id: (lastMatch?.deck_id ?? "") as string,
   });
   const [form, setForm] = useState(initial);
+
+  const { data: decks = [] } = useQuery({
+    queryKey: ["decks-for-match", user?.id, form.game],
+    enabled: !!user && open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("decks")
+        .select("id,name,leader,game")
+        .eq("user_id", user!.id)
+        .eq("game", form.game)
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
   // When opening, refresh defaults from the most recent match (if any).
   useEffect(() => {
@@ -635,6 +836,7 @@ function NewMatchDialog({
       went_first: form.went_first === "true",
       result: form.result,
       notes: form.notes.trim() || null,
+      deck_id: form.deck_id || null,
     });
     if (error) {
       toast.error(error.message);
@@ -691,6 +893,39 @@ function NewMatchDialog({
               </SelectContent>
             </Select>
           </div>
+          {decks.length > 0 && (
+            <div className="col-span-2 flex flex-col gap-1.5">
+              <Label>내 덱 선택 (선택사항)</Label>
+              <Select
+                value={form.deck_id || "none"}
+                onValueChange={(v) => {
+                  if (v === "none") {
+                    setForm({ ...form, deck_id: "" });
+                    return;
+                  }
+                  const d = decks.find((x) => x.id === v);
+                  setForm({
+                    ...form,
+                    deck_id: v,
+                    my_deck: d?.leader || d?.name || form.my_deck,
+                  });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="내 덱 목록에서 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">직접 입력</SelectItem>
+                  {decks.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>
+                      {d.name}
+                      {d.leader ? ` · ${d.leader}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="col-span-2 flex flex-col gap-1.5">
             <Label>내 덱 (리더/덱 이름)</Label>
             <Input
