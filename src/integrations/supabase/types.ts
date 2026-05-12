@@ -14,6 +14,111 @@ export type Database = {
   }
   public: {
     Tables: {
+      card_favorites: {
+        Row: {
+          card_code: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          card_code: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          card_code?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      card_reviews: {
+        Row: {
+          body: string | null
+          card_code: string
+          created_at: string
+          id: string
+          rating: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          card_code: string
+          created_at?: string
+          id?: string
+          rating: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          card_code?: string
+          created_at?: string
+          id?: string
+          rating?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      cards: {
+        Row: {
+          attribute: string | null
+          code: string
+          colors: string[]
+          cost: number | null
+          counter: number | null
+          created_at: string
+          effect: string | null
+          game: Database["public"]["Enums"]["tcg_game"]
+          id: string
+          image_url: string | null
+          name: string
+          power: number | null
+          rarity: string | null
+          set_code: string
+          type: Database["public"]["Enums"]["card_type"]
+          updated_at: string
+        }
+        Insert: {
+          attribute?: string | null
+          code: string
+          colors?: string[]
+          cost?: number | null
+          counter?: number | null
+          created_at?: string
+          effect?: string | null
+          game?: Database["public"]["Enums"]["tcg_game"]
+          id?: string
+          image_url?: string | null
+          name: string
+          power?: number | null
+          rarity?: string | null
+          set_code: string
+          type: Database["public"]["Enums"]["card_type"]
+          updated_at?: string
+        }
+        Update: {
+          attribute?: string | null
+          code?: string
+          colors?: string[]
+          cost?: number | null
+          counter?: number | null
+          created_at?: string
+          effect?: string | null
+          game?: Database["public"]["Enums"]["tcg_game"]
+          id?: string
+          image_url?: string | null
+          name?: string
+          power?: number | null
+          rarity?: string | null
+          set_code?: string
+          type?: Database["public"]["Enums"]["card_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       decks: {
         Row: {
           archetype: string | null
@@ -302,6 +407,7 @@ export type Database = {
       }
     }
     Enums: {
+      card_type: "leader" | "character" | "event" | "stage" | "don"
       match_event: "friendly" | "shop" | "official"
       match_result: "win" | "loss" | "draw"
       tcg_game: "optcg" | "ptcg" | "dtcg"
@@ -432,6 +538,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      card_type: ["leader", "character", "event", "stage", "don"],
       match_event: ["friendly", "shop", "official"],
       match_result: ["win", "loss", "draw"],
       tcg_game: ["optcg", "ptcg", "dtcg"],
