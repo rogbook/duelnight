@@ -381,6 +381,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_collection: {
+        Row: {
+          card_code: string
+          created_at: string
+          quantity: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          card_code: string
+          created_at?: string
+          quantity?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          card_code?: string
+          created_at?: string
+          quantity?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
