@@ -9,6 +9,7 @@ const RatePackSchema = z.object({
   total: z.number(),
   winRate: z.number(),
   wilsonLow: z.number(),
+  confidence: z.enum(["높음", "중간", "낮음"]).optional(),
 });
 
 const PayloadSchema = z.object({
