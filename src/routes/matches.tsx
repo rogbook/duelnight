@@ -426,10 +426,39 @@ function ResultBadge({ r }: { r: Result }) {
   );
 }
 
+function CanonicalHint({
+  raw,
+  game,
+  onApply,
+}: {
+  raw: string;
+  game: Game;
+  onApply: (v: string) => void;
+}) {
+  const canonical = normalizeDeckName(raw, game);
+  if (!canonical || canonical === raw.trim()) return null;
+  return (
+    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+      <span>
+        저장 시:{" "}
+        <span className="font-medium text-foreground">{canonical}</span>
+      </span>
+      <button
+        type="button"
+        onClick={() => onApply(canonical)}
+        className="rounded border border-border px-1.5 py-0.5 text-[10px] hover:bg-accent"
+      >
+        적용
+      </button>
+    </div>
+  );
+}
+
 function NewMatchDialog({ onCreated }: { onCreated: () => void }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [keepRaw, setKeepRaw] = useState(false);
   const [form, setForm] = useState({
     game: "optcg" as Game,
     event: "friendly" as EventT,
@@ -446,16 +475,19 @@ function NewMatchDialog({ onCreated }: { onCreated: () => void }) {
     setForm((f) => ({ ...f, my_deck: f.my_deck, opp_leader: "" }));
   }, [open]);
 
+  const finalize = (raw: string) =>
+    keepRaw ? raw.trim() : normalizeDeckName(raw, form.game);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    const myDeck = normalizeDeckName(form.my_deck, form.game);
+    const myDeck = finalize(form.my_deck);
     if (!myDeck) {
       toast.error("내 덱 이름을 입력해 주세요");
       return;
     }
-    const oppLeader = normalizeDeckName(form.opp_leader, form.game);
-    const oppDeck = normalizeDeckName(form.opp_deck, form.game);
+    const oppLeader = finalize(form.opp_leader);
+    const oppDeck = finalize(form.opp_deck);
     const { error } = await supabase.from("matches").insert({
       user_id: user.id,
       game: form.game,
