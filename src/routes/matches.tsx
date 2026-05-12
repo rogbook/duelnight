@@ -566,25 +566,50 @@ function CanonicalHint({
   );
 }
 
-function NewMatchDialog({ onCreated }: { onCreated: () => void }) {
+function NewMatchDialog({
+  onCreated,
+  lastMatch,
+}: {
+  onCreated: () => void;
+  lastMatch?: Match;
+}) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [keepRaw, setKeepRaw] = useState(false);
-  const [form, setForm] = useState({
-    game: "optcg" as Game,
-    event: "friendly" as EventT,
-    my_deck: "",
-    opp_leader: "",
-    opp_deck: "",
-    went_first: "true",
+  const initial = () => ({
+    game: (lastMatch?.game ?? "optcg") as Game,
+    event: (lastMatch?.event ?? "friendly") as EventT,
+    my_deck: lastMatch?.my_deck ?? "",
+    opp_leader: lastMatch?.opp_leader ?? "",
+    opp_deck: lastMatch?.opp_deck ?? "",
+    went_first: String(lastMatch?.went_first ?? true),
     result: "win" as Result,
     notes: "",
   });
+  const [form, setForm] = useState(initial);
 
+  // When opening, refresh defaults from the most recent match (if any).
   useEffect(() => {
     if (!open) return;
-    setForm((f) => ({ ...f, my_deck: f.my_deck, opp_leader: "" }));
+    setForm(initial());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, lastMatch?.id]);
+
+  // W / L / D keyboard shortcuts while dialog is open.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && /^(input|textarea|select)$/i.test(target.tagName)) return;
+      const map: Record<string, Result> = { w: "win", l: "loss", d: "draw" };
+      const r = map[e.key.toLowerCase()];
+      if (r) {
+        setForm((f) => ({ ...f, result: r }));
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
   const finalize = (raw: string) =>
