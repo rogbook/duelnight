@@ -11,6 +11,8 @@ import {
   MapPin,
   Users,
   User,
+  Megaphone,
+  ListOrdered,
 } from "lucide-react";
 
 import {
@@ -41,11 +43,13 @@ const cardItems = [
 const playItems = [
   { title: "전적 기록", url: "/matches", icon: Swords },
   { title: "리더보드", url: "/leaderboard", icon: Trophy },
+  { title: "티어 메이킹", url: "/tier", icon: ListOrdered },
 ];
 
 const communityItems = [
   { title: "매장 찾기", url: "/stores", icon: MapPin },
   { title: "오프라인 매칭", url: "/lfg", icon: Users },
+  { title: "공지사항", url: "/announcements", icon: Megaphone },
 ];
 
 const accountItems = [{ title: "프로필", url: "/profile", icon: User }];

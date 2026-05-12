@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      announcements: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          pinned: boolean
+          title: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          pinned?: boolean
+          title: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          pinned?: boolean
+          title?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
       card_favorites: {
         Row: {
           card_code: string
@@ -381,6 +414,39 @@ export type Database = {
         }
         Relationships: []
       }
+      tier_lists: {
+        Row: {
+          created_at: string
+          game: Database["public"]["Enums"]["tcg_game"]
+          id: string
+          is_public: boolean
+          placements: Json
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          game?: Database["public"]["Enums"]["tcg_game"]
+          id?: string
+          is_public?: boolean
+          placements?: Json
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          game?: Database["public"]["Enums"]["tcg_game"]
+          id?: string
+          is_public?: boolean
+          placements?: Json
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_collection: {
         Row: {
           card_code: string
@@ -401,6 +467,27 @@ export type Database = {
           created_at?: string
           quantity?: number
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
         Relationships: []
@@ -429,8 +516,20 @@ export type Database = {
           wins: number
         }[]
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      increment_announcement_views: {
+        Args: { _id: string }
+        Returns: undefined
+      }
     }
     Enums: {
+      app_role: "admin" | "moderator" | "user"
       card_type: "leader" | "character" | "event" | "stage" | "don"
       match_event: "friendly" | "shop" | "official"
       match_result: "win" | "loss" | "draw"
@@ -562,6 +661,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "moderator", "user"],
       card_type: ["leader", "character", "event", "stage", "don"],
       match_event: ["friendly", "shop", "official"],
       match_result: ["win", "loss", "draw"],
