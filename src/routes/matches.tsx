@@ -708,6 +708,39 @@ function NewMatchDialog({
               </SelectContent>
             </Select>
           </div>
+          {decks.length > 0 && (
+            <div className="col-span-2 flex flex-col gap-1.5">
+              <Label>내 덱 선택 (선택사항)</Label>
+              <Select
+                value={form.deck_id || "none"}
+                onValueChange={(v) => {
+                  if (v === "none") {
+                    setForm({ ...form, deck_id: "" });
+                    return;
+                  }
+                  const d = decks.find((x) => x.id === v);
+                  setForm({
+                    ...form,
+                    deck_id: v,
+                    my_deck: d?.leader || d?.name || form.my_deck,
+                  });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="내 덱 목록에서 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">직접 입력</SelectItem>
+                  {decks.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>
+                      {d.name}
+                      {d.leader ? ` · ${d.leader}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="col-span-2 flex flex-col gap-1.5">
             <Label>내 덱 (리더/덱 이름)</Label>
             <Input
