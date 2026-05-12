@@ -343,10 +343,10 @@ function InlineLfgForm({ onCreated, onCancel }: { onCreated: () => void; onCance
         <Button
           type="button"
           variant="ghost"
-          onClick={() => setForm(empty)}
+          onClick={onCancel}
           disabled={submitting}
         >
-          초기화
+          취소
         </Button>
         <Button type="submit" disabled={submitting}>
           {submitting ? "등록 중…" : "등록"}
