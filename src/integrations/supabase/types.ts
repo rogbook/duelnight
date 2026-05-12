@@ -14,9 +14,49 @@ export type Database = {
   }
   public: {
     Tables: {
+      decks: {
+        Row: {
+          archetype: string | null
+          created_at: string
+          game: Database["public"]["Enums"]["tcg_game"]
+          id: string
+          is_public: boolean
+          leader: string | null
+          name: string
+          notes: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          archetype?: string | null
+          created_at?: string
+          game: Database["public"]["Enums"]["tcg_game"]
+          id?: string
+          is_public?: boolean
+          leader?: string | null
+          name: string
+          notes?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          archetype?: string | null
+          created_at?: string
+          game?: Database["public"]["Enums"]["tcg_game"]
+          id?: string
+          is_public?: boolean
+          leader?: string | null
+          name?: string
+          notes?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       matches: {
         Row: {
           created_at: string
+          deck_id: string | null
           event: Database["public"]["Enums"]["match_event"]
           game: Database["public"]["Enums"]["tcg_game"]
           id: string
@@ -31,6 +71,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deck_id?: string | null
           event?: Database["public"]["Enums"]["match_event"]
           game: Database["public"]["Enums"]["tcg_game"]
           id?: string
@@ -45,6 +86,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deck_id?: string | null
           event?: Database["public"]["Enums"]["match_event"]
           game?: Database["public"]["Enums"]["tcg_game"]
           id?: string
@@ -56,6 +98,44 @@ export type Database = {
           result?: Database["public"]["Enums"]["match_result"]
           user_id?: string
           went_first?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matches_deck_id_fkey"
+            columns: ["deck_id"]
+            isOneToOne: false
+            referencedRelation: "decks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          id: string
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          username?: string | null
         }
         Relationships: []
       }

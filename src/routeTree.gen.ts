@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StoresRouteImport } from './routes/stores'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as MatchesRouteImport } from './routes/matches'
 import { Route as LoginRouteImport } from './routes/login'
@@ -25,6 +26,11 @@ import { Route as ApiCoachRouteImport } from './routes/api/coach'
 const StoresRoute = StoresRouteImport.update({
   id: '/stores',
   path: '/stores',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
   '/profile': typeof ProfileRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/stores': typeof StoresRoute
   '/api/coach': typeof ApiCoachRoute
 }
@@ -108,6 +115,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
   '/profile': typeof ProfileRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/stores': typeof StoresRoute
   '/api/coach': typeof ApiCoachRoute
 }
@@ -123,6 +131,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
   '/profile': typeof ProfileRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/stores': typeof StoresRoute
   '/api/coach': typeof ApiCoachRoute
 }
@@ -139,6 +148,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/matches'
     | '/profile'
+    | '/reset-password'
     | '/stores'
     | '/api/coach'
   fileRoutesByTo: FileRoutesByTo
@@ -153,6 +163,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/matches'
     | '/profile'
+    | '/reset-password'
     | '/stores'
     | '/api/coach'
   id:
@@ -167,6 +178,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/matches'
     | '/profile'
+    | '/reset-password'
     | '/stores'
     | '/api/coach'
   fileRoutesById: FileRoutesById
@@ -182,6 +194,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MatchesRoute: typeof MatchesRoute
   ProfileRoute: typeof ProfileRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   StoresRoute: typeof StoresRoute
   ApiCoachRoute: typeof ApiCoachRoute
 }
@@ -193,6 +206,13 @@ declare module '@tanstack/react-router' {
       path: '/stores'
       fullPath: '/stores'
       preLoaderRoute: typeof StoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -286,6 +306,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MatchesRoute: MatchesRoute,
   ProfileRoute: ProfileRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   StoresRoute: StoresRoute,
   ApiCoachRoute: ApiCoachRoute,
 }
