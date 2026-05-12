@@ -301,12 +301,36 @@ function StatCard({ label, pack }: { label: string; pack: RatePack }) {
   );
 }
 
-function StatGrid({ stats }: { stats: ReturnType<typeof computeStats> }) {
+function StatGrid({
+  stats,
+  streak,
+}: {
+  stats: ReturnType<typeof computeStats>;
+  streak: ReturnType<typeof computeStreak>;
+}) {
+  const cur = streak.current;
+  const curLabel =
+    cur === 0 ? "—" : cur > 0 ? `${cur}연승 🔥` : `${-cur}연패`;
+  const curClass =
+    cur > 0
+      ? "text-emerald-600 dark:text-emerald-400"
+      : cur < 0
+        ? "text-rose-600 dark:text-rose-400"
+        : "text-foreground";
   return (
-    <section className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+    <section className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-5">
       <StatCard label="전체 승률" pack={stats.overall} />
       <StatCard label="선공 승률" pack={stats.first} />
       <StatCard label="후공 승률" pack={stats.second} />
+      <div className="rounded-lg border border-border bg-card p-4">
+        <p className="text-xs text-muted-foreground">현재 연속</p>
+        <p className={`mt-2 text-2xl font-semibold tracking-tight ${curClass}`}>
+          {curLabel}
+        </p>
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          최고 {streak.best}연승 · 최장 {streak.worst}연패
+        </p>
+      </div>
       <div className="rounded-lg border border-border bg-card p-4">
         <p className="text-xs text-muted-foreground">사용 덱</p>
         <p className="mt-2 text-2xl font-semibold tracking-tight">
