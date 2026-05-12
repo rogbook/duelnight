@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Users, Plus, Trash2, MapPin, Clock } from "lucide-react";
+import { Users, Plus, Trash2, MapPin, Clock, X } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -17,13 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { GAME_LABEL } from "@/lib/match-stats";
 import type { Database } from "@/integrations/supabase/types";
@@ -59,6 +52,7 @@ export const Route = createFileRoute("/lfg")({
 function LfgPage() {
   const { user } = useAuth();
   const [game, setGame] = useState<Game | "all">("all");
+  const [showForm, setShowForm] = useState(false);
 
   const { data: posts = [], refetch } = useQuery({
     queryKey: ["lfg-posts", game],
@@ -108,7 +102,19 @@ function LfgPage() {
           </SelectContent>
         </Select>
         {user ? (
-          <NewLfgDialog onCreated={() => refetch()} />
+          <Button size="sm" onClick={() => setShowForm((v) => !v)}>
+            {showForm ? (
+              <>
+                <X className="mr-1 h-4 w-4" />
+                작성 닫기
+              </>
+            ) : (
+              <>
+                <Plus className="mr-1 h-4 w-4" />
+                모집 글 작성
+              </>
+            )}
+          </Button>
         ) : (
           <Button asChild size="sm">
             <Link to="/login">로그인하고 작성</Link>
@@ -116,9 +122,15 @@ function LfgPage() {
         )}
       </PageHeader>
 
-      {user ? (
-        <InlineLfgForm onCreated={() => refetch()} />
-      ) : (
+      {user && showForm && (
+        <InlineLfgForm
+          onCreated={() => {
+            refetch();
+            setShowForm(false);
+          }}
+        />
+      )}
+      {!user && (
         <div className="mt-6 rounded-lg border border-dashed border-border bg-card/50 p-4 text-center text-sm text-muted-foreground">
           글을 작성하려면{" "}
           <Link to="/login" className="font-medium text-primary underline">
@@ -208,136 +220,6 @@ function LfgPage() {
         </ul>
       )}
     </div>
-  );
-}
-
-function NewLfgDialog({ onCreated }: { onCreated: () => void }) {
-  const { user } = useAuth();
-  const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({
-    game: "optcg" as Game,
-    title: "",
-    location: "",
-    meet_at: "",
-    contact: "",
-    body: "",
-  });
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-    if (!form.title.trim()) {
-      toast.error("제목을 입력해 주세요");
-      return;
-    }
-    const { error } = await supabase.from("lfg_posts").insert({
-      user_id: user.id,
-      game: form.game,
-      title: form.title.trim(),
-      location: form.location.trim() || null,
-      meet_at: form.meet_at ? new Date(form.meet_at).toISOString() : null,
-      contact: form.contact.trim() || null,
-      body: form.body.trim() || null,
-    });
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("등록됨");
-    setOpen(false);
-    setForm({
-      game: "optcg",
-      title: "",
-      location: "",
-      meet_at: "",
-      contact: "",
-      body: "",
-    });
-    qc.invalidateQueries({ queryKey: ["lfg-posts"] });
-    onCreated();
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <Plus className="mr-1 h-4 w-4" />
-          모집 글 작성
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>같이 칠 사람 모집</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={submit} className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <Label>게임</Label>
-              <Select
-                value={form.game}
-                onValueChange={(v) => setForm({ ...form, game: v as Game })}
-              >
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="optcg">원피스</SelectItem>
-                  <SelectItem value="ptcg">포켓몬</SelectItem>
-                  <SelectItem value="dtcg">디지몬</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label>일시</Label>
-              <Input
-                type="datetime-local"
-                value={form.meet_at}
-                onChange={(e) => setForm({ ...form, meet_at: e.target.value })}
-              />
-            </div>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>제목</Label>
-            <Input
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              placeholder="예: 강남 친선 같이 치실 분"
-              required
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>장소</Label>
-            <Input
-              value={form.location}
-              onChange={(e) => setForm({ ...form, location: e.target.value })}
-              placeholder="지역 또는 매장명"
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>연락 방법</Label>
-            <Input
-              value={form.contact}
-              onChange={(e) => setForm({ ...form, contact: e.target.value })}
-              placeholder="디스코드 / 카톡 오픈채팅 등"
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>설명</Label>
-            <Textarea
-              value={form.body}
-              onChange={(e) => setForm({ ...form, body: e.target.value })}
-              placeholder="포맷, 인원, 환영 사항 등"
-              rows={3}
-            />
-          </div>
-          <div className="flex justify-end gap-2 pt-1">
-            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
-              취소
-            </Button>
-            <Button type="submit">등록</Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
   );
 }
 
