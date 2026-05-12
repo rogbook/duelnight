@@ -118,7 +118,7 @@ function CardDetailPage() {
           <h1 className="mt-1 text-2xl font-semibold">{card.name}</h1>
           <div className="mt-3 flex flex-wrap gap-1.5">
             <Tag>{TYPE_LABEL[card.type] ?? card.type}</Tag>
-            {card.colors.map((c) => (
+            {card.colors.map((c: string) => (
               <Tag key={c}>{COLOR_LABEL[c] ?? c}</Tag>
             ))}
             {card.rarity && <Tag>{card.rarity}</Tag>}
