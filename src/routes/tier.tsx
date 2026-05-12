@@ -350,24 +350,11 @@ function TierPage() {
                   {new Date(l.updated_at).toLocaleDateString()}
                 </p>
                 <Link
-                  to="/tier"
-                  search={{ id: l.id } as never}
+                  to="/tier/$id"
+                  params={{ id: l.id }}
                   className="mt-2 inline-block text-xs text-primary hover:underline"
-                  onClick={(e) => {
-                    // ensure load triggers via effect
-                    e.preventDefault();
-                    window.history.pushState({}, "", `/tier?id=${l.id}`);
-                    (async () => {
-                      const { data } = await supabase
-                        .from("tier_lists")
-                        .select("*")
-                        .eq("id", l.id)
-                        .maybeSingle();
-                      if (data) load(data as TierList);
-                    })();
-                  }}
                 >
-                  불러오기 →
+                  자세히 보기 →
                 </Link>
               </li>
             ))}
