@@ -28,6 +28,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useIsAdmin } from "@/hooks/use-is-admin";
 
 const mainItems = [
   { title: "대시보드", url: "/", icon: LayoutDashboard },
