@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Database, RefreshCw, AlertTriangle, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
@@ -7,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsAdmin } from "@/hooks/use-is-admin";
+import { reseedDemo } from "@/lib/admin-content.functions";
 
 export const Route = createFileRoute("/admin/seed")({
   head: () => ({
@@ -21,7 +23,20 @@ export const Route = createFileRoute("/admin/seed")({
 function SeedPage() {
   const { user, loading } = useAuth();
   const { isAdmin, isLoading } = useIsAdmin();
-  const [running, setRunning] = useState(false);
+  const qc = useQueryClient();
+  const run = useServerFn(reseedDemo);
+  const m = useMutation({
+    mutationFn: () => run(),
+    onSuccess: (res) => {
+      const parts: string[] = [];
+      if (res.announcements) parts.push(`공지 ${res.announcements}건`);
+      if (res.cards) parts.push(`카드 ${res.cards}장`);
+      toast.success(parts.length ? `보충 완료: ${parts.join(", ")}` : "이미 모든 시드가 채워져 있어요");
+      qc.invalidateQueries({ queryKey: ["cards"] });
+      qc.invalidateQueries({ queryKey: ["announcements"] });
+    },
+    onError: (e: Error) => toast.error(e.message ?? "재생성 실패"),
+  });
 
   if (loading || isLoading) {
     return <div className="flex flex-col gap-6 p-6 md:p-8"><PageHeader title="시드 재생성" /></div>;
@@ -46,36 +61,26 @@ function SeedPage() {
     );
   }
 
-  const onRun = async () => {
-    setRunning(true);
-    try {
-      await new Promise((r) => setTimeout(r, 800));
-      toast.success("시드 재생성 요청을 큐에 등록했습니다 (데모)");
-    } finally {
-      setRunning(false);
-    }
-  };
-
   return (
     <div className="flex flex-col gap-6 p-6 md:p-8">
-      <PageHeader title="시드 재생성" description="테스트 계정·카드·덱·공지 등 더미 데이터를 다시 채웁니다." />
+      <PageHeader title="시드 재생성" description="누락된 더미 공지·카드 등을 다시 채웁니다 (UPSERT)." />
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
             <Database className="h-5 w-5 text-primary" />
-            <CardTitle>전체 시드 재생성</CardTitle>
+            <CardTitle>전체 시드 보충</CardTitle>
           </div>
-          <CardDescription>기존 데이터는 보존하고 누락된 더미 레코드만 재삽입합니다 (UPSERT).</CardDescription>
+          <CardDescription>기존 데이터는 보존하고 비어있는 항목만 채웁니다.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="flex items-start gap-2 rounded-md border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-500" />
-            <span>운영 데이터가 있을 경우 충돌하지 않도록 확인 후 실행하세요.</span>
+            <span>운영 데이터에는 영향이 없지만, 데모용 카드(set_code=DEMO)와 환영 공지가 추가될 수 있습니다.</span>
           </div>
           <div className="flex gap-2">
-            <Button onClick={onRun} disabled={running}>
-              <RefreshCw className={`mr-2 h-4 w-4 ${running ? "animate-spin" : ""}`} />
-              {running ? "실행 중..." : "시드 재생성 실행"}
+            <Button onClick={() => m.mutate()} disabled={m.isPending}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${m.isPending ? "animate-spin" : ""}`} />
+              {m.isPending ? "실행 중..." : "시드 보충 실행"}
             </Button>
           </div>
         </CardContent>
