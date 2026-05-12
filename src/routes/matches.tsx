@@ -27,12 +27,18 @@ import { toast } from "sonner";
 import {
   computeStats,
   fmtPct,
+  fmtPctVal,
   GAME_LABEL,
   EVENT_LABEL,
   type Match,
   type RatePack,
+  type DeckStat,
+  type MatchupStat,
+  type EventStat,
+  type OpponentFreq,
 } from "@/lib/match-stats";
-import { WinRateChart } from "@/components/winrate-chart";
+import { WinRateChart, type ChartUnit } from "@/components/winrate-chart";
+import { AiCoachCard } from "@/components/ai-coach-card";
 import { normalizeDeckName } from "@/lib/normalize-deck";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -65,6 +71,7 @@ function MatchesPage() {
   const { user, loading } = useAuth();
   const [game, setGame] = useState<Game | "all">("all");
   const [period, setPeriod] = useState<Period>("30");
+  const [chartUnit, setChartUnit] = useState<ChartUnit>("day");
 
   const { data: allRows = [], refetch } = useQuery({
     queryKey: ["matches", user?.id, game],
@@ -127,27 +134,70 @@ function MatchesPage() {
         <GameTabs value={game} onChange={setGame} />
         <PeriodTabs value={period} onChange={setPeriod} />
         <NormalizeButton onDone={() => refetch()} />
-        <NewMatchDialog onCreated={() => refetch()} />
+        <NewMatchDialog onCreated={() => refetch()} lastMatch={allRows[0]} />
       </PageHeader>
 
       <StatGrid stats={stats} />
 
       <section className="mt-6 rounded-lg border border-border bg-card">
-        <div className="border-b border-border px-4 py-3">
-          <h3 className="text-sm font-medium">승률 추이</h3>
-          <p className="text-xs text-muted-foreground">
-            누적 승률(%) — 전체 및 사용량 상위 덱 3개
-          </p>
+        <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+          <div>
+            <h3 className="text-sm font-medium">승률 추이</h3>
+            <p className="text-xs text-muted-foreground">
+              누적 승률(%) — 전체 · 사용 상위 덱 3개 · 최근 7판 이동평균
+            </p>
+          </div>
+          <ChartUnitTabs value={chartUnit} onChange={setChartUnit} />
         </div>
-        <WinRateChart rows={rows} />
+        <WinRateChart rows={rows} unit={chartUnit} />
       </section>
+
+      <AiCoachCard rows={rows} stats={stats} period={period} game={game} />
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <DeckTable rows={stats.byDeck} />
         <MatchupTable rows={stats.matchups} />
       </div>
 
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <EventTable rows={stats.byEvent} />
+        <OpponentTable rows={stats.topOpponents} />
+      </div>
+
       <RecentList rows={rows} onDeleted={() => refetch()} />
+    </div>
+  );
+}
+
+function ChartUnitTabs({
+  value,
+  onChange,
+}: {
+  value: ChartUnit;
+  onChange: (v: ChartUnit) => void;
+}) {
+  const items: { id: ChartUnit; label: string }[] = [
+    { id: "day", label: "일" },
+    { id: "week", label: "주" },
+    { id: "month", label: "월" },
+  ];
+  return (
+    <div className="inline-flex items-center gap-1 rounded-md border border-border bg-card p-0.5">
+      {items.map((it) => (
+        <button
+          key={it.id}
+          type="button"
+          onClick={() => onChange(it.id)}
+          className={
+            "rounded px-2 py-1 text-[11px] font-medium transition-colors " +
+            (value === it.id
+              ? "bg-foreground text-background"
+              : "text-muted-foreground hover:text-foreground")
+          }
+        >
+          {it.label}
+        </button>
+      ))}
     </div>
   );
 }
@@ -252,15 +302,12 @@ function StatGrid({ stats }: { stats: ReturnType<typeof computeStats> }) {
   );
 }
 
-function DeckTable({
-  rows,
-}: {
-  rows: Array<{ deck: string; stats: RatePack }>;
-}) {
+function DeckTable({ rows }: { rows: DeckStat[] }) {
   return (
     <div className="rounded-lg border border-border bg-card">
       <div className="border-b border-border px-4 py-3">
         <h3 className="text-sm font-medium">덱별 승률</h3>
+        <p className="text-[11px] text-muted-foreground">선/후공 분리 · 신뢰하한(95%)</p>
       </div>
       {rows.length === 0 ? (
         <p className="px-4 py-8 text-center text-xs text-muted-foreground">
@@ -269,15 +316,87 @@ function DeckTable({
       ) : (
         <ul className="divide-y divide-border">
           {rows.map((r) => (
-            <li
-              key={r.deck}
-              className="flex items-center justify-between px-4 py-3"
-            >
-              <span className="truncate text-sm">{r.deck}</span>
-              <span className="text-xs text-muted-foreground">
-                <span className="mr-2 font-medium text-foreground">
-                  {fmtPct(r.stats)}
+            <li key={r.deck} className="px-4 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <span className="truncate text-sm">{r.deck}</span>
+                <span className="text-xs text-muted-foreground">
+                  <span className="mr-2 font-medium text-foreground">
+                    {fmtPct(r.stats)}
+                  </span>
+                  {r.stats.wins}-{r.stats.losses}
+                  {r.stats.draws ? `-${r.stats.draws}` : ""}
                 </span>
+              </div>
+              <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
+                <span>선공 {fmtPct(r.first)} ({r.first.total})</span>
+                <span>후공 {fmtPct(r.second)} ({r.second.total})</span>
+                <span>신뢰하한 {fmtPctVal(r.stats.wilsonLow)}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function MatchupTable({ rows }: { rows: MatchupStat[] }) {
+  return (
+    <div className="rounded-lg border border-border bg-card">
+      <div className="border-b border-border px-4 py-3">
+        <h3 className="text-sm font-medium">매치업 (내 덱 × 상대)</h3>
+        <p className="text-[11px] text-muted-foreground">선/후공 · 신뢰하한 표시</p>
+      </div>
+      {rows.length === 0 ? (
+        <p className="px-4 py-8 text-center text-xs text-muted-foreground">
+          상대 덱/리더를 입력한 전적이 필요합니다
+        </p>
+      ) : (
+        <ul className="divide-y divide-border">
+          {rows.slice(0, 12).map((r) => (
+            <li key={`${r.deck}-${r.opponent}`} className="px-4 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <span className="truncate text-sm">
+                  <span className="text-foreground">{r.deck}</span>
+                  <span className="mx-1.5 text-muted-foreground">vs</span>
+                  <span className="text-muted-foreground">{r.opponent}</span>
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  <span className="mr-2 font-medium text-foreground">
+                    {fmtPct(r.stats)}
+                  </span>
+                  {r.stats.wins}-{r.stats.losses}
+                  {r.stats.draws ? `-${r.stats.draws}` : ""}
+                </span>
+              </div>
+              <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
+                <span>선공 {fmtPct(r.first)} ({r.first.total})</span>
+                <span>후공 {fmtPct(r.second)} ({r.second.total})</span>
+                <span>신뢰하한 {fmtPctVal(r.stats.wilsonLow)}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function EventTable({ rows }: { rows: EventStat[] }) {
+  return (
+    <div className="rounded-lg border border-border bg-card">
+      <div className="border-b border-border px-4 py-3">
+        <h3 className="text-sm font-medium">이벤트별 승률</h3>
+      </div>
+      {rows.length === 0 ? (
+        <p className="px-4 py-8 text-center text-xs text-muted-foreground">데이터 없음</p>
+      ) : (
+        <ul className="divide-y divide-border">
+          {rows.map((r) => (
+            <li key={r.event} className="flex items-center justify-between px-4 py-3">
+              <span className="text-sm">{EVENT_LABEL[r.event]}</span>
+              <span className="text-xs text-muted-foreground">
+                <span className="mr-2 font-medium text-foreground">{fmtPct(r.stats)}</span>
                 {r.stats.wins}-{r.stats.losses}
                 {r.stats.draws ? `-${r.stats.draws}` : ""}
               </span>
@@ -289,39 +408,32 @@ function DeckTable({
   );
 }
 
-function MatchupTable({
-  rows,
-}: {
-  rows: Array<{ deck: string; opponent: string; stats: RatePack }>;
-}) {
+function OpponentTable({ rows }: { rows: OpponentFreq[] }) {
   return (
     <div className="rounded-lg border border-border bg-card">
       <div className="border-b border-border px-4 py-3">
-        <h3 className="text-sm font-medium">매치업 (내 덱 × 상대)</h3>
+        <h3 className="text-sm font-medium">상대 메타 Top</h3>
+        <p className="text-[11px] text-muted-foreground">자주 만난 상대 · 그 상대 대상 내 승률</p>
       </div>
       {rows.length === 0 ? (
-        <p className="px-4 py-8 text-center text-xs text-muted-foreground">
-          상대 덱/리더를 입력한 전적이 필요합니다
-        </p>
+        <p className="px-4 py-8 text-center text-xs text-muted-foreground">데이터 없음</p>
       ) : (
         <ul className="divide-y divide-border">
-          {rows.slice(0, 12).map((r) => (
-            <li
-              key={`${r.deck}-${r.opponent}`}
-              className="flex items-center justify-between px-4 py-3"
-            >
-              <span className="truncate text-sm">
-                <span className="text-foreground">{r.deck}</span>
-                <span className="mx-1.5 text-muted-foreground">vs</span>
-                <span className="text-muted-foreground">{r.opponent}</span>
-              </span>
-              <span className="text-xs text-muted-foreground">
-                <span className="mr-2 font-medium text-foreground">
-                  {fmtPct(r.stats)}
+          {rows.map((r) => (
+            <li key={r.opponent} className="px-4 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <span className="truncate text-sm">{r.opponent}</span>
+                <span className="text-xs text-muted-foreground">
+                  <span className="mr-2 font-medium text-foreground">{fmtPct(r.stats)}</span>
+                  {r.count}회 · {fmtPctVal(r.share)}
                 </span>
-                {r.stats.wins}-{r.stats.losses}
-                {r.stats.draws ? `-${r.stats.draws}` : ""}
-              </span>
+              </div>
+              <div className="mt-1 h-1.5 w-full overflow-hidden rounded bg-muted">
+                <div
+                  className="h-full bg-foreground/70"
+                  style={{ width: `${Math.round(r.share * 100)}%` }}
+                />
+              </div>
             </li>
           ))}
         </ul>
@@ -454,25 +566,50 @@ function CanonicalHint({
   );
 }
 
-function NewMatchDialog({ onCreated }: { onCreated: () => void }) {
+function NewMatchDialog({
+  onCreated,
+  lastMatch,
+}: {
+  onCreated: () => void;
+  lastMatch?: Match;
+}) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [keepRaw, setKeepRaw] = useState(false);
-  const [form, setForm] = useState({
-    game: "optcg" as Game,
-    event: "friendly" as EventT,
-    my_deck: "",
-    opp_leader: "",
-    opp_deck: "",
-    went_first: "true",
+  const initial = () => ({
+    game: (lastMatch?.game ?? "optcg") as Game,
+    event: (lastMatch?.event ?? "friendly") as EventT,
+    my_deck: lastMatch?.my_deck ?? "",
+    opp_leader: lastMatch?.opp_leader ?? "",
+    opp_deck: lastMatch?.opp_deck ?? "",
+    went_first: String(lastMatch?.went_first ?? true),
     result: "win" as Result,
     notes: "",
   });
+  const [form, setForm] = useState(initial);
 
+  // When opening, refresh defaults from the most recent match (if any).
   useEffect(() => {
     if (!open) return;
-    setForm((f) => ({ ...f, my_deck: f.my_deck, opp_leader: "" }));
+    setForm(initial());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, lastMatch?.id]);
+
+  // W / L / D keyboard shortcuts while dialog is open.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && /^(input|textarea|select)$/i.test(target.tagName)) return;
+      const map: Record<string, Result> = { w: "win", l: "loss", d: "draw" };
+      const r = map[e.key.toLowerCase()];
+      if (r) {
+        setForm((f) => ({ ...f, result: r }));
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
   const finalize = (raw: string) =>
