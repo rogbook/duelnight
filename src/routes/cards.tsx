@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { Library, Search, Star, X, ImageOff } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -283,7 +283,7 @@ function CardTile({
   onClick: () => void;
 }) {
   return (
-    <li>
+    <li className="relative">
       <button
         onClick={onClick}
         className="group block w-full overflow-hidden rounded-lg border border-border bg-card text-left transition hover:border-primary"
@@ -333,6 +333,15 @@ function CardTile({
           </div>
         </div>
       </button>
+      <Link
+        to="/cards/$code"
+        params={{ code: card.code }}
+        className="absolute bottom-1 right-1 rounded bg-background/80 px-1.5 py-0.5 text-[10px] text-muted-foreground opacity-0 backdrop-blur transition group-hover:opacity-100 hover:text-foreground"
+        onClick={(e) => e.stopPropagation()}
+        aria-label="공유 가능한 상세 페이지로 이동"
+      >
+        상세 →
+      </Link>
     </li>
   );
 }
