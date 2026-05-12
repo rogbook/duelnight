@@ -237,6 +237,20 @@ function InlineLfgForm({ onCreated, onCancel }: { onCreated: () => void; onCance
     body: "",
   };
   const [form, setForm] = useState(empty);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const isDirty =
+    form.title.trim() !== "" ||
+    form.location.trim() !== "" ||
+    form.meet_at !== "" ||
+    form.contact.trim() !== "" ||
+    form.body.trim() !== "" ||
+    form.game !== "optcg";
+
+  const handleCancel = () => {
+    if (isDirty) setConfirmOpen(true);
+    else onCancel();
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
