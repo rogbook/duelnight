@@ -7,13 +7,23 @@ import type { Database } from "@/integrations/supabase/types";
 type Game = Database["public"]["Enums"]["tcg_game"];
 type Period = "7" | "30" | "90" | "all";
 
-const pickRate = (r: RatePack): RatePack => ({
+type Confidence = "높음" | "중간" | "낮음";
+
+const confidenceOf = (r: RatePack): Confidence => {
+  const decided = r.wins + r.losses;
+  if (decided >= 30 && r.wilsonLow >= 0.4) return "높음";
+  if (decided >= 10) return "중간";
+  return "낮음";
+};
+
+const pickRate = (r: RatePack) => ({
   wins: r.wins,
   losses: r.losses,
   draws: r.draws,
   total: r.total,
   winRate: r.winRate,
   wilsonLow: r.wilsonLow,
+  confidence: confidenceOf(r),
 });
 
 async function fetchCoach(payload: unknown): Promise<string> {
