@@ -191,14 +191,35 @@ export type Database = {
         }
         Relationships: []
       }
+      event_favorites: {
+        Row: {
+          created_at: string
+          event_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           created_at: string
+          early_release_at: string | null
           ends_at: string | null
           game: Database["public"]["Enums"]["tcg_game"]
           id: string
+          kind: Database["public"]["Enums"]["event_kind"]
           location: string | null
           notes: string | null
+          product_url: string | null
           starts_at: string
           store_id: string | null
           title: string
@@ -208,11 +229,14 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          early_release_at?: string | null
           ends_at?: string | null
           game: Database["public"]["Enums"]["tcg_game"]
           id?: string
+          kind?: Database["public"]["Enums"]["event_kind"]
           location?: string | null
           notes?: string | null
+          product_url?: string | null
           starts_at: string
           store_id?: string | null
           title: string
@@ -222,11 +246,14 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          early_release_at?: string | null
           ends_at?: string | null
           game?: Database["public"]["Enums"]["tcg_game"]
           id?: string
+          kind?: Database["public"]["Enums"]["event_kind"]
           location?: string | null
           notes?: string | null
+          product_url?: string | null
           starts_at?: string
           store_id?: string | null
           title?: string
@@ -342,6 +369,39 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          link: string | null
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -349,6 +409,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          primary_game: Database["public"]["Enums"]["tcg_game"] | null
           updated_at: string
           username: string | null
         }
@@ -358,6 +419,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id: string
+          primary_game?: Database["public"]["Enums"]["tcg_game"] | null
           updated_at?: string
           username?: string | null
         }
@@ -367,6 +429,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          primary_game?: Database["public"]["Enums"]["tcg_game"] | null
           updated_at?: string
           username?: string | null
         }
@@ -544,6 +607,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "moderator" | "user"
       card_type: "leader" | "character" | "event" | "stage" | "don"
+      event_kind: "tournament" | "release" | "match"
       match_event: "friendly" | "shop" | "official"
       match_result: "win" | "loss" | "draw"
       tcg_game: "optcg" | "ptcg" | "dtcg"
@@ -676,6 +740,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "moderator", "user"],
       card_type: ["leader", "character", "event", "stage", "don"],
+      event_kind: ["tournament", "release", "match"],
       match_event: ["friendly", "shop", "official"],
       match_result: ["win", "loss", "draw"],
       tcg_game: ["optcg", "ptcg", "dtcg"],
