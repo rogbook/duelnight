@@ -447,13 +447,20 @@ function NewMatchDialog({ onCreated }: { onCreated: () => void }) {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+    const myDeck = normalizeDeckName(form.my_deck, form.game);
+    if (!myDeck) {
+      toast.error("내 덱 이름을 입력해 주세요");
+      return;
+    }
+    const oppLeader = normalizeDeckName(form.opp_leader, form.game);
+    const oppDeck = normalizeDeckName(form.opp_deck, form.game);
     const { error } = await supabase.from("matches").insert({
       user_id: user.id,
       game: form.game,
       event: form.event,
-      my_deck: form.my_deck.trim(),
-      opp_leader: form.opp_leader.trim() || null,
-      opp_deck: form.opp_deck.trim() || null,
+      my_deck: myDeck,
+      opp_leader: oppLeader || null,
+      opp_deck: oppDeck || null,
       went_first: form.went_first === "true",
       result: form.result,
       notes: form.notes.trim() || null,
