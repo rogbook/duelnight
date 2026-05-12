@@ -65,12 +65,30 @@ function LfgPage() {
     queryFn: async () => {
       let q = supabase
         .from("lfg_posts")
-        .select("*, profiles(display_name, username)")
+        .select("*")
         .order("created_at", { ascending: false });
       if (game !== "all") q = q.eq("game", game);
       const { data, error } = await q;
       if (error) throw error;
-      return (data ?? []) as Post[];
+      const rows = (data ?? []) as Omit<Post, "profiles">[];
+      const ids = Array.from(new Set(rows.map((r) => r.user_id)));
+      let profMap = new Map<string, { display_name: string | null; username: string | null }>();
+      if (ids.length) {
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("id, display_name, username")
+          .in("id", ids);
+        profMap = new Map(
+          (profs ?? []).map((p) => [
+            p.id,
+            { display_name: p.display_name, username: p.username },
+          ]),
+        );
+      }
+      return rows.map((r) => ({
+        ...r,
+        profiles: profMap.get(r.user_id) ?? null,
+      })) as Post[];
     },
   });
 
