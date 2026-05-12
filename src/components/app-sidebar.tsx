@@ -11,6 +11,8 @@ import {
   MapPin,
   Users,
   User,
+  Megaphone,
+  ListOrdered,
 } from "lucide-react";
 
 import {
