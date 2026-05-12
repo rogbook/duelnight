@@ -95,9 +95,10 @@ export const listAdmins = createServerFn({ method: "POST" })
 /** 관리자 존재 여부. 비로그인도 호출 가능해야 부트스트랩 안내가 가능. */
 export const anyAdminExists = createServerFn({ method: "POST" }).handler(
   async () => {
-    // 별도 인증 없이 publishable key로 호출 — RPC 자체는 단순 EXISTS만 노출
-    const { supabase } = await import("@/integrations/supabase/client");
-    const { data, error } = await supabase.rpc("any_admin_exists");
+    const { supabaseAdmin } = await import(
+      "@/integrations/supabase/client.server"
+    );
+    const { data, error } = await supabaseAdmin.rpc("any_admin_exists");
     if (error) throw new Response(error.message, { status: 500 });
     return { exists: !!data };
   },
