@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TierRouteImport } from './routes/tier'
 import { Route as StoresRouteImport } from './routes/stores'
+import { Route as SandboxRouteImport } from './routes/sandbox'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PacksRouteImport } from './routes/packs'
@@ -38,6 +39,11 @@ const TierRoute = TierRouteImport.update({
 const StoresRoute = StoresRouteImport.update({
   id: '/stores',
   path: '/stores',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SandboxRoute = SandboxRouteImport.update({
+  id: '/sandbox',
+  path: '/sandbox',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -146,6 +152,7 @@ export interface FileRoutesByFullPath {
   '/packs': typeof PacksRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sandbox': typeof SandboxRoute
   '/stores': typeof StoresRoute
   '/tier': typeof TierRoute
   '/admin/card-generator': typeof AdminCardGeneratorRoute
@@ -168,6 +175,7 @@ export interface FileRoutesByTo {
   '/packs': typeof PacksRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sandbox': typeof SandboxRoute
   '/stores': typeof StoresRoute
   '/tier': typeof TierRoute
   '/admin/card-generator': typeof AdminCardGeneratorRoute
@@ -191,6 +199,7 @@ export interface FileRoutesById {
   '/packs': typeof PacksRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sandbox': typeof SandboxRoute
   '/stores': typeof StoresRoute
   '/tier': typeof TierRoute
   '/admin/card-generator': typeof AdminCardGeneratorRoute
@@ -215,6 +224,7 @@ export interface FileRouteTypes {
     | '/packs'
     | '/profile'
     | '/reset-password'
+    | '/sandbox'
     | '/stores'
     | '/tier'
     | '/admin/card-generator'
@@ -237,6 +247,7 @@ export interface FileRouteTypes {
     | '/packs'
     | '/profile'
     | '/reset-password'
+    | '/sandbox'
     | '/stores'
     | '/tier'
     | '/admin/card-generator'
@@ -259,6 +270,7 @@ export interface FileRouteTypes {
     | '/packs'
     | '/profile'
     | '/reset-password'
+    | '/sandbox'
     | '/stores'
     | '/tier'
     | '/admin/card-generator'
@@ -282,6 +294,7 @@ export interface RootRouteChildren {
   PacksRoute: typeof PacksRoute
   ProfileRoute: typeof ProfileRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SandboxRoute: typeof SandboxRoute
   StoresRoute: typeof StoresRoute
   TierRoute: typeof TierRoute
   ApiCoachRoute: typeof ApiCoachRoute
@@ -301,6 +314,13 @@ declare module '@tanstack/react-router' {
       path: '/stores'
       fullPath: '/stores'
       preLoaderRoute: typeof StoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sandbox': {
+      id: '/sandbox'
+      path: '/sandbox'
+      fullPath: '/sandbox'
+      preLoaderRoute: typeof SandboxRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -461,6 +481,7 @@ const rootRouteChildren: RootRouteChildren = {
   PacksRoute: PacksRoute,
   ProfileRoute: ProfileRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SandboxRoute: SandboxRoute,
   StoresRoute: StoresRoute,
   TierRoute: TierRoute,
   ApiCoachRoute: ApiCoachRoute,
