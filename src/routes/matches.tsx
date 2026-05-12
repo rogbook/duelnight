@@ -32,11 +32,20 @@ import {
   type Match,
   type RatePack,
 } from "@/lib/match-stats";
+import { WinRateChart } from "@/components/winrate-chart";
 import type { Database } from "@/integrations/supabase/types";
 
 type Game = Database["public"]["Enums"]["tcg_game"];
 type EventT = Database["public"]["Enums"]["match_event"];
 type Result = Database["public"]["Enums"]["match_result"];
+type Period = "7" | "30" | "90" | "all";
+
+const PERIOD_DAYS: Record<Period, number | null> = {
+  "7": 7,
+  "30": 30,
+  "90": 90,
+  all: null,
+};
 
 export const Route = createFileRoute("/matches")({
   head: () => ({
