@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Sparkles, Wand2, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page-header";
@@ -9,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsAdmin } from "@/hooks/use-is-admin";
+import { generateCards } from "@/lib/admin-content.functions";
 
 export const Route = createFileRoute("/admin/card-generator")({
   head: () => ({
@@ -25,7 +28,19 @@ function CardGenPage() {
   const { isAdmin, isLoading } = useIsAdmin();
   const [setCode, setSetCode] = useState("OP12");
   const [count, setCount] = useState(5);
-  const [running, setRunning] = useState(false);
+  const qc = useQueryClient();
+  const generate = useServerFn(generateCards);
+  const m = useMutation({
+    mutationFn: (input: { setCode: string; count: number }) =>
+      generate({ data: input }),
+    onSuccess: (res) => {
+      toast.success(`${res.inserted}장 생성 완료 (${res.codes[0]} …)`);
+      qc.invalidateQueries({ queryKey: ["cards"] });
+      qc.invalidateQueries({ queryKey: ["pack-sets"] });
+      qc.invalidateQueries({ queryKey: ["pack-pool"] });
+    },
+    onError: (e: Error) => toast.error(e.message ?? "생성 실패"),
+  });
 
   if (loading || isLoading) {
     return <div className="flex flex-col gap-6 p-6 md:p-8"><PageHeader title="카드 자동생성" /></div>;
@@ -50,16 +65,6 @@ function CardGenPage() {
     );
   }
 
-  const onRun = async () => {
-    setRunning(true);
-    try {
-      await new Promise((r) => setTimeout(r, 800));
-      toast.success(`${setCode} ${count}장 생성 요청을 등록했습니다 (데모)`);
-    } finally {
-      setRunning(false);
-    }
-  };
-
   return (
     <div className="flex flex-col gap-6 p-6 md:p-8">
       <PageHeader title="카드 자동생성" description="세트 코드를 지정해 더미 카드를 일괄 생성합니다." />
@@ -82,9 +87,13 @@ function CardGenPage() {
               <Input id="count" type="number" min={1} max={50} value={count} onChange={(e) => setCount(Number(e.target.value))} />
             </div>
           </div>
-          <Button onClick={onRun} disabled={running} className="w-fit">
+          <Button
+            onClick={() => m.mutate({ setCode: setCode.trim(), count })}
+            disabled={m.isPending}
+            className="w-fit"
+          >
             <Wand2 className="mr-2 h-4 w-4" />
-            {running ? "생성 중..." : "자동 생성 실행"}
+            {m.isPending ? "생성 중..." : "자동 생성 실행"}
           </Button>
         </CardContent>
       </Card>
