@@ -26,6 +26,7 @@ import {
 import { toast } from "sonner";
 import {
   computeStats,
+  computeStreak,
   fmtPct,
   fmtPctVal,
   GAME_LABEL,
@@ -40,6 +41,12 @@ import {
 import { WinRateChart, type ChartUnit } from "@/components/winrate-chart";
 import { AiCoachCard } from "@/components/ai-coach-card";
 import { normalizeDeckName } from "@/lib/normalize-deck";
+import {
+  matchesToCsv,
+  matchesToJson,
+  parseImport,
+  downloadFile,
+} from "@/lib/csv";
 import type { Database } from "@/integrations/supabase/types";
 
 type Game = Database["public"]["Enums"]["tcg_game"];
