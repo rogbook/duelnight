@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Megaphone, Pin, Plus, Eye, Trash2, Pencil } from "lucide-react";
+import { Megaphone, Pin, Plus, Eye, Trash2, Pencil, ExternalLink } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -108,28 +108,38 @@ function AnnouncementsPage() {
                     <Eye className="inline h-3 w-3" /> {a.view_count}
                   </p>
                 </div>
-                {isAdmin && (
-                  <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-8 w-8"
-                      onClick={() => setEditing(a)}
-                      aria-label="수정"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-8 w-8"
-                      onClick={() => remove(a.id)}
-                      aria-label="삭제"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
+                <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                  <Link
+                    to="/announcements/$id"
+                    params={{ id: a.id }}
+                    aria-label="공유 페이지 열기"
+                    className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </Link>
+                  {isAdmin && (
+                    <>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                        onClick={() => setEditing(a)}
+                        aria-label="수정"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                        onClick={() => remove(a.id)}
+                        aria-label="삭제"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
+                </div>
               </button>
             </li>
           ))}
