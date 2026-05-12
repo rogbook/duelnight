@@ -48,6 +48,9 @@
 - `package-lock.json` / `bun.lockb`
 - `supabase/config.toml` 의 `project_id`
 
+> 위 파일들은 GitHub Actions 워크플로 `.github/workflows/guard-lovable-files.yml` 에서
+> PR diff를 검사해 변경 시 자동으로 코멘트를 달고 체크를 실패시킵니다.
+
 #### **종료 및 동기화**:
 - `git add .` -> `git commit` -> `git push`
 - GitHub에서 PR 생성 후 `main`에 머지.
