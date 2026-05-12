@@ -57,9 +57,10 @@ function LeaderboardPage() {
   const { data = [], isLoading } = useQuery({
     queryKey: ["leaderboard", game, period, minTotal],
     queryFn: async () => {
+      const days = PERIOD_DAYS[period];
       const { data, error } = await supabase.rpc("get_leaderboard", {
-        p_game: game === "all" ? null : game,
-        p_days: PERIOD_DAYS[period],
+        ...(game === "all" ? {} : { p_game: game }),
+        ...(days == null ? {} : { p_days: days }),
         p_min_total: minTotal,
         p_limit: 50,
       });
