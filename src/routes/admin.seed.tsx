@@ -36,10 +36,10 @@ function SeedPage() {
               <Lock className="h-5 w-5 text-muted-foreground" />
               <CardTitle>접근 권한이 없습니다</CardTitle>
             </div>
-            <CardDescription>이 화면은 관리자 전용입니다. 일반 사용자는 “샘플 데이터 둘러보기”에서 시드 데이터를 확인하실 수 있어요.</CardDescription>
+            <CardDescription>이 화면은 관리자 전용입니다. 일반 사용자는 카드 DB·덱 빌더·컬렉션 등 실제 기능을 자유롭게 사용하실 수 있어요.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild variant="outline"><Link to="/sandbox">샘플 데이터 둘러보기</Link></Button>
+            <Button asChild variant="outline"><Link to="/cards">카드 DB로 이동</Link></Button>
           </CardContent>
         </Card>
       </div>

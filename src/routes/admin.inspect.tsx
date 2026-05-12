@@ -49,10 +49,10 @@ function InspectPage() {
               <Lock className="h-5 w-5 text-muted-foreground" />
               <CardTitle>접근 권한이 없습니다</CardTitle>
             </div>
-            <CardDescription>데이터 검수 화면은 관리자만 접근할 수 있어요.</CardDescription>
+            <CardDescription>데이터 검수 화면은 관리자만 접근할 수 있어요. 일반 사용자는 실제 서비스 기능을 자유롭게 이용해 주세요.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild variant="outline"><Link to="/sandbox">샘플 데이터 둘러보기</Link></Button>
+            <Button asChild variant="outline"><Link to="/">대시보드로 이동</Link></Button>
           </CardContent>
         </Card>
       </div>
