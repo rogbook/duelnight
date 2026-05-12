@@ -1,4 +1,5 @@
 import type { Tables } from "@/integrations/supabase/types";
+import { normalizeDeckName, deckKey } from "@/lib/normalize-deck";
 
 export type Match = Tables<"matches">;
 
@@ -49,31 +50,42 @@ export function computeStats(rows: Match[]): MatchStats {
   const first = tally(rows.filter((m) => m.went_first));
   const second = tally(rows.filter((m) => !m.went_first));
 
-  const deckMap = new Map<string, Match[]>();
+  const deckMap = new Map<string, { label: string; rows: Match[] }>();
   for (const m of rows) {
-    const k = m.my_deck.trim() || "(이름 없음)";
-    const arr = deckMap.get(k) ?? [];
-    arr.push(m);
-    deckMap.set(k, arr);
+    const label = normalizeDeckName(m.my_deck, m.game) || "(이름 없음)";
+    const k = deckKey(m.my_deck, m.game) || "_unnamed_";
+    const entry = deckMap.get(k) ?? { label, rows: [] };
+    entry.rows.push(m);
+    deckMap.set(k, entry);
   }
-  const byDeck = [...deckMap.entries()]
-    .map(([deck, arr]) => ({ deck, stats: tally(arr) }))
+  const byDeck = [...deckMap.values()]
+    .map(({ label, rows: arr }) => ({ deck: label, stats: tally(arr) }))
     .sort((a, b) => b.stats.total - a.stats.total);
 
-  const matchupMap = new Map<string, Match[]>();
+  const matchupMap = new Map<
+    string,
+    { deck: string; opponent: string; rows: Match[] }
+  >();
   for (const m of rows) {
-    const opp = (m.opp_leader || m.opp_deck || "").trim();
-    if (!opp) continue;
-    const k = `${m.my_deck.trim() || "(내 덱)"}__VS__${opp}`;
-    const arr = matchupMap.get(k) ?? [];
-    arr.push(m);
-    matchupMap.set(k, arr);
+    const oppRaw = m.opp_leader || m.opp_deck || "";
+    const oppLabel = normalizeDeckName(oppRaw, m.game);
+    if (!oppLabel) continue;
+    const deckLabel = normalizeDeckName(m.my_deck, m.game) || "(내 덱)";
+    const k = `${deckKey(m.my_deck, m.game) || "_mine_"}__VS__${deckKey(oppRaw, m.game)}`;
+    const entry = matchupMap.get(k) ?? {
+      deck: deckLabel,
+      opponent: oppLabel,
+      rows: [],
+    };
+    entry.rows.push(m);
+    matchupMap.set(k, entry);
   }
-  const matchups = [...matchupMap.entries()]
-    .map(([k, arr]) => {
-      const [deck, opponent] = k.split("__VS__");
-      return { deck, opponent, stats: tally(arr) };
-    })
+  const matchups = [...matchupMap.values()]
+    .map(({ deck, opponent, rows: arr }) => ({
+      deck,
+      opponent,
+      stats: tally(arr),
+    }))
     .sort((a, b) => b.stats.total - a.stats.total);
 
   const recent = [...rows]
