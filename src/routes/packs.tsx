@@ -109,9 +109,24 @@ function PacksPage() {
       toast.error("이 세트에는 개봉 가능한 카드가 없어요");
       return;
     }
+    const rares = pool.filter((c) =>
+      ["SR", "SEC"].includes((c.rarity ?? "").toUpperCase()),
+    );
+    const commons = pool.filter(
+      (c) => !["SR", "SEC"].includes((c.rarity ?? "").toUpperCase()),
+    );
     const pulled: Card[] = [];
-    for (let i = 0; i < packs * PACK_SIZE; i++) {
-      pulled.push(pickWeighted(pool, (c) => rarityWeight(c.rarity)));
+    for (let p = 0; p < packs; p++) {
+      // 1팩 = SR/SEC 보장 1장 + 나머지 가중치 추첨
+      if (rares.length > 0) {
+        // SEC는 SR보다 훨씬 희귀
+        pulled.push(pickWeighted(rares, (c) => rarityWeight(c.rarity)));
+      }
+      const restPool = commons.length > 0 ? commons : pool;
+      const restCount = PACK_SIZE - (rares.length > 0 ? 1 : 0);
+      for (let i = 0; i < restCount; i++) {
+        pulled.push(pickWeighted(restPool, (c) => rarityWeight(c.rarity)));
+      }
     }
     setResults(pulled);
   };

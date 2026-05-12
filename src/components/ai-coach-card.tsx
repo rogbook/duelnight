@@ -1,6 +1,6 @@
-import { Sparkles, Loader2, RefreshCw, AlertCircle } from "lucide-react";
+import { Sparkles, Loader2, RefreshCw, AlertCircle, Play } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import type { Match, MatchStats, RatePack } from "@/lib/match-stats";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -91,13 +91,6 @@ export function AiCoachCard({
     mutationFn: () => fetchCoach(payload),
   });
 
-  // Auto-fetch on mount / when filters change
-  useEffect(() => {
-    if (!enoughData) return;
-    mutation.mutate();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enoughData, period, game, rows.length]);
-
   if (!enoughData) return null;
 
   const turnGap =
@@ -148,21 +141,34 @@ export function AiCoachCard({
       )}
 
       {!mutation.isPending && !mutation.data && !mutation.isError && (
-        <ul className="ml-1 space-y-1 text-xs text-muted-foreground">
-          <li>
-            최근 {rows.length}판에서 선공·후공 격차 약{" "}
-            <span className="text-foreground">{turnGap}%p</span>
-          </li>
-          {stats.topOpponents[0] && (
+        <div className="space-y-3">
+          <ul className="ml-1 space-y-1 text-xs text-muted-foreground">
             <li>
-              가장 자주 만난 상대:{" "}
-              <span className="text-foreground">
-                {stats.topOpponents[0].opponent}
-              </span>{" "}
-              ({stats.topOpponents[0].count}회)
+              최근 {rows.length}판에서 선공·후공 격차 약{" "}
+              <span className="text-foreground">{turnGap}%p</span>
             </li>
-          )}
-        </ul>
+            {stats.topOpponents[0] && (
+              <li>
+                가장 자주 만난 상대:{" "}
+                <span className="text-foreground">
+                  {stats.topOpponents[0].opponent}
+                </span>{" "}
+                ({stats.topOpponents[0].count}회)
+              </li>
+            )}
+          </ul>
+          <button
+            type="button"
+            onClick={() => mutation.mutate()}
+            className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1.5 text-xs hover:bg-accent"
+          >
+            <Play className="h-3 w-3" />
+            AI 분석 실행
+          </button>
+          <p className="text-[10px] text-muted-foreground">
+            * 비용 절감을 위해 자동 호출하지 않습니다. 필터를 바꾼 뒤 직접 실행하세요.
+          </p>
+        </div>
       )}
     </section>
   );
