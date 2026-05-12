@@ -79,6 +79,7 @@ function MatchesPage() {
   const [game, setGame] = useState<Game | "all">("all");
   const [period, setPeriod] = useState<Period>("30");
   const [chartUnit, setChartUnit] = useState<ChartUnit>("day");
+  const [filters, setFilters] = useState<Filters>(emptyFilters);
 
   const { data: allRows = [], refetch } = useQuery({
     queryKey: ["matches", user?.id, game],
@@ -95,14 +96,17 @@ function MatchesPage() {
     },
   });
 
-  const rows = useMemo(() => {
+  const periodRows = useMemo(() => {
     const days = PERIOD_DAYS[period];
     if (days == null) return allRows;
     const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
     return allRows.filter((m) => new Date(m.played_at).getTime() >= cutoff);
   }, [allRows, period]);
 
+  const rows = useMemo(() => applyFilters(periodRows, filters), [periodRows, filters]);
+
   const stats = useMemo(() => computeStats(rows), [rows]);
+  const streak = useMemo(() => computeStreak(rows), [rows]);
 
   if (loading) {
     return (
