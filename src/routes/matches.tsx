@@ -1268,3 +1268,317 @@ function NormalizeButton({ onDone }: { onDone: () => void }) {
     </Button>
   );
 }
+
+// ============================================================
+// Filters + helpers
+// ============================================================
+
+type ResultFilter = "all" | "win" | "loss" | "draw";
+
+interface Filters {
+  result: ResultFilter;
+  myDeck: string;
+  opp: string;
+  event: EventT | "all";
+  q: string;
+  from: string; // yyyy-mm-dd
+  to: string;
+}
+
+const emptyFilters: Filters = {
+  result: "all",
+  myDeck: "",
+  opp: "",
+  event: "all",
+  q: "",
+  from: "",
+  to: "",
+};
+
+function applyFilters(rows: Match[], f: Filters): Match[] {
+  return rows.filter((m) => {
+    if (f.result !== "all" && m.result !== f.result) return false;
+    if (f.event !== "all" && m.event !== f.event) return false;
+    if (f.myDeck && !m.my_deck.toLowerCase().includes(f.myDeck.toLowerCase()))
+      return false;
+    if (f.opp) {
+      const o = `${m.opp_leader ?? ""} ${m.opp_deck ?? ""}`.toLowerCase();
+      if (!o.includes(f.opp.toLowerCase())) return false;
+    }
+    if (f.q) {
+      const hay = `${m.my_deck} ${m.opp_leader ?? ""} ${m.opp_deck ?? ""} ${m.notes ?? ""}`.toLowerCase();
+      if (!hay.includes(f.q.toLowerCase())) return false;
+    }
+    if (f.from) {
+      if (new Date(m.played_at).getTime() < new Date(f.from).getTime())
+        return false;
+    }
+    if (f.to) {
+      // include the whole 'to' day
+      const t = new Date(f.to).getTime() + 24 * 60 * 60 * 1000;
+      if (new Date(m.played_at).getTime() >= t) return false;
+    }
+    return true;
+  });
+}
+
+function FilterBar({
+  rows,
+  value,
+  onChange,
+}: {
+  rows: Match[];
+  value: Filters;
+  onChange: (f: Filters) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const active =
+    value.result !== "all" ||
+    value.event !== "all" ||
+    !!value.myDeck ||
+    !!value.opp ||
+    !!value.q ||
+    !!value.from ||
+    !!value.to;
+  const filteredCount = useMemo(() => applyFilters(rows, value).length, [rows, value]);
+
+  const set = <K extends keyof Filters>(k: K, v: Filters[K]) =>
+    onChange({ ...value, [k]: v });
+
+  return (
+    <section className="mt-6 rounded-lg border border-border bg-card">
+      <div className="flex items-center justify-between gap-3 px-4 py-3">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setOpen((o) => !o)}
+            className="text-sm font-medium hover:underline"
+          >
+            필터 {open ? "닫기" : "열기"}
+          </button>
+          {active && (
+            <span className="text-xs text-muted-foreground">
+              · {filteredCount}/{rows.length}건 일치
+            </span>
+          )}
+        </div>
+        {active && (
+          <button
+            type="button"
+            onClick={() => onChange(emptyFilters)}
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-3 w-3" /> 초기화
+          </button>
+        )}
+      </div>
+      {open && (
+        <div className="grid grid-cols-2 gap-3 border-t border-border p-4 md:grid-cols-4">
+          <div className="flex flex-col gap-1">
+            <Label className="text-[11px]">결과</Label>
+            <Select
+              value={value.result}
+              onValueChange={(v) => set("result", v as ResultFilter)}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">전체</SelectItem>
+                <SelectItem value="win">승</SelectItem>
+                <SelectItem value="loss">패</SelectItem>
+                <SelectItem value="draw">무</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label className="text-[11px]">이벤트</Label>
+            <Select
+              value={value.event}
+              onValueChange={(v) => set("event", v as EventT | "all")}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">전체</SelectItem>
+                <SelectItem value="friendly">친선</SelectItem>
+                <SelectItem value="shop">매장 대회</SelectItem>
+                <SelectItem value="official">공식 대회</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label className="text-[11px]">내 덱</Label>
+            <Input
+              value={value.myDeck}
+              onChange={(e) => set("myDeck", e.target.value)}
+              placeholder="이름 일부"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label className="text-[11px]">상대</Label>
+            <Input
+              value={value.opp}
+              onChange={(e) => set("opp", e.target.value)}
+              placeholder="리더/덱 일부"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label className="text-[11px]">시작일</Label>
+            <Input
+              type="date"
+              value={value.from}
+              onChange={(e) => set("from", e.target.value)}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <Label className="text-[11px]">종료일</Label>
+            <Input
+              type="date"
+              value={value.to}
+              onChange={(e) => set("to", e.target.value)}
+            />
+          </div>
+          <div className="col-span-2 flex flex-col gap-1">
+            <Label className="text-[11px]">키워드 (메모 포함)</Label>
+            <Input
+              value={value.q}
+              onChange={(e) => set("q", e.target.value)}
+              placeholder="검색어"
+            />
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ============================================================
+// Import / Export
+// ============================================================
+
+function ImportExportButton({
+  rows,
+  onImported,
+}: {
+  rows: Match[];
+  onImported: () => void;
+}) {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+
+  const exportCsv = () => {
+    downloadFile(
+      `tcghub-matches-${new Date().toISOString().slice(0, 10)}.csv`,
+      matchesToCsv(rows),
+      "text/csv;charset=utf-8",
+    );
+  };
+  const exportJson = () => {
+    downloadFile(
+      `tcghub-matches-${new Date().toISOString().slice(0, 10)}.json`,
+      matchesToJson(rows),
+      "application/json",
+    );
+  };
+
+  const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !user) return;
+    setBusy(true);
+    const toastId = toast.loading("파일 분석 중...");
+    try {
+      const text = await file.text();
+      const rows = parseImport(text);
+      if (rows.length === 0) {
+        toast.error("가져올 유효한 행이 없습니다", { id: toastId });
+        return;
+      }
+      const payload = rows.map((r) => ({
+        user_id: user.id,
+        game: r.game,
+        event: r.event,
+        my_deck: r.my_deck,
+        opp_leader: r.opp_leader,
+        opp_deck: r.opp_deck,
+        went_first: r.went_first,
+        result: r.result,
+        notes: r.notes,
+        ...(r.played_at ? { played_at: r.played_at } : {}),
+      }));
+      // Insert in chunks of 200
+      let ok = 0;
+      for (let i = 0; i < payload.length; i += 200) {
+        const chunk = payload.slice(i, i + 200);
+        const { error } = await supabase.from("matches").insert(chunk);
+        if (error) {
+          toast.error(error.message, { id: toastId });
+          return;
+        }
+        ok += chunk.length;
+        toast.loading(`가져오는 중... ${ok}/${payload.length}`, { id: toastId });
+      }
+      toast.success(`${ok}건 가져옴`, { id: toastId });
+      qc.invalidateQueries({ queryKey: ["matches"] });
+      onImported();
+      setOpen(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "가져오기 실패", { id: toastId });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline">
+          <Download className="mr-1 h-4 w-4" />
+          내보내기/가져오기
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>전적 내보내기 / 가져오기</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <p className="text-xs text-muted-foreground mb-2">
+              현재 로드된 {rows.length}건을 백업합니다.
+            </p>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={exportCsv}>
+                <Download className="mr-1 h-4 w-4" /> CSV
+              </Button>
+              <Button size="sm" variant="outline" onClick={exportJson}>
+                <Download className="mr-1 h-4 w-4" /> JSON
+              </Button>
+            </div>
+          </div>
+          <div className="border-t border-border pt-4">
+            <p className="text-xs text-muted-foreground mb-2">
+              CSV 또는 JSON 파일에서 가져오기. 헤더: game, event, my_deck,
+              opp_leader, opp_deck, went_first, result, notes, played_at
+            </p>
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".csv,.json,text/csv,application/json"
+              onChange={onFile}
+              className="hidden"
+            />
+            <Button
+              size="sm"
+              onClick={() => fileRef.current?.click()}
+              disabled={busy}
+            >
+              <Upload className="mr-1 h-4 w-4" />
+              {busy ? "가져오는 중..." : "파일 선택"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
