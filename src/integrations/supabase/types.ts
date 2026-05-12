@@ -14,7 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      matches: {
+        Row: {
+          created_at: string
+          event: Database["public"]["Enums"]["match_event"]
+          game: Database["public"]["Enums"]["tcg_game"]
+          id: string
+          my_deck: string
+          notes: string | null
+          opp_deck: string | null
+          opp_leader: string | null
+          played_at: string
+          result: Database["public"]["Enums"]["match_result"]
+          user_id: string
+          went_first: boolean
+        }
+        Insert: {
+          created_at?: string
+          event?: Database["public"]["Enums"]["match_event"]
+          game: Database["public"]["Enums"]["tcg_game"]
+          id?: string
+          my_deck: string
+          notes?: string | null
+          opp_deck?: string | null
+          opp_leader?: string | null
+          played_at?: string
+          result: Database["public"]["Enums"]["match_result"]
+          user_id: string
+          went_first?: boolean
+        }
+        Update: {
+          created_at?: string
+          event?: Database["public"]["Enums"]["match_event"]
+          game?: Database["public"]["Enums"]["tcg_game"]
+          id?: string
+          my_deck?: string
+          notes?: string | null
+          opp_deck?: string | null
+          opp_leader?: string | null
+          played_at?: string
+          result?: Database["public"]["Enums"]["match_result"]
+          user_id?: string
+          went_first?: boolean
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +67,9 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      match_event: "friendly" | "shop" | "official"
+      match_result: "win" | "loss" | "draw"
+      tcg_game: "optcg" | "ptcg" | "dtcg"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +196,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      match_event: ["friendly", "shop", "official"],
+      match_result: ["win", "loss", "draw"],
+      tcg_game: ["optcg", "ptcg", "dtcg"],
+    },
   },
 } as const
