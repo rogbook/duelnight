@@ -28,6 +28,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useIsAdmin } from "@/hooks/use-is-admin";
 
 const mainItems = [
   { title: "대시보드", url: "/", icon: LayoutDashboard },
@@ -55,7 +56,10 @@ const communityItems = [
 
 const accountItems = [
   { title: "프로필", url: "/profile", icon: User },
-  { title: "관리자", url: "/admin", icon: Shield },
+];
+
+const adminItems = [
+  { title: "관리자 콘솔", url: "/admin", icon: Shield },
 ];
 
 export function AppSidebar() {
@@ -64,6 +68,7 @@ export function AppSidebar() {
   const currentPath = useRouterState({
     select: (router) => router.location.pathname,
   });
+  const { isAdmin } = useIsAdmin();
 
   const renderGroup = (
     label: string,
@@ -102,8 +107,13 @@ export function AppSidebar() {
             T
           </div>
           {!collapsed && (
-            <span className="text-sm font-semibold tracking-tight">
+            <span className="flex items-center gap-1.5 text-sm font-semibold tracking-tight">
               TCG Hub
+              {isAdmin && (
+                <span className="rounded bg-primary px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary-foreground">
+                  Admin
+                </span>
+              )}
             </span>
           )}
         </Link>
@@ -114,6 +124,7 @@ export function AppSidebar() {
         {renderGroup("플레이", playItems)}
         {renderGroup("커뮤니티", communityItems)}
         {renderGroup("계정", accountItems)}
+        {isAdmin && renderGroup("관리", adminItems)}
       </SidebarContent>
     </Sidebar>
   );
