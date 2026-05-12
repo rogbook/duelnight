@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TierRouteImport } from './routes/tier'
 import { Route as StoresRouteImport } from './routes/stores'
+import { Route as SandboxRouteImport } from './routes/sandbox'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PacksRouteImport } from './routes/packs'
@@ -26,6 +27,9 @@ import { Route as AnnouncementsRouteImport } from './routes/announcements'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiCoachRouteImport } from './routes/api/coach'
+import { Route as AdminSeedRouteImport } from './routes/admin.seed'
+import { Route as AdminInspectRouteImport } from './routes/admin.inspect'
+import { Route as AdminCardGeneratorRouteImport } from './routes/admin.card-generator'
 
 const TierRoute = TierRouteImport.update({
   id: '/tier',
@@ -35,6 +39,11 @@ const TierRoute = TierRouteImport.update({
 const StoresRoute = StoresRouteImport.update({
   id: '/stores',
   path: '/stores',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SandboxRoute = SandboxRouteImport.update({
+  id: '/sandbox',
+  path: '/sandbox',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -112,10 +121,25 @@ const ApiCoachRoute = ApiCoachRouteImport.update({
   path: '/api/coach',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminSeedRoute = AdminSeedRouteImport.update({
+  id: '/seed',
+  path: '/seed',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminInspectRoute = AdminInspectRouteImport.update({
+  id: '/inspect',
+  path: '/inspect',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCardGeneratorRoute = AdminCardGeneratorRouteImport.update({
+  id: '/card-generator',
+  path: '/card-generator',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/announcements': typeof AnnouncementsRoute
   '/calendar': typeof CalendarRoute
   '/cards': typeof CardsRoute
@@ -128,13 +152,17 @@ export interface FileRoutesByFullPath {
   '/packs': typeof PacksRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sandbox': typeof SandboxRoute
   '/stores': typeof StoresRoute
   '/tier': typeof TierRoute
+  '/admin/card-generator': typeof AdminCardGeneratorRoute
+  '/admin/inspect': typeof AdminInspectRoute
+  '/admin/seed': typeof AdminSeedRoute
   '/api/coach': typeof ApiCoachRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/announcements': typeof AnnouncementsRoute
   '/calendar': typeof CalendarRoute
   '/cards': typeof CardsRoute
@@ -147,14 +175,18 @@ export interface FileRoutesByTo {
   '/packs': typeof PacksRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sandbox': typeof SandboxRoute
   '/stores': typeof StoresRoute
   '/tier': typeof TierRoute
+  '/admin/card-generator': typeof AdminCardGeneratorRoute
+  '/admin/inspect': typeof AdminInspectRoute
+  '/admin/seed': typeof AdminSeedRoute
   '/api/coach': typeof ApiCoachRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/announcements': typeof AnnouncementsRoute
   '/calendar': typeof CalendarRoute
   '/cards': typeof CardsRoute
@@ -167,8 +199,12 @@ export interface FileRoutesById {
   '/packs': typeof PacksRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sandbox': typeof SandboxRoute
   '/stores': typeof StoresRoute
   '/tier': typeof TierRoute
+  '/admin/card-generator': typeof AdminCardGeneratorRoute
+  '/admin/inspect': typeof AdminInspectRoute
+  '/admin/seed': typeof AdminSeedRoute
   '/api/coach': typeof ApiCoachRoute
 }
 export interface FileRouteTypes {
@@ -188,8 +224,12 @@ export interface FileRouteTypes {
     | '/packs'
     | '/profile'
     | '/reset-password'
+    | '/sandbox'
     | '/stores'
     | '/tier'
+    | '/admin/card-generator'
+    | '/admin/inspect'
+    | '/admin/seed'
     | '/api/coach'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -207,8 +247,12 @@ export interface FileRouteTypes {
     | '/packs'
     | '/profile'
     | '/reset-password'
+    | '/sandbox'
     | '/stores'
     | '/tier'
+    | '/admin/card-generator'
+    | '/admin/inspect'
+    | '/admin/seed'
     | '/api/coach'
   id:
     | '__root__'
@@ -226,14 +270,18 @@ export interface FileRouteTypes {
     | '/packs'
     | '/profile'
     | '/reset-password'
+    | '/sandbox'
     | '/stores'
     | '/tier'
+    | '/admin/card-generator'
+    | '/admin/inspect'
+    | '/admin/seed'
     | '/api/coach'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRoute
+  AdminRoute: typeof AdminRouteWithChildren
   AnnouncementsRoute: typeof AnnouncementsRoute
   CalendarRoute: typeof CalendarRoute
   CardsRoute: typeof CardsRoute
@@ -246,6 +294,7 @@ export interface RootRouteChildren {
   PacksRoute: typeof PacksRoute
   ProfileRoute: typeof ProfileRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SandboxRoute: typeof SandboxRoute
   StoresRoute: typeof StoresRoute
   TierRoute: typeof TierRoute
   ApiCoachRoute: typeof ApiCoachRoute
@@ -265,6 +314,13 @@ declare module '@tanstack/react-router' {
       path: '/stores'
       fullPath: '/stores'
       preLoaderRoute: typeof StoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sandbox': {
+      id: '/sandbox'
+      path: '/sandbox'
+      fullPath: '/sandbox'
+      preLoaderRoute: typeof SandboxRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -372,12 +428,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCoachRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/seed': {
+      id: '/admin/seed'
+      path: '/seed'
+      fullPath: '/admin/seed'
+      preLoaderRoute: typeof AdminSeedRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/inspect': {
+      id: '/admin/inspect'
+      path: '/inspect'
+      fullPath: '/admin/inspect'
+      preLoaderRoute: typeof AdminInspectRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/card-generator': {
+      id: '/admin/card-generator'
+      path: '/card-generator'
+      fullPath: '/admin/card-generator'
+      preLoaderRoute: typeof AdminCardGeneratorRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
+interface AdminRouteChildren {
+  AdminCardGeneratorRoute: typeof AdminCardGeneratorRoute
+  AdminInspectRoute: typeof AdminInspectRoute
+  AdminSeedRoute: typeof AdminSeedRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminCardGeneratorRoute: AdminCardGeneratorRoute,
+  AdminInspectRoute: AdminInspectRoute,
+  AdminSeedRoute: AdminSeedRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
+  AdminRoute: AdminRouteWithChildren,
   AnnouncementsRoute: AnnouncementsRoute,
   CalendarRoute: CalendarRoute,
   CardsRoute: CardsRoute,
@@ -390,6 +481,7 @@ const rootRouteChildren: RootRouteChildren = {
   PacksRoute: PacksRoute,
   ProfileRoute: ProfileRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SandboxRoute: SandboxRoute,
   StoresRoute: StoresRoute,
   TierRoute: TierRoute,
   ApiCoachRoute: ApiCoachRoute,
