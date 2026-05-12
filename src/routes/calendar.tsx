@@ -142,9 +142,13 @@ function CalendarPage() {
                           <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                             {GAME_LABEL[ev.game]}
                           </span>
-                          <h3 className="truncate text-sm font-semibold">
+                          <Link
+                            to="/events/$id"
+                            params={{ id: ev.id }}
+                            className="truncate text-sm font-semibold hover:underline"
+                          >
                             {ev.title}
-                          </h3>
+                          </Link>
                         </div>
                         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                           <span>
