@@ -283,10 +283,10 @@ function CardTile({
   onClick: () => void;
 }) {
   return (
-    <li className="relative">
+    <li className="group relative">
       <button
         onClick={onClick}
-        className="group block w-full overflow-hidden rounded-lg border border-border bg-card text-left transition hover:border-primary"
+        className="block w-full overflow-hidden rounded-lg border border-border bg-card text-left transition hover:border-primary"
       >
         <div className="relative aspect-[5/7] w-full bg-muted">
           {card.image_url ? (
