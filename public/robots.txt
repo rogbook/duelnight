@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /profile
+Disallow: /collection
+Disallow: /matches
+Disallow: /sandbox
+Disallow: /reset-password
+
+Sitemap: https://tcg-hub.lovable.app/sitemap.xml
