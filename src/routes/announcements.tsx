@@ -36,26 +36,10 @@ export const Route = createFileRoute("/announcements")({
 
 function AnnouncementsPage() {
   const { user } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const qc = useQueryClient();
-  const [isAdmin, setIsAdmin] = useState(false);
   const [editing, setEditing] = useState<Announcement | "new" | null>(null);
   const [reading, setReading] = useState<Announcement | null>(null);
-
-  useEffect(() => {
-    if (!user) {
-      setIsAdmin(false);
-      return;
-    }
-    (async () => {
-      const { data } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("role", "admin")
-        .maybeSingle();
-      setIsAdmin(!!data);
-    })();
-  }, [user]);
 
   const { data: items = [] } = useQuery({
     queryKey: ["announcements"],
