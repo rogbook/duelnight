@@ -140,21 +140,67 @@ function MatchesPage() {
       <StatGrid stats={stats} />
 
       <section className="mt-6 rounded-lg border border-border bg-card">
-        <div className="border-b border-border px-4 py-3">
-          <h3 className="text-sm font-medium">승률 추이</h3>
-          <p className="text-xs text-muted-foreground">
-            누적 승률(%) — 전체 및 사용량 상위 덱 3개
-          </p>
+        <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+          <div>
+            <h3 className="text-sm font-medium">승률 추이</h3>
+            <p className="text-xs text-muted-foreground">
+              누적 승률(%) — 전체 · 사용 상위 덱 3개 · 최근 7판 이동평균
+            </p>
+          </div>
+          <ChartUnitTabs value={chartUnit} onChange={setChartUnit} />
         </div>
-        <WinRateChart rows={rows} />
+        <WinRateChart rows={rows} unit={chartUnit} />
       </section>
+
+      <AiCoachCard rows={rows} stats={stats} period={period} game={game} />
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <DeckTable rows={stats.byDeck} />
         <MatchupTable rows={stats.matchups} />
       </div>
 
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <EventTable rows={stats.byEvent} />
+        <OpponentTable rows={stats.topOpponents} />
+      </div>
+
       <RecentList rows={rows} onDeleted={() => refetch()} />
+    </div>
+  );
+}
+
+function ChartUnitTabs({
+  value,
+  onChange,
+}: {
+  value: ChartUnit;
+  onChange: (v: ChartUnit) => void;
+}) {
+  const items: { id: ChartUnit; label: string }[] = [
+    { id: "day", label: "일" },
+    { id: "week", label: "주" },
+    { id: "month", label: "월" },
+  ];
+  return (
+    <div className="inline-flex items-center gap-1 rounded-md border border-border bg-card p-0.5">
+      {items.map((it) => (
+        <button
+          key={it.id}
+          type="button"
+          onClick={() => onChange(it.id)}
+          className={
+            "rounded px-2 py-1 text-[11px] font-medium transition-colors " +
+            (value === it.id
+              ? "bg-foreground text-background"
+              : "text-muted-foreground hover:text-foreground")
+          }
+        >
+          {it.label}
+        </button>
+      ))}
+    </div>
+  );
+}
     </div>
   );
 }
