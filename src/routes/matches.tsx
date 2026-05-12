@@ -562,6 +562,13 @@ function NewMatchDialog({ onCreated }: { onCreated: () => void }) {
               placeholder="예: 적 루피"
               required
             />
+            {!keepRaw && (
+              <CanonicalHint
+                raw={form.my_deck}
+                game={form.game}
+                onApply={(v) => setForm({ ...form, my_deck: v })}
+              />
+            )}
           </div>
           <div className="flex flex-col gap-1.5">
             <Label>상대 리더</Label>
@@ -572,6 +579,13 @@ function NewMatchDialog({ onCreated }: { onCreated: () => void }) {
               }
               placeholder="예: 검은수염"
             />
+            {!keepRaw && (
+              <CanonicalHint
+                raw={form.opp_leader}
+                game={form.game}
+                onApply={(v) => setForm({ ...form, opp_leader: v })}
+              />
+            )}
           </div>
           <div className="flex flex-col gap-1.5">
             <Label>상대 덱 타입</Label>
@@ -580,6 +594,13 @@ function NewMatchDialog({ onCreated }: { onCreated: () => void }) {
               onChange={(e) => setForm({ ...form, opp_deck: e.target.value })}
               placeholder="선택"
             />
+            {!keepRaw && (
+              <CanonicalHint
+                raw={form.opp_deck}
+                game={form.game}
+                onApply={(v) => setForm({ ...form, opp_deck: v })}
+              />
+            )}
           </div>
           <div className="flex flex-col gap-1.5">
             <Label>선/후</Label>
