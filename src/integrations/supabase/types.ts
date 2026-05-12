@@ -497,6 +497,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      any_admin_exists: { Args: never; Returns: boolean }
+      claim_admin_if_none: { Args: never; Returns: boolean }
       get_leaderboard: {
         Args: {
           p_days?: number
@@ -516,6 +518,7 @@ export type Database = {
           wins: number
         }[]
       }
+      grant_admin_by_email: { Args: { _email: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -527,6 +530,16 @@ export type Database = {
         Args: { _id: string }
         Returns: undefined
       }
+      list_admins: {
+        Args: never
+        Returns: {
+          display_name: string
+          email: string
+          granted_at: string
+          user_id: string
+        }[]
+      }
+      revoke_admin_by_email: { Args: { _email: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
