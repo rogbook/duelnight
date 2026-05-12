@@ -651,6 +651,7 @@ function NewMatchDialog({
       went_first: form.went_first === "true",
       result: form.result,
       notes: form.notes.trim() || null,
+      deck_id: form.deck_id || null,
     });
     if (error) {
       toast.error(error.message);
