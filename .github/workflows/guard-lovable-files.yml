@@ -1,0 +1,83 @@
+name: Guard Lovable-managed files
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  guard:
+    name: Block edits to Lovable-managed files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect protected file changes
+        id: detect
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+
+          # Lovable이 자동 관리하는 파일 — Antigravity/로컬에서 수정 금지
+          PROTECTED_REGEX='^(\.env(\..+)?|src/integrations/supabase/(client|types)\.ts|package-lock\.json|bun\.lockb|yarn\.lock|pnpm-lock\.yaml)$'
+
+          CHANGED=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
+          echo "Changed files:"
+          echo "$CHANGED"
+
+          VIOLATIONS=$(echo "$CHANGED" | grep -E "$PROTECTED_REGEX" || true)
+
+          # supabase/config.toml 의 project_id 변경 별도 검사
+          CONFIG_VIOLATION=""
+          if echo "$CHANGED" | grep -qx 'supabase/config.toml'; then
+            if git diff "$BASE_SHA" "$HEAD_SHA" -- supabase/config.toml \
+                | grep -E '^[+-]project_id' > /dev/null; then
+              CONFIG_VIOLATION="supabase/config.toml (project_id 변경 감지)"
+            fi
+          fi
+
+          {
+            echo "violations<<EOF"
+            echo "$VIOLATIONS"
+            [ -n "$CONFIG_VIOLATION" ] && echo "$CONFIG_VIOLATION"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Comment & fail when violations exist
+        if: steps.detect.outputs.violations != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const violations = `${{ steps.detect.outputs.violations }}`.trim();
+            const body = [
+              '### ⛔ Lovable 관리 파일 변경 감지',
+              '',
+              '아래 파일은 Lovable이 자동 생성/관리하므로 수동으로 수정하면 안 됩니다.',
+              '`docs/COLLABORATION_GUIDE.md` 의 **수정 금지 파일** 규칙을 확인하세요.',
+              '',
+              '```',
+              violations,
+              '```',
+              '',
+              '**해결 방법**',
+              '1. 해당 파일 변경분을 되돌립니다 (`git checkout origin/main -- <file>`).',
+              '2. 스키마/패키지/환경변수 변경이 필요하면 Lovable에서 작업 후 GitHub로 sync 하세요.',
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+
+            core.setFailed('Lovable-managed 파일 변경이 포함되어 있습니다.');
