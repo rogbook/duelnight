@@ -62,8 +62,18 @@ const accountItems = [
   { title: "프로필", url: "/profile", icon: User },
 ];
 
+const sandboxItems = [
+  { title: "샘플 데이터", url: "/sandbox", icon: Beaker },
+];
+
 const adminItems = [
   { title: "관리자 콘솔", url: "/admin", icon: Shield },
+];
+
+const adminDataItems = [
+  { title: "시드 재생성", url: "/admin/seed", icon: Database },
+  { title: "카드 자동생성", url: "/admin/card-generator", icon: SparklesIcon },
+  { title: "데이터 검수", url: "/admin/inspect", icon: ClipboardList },
 ];
 
 export function AppSidebar() {
