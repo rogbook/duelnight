@@ -116,6 +116,18 @@ function LfgPage() {
         )}
       </PageHeader>
 
+      {user ? (
+        <InlineLfgForm onCreated={() => refetch()} />
+      ) : (
+        <div className="mt-6 rounded-lg border border-dashed border-border bg-card/50 p-4 text-center text-sm text-muted-foreground">
+          글을 작성하려면{" "}
+          <Link to="/login" className="font-medium text-primary underline">
+            로그인
+          </Link>
+          이 필요해요.
+        </div>
+      )}
+
       {posts.length === 0 ? (
         <div className="mt-6">
           <EmptyState
