@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as StoresRouteImport } from './routes/stores'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as MatchesRouteImport } from './routes/matches'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as LfgRouteImport } from './routes/lfg'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as DecksRouteImport } from './routes/decks'
@@ -33,6 +34,11 @@ const ProfileRoute = ProfileRouteImport.update({
 const MatchesRoute = MatchesRouteImport.update({
   id: '/matches',
   path: '/matches',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LfgRoute = LfgRouteImport.update({
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/decks': typeof DecksRoute
   '/leaderboard': typeof LeaderboardRoute
   '/lfg': typeof LfgRoute
+  '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
   '/profile': typeof ProfileRoute
   '/stores': typeof StoresRoute
@@ -91,6 +98,7 @@ export interface FileRoutesByTo {
   '/decks': typeof DecksRoute
   '/leaderboard': typeof LeaderboardRoute
   '/lfg': typeof LfgRoute
+  '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
   '/profile': typeof ProfileRoute
   '/stores': typeof StoresRoute
@@ -104,6 +112,7 @@ export interface FileRoutesById {
   '/decks': typeof DecksRoute
   '/leaderboard': typeof LeaderboardRoute
   '/lfg': typeof LfgRoute
+  '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
   '/profile': typeof ProfileRoute
   '/stores': typeof StoresRoute
@@ -118,6 +127,7 @@ export interface FileRouteTypes {
     | '/decks'
     | '/leaderboard'
     | '/lfg'
+    | '/login'
     | '/matches'
     | '/profile'
     | '/stores'
@@ -130,6 +140,7 @@ export interface FileRouteTypes {
     | '/decks'
     | '/leaderboard'
     | '/lfg'
+    | '/login'
     | '/matches'
     | '/profile'
     | '/stores'
@@ -142,6 +153,7 @@ export interface FileRouteTypes {
     | '/decks'
     | '/leaderboard'
     | '/lfg'
+    | '/login'
     | '/matches'
     | '/profile'
     | '/stores'
@@ -155,6 +167,7 @@ export interface RootRouteChildren {
   DecksRoute: typeof DecksRoute
   LeaderboardRoute: typeof LeaderboardRoute
   LfgRoute: typeof LfgRoute
+  LoginRoute: typeof LoginRoute
   MatchesRoute: typeof MatchesRoute
   ProfileRoute: typeof ProfileRoute
   StoresRoute: typeof StoresRoute
@@ -181,6 +194,13 @@ declare module '@tanstack/react-router' {
       path: '/matches'
       fullPath: '/matches'
       preLoaderRoute: typeof MatchesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lfg': {
@@ -243,6 +263,7 @@ const rootRouteChildren: RootRouteChildren = {
   DecksRoute: DecksRoute,
   LeaderboardRoute: LeaderboardRoute,
   LfgRoute: LfgRoute,
+  LoginRoute: LoginRoute,
   MatchesRoute: MatchesRoute,
   ProfileRoute: ProfileRoute,
   StoresRoute: StoresRoute,
@@ -250,3 +271,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
