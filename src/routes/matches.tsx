@@ -652,6 +652,82 @@ function RecentList({
   );
 }
 
+function ViewMatchDialog({
+  match,
+  onOpenChange,
+  onEdit,
+  onDelete,
+}: {
+  match: Match | null;
+  onOpenChange: (open: boolean) => void;
+  onEdit: (m: Match) => void;
+  onDelete: (id: string) => void;
+}) {
+  return (
+    <Dialog open={!!match} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        {match && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                전적 상세
+                <ResultBadge r={match.result} />
+              </DialogTitle>
+            </DialogHeader>
+            <dl className="grid grid-cols-3 gap-x-3 gap-y-3 text-sm">
+              <Row label="일시" value={new Date(match.played_at).toLocaleString("ko-KR")} />
+              <Row label="게임" value={GAME_LABEL[match.game]} />
+              <Row label="이벤트" value={EVENT_LABEL[match.event]} />
+              <Row label="내 덱" value={match.my_deck} />
+              <Row
+                label="상대"
+                value={
+                  match.opp_leader || match.opp_deck
+                    ? `${match.opp_leader ?? ""}${
+                        match.opp_leader && match.opp_deck ? " · " : ""
+                      }${match.opp_deck ?? ""}`
+                    : "—"
+                }
+              />
+              <Row label="선/후공" value={match.went_first ? "선공" : "후공"} />
+              {match.notes && (
+                <div className="col-span-3">
+                  <dt className="text-xs text-muted-foreground">메모</dt>
+                  <dd className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-3 text-sm leading-relaxed">
+                    {match.notes}
+                  </dd>
+                </div>
+              )}
+            </dl>
+            <div className="mt-2 flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onDelete(match.id)}
+                className="text-destructive hover:text-destructive"
+              >
+                <Trash2 className="mr-1 h-4 w-4" /> 삭제
+              </Button>
+              <Button size="sm" onClick={() => onEdit(match)}>
+                <Pencil className="mr-1 h-4 w-4" /> 수정
+              </Button>
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="mt-0.5 text-sm">{value}</dd>
+    </div>
+  );
+}
+
 function EditMatchDialog({
   match,
   onOpenChange,
