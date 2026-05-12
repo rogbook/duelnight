@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Swords, Trash2, Plus } from "lucide-react";
+import { Swords, Trash2, Plus, Wand2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -126,6 +126,7 @@ function MatchesPage() {
       >
         <GameTabs value={game} onChange={setGame} />
         <PeriodTabs value={period} onChange={setPeriod} />
+        <NormalizeButton onDone={() => refetch()} />
         <NewMatchDialog onCreated={() => refetch()} />
       </PageHeader>
 
@@ -588,5 +589,105 @@ function NewMatchDialog({ onCreated }: { onCreated: () => void }) {
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function NormalizeButton({ onDone }: { onDone: () => void }) {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const [busy, setBusy] = useState(false);
+
+  const run = async () => {
+    if (!user) return;
+    if (
+      !confirm(
+        "기존 전적의 덱·리더 이름을 정규화 규칙으로 일괄 정리할까요? 변경된 항목만 업데이트됩니다.",
+      )
+    )
+      return;
+
+    setBusy(true);
+    try {
+      const { data, error } = await supabase
+        .from("matches")
+        .select("id, game, my_deck, opp_leader, opp_deck")
+        .eq("user_id", user.id);
+      if (error) throw error;
+
+      const updates: Array<{
+        id: string;
+        my_deck: string;
+        opp_leader: string | null;
+        opp_deck: string | null;
+      }> = [];
+
+      for (const m of data ?? []) {
+        const myDeck = normalizeDeckName(m.my_deck, m.game) || m.my_deck;
+        const oppLeader = m.opp_leader
+          ? normalizeDeckName(m.opp_leader, m.game) || null
+          : null;
+        const oppDeck = m.opp_deck
+          ? normalizeDeckName(m.opp_deck, m.game) || null
+          : null;
+        if (
+          myDeck !== m.my_deck ||
+          (oppLeader ?? null) !== (m.opp_leader ?? null) ||
+          (oppDeck ?? null) !== (m.opp_deck ?? null)
+        ) {
+          updates.push({
+            id: m.id,
+            my_deck: myDeck,
+            opp_leader: oppLeader,
+            opp_deck: oppDeck,
+          });
+        }
+      }
+
+      if (updates.length === 0) {
+        toast.info("정리할 항목이 없습니다");
+        return;
+      }
+
+      let ok = 0;
+      let fail = 0;
+      // RLS scopes to current user; update each row by id.
+      await Promise.all(
+        updates.map(async (u) => {
+          const { error: uerr } = await supabase
+            .from("matches")
+            .update({
+              my_deck: u.my_deck,
+              opp_leader: u.opp_leader,
+              opp_deck: u.opp_deck,
+            })
+            .eq("id", u.id);
+          if (uerr) fail++;
+          else ok++;
+        }),
+      );
+
+      if (fail > 0) toast.error(`${ok}건 정리 / ${fail}건 실패`);
+      else toast.success(`${ok}건 정리됨`);
+
+      qc.invalidateQueries({ queryKey: ["matches"] });
+      onDone();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "정리 실패");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Button
+      size="sm"
+      variant="outline"
+      onClick={run}
+      disabled={busy}
+      title="기존 전적의 덱·리더 이름을 정규화 규칙으로 일괄 정리"
+    >
+      <Wand2 className="mr-1 h-4 w-4" />
+      {busy ? "정리 중..." : "이름 정리"}
+    </Button>
   );
 }
