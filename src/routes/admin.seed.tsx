@@ -26,7 +26,7 @@ function SeedPage() {
   const qc = useQueryClient();
   const run = useServerFn(reseedDemo);
   const m = useMutation({
-    mutationFn: () => run({ data: undefined as never }),
+    mutationFn: () => run(),
     onSuccess: (res) => {
       const parts: string[] = [];
       if (res.announcements) parts.push(`공지 ${res.announcements}건`);
