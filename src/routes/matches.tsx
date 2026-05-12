@@ -656,10 +656,33 @@ function NewMatchDialog({ onCreated }: { onCreated: () => void }) {
   );
 }
 
+const PAGE_SIZE = 500; // rows per select page (Supabase default cap = 1000)
+const UPDATE_CONCURRENCY = 8; // parallel updates per batch
+
+async function runWithConcurrency<T>(
+  items: T[],
+  limit: number,
+  worker: (item: T) => Promise<void>,
+) {
+  let i = 0;
+  const runners = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (i < items.length) {
+      const idx = i++;
+      await worker(items[idx]);
+    }
+  });
+  await Promise.all(runners);
+}
+
 function NormalizeButton({ onDone }: { onDone: () => void }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<{
+    scanned: number;
+    total: number;
+    updated: number;
+  } | null>(null);
 
   const run = async () => {
     if (!user) return;
@@ -671,76 +694,119 @@ function NormalizeButton({ onDone }: { onDone: () => void }) {
       return;
 
     setBusy(true);
+    const toastId = toast.loading("정리 준비 중...");
     try {
-      const { data, error } = await supabase
+      // 1) Total count up-front for progress.
+      const { count, error: cErr } = await supabase
         .from("matches")
-        .select("id, game, my_deck, opp_leader, opp_deck")
+        .select("id", { count: "exact", head: true })
         .eq("user_id", user.id);
-      if (error) throw error;
+      if (cErr) throw cErr;
+      const total = count ?? 0;
+      if (total === 0) {
+        toast.info("정리할 전적이 없습니다", { id: toastId });
+        return;
+      }
+      setProgress({ scanned: 0, total, updated: 0 });
 
-      const updates: Array<{
+      // 2) Page through rows, accumulate diffs only.
+      type Update = {
         id: string;
         my_deck: string;
         opp_leader: string | null;
         opp_deck: string | null;
-      }> = [];
+      };
+      const updates: Update[] = [];
+      let scanned = 0;
 
-      for (const m of data ?? []) {
-        const myDeck = normalizeDeckName(m.my_deck, m.game) || m.my_deck;
-        const oppLeader = m.opp_leader
-          ? normalizeDeckName(m.opp_leader, m.game) || null
-          : null;
-        const oppDeck = m.opp_deck
-          ? normalizeDeckName(m.opp_deck, m.game) || null
-          : null;
-        if (
-          myDeck !== m.my_deck ||
-          (oppLeader ?? null) !== (m.opp_leader ?? null) ||
-          (oppDeck ?? null) !== (m.opp_deck ?? null)
-        ) {
-          updates.push({
-            id: m.id,
-            my_deck: myDeck,
-            opp_leader: oppLeader,
-            opp_deck: oppDeck,
-          });
+      for (let from = 0; from < total; from += PAGE_SIZE) {
+        const to = Math.min(from + PAGE_SIZE - 1, total - 1);
+        const { data, error } = await supabase
+          .from("matches")
+          .select("id, game, my_deck, opp_leader, opp_deck")
+          .eq("user_id", user.id)
+          .order("id", { ascending: true })
+          .range(from, to);
+        if (error) throw error;
+
+        for (const m of data ?? []) {
+          const myDeck = normalizeDeckName(m.my_deck, m.game) || m.my_deck;
+          const oppLeader = m.opp_leader
+            ? normalizeDeckName(m.opp_leader, m.game) || null
+            : null;
+          const oppDeck = m.opp_deck
+            ? normalizeDeckName(m.opp_deck, m.game) || null
+            : null;
+          if (
+            myDeck !== m.my_deck ||
+            (oppLeader ?? null) !== (m.opp_leader ?? null) ||
+            (oppDeck ?? null) !== (m.opp_deck ?? null)
+          ) {
+            updates.push({
+              id: m.id,
+              my_deck: myDeck,
+              opp_leader: oppLeader,
+              opp_deck: oppDeck,
+            });
+          }
         }
+
+        scanned += data?.length ?? 0;
+        setProgress({ scanned, total, updated: 0 });
+        toast.loading(`스캔 ${scanned}/${total}...`, { id: toastId });
       }
 
       if (updates.length === 0) {
-        toast.info("정리할 항목이 없습니다");
+        toast.success("이미 모두 정규화되어 있습니다", { id: toastId });
         return;
       }
 
+      // 3) Apply updates in concurrency-limited batches.
       let ok = 0;
       let fail = 0;
-      // RLS scopes to current user; update each row by id.
-      await Promise.all(
-        updates.map(async (u) => {
-          const { error: uerr } = await supabase
-            .from("matches")
-            .update({
-              my_deck: u.my_deck,
-              opp_leader: u.opp_leader,
-              opp_deck: u.opp_deck,
-            })
-            .eq("id", u.id);
-          if (uerr) fail++;
-          else ok++;
-        }),
-      );
+      const tickEvery = Math.max(10, Math.floor(updates.length / 20));
 
-      if (fail > 0) toast.error(`${ok}건 정리 / ${fail}건 실패`);
-      else toast.success(`${ok}건 정리됨`);
+      await runWithConcurrency(updates, UPDATE_CONCURRENCY, async (u) => {
+        const { error: uerr } = await supabase
+          .from("matches")
+          .update({
+            my_deck: u.my_deck,
+            opp_leader: u.opp_leader,
+            opp_deck: u.opp_deck,
+          })
+          .eq("id", u.id);
+        if (uerr) fail++;
+        else ok++;
+        const done = ok + fail;
+        if (done % tickEvery === 0 || done === updates.length) {
+          setProgress({ scanned: total, total, updated: ok });
+          toast.loading(`업데이트 ${done}/${updates.length}...`, { id: toastId });
+        }
+      });
+
+      if (fail > 0) {
+        toast.error(`${ok}건 정리 / ${fail}건 실패`, { id: toastId });
+      } else {
+        toast.success(`${ok}건 정리됨 (총 ${total}건 중)`, { id: toastId });
+      }
 
       qc.invalidateQueries({ queryKey: ["matches"] });
       onDone();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "정리 실패");
+      toast.error(e instanceof Error ? e.message : "정리 실패", { id: toastId });
     } finally {
       setBusy(false);
+      setProgress(null);
     }
   };
+
+  const label = busy
+    ? progress
+      ? progress.scanned < progress.total
+        ? `스캔 ${progress.scanned}/${progress.total}`
+        : `정리 ${progress.updated}`
+      : "정리 중..."
+    : "이름 정리";
 
   return (
     <Button
@@ -748,10 +814,10 @@ function NormalizeButton({ onDone }: { onDone: () => void }) {
       variant="outline"
       onClick={run}
       disabled={busy}
-      title="기존 전적의 덱·리더 이름을 정규화 규칙으로 일괄 정리"
+      title="기존 전적의 덱·리더 이름을 페이지/배치 단위로 정규화"
     >
       <Wand2 className="mr-1 h-4 w-4" />
-      {busy ? "정리 중..." : "이름 정리"}
+      {label}
     </Button>
   );
 }
