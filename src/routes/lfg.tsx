@@ -223,6 +223,7 @@ function LfgPage() {
   );
 }
 
+function InlineLfgForm({ onCreated }: { onCreated: () => void }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [submitting, setSubmitting] = useState(false);
