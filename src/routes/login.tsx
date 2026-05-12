@@ -21,6 +21,24 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const forgotPassword = async () => {
+    const target = email.trim();
+    if (!target) {
+      toast.error("먼저 이메일을 입력해 주세요.");
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(target, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("비밀번호 재설정 이메일을 보냈어요. 받은 편지함을 확인해 주세요.");
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
@@ -150,14 +168,26 @@ function LoginPage() {
           {busy ? "처리 중..." : mode === "signin" ? "로그인" : "가입하기"}
         </Button>
       </form>
-      <button
-        onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-        className="mt-4 text-xs text-muted-foreground hover:text-foreground"
-      >
-        {mode === "signin"
-          ? "계정이 없으신가요? 가입하기"
-          : "이미 계정이 있으신가요? 로그인"}
-      </button>
+      <div className="mt-4 flex items-center justify-between gap-2 text-xs">
+        <button
+          onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          {mode === "signin"
+            ? "계정이 없으신가요? 가입하기"
+            : "이미 계정이 있으신가요? 로그인"}
+        </button>
+        {mode === "signin" && (
+          <button
+            type="button"
+            onClick={forgotPassword}
+            disabled={busy}
+            className="text-muted-foreground hover:text-foreground disabled:opacity-50"
+          >
+            비밀번호 잊으셨나요?
+          </button>
+        )}
+      </div>
       <Link to="/" className="mt-2 text-xs text-muted-foreground hover:text-foreground">
         ← 대시보드로
       </Link>
