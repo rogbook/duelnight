@@ -71,6 +71,7 @@ function MatchesPage() {
   const { user, loading } = useAuth();
   const [game, setGame] = useState<Game | "all">("all");
   const [period, setPeriod] = useState<Period>("30");
+  const [chartUnit, setChartUnit] = useState<ChartUnit>("day");
 
   const { data: allRows = [], refetch } = useQuery({
     queryKey: ["matches", user?.id, game],
