@@ -539,7 +539,7 @@ function RecentList({
             </tr>
           </thead>
           <tbody>
-            {rows.slice(0, 30).map((m) => (
+            {pageRows.map((m) => (
               <tr key={m.id} className="border-b border-border last:border-0">
                 <td className="px-3 py-2 text-muted-foreground">
                   {new Date(m.played_at).toLocaleDateString("ko-KR")}
