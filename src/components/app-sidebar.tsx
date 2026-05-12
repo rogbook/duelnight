@@ -51,9 +51,6 @@ const communityItems = [
   { title: "오프라인 매칭", url: "/lfg", icon: Users },
   { title: "공지사항", url: "/announcements", icon: Megaphone },
 ];
-  { title: "매장 찾기", url: "/stores", icon: MapPin },
-  { title: "오프라인 매칭", url: "/lfg", icon: Users },
-];
 
 const accountItems = [{ title: "프로필", url: "/profile", icon: User }];
 
