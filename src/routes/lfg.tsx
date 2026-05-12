@@ -377,7 +377,13 @@ function InlineLfgForm({ onCreated, onCancel }: { onCreated: () => void; onCance
         </Button>
       </div>
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent
+          onEscapeKeyDown={() => setConfirmOpen(false)}
+          onPointerDownOutside={(e) => {
+            e.preventDefault();
+            setConfirmOpen(false);
+          }}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle>정말 취소할까요?</AlertDialogTitle>
             <AlertDialogDescription>
