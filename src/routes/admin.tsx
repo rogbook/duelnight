@@ -295,5 +295,3 @@ function GuardCard({
   );
 }
 
-// retain Shield import to avoid lint while preserving icon set option
-void Shield;
