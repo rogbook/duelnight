@@ -35,6 +35,7 @@ const cardItems = [
   { title: "카드 DB", url: "/cards", icon: Library },
   { title: "덱 빌더", url: "/decks", icon: Layers },
   { title: "내 컬렉션", url: "/collection", icon: PackageOpen },
+  { title: "팩 시뮬레이터", url: "/packs", icon: Sparkles },
 ];
 
 const playItems = [
