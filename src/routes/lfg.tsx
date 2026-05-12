@@ -390,6 +390,7 @@ function InlineLfgForm({ onCreated, onCancel }: { onCreated: () => void; onCance
               onClick={() => {
                 setConfirmOpen(false);
                 onCancel();
+                toast("입력 내용을 취소했어요");
               }}
             >
               취소하기
