@@ -109,7 +109,7 @@ function TierDetailPage() {
               {t}
             </div>
             <ul className="flex min-h-20 flex-1 flex-wrap content-start gap-2 p-2">
-              {placements[t].map((code) => {
+              {placements[t].map((code: string) => {
                 const c = cardByCode.get(code);
                 if (!c) return null;
                 return (
