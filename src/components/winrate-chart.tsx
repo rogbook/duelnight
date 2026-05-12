@@ -23,16 +23,40 @@ const PALETTE = [
   "hsl(var(--chart-3, 30 80% 55%))",
   "hsl(var(--chart-4, 280 65% 60%))",
 ];
+const ROLLING_COLOR = "hsl(var(--chart-5, 0 0% 50%))";
 
-const dayKey = (iso: string) => new Date(iso).toISOString().slice(0, 10);
+export type ChartUnit = "day" | "week" | "month";
+const ROLLING_WINDOW = 7;
 
 interface Series {
   key: string;
   label: string;
   color: string;
+  dashed?: boolean;
 }
 
-export function WinRateChart({ rows }: { rows: Match[] }) {
+const startOfWeek = (d: Date) => {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  const day = (x.getDay() + 6) % 7; // Mon=0
+  x.setDate(x.getDate() - day);
+  return x;
+};
+
+const bucketKey = (iso: string, unit: ChartUnit): string => {
+  const d = new Date(iso);
+  if (unit === "day") return d.toISOString().slice(0, 10);
+  if (unit === "week") return startOfWeek(d).toISOString().slice(0, 10);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+};
+
+export function WinRateChart({
+  rows,
+  unit = "day",
+}: {
+  rows: Match[];
+  unit?: ChartUnit;
+}) {
   const { data, config, series } = useMemo(() => {
     if (rows.length === 0) {
       return {
@@ -57,27 +81,30 @@ export function WinRateChart({ rows }: { rows: Match[] }) {
         label: d,
         color: PALETTE[i + 1],
       })),
+      { key: "rolling", label: `최근 ${ROLLING_WINDOW}판`, color: ROLLING_COLOR, dashed: true },
     ];
 
-    // Sort ascending by date
     const sorted = [...rows].sort(
       (a, b) => new Date(a.played_at).getTime() - new Date(b.played_at).getTime(),
     );
 
-    // Group by day (cumulative across all days within the filtered range)
-    const days = new Map<string, Match[]>();
+    // Group by chosen unit
+    const buckets = new Map<string, Match[]>();
     for (const m of sorted) {
-      const k = dayKey(m.played_at);
-      if (!days.has(k)) days.set(k, []);
-      days.get(k)!.push(m);
+      const k = bucketKey(m.played_at, unit);
+      if (!buckets.has(k)) buckets.set(k, []);
+      buckets.get(k)!.push(m);
     }
 
-    // Running tallies per series
+    // Cumulative tallies for overall + per-deck lines
     const tallies = new Map<string, { w: number; d: number }>();
     for (const s of series) tallies.set(s.key, { w: 0, d: 0 });
 
+    // Rolling window over all decided matches
+    const window: number[] = []; // 1 = win, 0 = loss
+
     const data: Array<Record<string, number | string>> = [];
-    for (const [day, matches] of [...days.entries()].sort()) {
+    for (const [bucket, matches] of [...buckets.entries()].sort()) {
       for (const m of matches) {
         if (m.result === "draw") continue;
         const isWin = m.result === "win";
@@ -90,11 +117,22 @@ export function WinRateChart({ rows }: { rows: Match[] }) {
           if (isWin) t.w++;
           t.d++;
         }
+        window.push(isWin ? 1 : 0);
+        if (window.length > ROLLING_WINDOW) window.shift();
       }
-      const point: Record<string, number | string> = { date: day };
+      const point: Record<string, number | string> = { date: bucket };
       for (const s of series) {
-        const t = tallies.get(s.key)!;
-        point[s.key] = t.d === 0 ? 0 : Math.round((t.w / t.d) * 1000) / 10;
+        if (s.key === "rolling") {
+          point.rolling =
+            window.length === 0
+              ? 0
+              : Math.round(
+                  (window.reduce((a, b) => a + b, 0) / window.length) * 1000,
+                ) / 10;
+        } else {
+          const t = tallies.get(s.key)!;
+          point[s.key] = t.d === 0 ? 0 : Math.round((t.w / t.d) * 1000) / 10;
+        }
       }
       data.push(point);
     }
@@ -104,7 +142,7 @@ export function WinRateChart({ rows }: { rows: Match[] }) {
     );
 
     return { data, config, series };
-  }, [rows]);
+  }, [rows, unit]);
 
   if (data.length === 0) {
     return (
@@ -113,6 +151,11 @@ export function WinRateChart({ rows }: { rows: Match[] }) {
       </p>
     );
   }
+
+  const formatTick = (v: string) => {
+    if (unit === "month") return v;
+    return v.slice(5);
+  };
 
   return (
     <ChartContainer config={config} className="h-64 w-full px-2 pb-2">
@@ -124,7 +167,7 @@ export function WinRateChart({ rows }: { rows: Match[] }) {
             tickLine={false}
             axisLine={false}
             tick={{ fontSize: 11 }}
-            tickFormatter={(v: string) => v.slice(5)}
+            tickFormatter={formatTick}
           />
           <YAxis
             domain={[0, 100]}
@@ -145,7 +188,8 @@ export function WinRateChart({ rows }: { rows: Match[] }) {
               dataKey={s.key}
               name={s.label}
               stroke={s.color}
-              strokeWidth={2}
+              strokeWidth={s.dashed ? 1.5 : 2}
+              strokeDasharray={s.dashed ? "4 3" : undefined}
               dot={false}
               isAnimationActive={false}
             />
