@@ -52,6 +52,7 @@ export const Route = createFileRoute("/lfg")({
 function LfgPage() {
   const { user } = useAuth();
   const [game, setGame] = useState<Game | "all">("all");
+  const [showForm, setShowForm] = useState(false);
 
   const { data: posts = [], refetch } = useQuery({
     queryKey: ["lfg-posts", game],
