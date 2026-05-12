@@ -60,7 +60,6 @@ const accountItems = [
 
 const adminItems = [
   { title: "관리자 콘솔", url: "/admin", icon: Shield },
-  { title: "공지 관리", url: "/announcements", icon: Megaphone },
 ];
 
 export function AppSidebar() {
