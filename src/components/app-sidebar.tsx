@@ -5,6 +5,7 @@ import {
   Library,
   Layers,
   PackageOpen,
+  Sparkles,
   Swords,
   Trophy,
   MapPin,

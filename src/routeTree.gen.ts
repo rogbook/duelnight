@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as StoresRouteImport } from './routes/stores'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as PacksRouteImport } from './routes/packs'
 import { Route as MatchesRouteImport } from './routes/matches'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LfgRouteImport } from './routes/lfg'
@@ -36,6 +37,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PacksRoute = PacksRouteImport.update({
+  id: '/packs',
+  path: '/packs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MatchesRoute = MatchesRouteImport.update({
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/lfg': typeof LfgRoute
   '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
+  '/packs': typeof PacksRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/stores': typeof StoresRoute
@@ -114,6 +121,7 @@ export interface FileRoutesByTo {
   '/lfg': typeof LfgRoute
   '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
+  '/packs': typeof PacksRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/stores': typeof StoresRoute
@@ -130,6 +138,7 @@ export interface FileRoutesById {
   '/lfg': typeof LfgRoute
   '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
+  '/packs': typeof PacksRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/stores': typeof StoresRoute
@@ -147,6 +156,7 @@ export interface FileRouteTypes {
     | '/lfg'
     | '/login'
     | '/matches'
+    | '/packs'
     | '/profile'
     | '/reset-password'
     | '/stores'
@@ -162,6 +172,7 @@ export interface FileRouteTypes {
     | '/lfg'
     | '/login'
     | '/matches'
+    | '/packs'
     | '/profile'
     | '/reset-password'
     | '/stores'
@@ -177,6 +188,7 @@ export interface FileRouteTypes {
     | '/lfg'
     | '/login'
     | '/matches'
+    | '/packs'
     | '/profile'
     | '/reset-password'
     | '/stores'
@@ -193,6 +205,7 @@ export interface RootRouteChildren {
   LfgRoute: typeof LfgRoute
   LoginRoute: typeof LoginRoute
   MatchesRoute: typeof MatchesRoute
+  PacksRoute: typeof PacksRoute
   ProfileRoute: typeof ProfileRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   StoresRoute: typeof StoresRoute
@@ -220,6 +233,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/packs': {
+      id: '/packs'
+      path: '/packs'
+      fullPath: '/packs'
+      preLoaderRoute: typeof PacksRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/matches': {
@@ -305,6 +325,7 @@ const rootRouteChildren: RootRouteChildren = {
   LfgRoute: LfgRoute,
   LoginRoute: LoginRoute,
   MatchesRoute: MatchesRoute,
+  PacksRoute: PacksRoute,
   ProfileRoute: ProfileRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   StoresRoute: StoresRoute,
