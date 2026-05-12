@@ -586,8 +586,24 @@ function NewMatchDialog({
     went_first: String(lastMatch?.went_first ?? true),
     result: "win" as Result,
     notes: "",
+    deck_id: (lastMatch?.deck_id ?? "") as string,
   });
   const [form, setForm] = useState(initial);
+
+  const { data: decks = [] } = useQuery({
+    queryKey: ["decks-for-match", user?.id, form.game],
+    enabled: !!user && open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("decks")
+        .select("id,name,leader,game")
+        .eq("user_id", user!.id)
+        .eq("game", form.game)
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
   // When opening, refresh defaults from the most recent match (if any).
   useEffect(() => {
