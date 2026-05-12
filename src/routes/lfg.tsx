@@ -340,3 +340,135 @@ function NewLfgDialog({ onCreated }: { onCreated: () => void }) {
     </Dialog>
   );
 }
+
+function InlineLfgForm({ onCreated }: { onCreated: () => void }) {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const [submitting, setSubmitting] = useState(false);
+  const empty = {
+    game: "optcg" as Game,
+    title: "",
+    location: "",
+    meet_at: "",
+    contact: "",
+    body: "",
+  };
+  const [form, setForm] = useState(empty);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    if (!form.title.trim()) {
+      toast.error("제목을 입력해 주세요");
+      return;
+    }
+    setSubmitting(true);
+    const { error } = await supabase.from("lfg_posts").insert({
+      user_id: user.id,
+      game: form.game,
+      title: form.title.trim(),
+      location: form.location.trim() || null,
+      meet_at: form.meet_at ? new Date(form.meet_at).toISOString() : null,
+      contact: form.contact.trim() || null,
+      body: form.body.trim() || null,
+    });
+    setSubmitting(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("등록됨");
+    setForm(empty);
+    qc.invalidateQueries({ queryKey: ["lfg-posts"] });
+    onCreated();
+  };
+
+  return (
+    <form
+      onSubmit={submit}
+      className="mt-6 space-y-3 rounded-lg border border-border bg-card p-4"
+    >
+      <div className="flex items-center gap-2">
+        <Plus className="h-4 w-4 text-primary" />
+        <h2 className="text-sm font-semibold">새 모집 글 작성</h2>
+      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="flex flex-col gap-1.5">
+          <Label>게임</Label>
+          <Select
+            value={form.game}
+            onValueChange={(v) => setForm({ ...form, game: v as Game })}
+          >
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="optcg">원피스</SelectItem>
+              <SelectItem value="ptcg">포켓몬</SelectItem>
+              <SelectItem value="dtcg">디지몬</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label>일시</Label>
+          <Input
+            type="datetime-local"
+            value={form.meet_at}
+            onChange={(e) => setForm({ ...form, meet_at: e.target.value })}
+          />
+        </div>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label>제목</Label>
+        <Input
+          value={form.title}
+          onChange={(e) => setForm({ ...form, title: e.target.value })}
+          placeholder="예: 강남 친선 같이 치실 분"
+          maxLength={120}
+          required
+        />
+      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="flex flex-col gap-1.5">
+          <Label>장소</Label>
+          <Input
+            value={form.location}
+            onChange={(e) => setForm({ ...form, location: e.target.value })}
+            placeholder="지역 또는 매장명"
+            maxLength={120}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label>연락 방법</Label>
+          <Input
+            value={form.contact}
+            onChange={(e) => setForm({ ...form, contact: e.target.value })}
+            placeholder="디스코드 / 카톡 오픈채팅 등"
+            maxLength={120}
+          />
+        </div>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label>설명</Label>
+        <Textarea
+          value={form.body}
+          onChange={(e) => setForm({ ...form, body: e.target.value })}
+          placeholder="포맷, 인원, 환영 사항 등"
+          rows={3}
+          maxLength={1000}
+        />
+      </div>
+      <div className="flex justify-end gap-2 pt-1">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => setForm(empty)}
+          disabled={submitting}
+        >
+          초기화
+        </Button>
+        <Button type="submit" disabled={submitting}>
+          {submitting ? "등록 중…" : "등록"}
+        </Button>
+      </div>
+    </form>
+  );
+}
