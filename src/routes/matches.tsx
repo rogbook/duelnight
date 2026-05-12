@@ -33,6 +33,7 @@ import {
   type RatePack,
 } from "@/lib/match-stats";
 import { WinRateChart } from "@/components/winrate-chart";
+import { normalizeDeckName } from "@/lib/normalize-deck";
 import type { Database } from "@/integrations/supabase/types";
 
 type Game = Database["public"]["Enums"]["tcg_game"];
