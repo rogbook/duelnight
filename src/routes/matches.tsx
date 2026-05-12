@@ -144,11 +144,18 @@ function MatchesPage() {
       >
         <GameTabs value={game} onChange={setGame} />
         <PeriodTabs value={period} onChange={setPeriod} />
+        <ImportExportButton rows={allRows} onImported={() => refetch()} />
         <NormalizeButton onDone={() => refetch()} />
         <NewMatchDialog onCreated={() => refetch()} lastMatch={allRows[0]} />
       </PageHeader>
 
-      <StatGrid stats={stats} />
+      <FilterBar
+        rows={periodRows}
+        value={filters}
+        onChange={setFilters}
+      />
+
+      <StatGrid stats={stats} streak={streak} />
 
       <section className="mt-6 rounded-lg border border-border bg-card">
         <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
