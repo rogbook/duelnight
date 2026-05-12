@@ -579,6 +579,31 @@ function RecentList({
           </tbody>
         </table>
       </div>
+      {totalPages > 1 && (
+        <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+          <span>
+            총 {rows.length}건 · {safePage}/{totalPages} 페이지
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={safePage <= 1}
+            >
+              이전
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safePage >= totalPages}
+            >
+              다음
+            </Button>
+          </div>
+        </div>
+      )}
       <EditMatchDialog
         match={editing}
         onOpenChange={(o) => !o && setEditing(null)}
