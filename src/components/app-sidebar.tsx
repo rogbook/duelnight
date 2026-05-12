@@ -108,8 +108,13 @@ export function AppSidebar() {
             T
           </div>
           {!collapsed && (
-            <span className="text-sm font-semibold tracking-tight">
+            <span className="flex items-center gap-1.5 text-sm font-semibold tracking-tight">
               TCG Hub
+              {isAdmin && (
+                <span className="rounded bg-primary px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary-foreground">
+                  Admin
+                </span>
+              )}
             </span>
           )}
         </Link>
@@ -120,6 +125,7 @@ export function AppSidebar() {
         {renderGroup("플레이", playItems)}
         {renderGroup("커뮤니티", communityItems)}
         {renderGroup("계정", accountItems)}
+        {isAdmin && renderGroup("관리", adminItems)}
       </SidebarContent>
     </Sidebar>
   );
