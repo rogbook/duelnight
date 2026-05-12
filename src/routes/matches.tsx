@@ -628,6 +628,18 @@ function RecentList({
           </div>
         </div>
       )}
+      <ViewMatchDialog
+        match={viewing}
+        onOpenChange={(o) => !o && setViewing(null)}
+        onEdit={(m) => {
+          setViewing(null);
+          setEditing(m);
+        }}
+        onDelete={(id) => {
+          setViewing(null);
+          onDelete(id);
+        }}
+      />
       <EditMatchDialog
         match={editing}
         onOpenChange={(o) => !o && setEditing(null)}
