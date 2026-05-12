@@ -201,9 +201,6 @@ function ChartUnitTabs({
     </div>
   );
 }
-    </div>
-  );
-}
 
 function PeriodTabs({
   value,
