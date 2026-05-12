@@ -27,6 +27,7 @@ import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AnnouncementsRouteImport } from './routes/announcements'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TierIdRouteImport } from './routes/tier.$id'
 import { Route as StoresIdRouteImport } from './routes/stores.$id'
 import { Route as LfgIdRouteImport } from './routes/lfg.$id'
 import { Route as EventsIdRouteImport } from './routes/events.$id'
@@ -128,6 +129,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TierIdRoute = TierIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => TierRoute,
+} as any)
 const StoresIdRoute = StoresIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -197,7 +203,7 @@ export interface FileRoutesByFullPath {
   '/sandbox': typeof SandboxRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stores': typeof StoresRouteWithChildren
-  '/tier': typeof TierRoute
+  '/tier': typeof TierRouteWithChildren
   '/admin/card-generator': typeof AdminCardGeneratorRoute
   '/admin/inspect': typeof AdminInspectRoute
   '/admin/seed': typeof AdminSeedRoute
@@ -208,6 +214,7 @@ export interface FileRoutesByFullPath {
   '/events/$id': typeof EventsIdRoute
   '/lfg/$id': typeof LfgIdRoute
   '/stores/$id': typeof StoresIdRoute
+  '/tier/$id': typeof TierIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -227,7 +234,7 @@ export interface FileRoutesByTo {
   '/sandbox': typeof SandboxRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stores': typeof StoresRouteWithChildren
-  '/tier': typeof TierRoute
+  '/tier': typeof TierRouteWithChildren
   '/admin/card-generator': typeof AdminCardGeneratorRoute
   '/admin/inspect': typeof AdminInspectRoute
   '/admin/seed': typeof AdminSeedRoute
@@ -238,6 +245,7 @@ export interface FileRoutesByTo {
   '/events/$id': typeof EventsIdRoute
   '/lfg/$id': typeof LfgIdRoute
   '/stores/$id': typeof StoresIdRoute
+  '/tier/$id': typeof TierIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -258,7 +266,7 @@ export interface FileRoutesById {
   '/sandbox': typeof SandboxRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stores': typeof StoresRouteWithChildren
-  '/tier': typeof TierRoute
+  '/tier': typeof TierRouteWithChildren
   '/admin/card-generator': typeof AdminCardGeneratorRoute
   '/admin/inspect': typeof AdminInspectRoute
   '/admin/seed': typeof AdminSeedRoute
@@ -269,6 +277,7 @@ export interface FileRoutesById {
   '/events/$id': typeof EventsIdRoute
   '/lfg/$id': typeof LfgIdRoute
   '/stores/$id': typeof StoresIdRoute
+  '/tier/$id': typeof TierIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -301,6 +310,7 @@ export interface FileRouteTypes {
     | '/events/$id'
     | '/lfg/$id'
     | '/stores/$id'
+    | '/tier/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -331,6 +341,7 @@ export interface FileRouteTypes {
     | '/events/$id'
     | '/lfg/$id'
     | '/stores/$id'
+    | '/tier/$id'
   id:
     | '__root__'
     | '/'
@@ -361,6 +372,7 @@ export interface FileRouteTypes {
     | '/events/$id'
     | '/lfg/$id'
     | '/stores/$id'
+    | '/tier/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -381,7 +393,7 @@ export interface RootRouteChildren {
   SandboxRoute: typeof SandboxRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StoresRoute: typeof StoresRouteWithChildren
-  TierRoute: typeof TierRoute
+  TierRoute: typeof TierRouteWithChildren
   ApiCoachRoute: typeof ApiCoachRoute
   EventsIdRoute: typeof EventsIdRoute
 }
@@ -513,6 +525,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/tier/$id': {
+      id: '/tier/$id'
+      path: '/$id'
+      fullPath: '/tier/$id'
+      preLoaderRoute: typeof TierIdRouteImport
+      parentRoute: typeof TierRoute
     }
     '/stores/$id': {
       id: '/stores/$id'
@@ -654,6 +673,16 @@ const StoresRouteChildren: StoresRouteChildren = {
 const StoresRouteWithChildren =
   StoresRoute._addFileChildren(StoresRouteChildren)
 
+interface TierRouteChildren {
+  TierIdRoute: typeof TierIdRoute
+}
+
+const TierRouteChildren: TierRouteChildren = {
+  TierIdRoute: TierIdRoute,
+}
+
+const TierRouteWithChildren = TierRoute._addFileChildren(TierRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
@@ -672,7 +701,7 @@ const rootRouteChildren: RootRouteChildren = {
   SandboxRoute: SandboxRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StoresRoute: StoresRouteWithChildren,
-  TierRoute: TierRoute,
+  TierRoute: TierRouteWithChildren,
   ApiCoachRoute: ApiCoachRoute,
   EventsIdRoute: EventsIdRoute,
 }
