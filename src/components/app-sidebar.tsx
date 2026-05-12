@@ -13,6 +13,7 @@ import {
   User,
   Megaphone,
   ListOrdered,
+  Shield,
 } from "lucide-react";
 
 import {
