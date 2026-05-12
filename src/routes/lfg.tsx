@@ -357,7 +357,7 @@ function InlineLfgForm({ onCreated, onCancel }: { onCreated: () => void; onCance
         <Button
           type="button"
           variant="ghost"
-          onClick={onCancel}
+          onClick={handleCancel}
           disabled={submitting}
         >
           취소
@@ -366,6 +366,27 @@ function InlineLfgForm({ onCreated, onCancel }: { onCreated: () => void; onCance
           {submitting ? "등록 중…" : "등록"}
         </Button>
       </div>
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>정말 취소할까요?</AlertDialogTitle>
+            <AlertDialogDescription>
+              작성 중인 내용이 모두 사라집니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>계속 작성</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setConfirmOpen(false);
+                onCancel();
+              }}
+            >
+              취소하기
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </form>
   );
 }
