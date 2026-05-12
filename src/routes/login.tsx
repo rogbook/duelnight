@@ -168,14 +168,26 @@ function LoginPage() {
           {busy ? "처리 중..." : mode === "signin" ? "로그인" : "가입하기"}
         </Button>
       </form>
-      <button
-        onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-        className="mt-4 text-xs text-muted-foreground hover:text-foreground"
-      >
-        {mode === "signin"
-          ? "계정이 없으신가요? 가입하기"
-          : "이미 계정이 있으신가요? 로그인"}
-      </button>
+      <div className="mt-4 flex items-center justify-between gap-2 text-xs">
+        <button
+          onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          {mode === "signin"
+            ? "계정이 없으신가요? 가입하기"
+            : "이미 계정이 있으신가요? 로그인"}
+        </button>
+        {mode === "signin" && (
+          <button
+            type="button"
+            onClick={forgotPassword}
+            disabled={busy}
+            className="text-muted-foreground hover:text-foreground disabled:opacity-50"
+          >
+            비밀번호 잊으셨나요?
+          </button>
+        )}
+      </div>
       <Link to="/" className="mt-2 text-xs text-muted-foreground hover:text-foreground">
         ← 대시보드로
       </Link>
