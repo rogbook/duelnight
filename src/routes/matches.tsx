@@ -27,12 +27,18 @@ import { toast } from "sonner";
 import {
   computeStats,
   fmtPct,
+  fmtPctVal,
   GAME_LABEL,
   EVENT_LABEL,
   type Match,
   type RatePack,
+  type DeckStat,
+  type MatchupStat,
+  type EventStat,
+  type OpponentFreq,
 } from "@/lib/match-stats";
-import { WinRateChart } from "@/components/winrate-chart";
+import { WinRateChart, type ChartUnit } from "@/components/winrate-chart";
+import { AiCoachCard } from "@/components/ai-coach-card";
 import { normalizeDeckName } from "@/lib/normalize-deck";
 import type { Database } from "@/integrations/supabase/types";
 
