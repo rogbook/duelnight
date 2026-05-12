@@ -26,6 +26,7 @@ import { Route as AnnouncementsRouteImport } from './routes/announcements'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiCoachRouteImport } from './routes/api/coach'
+import { Route as AdminSeedRouteImport } from './routes/admin.seed'
 
 const TierRoute = TierRouteImport.update({
   id: '/tier',
@@ -112,10 +113,15 @@ const ApiCoachRoute = ApiCoachRouteImport.update({
   path: '/api/coach',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminSeedRoute = AdminSeedRouteImport.update({
+  id: '/seed',
+  path: '/seed',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/announcements': typeof AnnouncementsRoute
   '/calendar': typeof CalendarRoute
   '/cards': typeof CardsRoute
@@ -130,11 +136,12 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/stores': typeof StoresRoute
   '/tier': typeof TierRoute
+  '/admin/seed': typeof AdminSeedRoute
   '/api/coach': typeof ApiCoachRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/announcements': typeof AnnouncementsRoute
   '/calendar': typeof CalendarRoute
   '/cards': typeof CardsRoute
@@ -149,12 +156,13 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/stores': typeof StoresRoute
   '/tier': typeof TierRoute
+  '/admin/seed': typeof AdminSeedRoute
   '/api/coach': typeof ApiCoachRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/announcements': typeof AnnouncementsRoute
   '/calendar': typeof CalendarRoute
   '/cards': typeof CardsRoute
@@ -169,6 +177,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/stores': typeof StoresRoute
   '/tier': typeof TierRoute
+  '/admin/seed': typeof AdminSeedRoute
   '/api/coach': typeof ApiCoachRoute
 }
 export interface FileRouteTypes {
@@ -190,6 +199,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/stores'
     | '/tier'
+    | '/admin/seed'
     | '/api/coach'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -209,6 +219,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/stores'
     | '/tier'
+    | '/admin/seed'
     | '/api/coach'
   id:
     | '__root__'
@@ -228,12 +239,13 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/stores'
     | '/tier'
+    | '/admin/seed'
     | '/api/coach'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRoute
+  AdminRoute: typeof AdminRouteWithChildren
   AnnouncementsRoute: typeof AnnouncementsRoute
   CalendarRoute: typeof CalendarRoute
   CardsRoute: typeof CardsRoute
@@ -372,12 +384,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCoachRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/seed': {
+      id: '/admin/seed'
+      path: '/seed'
+      fullPath: '/admin/seed'
+      preLoaderRoute: typeof AdminSeedRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
+interface AdminRouteChildren {
+  AdminSeedRoute: typeof AdminSeedRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminSeedRoute: AdminSeedRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
+  AdminRoute: AdminRouteWithChildren,
   AnnouncementsRoute: AnnouncementsRoute,
   CalendarRoute: CalendarRoute,
   CardsRoute: CardsRoute,
@@ -397,3 +426,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
