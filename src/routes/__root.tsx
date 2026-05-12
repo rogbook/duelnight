@@ -11,6 +11,36 @@ import {
 import appCss from "../styles.css?url";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { Toaster } from "@/components/ui/sonner";
+import { supabase } from "@/integrations/supabase/client";
+
+function AuthHeaderButton() {
+  const { user } = useAuth();
+  if (user) {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="hidden text-xs text-muted-foreground sm:inline">
+          {user.email}
+        </span>
+        <button
+          onClick={() => supabase.auth.signOut()}
+          className="rounded-md border border-border px-3 py-1.5 text-xs hover:bg-accent"
+        >
+          로그아웃
+        </button>
+      </div>
+    );
+  }
+  return (
+    <Link
+      to="/login"
+      className="rounded-md bg-foreground px-3 py-1.5 text-xs font-medium text-background hover:opacity-90"
+    >
+      로그인
+    </Link>
+  );
+}
 
 function NotFoundComponent() {
   return (
@@ -115,23 +145,24 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full bg-background">
-          <AppSidebar />
-          <div className="flex flex-1 flex-col">
-            <header className="flex h-14 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur">
-              <SidebarTrigger />
-              <div className="flex-1" />
-              <span className="text-xs text-muted-foreground">
-                TCG 통합 관리 플랫폼
-              </span>
-            </header>
-            <main className="flex-1">
-              <Outlet />
-            </main>
+      <AuthProvider>
+        <SidebarProvider>
+          <div className="flex min-h-screen w-full bg-background">
+            <AppSidebar />
+            <div className="flex flex-1 flex-col">
+              <header className="flex h-14 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur">
+                <SidebarTrigger />
+                <div className="flex-1" />
+                <AuthHeaderButton />
+              </header>
+              <main className="flex-1">
+                <Outlet />
+              </main>
+            </div>
           </div>
-        </div>
-      </SidebarProvider>
+          <Toaster />
+        </SidebarProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
