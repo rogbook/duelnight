@@ -191,6 +191,46 @@ export const fmtPct = (r: RatePack) =>
 
 export const fmtPctVal = (v: number) => `${Math.round(v * 1000) / 10}%`;
 
+export interface StreakInfo {
+  current: number; // +N=win streak, -N=loss streak, 0 otherwise
+  best: number;
+  worst: number;
+}
+
+export function computeStreak(rows: Match[]): StreakInfo {
+  const sorted = [...rows].sort(
+    (a, b) => +new Date(a.played_at) - +new Date(b.played_at),
+  );
+  let best = 0,
+    worst = 0,
+    runW = 0,
+    runL = 0;
+  for (const m of sorted) {
+    if (m.result === "win") {
+      runW++;
+      runL = 0;
+      if (runW > best) best = runW;
+    } else if (m.result === "loss") {
+      runL++;
+      runW = 0;
+      if (runL > worst) worst = runL;
+    } else {
+      runW = 0;
+      runL = 0;
+    }
+  }
+  let current = 0;
+  for (let i = sorted.length - 1; i >= 0; i--) {
+    const r = sorted[i].result;
+    if (r === "draw") break;
+    if (current === 0) current = r === "win" ? 1 : -1;
+    else if ((current > 0 && r === "win") || (current < 0 && r === "loss"))
+      current += current > 0 ? 1 : -1;
+    else break;
+  }
+  return { current, best, worst };
+}
+
 export const GAME_LABEL: Record<string, string> = {
   optcg: "원피스",
   ptcg: "포켓몬",
