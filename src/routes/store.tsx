@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Coins, Zap, ShieldCheck, Gem } from "lucide-react";
 import { PaymentDialog } from "@/components/payment/PaymentDialog";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/store")({
   head: () => ({
