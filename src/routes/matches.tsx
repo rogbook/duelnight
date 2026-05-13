@@ -472,36 +472,94 @@ function EventTable({ rows }: { rows: EventStat[] }) {
   );
 }
 
-function OpponentTable({ rows }: { rows: OpponentFreq[] }) {
+function OpponentTable({
+  rows,
+  allRows,
+  game,
+}: {
+  rows: OpponentFreq[];
+  allRows: Match[];
+  game: Game | "all";
+}) {
+  const [selected, setSelected] = useState<{ name: string; userId?: string | null } | null>(null);
+
+  const matchesFor = (oppName: string) =>
+    allRows.filter((m) => (m.opp_leader || m.opp_deck || "") === oppName);
+
+  const userIdFor = (oppName: string): string | null => {
+    const found = allRows.find(
+      (m) => (m.opp_leader || m.opp_deck || "") === oppName && m.opponent_user_id,
+    );
+    return found?.opponent_user_id ?? null;
+  };
+
+  // Pick a representative game from filtered set; fallback to optcg if "all"
+  const dialogGame: Game =
+    game !== "all"
+      ? game
+      : (selected
+          ? matchesFor(selected.name)[0]?.game ?? "optcg"
+          : "optcg");
+
   return (
     <div className="rounded-lg border border-border bg-card">
       <div className="border-b border-border px-4 py-3">
         <h3 className="text-sm font-medium">상대 메타 Top</h3>
-        <p className="text-[11px] text-muted-foreground">자주 만난 상대 · 그 상대 대상 내 승률</p>
+        <p className="text-[11px] text-muted-foreground">자주 만난 상대 · 그 상대 대상 내 승률 · 클릭하여 상세 보기</p>
       </div>
       {rows.length === 0 ? (
         <p className="px-4 py-8 text-center text-xs text-muted-foreground">데이터 없음</p>
       ) : (
         <ul className="divide-y divide-border">
           {rows.map((r) => (
-            <li key={r.opponent} className="px-4 py-3">
-              <div className="flex items-center justify-between gap-3">
-                <span className="truncate text-sm">{r.opponent}</span>
-                <span className="text-xs text-muted-foreground">
-                  <span className="mr-2 font-medium text-foreground">{fmtPct(r.stats)}</span>
-                  {r.count}회 · {fmtPctVal(r.share)}
-                </span>
-              </div>
-              <div className="mt-1 h-1.5 w-full overflow-hidden rounded bg-muted">
-                <div
-                  className="h-full bg-foreground/70"
-                  style={{ width: `${Math.round(r.share * 100)}%` }}
-                />
-              </div>
+            <li key={r.opponent}>
+              <button
+                type="button"
+                onClick={() =>
+                  setSelected({ name: r.opponent, userId: userIdFor(r.opponent) })
+                }
+                className="block w-full px-4 py-3 text-left transition hover:bg-muted/30"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="truncate text-sm">{r.opponent}</span>
+                  <span className="text-xs text-muted-foreground">
+                    <span className="mr-2 font-medium text-foreground">{fmtPct(r.stats)}</span>
+                    {r.count}회 · {fmtPctVal(r.share)}
+                  </span>
+                </div>
+                <div className="mt-1 h-1.5 w-full overflow-hidden rounded bg-muted">
+                  <div
+                    className="h-full bg-foreground/70"
+                    style={{ width: `${Math.round(r.share * 100)}%` }}
+                  />
+                </div>
+              </button>
             </li>
           ))}
         </ul>
       )}
+      <OpponentDetailDialog
+        open={!!selected}
+        onOpenChange={(o) => !o && setSelected(null)}
+        opponent={selected}
+        game={dialogGame}
+        myMatches={
+          selected
+            ? matchesFor(selected.name).map((m) => ({
+                id: m.id,
+                played_at: m.played_at,
+                game: m.game,
+                my_deck: m.my_deck,
+                opp_leader: m.opp_leader,
+                opp_deck: m.opp_deck,
+                result: m.result as "win" | "loss" | "draw",
+                went_first: m.went_first,
+                points_delta: m.points_delta,
+                opponent_user_id: m.opponent_user_id,
+              }))
+            : []
+        }
+      />
     </div>
   );
 }
