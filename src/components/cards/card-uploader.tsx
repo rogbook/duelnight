@@ -381,7 +381,8 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
             <CardHeader>
               <CardTitle className="text-base">엑셀(.xlsx) 또는 CSV 파일 업로드</CardTitle>
               <CardDescription>
-                한국어 헤더를 자동 인식합니다: 코드, 세트, 게임, 이름, 종류, 색상, 비용, 파워, 카운터, 속성, 레어도, 효과, 이미지
+                한국어 헤더를 자동 인식합니다: 코드, 세트, 게임, 이름, 종류, 색상, 비용, 파워, 카운터, 속성, 레어도, 효과, 이미지.
+                이미지 칸에는 일반 URL 또는 <b>구글 드라이브 공유 링크</b>를 넣을 수 있습니다 (자동 변환, 공개 권한 필요).
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
