@@ -66,18 +66,38 @@ function TierPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
 
+  const [game, setGame] = useState<Game>("optcg");
+  const [setCode, setSetCode] = useState<string>("all");
+
   const { data: leaders = [] } = useQuery({
-    queryKey: ["tier-leaders"],
+    queryKey: ["tier-leaders", game],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("cards")
-        .select("*")
-        .eq("type", "leader")
-        .order("code", { ascending: true });
+      let q = supabase.from("cards").select("*").eq("game", game);
+      // 원피스는 리더 카드만, 그 외 게임은 모든 카드 후보
+      if (game === "optcg") q = q.eq("type", "leader");
+      const { data, error } = await q.order("code", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Card[];
     },
   });
+
+  const setOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const c of leaders) if (c.set_code) set.add(c.set_code);
+    return [...set].sort();
+  }, [leaders]);
+
+  // setCode가 현재 game에 없으면 리셋
+  useEffect(() => {
+    if (setCode !== "all" && !setOptions.includes(setCode)) {
+      setSetCode("all");
+    }
+  }, [setOptions, setCode]);
+
+  const filteredLeaders = useMemo(
+    () => (setCode === "all" ? leaders : leaders.filter((c) => c.set_code === setCode)),
+    [leaders, setCode],
+  );
 
   const { data: myLists = [] } = useQuery({
     queryKey: ["tier-lists-mine", user?.id],
