@@ -37,6 +37,7 @@ import { Route as DecksIdRouteImport } from './routes/decks.$id'
 import { Route as CardsUploadRouteImport } from './routes/cards_.upload'
 import { Route as CardsCodeRouteImport } from './routes/cards_.$code'
 import { Route as ApiCoachRouteImport } from './routes/api/coach'
+import { Route as ApiCardOcrRouteImport } from './routes/api/card-ocr'
 import { Route as AnnouncementsIdRouteImport } from './routes/announcements.$id'
 import { Route as AdminCardsRouteImport } from './routes/admin.cards'
 
@@ -180,6 +181,11 @@ const ApiCoachRoute = ApiCoachRouteImport.update({
   path: '/api/coach',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCardOcrRoute = ApiCardOcrRouteImport.update({
+  id: '/api/card-ocr',
+  path: '/api/card-ocr',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AnnouncementsIdRoute = AnnouncementsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -213,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/tier': typeof TierRouteWithChildren
   '/admin/cards': typeof AdminCardsRoute
   '/announcements/$id': typeof AnnouncementsIdRoute
+  '/api/card-ocr': typeof ApiCardOcrRoute
   '/api/coach': typeof ApiCoachRoute
   '/cards/$code': typeof CardsCodeRoute
   '/cards/upload': typeof CardsUploadRoute
@@ -245,6 +252,7 @@ export interface FileRoutesByTo {
   '/tier': typeof TierRouteWithChildren
   '/admin/cards': typeof AdminCardsRoute
   '/announcements/$id': typeof AnnouncementsIdRoute
+  '/api/card-ocr': typeof ApiCardOcrRoute
   '/api/coach': typeof ApiCoachRoute
   '/cards/$code': typeof CardsCodeRoute
   '/cards/upload': typeof CardsUploadRoute
@@ -278,6 +286,7 @@ export interface FileRoutesById {
   '/tier': typeof TierRouteWithChildren
   '/admin/cards': typeof AdminCardsRoute
   '/announcements/$id': typeof AnnouncementsIdRoute
+  '/api/card-ocr': typeof ApiCardOcrRoute
   '/api/coach': typeof ApiCoachRoute
   '/cards_/$code': typeof CardsCodeRoute
   '/cards_/upload': typeof CardsUploadRoute
@@ -312,6 +321,7 @@ export interface FileRouteTypes {
     | '/tier'
     | '/admin/cards'
     | '/announcements/$id'
+    | '/api/card-ocr'
     | '/api/coach'
     | '/cards/$code'
     | '/cards/upload'
@@ -344,6 +354,7 @@ export interface FileRouteTypes {
     | '/tier'
     | '/admin/cards'
     | '/announcements/$id'
+    | '/api/card-ocr'
     | '/api/coach'
     | '/cards/$code'
     | '/cards/upload'
@@ -376,6 +387,7 @@ export interface FileRouteTypes {
     | '/tier'
     | '/admin/cards'
     | '/announcements/$id'
+    | '/api/card-ocr'
     | '/api/coach'
     | '/cards_/$code'
     | '/cards_/upload'
@@ -408,6 +420,7 @@ export interface RootRouteChildren {
   StoresRoute: typeof StoresRouteWithChildren
   TierRoute: typeof TierRouteWithChildren
   AdminCardsRoute: typeof AdminCardsRoute
+  ApiCardOcrRoute: typeof ApiCardOcrRoute
   ApiCoachRoute: typeof ApiCoachRoute
   CardsCodeRoute: typeof CardsCodeRoute
   CardsUploadRoute: typeof CardsUploadRoute
@@ -613,6 +626,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCoachRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/card-ocr': {
+      id: '/api/card-ocr'
+      path: '/api/card-ocr'
+      fullPath: '/api/card-ocr'
+      preLoaderRoute: typeof ApiCardOcrRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/announcements/$id': {
       id: '/announcements/$id'
       path: '/$id'
@@ -704,6 +724,7 @@ const rootRouteChildren: RootRouteChildren = {
   StoresRoute: StoresRouteWithChildren,
   TierRoute: TierRouteWithChildren,
   AdminCardsRoute: AdminCardsRoute,
+  ApiCardOcrRoute: ApiCardOcrRoute,
   ApiCoachRoute: ApiCoachRoute,
   CardsCodeRoute: CardsCodeRoute,
   CardsUploadRoute: CardsUploadRoute,
