@@ -186,6 +186,7 @@ function CardsUploadPage() {
   const { isAdmin } = useIsAdmin();
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [result, setResult] = useState<{ inserted: number; skipped: number } | null>(null);
 
   const parsed = useMemo(() => parseInput(text), [text]);
