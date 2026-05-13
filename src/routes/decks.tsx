@@ -165,6 +165,15 @@ function DecksPage() {
                   )}
                 </div>
                 <div className="flex items-center gap-1">
+                  <Link
+                    to="/decks/$id"
+                    params={{ id: d.id }}
+                    aria-label="덱 레시피"
+                    title="덱 레시피 편집"
+                    className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+                  >
+                    <Layers className="h-4 w-4" />
+                  </Link>
                   <DeckDialog
                     mode="edit"
                     deck={d}
@@ -398,7 +407,7 @@ function DeckDialog({
           <button
             type="button"
             onClick={() => setTab("recipe")}
-            disabled={mode === "create"}
+            disabled={mode === "create" && !deck}
             className={`rounded px-3 py-1 ${
               tab === "recipe"
                 ? "bg-foreground text-background"
