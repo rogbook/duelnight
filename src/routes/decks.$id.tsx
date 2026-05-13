@@ -22,15 +22,37 @@ export const Route = createFileRoute("/decks/$id")({
     if (error) throw error;
     if (!deck) throw notFound();
     let author: Profile | null = null;
+    let deckCards: DeckCard[] = [];
+    let cardMeta: Record<string, CardRow> = {};
     if (deck.is_public) {
-      const { data: p } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", deck.user_id)
-        .maybeSingle();
+      const [{ data: p }, { data: dc }] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", deck.user_id).maybeSingle(),
+        supabase
+          .from("deck_cards")
+          .select("*")
+          .eq("deck_id", deck.id)
+          .order("position", { ascending: true }),
+      ]);
       author = (p as Profile | null) ?? null;
+      deckCards = (dc ?? []) as DeckCard[];
+      if (deckCards.length > 0) {
+        const codes = deckCards.map((c) => c.card_code);
+        const { data: cards } = await supabase
+          .from("cards")
+          .select("*")
+          .in("code", codes);
+        cardMeta = Object.fromEntries(
+          (cards ?? []).map((c) => [c.code, c as CardRow]),
+        );
+      }
     }
-    return { deck: deck as Deck, author, isPublic: deck.is_public };
+    return {
+      deck: deck as Deck,
+      author,
+      isPublic: deck.is_public,
+      deckCards,
+      cardMeta,
+    };
   },
   head: ({ loaderData }) => {
     const d = loaderData?.deck;
