@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { OpponentSearch, type FoundUser } from "@/components/opponent-search";
+import { OpponentDetailDialog } from "@/components/opponent-detail-dialog";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
