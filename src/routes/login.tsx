@@ -83,34 +83,36 @@ function LoginPage() {
   };
 
   const signInWithNaver = async () => {
+    // NOTE: Naver requires Custom OIDC configuration in Supabase Dashboard
     setBusy(true);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: "naver",
+        provider: "naver" as any, // Cast as any because it's not in the default type list
         options: {
           redirectTo: `${window.location.origin}/matches`,
         },
       });
       if (error) throw error;
     } catch (err) {
-      toast.error((err as Error).message);
+      toast.error(`네이버 연동 오류: ${(err as Error).message}. (Supabase Custom OIDC 설정이 필요합니다)`);
     } finally {
       setBusy(false);
     }
   };
 
   const signInWithKakao = async () => {
+    // NOTE: Kakao requires Custom OIDC configuration in Supabase Dashboard
     setBusy(true);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: "kakao",
+        provider: "kakao" as any,
         options: {
           redirectTo: `${window.location.origin}/matches`,
         },
       });
       if (error) throw error;
     } catch (err) {
-      toast.error((err as Error).message);
+      toast.error(`카카오 연동 오류: ${(err as Error).message}. (Supabase Custom OIDC 설정이 필요합니다)`);
     } finally {
       setBusy(false);
     }

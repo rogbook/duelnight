@@ -42,21 +42,26 @@ export interface PaymentOptions {
   sandbox?: boolean;
 }
 
+const PORTONE_USER_CODE = import.meta.env.VITE_PORTONE_USER_CODE;
+
 /**
  * Initialize and process PortOne (Domestic) payment
  */
 export const processPortOnePayment = async (
-  userCode: string, // PortOne Store ID (IMP User Code)
   options: PaymentOptions
 ): Promise<any> => {
+  if (!PORTONE_USER_CODE) {
+    throw new Error("PortOne User Code is not configured.");
+  }
+
   await loadScript(PORTONE_SDK_URL);
   const { IMP } = window;
-  IMP.init(userCode);
+  IMP.init(PORTONE_USER_CODE);
 
   return new Promise((resolve, reject) => {
     IMP.request_pay(
       {
-        pg: options.sandbox ? "kakaopay.TC0ONETIME" : "html5_inicis", // kakaopay test PG if sandbox
+        pg: options.sandbox ? "kakaopay.TC0ONETIME" : "html5_inicis", 
         pay_method: "card",
         merchant_uid: options.orderId,
         name: options.orderName,
@@ -75,17 +80,21 @@ export const processPortOnePayment = async (
   });
 };
 
+const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID;
+
 /**
  * Initialize and process PayPal (International) payment
- * This is a simplified version using the PayPal Buttons API
  */
 export const initPayPalButtons = async (
-  clientId: string,
   options: PaymentOptions,
   onApprove: (data: any) => Promise<void>,
   onError: (err: any) => void
 ) => {
-  await loadScript(PAYPAL_SDK_URL(clientId));
+  if (!PAYPAL_CLIENT_ID) {
+    throw new Error("PayPal Client ID is not configured.");
+  }
+
+  await loadScript(PAYPAL_SDK_URL(PAYPAL_CLIENT_ID));
   const { paypal } = window;
 
   if (paypal) {
@@ -95,16 +104,17 @@ export const initPayPalButtons = async (
           purchase_units: [
             {
               amount: {
-                value: (options.amount / 1300).toFixed(2), // Simple KRW to USD conversion for demo
+                value: (options.amount / 1400).toFixed(2), // Updated rate example
               },
               description: options.orderName,
-              reference_id: options.orderId,
+              custom_id: options.orderId,
             },
           ],
         });
       },
       onApprove: async (data: any, actions: any) => {
         const details = await actions.order.capture();
+        // Server should verify this order ID
         await onApprove(details);
       },
       onError: (err: any) => {

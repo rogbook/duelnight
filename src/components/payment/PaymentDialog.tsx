@@ -8,9 +8,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CreditCard, Globe, CheckCircle2, Loader2, FlaskConical } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import { CreditCard, Globe, CheckCircle2, Loader2, FlaskConical, ShieldAlert } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import { processPortOnePayment, initPayPalButtons, PaymentOptions } from "@/lib/payment";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -28,21 +28,41 @@ export function PaymentDialog({
   options,
   onSuccess,
 }: PaymentDialogProps) {
+  const { session } = useAuth();
   const [method, setMethod] = useState<"domestic" | "intl" | null>(null);
   const [busy, setBusy] = useState(false);
   const [showPayPal, setShowPayPal] = useState(false);
-  const [isTest, setIsTest] = useState(true); // Default to test mode for safety
+  
+  const isTestMode = import.meta.env.DEV;
 
   const handleDomesticPayment = async () => {
+    if (!session) {
+      toast.error("로그인이 필요합니다.");
+      return;
+    }
+    
     setBusy(true);
     try {
-      // PortOne User Code (Can be any valid one for testing, e.g., imp31011697)
-      const userCode = isTest ? "imp31011697" : "imp00000000"; 
-      const result = await processPortOnePayment(userCode, {
+      const result = await processPortOnePayment({
         ...options,
-        sandbox: isTest,
+        sandbox: isTestMode,
+        userEmail: session.user.email,
       });
-      toast.success("결제가 완료되었습니다!");
+
+      // SERVER-SIDE VERIFICATION
+      const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-payment', {
+        body: { 
+          imp_uid: result.imp_uid, 
+          merchant_uid: result.merchant_uid,
+          provider: 'portone'
+        }
+      });
+
+      if (verifyError || !verifyData.success) {
+        throw new Error(verifyError?.message || "결제 검증에 실패했습니다.");
+      }
+
+      toast.success("결제가 성공적으로 검증되고 완료되었습니다!");
       onSuccess(result);
       onOpenChange(false);
     } catch (err) {
@@ -57,27 +77,63 @@ export function PaymentDialog({
     setShowPayPal(true);
   };
 
+  useEffect(() => {
+    if (showPayPal && method === "intl") {
+      const initPayPal = async () => {
+        try {
+          const buttons = await initPayPalButtons(
+            options,
+            async (details) => {
+              // Verify PayPal on server
+              const { data, error } = await supabase.functions.invoke('verify-payment', {
+                body: { 
+                  order_id: details.id, 
+                  provider: 'paypal'
+                }
+              });
+              if (error || !data.success) throw new Error("PayPal verification failed");
+              
+              toast.success("PayPal 결제 검증 완료!");
+              onSuccess(details);
+              onOpenChange(false);
+            },
+            (err) => toast.error(`PayPal 오류: ${err.message}`)
+          );
+          if (buttons) {
+            buttons.render("#paypal-button-container");
+          }
+        } catch (err) {
+          toast.error(`PayPal 초기화 실패: ${(err as Error).message}`);
+        }
+      };
+      initPayPal();
+    }
+  }, [showPayPal, method]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-2xl font-bold">결제 방법 선택</DialogTitle>
-            <div className="flex items-center space-x-2 rounded-full bg-muted px-3 py-1">
-              <FlaskConical className={cn("h-3.5 w-3.5", isTest ? "text-amber-500" : "text-muted-foreground")} />
-              <Label htmlFor="test-mode" className="text-[10px] font-bold uppercase tracking-wider">Test Mode</Label>
-              <Switch 
-                id="test-mode" 
-                checked={isTest} 
-                onCheckedChange={setIsTest} 
-                className="h-4 w-7 data-[state=checked]:bg-amber-500"
-              />
-            </div>
+            {isTestMode && (
+              <div className="flex items-center space-x-2 rounded-full bg-amber-100 px-3 py-1 text-amber-700">
+                <FlaskConical className="h-3.5 w-3.5" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Sandbox Mode</span>
+              </div>
+            )}
           </div>
           <DialogDescription>
             {options.orderName} - {options.amount.toLocaleString()}원
           </DialogDescription>
         </DialogHeader>
+
+        {!session && (
+          <div className="flex flex-col items-center gap-3 rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-destructive">
+            <ShieldAlert className="h-8 w-8" />
+            <p className="text-sm font-medium text-center">결제를 진행하려면 먼저 로그인해야 합니다.</p>
+          </div>
+        )}
 
         <div className="grid gap-4 py-4">
           <button
