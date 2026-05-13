@@ -21,6 +21,7 @@ import { Route as MatchesRouteImport } from './routes/matches'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LfgRouteImport } from './routes/lfg'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
+import { Route as FriendsRouteImport } from './routes/friends'
 import { Route as DecksRouteImport } from './routes/decks'
 import { Route as CollectionRouteImport } from './routes/collection'
 import { Route as CardsRouteImport } from './routes/cards'
@@ -98,6 +99,11 @@ const LfgRoute = LfgRouteImport.update({
 const LeaderboardRoute = LeaderboardRouteImport.update({
   id: '/leaderboard',
   path: '/leaderboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FriendsRoute = FriendsRouteImport.update({
+  id: '/friends',
+  path: '/friends',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DecksRoute = DecksRouteImport.update({
@@ -199,6 +205,7 @@ export interface FileRoutesByFullPath {
   '/cards': typeof CardsRouteWithChildren
   '/collection': typeof CollectionRoute
   '/decks': typeof DecksRouteWithChildren
+  '/friends': typeof FriendsRoute
   '/leaderboard': typeof LeaderboardRoute
   '/lfg': typeof LfgRouteWithChildren
   '/login': typeof LoginRoute
@@ -231,6 +238,7 @@ export interface FileRoutesByTo {
   '/cards': typeof CardsRouteWithChildren
   '/collection': typeof CollectionRoute
   '/decks': typeof DecksRouteWithChildren
+  '/friends': typeof FriendsRoute
   '/leaderboard': typeof LeaderboardRoute
   '/lfg': typeof LfgRouteWithChildren
   '/login': typeof LoginRoute
@@ -264,6 +272,7 @@ export interface FileRoutesById {
   '/cards': typeof CardsRouteWithChildren
   '/collection': typeof CollectionRoute
   '/decks': typeof DecksRouteWithChildren
+  '/friends': typeof FriendsRoute
   '/leaderboard': typeof LeaderboardRoute
   '/lfg': typeof LfgRouteWithChildren
   '/login': typeof LoginRoute
@@ -298,6 +307,7 @@ export interface FileRouteTypes {
     | '/cards'
     | '/collection'
     | '/decks'
+    | '/friends'
     | '/leaderboard'
     | '/lfg'
     | '/login'
@@ -330,6 +340,7 @@ export interface FileRouteTypes {
     | '/cards'
     | '/collection'
     | '/decks'
+    | '/friends'
     | '/leaderboard'
     | '/lfg'
     | '/login'
@@ -362,6 +373,7 @@ export interface FileRouteTypes {
     | '/cards'
     | '/collection'
     | '/decks'
+    | '/friends'
     | '/leaderboard'
     | '/lfg'
     | '/login'
@@ -395,6 +407,7 @@ export interface RootRouteChildren {
   CardsRoute: typeof CardsRouteWithChildren
   CollectionRoute: typeof CollectionRoute
   DecksRoute: typeof DecksRouteWithChildren
+  FriendsRoute: typeof FriendsRoute
   LeaderboardRoute: typeof LeaderboardRoute
   LfgRoute: typeof LfgRouteWithChildren
   LoginRoute: typeof LoginRoute
@@ -495,6 +508,13 @@ declare module '@tanstack/react-router' {
       path: '/leaderboard'
       fullPath: '/leaderboard'
       preLoaderRoute: typeof LeaderboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/friends': {
+      id: '/friends'
+      path: '/friends'
+      fullPath: '/friends'
+      preLoaderRoute: typeof FriendsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/decks': {
@@ -711,6 +731,7 @@ const rootRouteChildren: RootRouteChildren = {
   CardsRoute: CardsRouteWithChildren,
   CollectionRoute: CollectionRoute,
   DecksRoute: DecksRouteWithChildren,
+  FriendsRoute: FriendsRoute,
   LeaderboardRoute: LeaderboardRoute,
   LfgRoute: LfgRouteWithChildren,
   LoginRoute: LoginRoute,
