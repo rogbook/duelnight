@@ -1,5 +1,7 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowLeft, Layers } from "lucide-react";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+import { ArrowLeft, Layers, Pencil, Check } from "lucide-react";
+import { RecipeEditor } from "@/components/decks/recipe-editor";
 import { supabase } from "@/integrations/supabase/client";
 import { GAME_LABEL } from "@/lib/match-stats";
 import { colorHex, colorLabel, type Game } from "@/lib/deck-colors";
@@ -113,6 +115,9 @@ function DeckDetailPage() {
     cardMeta: Record<string, CardRow>;
   };
 
+  const [isEditing, setIsEditing] = useState(false);
+  const navigate = useNavigate();
+
   if (!canView) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-16 text-center">
@@ -179,9 +184,33 @@ function DeckDetailPage() {
           </span>
           <span>{new Date(deck.updated_at).toLocaleDateString("ko-KR")}</span>
         </div>
+        
+        {isOwner && (
+          <div className="mt-4 border-t pt-4">
+            <button
+              onClick={() => setIsEditing(!isEditing)}
+              className="flex w-full items-center justify-center gap-2 rounded-md bg-muted px-4 py-2 text-sm font-medium hover:bg-muted/80"
+            >
+              {isEditing ? (
+                <>
+                  <Check className="h-4 w-4" /> 조회 모드로 전환
+                </>
+              ) : (
+                <>
+                  <Pencil className="h-4 w-4" /> 레시피 편집하기
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </div>
 
-      {deckCards.length > 0 && (
+      {isEditing ? (
+        <div className="mt-6 rounded-lg border border-border bg-card p-6">
+          <h2 className="mb-4 text-sm font-semibold">덱 레시피 편집</h2>
+          <RecipeEditor deck={deck} />
+        </div>
+      ) : deckCards.length > 0 && (
         <div className="mt-6 rounded-lg border border-border bg-card p-6">
           <h2 className="text-sm font-semibold">
             덱 레시피{" "}
