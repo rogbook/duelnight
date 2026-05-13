@@ -1,22 +1,40 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getRequest } from "@tanstack/react-start/server";
+import { createClient } from "@supabase/supabase-js";
+
+/** 서버 사이드에서 인증된 사용자 ID를 가져오는 헬퍼 */
+async function getAuthenticatedUserId() {
+  const request = getRequest();
+  const authHeader = request?.headers?.get("authorization");
+  if (!authHeader?.startsWith("Bearer ")) throw new Error("Unauthorized");
+  
+  const token = authHeader.replace("Bearer ", "");
+  const supabase = createClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_PUBLISHABLE_KEY!
+  );
+  
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data.user) throw new Error("Unauthorized");
+  return data.user.id;
+}
 
 export const getDriveAuthUrlFn = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .handler(async () => {
+    const userId = await getAuthenticatedUserId();
     const { getGoogleAuthUrl } = await import("./google-drive.server");
-    const url = await getGoogleAuthUrl(context.userId);
+    const url = await getGoogleAuthUrl(userId);
     return { url };
   });
 
 export const getDriveConnectionFn = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .handler(async () => {
+    const userId = await getAuthenticatedUserId();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("user_drive_tokens")
       .select("connected_email, updated_at")
-      .eq("user_id", context.userId)
+      .eq("user_id", userId)
       .single();
 
     if (error || !data) return { connected: false };
@@ -24,11 +42,11 @@ export const getDriveConnectionFn = createServerFn({ method: "GET" })
   });
 
 export const listDriveFolderFn = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data }) => {
+    const userId = await getAuthenticatedUserId();
     const { folderUrl } = data as { folderUrl: string };
     const { getValidAccessToken } = await import("./google-drive.server");
-    const token = await getValidAccessToken(context.userId);
+    const token = await getValidAccessToken(userId);
     if (!token) throw new Error("Google Drive not connected");
 
     const folderId = (url: string) => {
@@ -58,13 +76,13 @@ export const listDriveFolderFn = createServerFn({ method: "POST" })
   });
 
 export const disconnectDriveFn = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .handler(async () => {
+    const userId = await getAuthenticatedUserId();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: tokenData } = await supabaseAdmin
       .from("user_drive_tokens")
       .select("access_token")
-      .eq("user_id", context.userId)
+      .eq("user_id", userId)
       .single();
 
     if (tokenData) {
@@ -74,19 +92,19 @@ export const disconnectDriveFn = createServerFn({ method: "POST" })
     await supabaseAdmin
       .from("user_drive_tokens")
       .delete()
-      .eq("user_id", context.userId);
+      .eq("user_id", userId);
 
     return { success: true };
   });
 
 export const importDriveFilesFn = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data }) => {
+    const userId = await getAuthenticatedUserId();
     const { fileIds } = data as { fileIds: string[] };
     const { getValidAccessToken } = await import("./google-drive.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     
-    const token = await getValidAccessToken(context.userId);
+    const token = await getValidAccessToken(userId);
     if (!token) throw new Error("Google Drive not connected");
 
     const results = [];
@@ -104,7 +122,7 @@ export const importDriveFilesFn = createServerFn({ method: "POST" })
         if (!contentRes.ok) continue;
         const buffer = await contentRes.arrayBuffer();
 
-        const fileName = `${context.userId}/${Date.now()}-${meta.name}`;
+        const fileName = `${userId}/${Date.now()}-${meta.name}`;
         const { error: uploadError } = await supabaseAdmin.storage
           .from("card-images")
           .upload(fileName, buffer, {
