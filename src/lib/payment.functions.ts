@@ -1,22 +1,20 @@
 import { createServerFn } from "@tanstack/react-start";
-import { supabase } from "@/integrations/supabase/client";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 /**
  * PortOne 결제 검증 서버 함수
  */
 export const verifyPortOnePayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { imp_uid: string; merchant_uid: string; amount: number }) => d)
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { imp_uid, merchant_uid, amount } = data;
+    const userId = context.userId;
 
     try {
-      // 1. 서버 측 인증 확인 (클라이언트가 보낸 ID가 아닌 실제 세션 정보 사용)
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) {
-        throw new Error("인증되지 않은 사용자입니다.");
-      }
-
-      // 2. PortOne 토큰 발급
+      // 1. PortOne 토큰 발급
+      // 서버 환경변수(Lovable Cloud Secrets)에서 키를 가져옴
       const tokenRes = await fetch("https://api.iamport.kr/users/getToken", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -27,10 +25,10 @@ export const verifyPortOnePayment = createServerFn({ method: "POST" })
       });
       
       const tokenData = await tokenRes.json();
-      if (!tokenRes.ok) throw new Error("PortOne 토큰 발급 실패");
+      if (!tokenRes.ok) throw new Error("PortOne 토큰 발급 실패 (API 키 설정을 확인하세요)");
       const { access_token } = tokenData.response;
 
-      // 3. 결제 정보 조회
+      // 2. 결제 정보 조회
       const paymentRes = await fetch(`https://api.iamport.kr/payments/${imp_uid}`, {
         headers: { Authorization: access_token },
       });
@@ -38,7 +36,7 @@ export const verifyPortOnePayment = createServerFn({ method: "POST" })
       if (!paymentRes.ok) throw new Error("결제 정보 조회 실패");
       const payment = paymentData.response;
 
-      // 4. 검증 (금액 비교 및 상태 확인)
+      // 3. 검증 (금액 비교 및 상태 확인)
       if (payment.amount !== amount) {
         throw new Error("결제 금액 위변조가 의심됩니다.");
       }
@@ -47,9 +45,9 @@ export const verifyPortOnePayment = createServerFn({ method: "POST" })
         throw new Error(`결제가 완료되지 않았습니다. (상태: ${payment.status})`);
       }
 
-      // 5. DB 업데이트 (인증된 user.id 사용)
-      const { error } = await supabase.rpc("process_successful_payment", {
-        p_user_id: user.id,
+      // 4. DB 업데이트 (미들웨어에서 추출한 인증된 userId 사용 및 Admin 권한으로 실행)
+      const { error } = await supabaseAdmin.rpc("process_successful_payment", {
+        p_user_id: userId,
         p_amount: amount,
         p_order_id: merchant_uid,
         p_provider: "portone",
@@ -69,8 +67,9 @@ export const verifyPortOnePayment = createServerFn({ method: "POST" })
  * PayPal 결제 검증 서버 함수
  */
 export const verifyPayPalPayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { order_id: string; amount: number }) => d)
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     // TODO: PayPal API 연동 실구현 필요
     return { success: false, error: "PayPal 서버 검증이 아직 구현되지 않았습니다." };
   });
