@@ -40,15 +40,15 @@ CREATE OR REPLACE FUNCTION process_successful_payment(
 DECLARE
     v_credits_to_add INTEGER;
 BEGIN
-    -- 중복 처리 방지 (이미 완료된 결제인지 확인)
+    -- 1. 중복 처리 방지 (이미 완료된 결제인지 확인)
     IF EXISTS (SELECT 1 FROM public.payments WHERE order_id = p_order_id AND status = 'completed') THEN
         RETURN;
     END IF;
 
-    -- 금액에 따른 크레딧 계산 (1,000원당 100크레딧 예시)
+    -- 2. 금액에 따른 크레딧 계산
     v_credits_to_add := FLOOR(p_amount / 10);
 
-    -- 결제 내역 저장 또는 업데이트
+    -- 3. 결제 내역 저장 또는 업데이트
     INSERT INTO public.payments (user_id, order_id, imp_uid, amount, provider, status)
     VALUES (p_user_id, p_order_id, p_imp_uid, p_amount, p_provider, 'completed')
     ON CONFLICT (order_id) DO UPDATE 
@@ -56,11 +56,11 @@ BEGIN
         imp_uid = EXCLUDED.imp_uid,
         updated_at = now();
 
-    -- 사용자 크레딧 업데이트
+    -- 4. 사용자 크레딧 업데이트
     INSERT INTO public.user_credits (user_id, balance)
     VALUES (p_user_id, v_credits_to_add)
     ON CONFLICT (user_id) DO UPDATE
     SET balance = public.user_credits.balance + v_credits_to_add,
         updated_at = now();
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;

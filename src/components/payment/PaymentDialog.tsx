@@ -55,8 +55,7 @@ export function PaymentDialog({
         data: {
           imp_uid: result.imp_uid,
           merchant_uid: result.merchant_uid,
-          amount: options.amount,
-          user_id: session.user.id
+          amount: options.amount
         }
       });
 
@@ -90,8 +89,7 @@ export function PaymentDialog({
               const verifyResult = await verifyPayPalPayment({
                 data: {
                   order_id: details.id,
-                  amount: options.amount,
-                  user_id: session.user.id
+                  amount: options.amount
                 }
               });
 
