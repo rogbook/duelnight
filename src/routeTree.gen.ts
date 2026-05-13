@@ -36,6 +36,7 @@ import { Route as DecksIdRouteImport } from './routes/decks.$id'
 import { Route as CardsCodeRouteImport } from './routes/cards.$code'
 import { Route as ApiCoachRouteImport } from './routes/api/coach'
 import { Route as AnnouncementsIdRouteImport } from './routes/announcements.$id'
+import { Route as AdminCardsRouteImport } from './routes/admin.cards'
 
 const TierRoute = TierRouteImport.update({
   id: '/tier',
@@ -172,10 +173,15 @@ const AnnouncementsIdRoute = AnnouncementsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AnnouncementsRoute,
 } as any)
+const AdminCardsRoute = AdminCardsRouteImport.update({
+  id: '/cards',
+  path: '/cards',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/announcements': typeof AnnouncementsRouteWithChildren
   '/calendar': typeof CalendarRoute
   '/cards': typeof CardsRouteWithChildren
@@ -193,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stores': typeof StoresRouteWithChildren
   '/tier': typeof TierRouteWithChildren
+  '/admin/cards': typeof AdminCardsRoute
   '/announcements/$id': typeof AnnouncementsIdRoute
   '/api/coach': typeof ApiCoachRoute
   '/cards/$code': typeof CardsCodeRoute
@@ -204,7 +211,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/announcements': typeof AnnouncementsRouteWithChildren
   '/calendar': typeof CalendarRoute
   '/cards': typeof CardsRouteWithChildren
@@ -222,6 +229,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stores': typeof StoresRouteWithChildren
   '/tier': typeof TierRouteWithChildren
+  '/admin/cards': typeof AdminCardsRoute
   '/announcements/$id': typeof AnnouncementsIdRoute
   '/api/coach': typeof ApiCoachRoute
   '/cards/$code': typeof CardsCodeRoute
@@ -234,7 +242,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/announcements': typeof AnnouncementsRouteWithChildren
   '/calendar': typeof CalendarRoute
   '/cards': typeof CardsRouteWithChildren
@@ -252,6 +260,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stores': typeof StoresRouteWithChildren
   '/tier': typeof TierRouteWithChildren
+  '/admin/cards': typeof AdminCardsRoute
   '/announcements/$id': typeof AnnouncementsIdRoute
   '/api/coach': typeof ApiCoachRoute
   '/cards/$code': typeof CardsCodeRoute
@@ -283,6 +292,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/stores'
     | '/tier'
+    | '/admin/cards'
     | '/announcements/$id'
     | '/api/coach'
     | '/cards/$code'
@@ -312,6 +322,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/stores'
     | '/tier'
+    | '/admin/cards'
     | '/announcements/$id'
     | '/api/coach'
     | '/cards/$code'
@@ -341,6 +352,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/stores'
     | '/tier'
+    | '/admin/cards'
     | '/announcements/$id'
     | '/api/coach'
     | '/cards/$code'
@@ -353,7 +365,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRoute
+  AdminRoute: typeof AdminRouteWithChildren
   AnnouncementsRoute: typeof AnnouncementsRouteWithChildren
   CalendarRoute: typeof CalendarRoute
   CardsRoute: typeof CardsRouteWithChildren
@@ -566,8 +578,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AnnouncementsIdRouteImport
       parentRoute: typeof AnnouncementsRoute
     }
+    '/admin/cards': {
+      id: '/admin/cards'
+      path: '/cards'
+      fullPath: '/admin/cards'
+      preLoaderRoute: typeof AdminCardsRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
+
+interface AdminRouteChildren {
+  AdminCardsRoute: typeof AdminCardsRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminCardsRoute: AdminCardsRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface AnnouncementsRouteChildren {
   AnnouncementsIdRoute: typeof AnnouncementsIdRoute
@@ -634,7 +663,7 @@ const TierRouteWithChildren = TierRoute._addFileChildren(TierRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
+  AdminRoute: AdminRouteWithChildren,
   AnnouncementsRoute: AnnouncementsRouteWithChildren,
   CalendarRoute: CalendarRoute,
   CardsRoute: CardsRouteWithChildren,
