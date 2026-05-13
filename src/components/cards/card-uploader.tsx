@@ -276,6 +276,7 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkPatch, setBulkPatch] = useState<Partial<CardRow>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [editIdx, setEditIdx] = useState<number | null>(null);
 
   const valid = useMemo(() => rows.filter(r => r.code && r.set_code && r.name), [rows]);
   const issuesByRow = useMemo(() => rows.map((r) => validateRow(r as CardRow)), [rows]);
