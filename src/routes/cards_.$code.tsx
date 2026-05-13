@@ -18,7 +18,7 @@ const COLOR_LABEL: Record<string, string> = {
   purple: "자", black: "흑", yellow: "황",
 };
 
-export const Route = createFileRoute("/cards/$code")({
+export const Route = createFileRoute("/cards_/$code")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
       .from("cards")
