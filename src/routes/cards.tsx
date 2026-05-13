@@ -79,12 +79,16 @@ function CardsPage() {
 
   const { data: sets = [] } = useQuery({
     queryKey: ["card-sets", game],
+    staleTime: 10 * 60_000, // 세트 목록은 거의 안 바뀌므로 10분 캐시
     queryFn: async () => {
+      // 게임당 카드가 수천 개여도 set_code만 가져오면 작지만,
+      // 그래도 상한을 두어 회귀 안전장치 마련
       const { data, error } = await supabase
         .from("cards")
         .select("set_code")
         .eq("game", game)
-        .order("set_code", { ascending: false });
+        .order("set_code", { ascending: false })
+        .limit(5000);
       if (error) throw error;
       return Array.from(new Set((data ?? []).map((r) => r.set_code)));
     },
@@ -93,6 +97,7 @@ function CardsPage() {
   const { data: favSet = new Set<string>() } = useQuery({
     queryKey: ["card-favs", user?.id],
     enabled: !!user,
+    staleTime: 5 * 60_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("card_favorites")
@@ -103,9 +108,12 @@ function CardsPage() {
     },
   });
 
+  // 즐겨찾기 키는 favOnly가 true일 때만 쿼리 키에 포함
+  // (즐겨찾기 토글이 전체 목록 재요청을 트리거하지 않도록)
+  const favKey = favOnly ? Array.from(favSet).sort().join(",") : "";
   const filters = { game, q, type, setCode, color, favOnly, page };
   const { data, isFetching } = useQuery({
-    queryKey: ["cards", filters, Array.from(favSet).sort().join(",")],
+    queryKey: ["cards", filters, favKey],
     queryFn: async () => {
       let query = supabase
         .from("cards")
