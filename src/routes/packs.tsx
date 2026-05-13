@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { PackageOpen, Sparkles, ImageOff, Plus } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { PackageOpen, Sparkles, ImageOff } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
@@ -70,8 +69,6 @@ function rarityWeight(r: string | null | undefined): number {
 }
 
 function PacksPage() {
-  const { user } = useAuth();
-  const qc = useQueryClient();
   const [setCode, setSetCode] = useState<string>("");
   const [packs, setPacks] = useState<number>(1);
   const [results, setResults] = useState<Card[]>([]);
@@ -148,33 +145,6 @@ function PacksPage() {
     });
   }, [results]);
 
-  const addAllToCollection = async () => {
-    if (!user) {
-      toast.error("로그인이 필요합니다");
-      return;
-    }
-    if (tally.length === 0) return;
-    const codes = tally.map((t) => t.card.code);
-    const { data: existing, error: e1 } = await supabase
-      .from("user_collection")
-      .select("card_code, quantity")
-      .eq("user_id", user.id)
-      .in("card_code", codes);
-    if (e1) return toast.error(e1.message);
-    const have = new Map<string, number>();
-    for (const r of existing ?? []) have.set(r.card_code, r.quantity);
-    const rows = tally.map((t) => ({
-      user_id: user.id,
-      card_code: t.card.code,
-      quantity: (have.get(t.card.code) ?? 0) + t.count,
-    }));
-    const { error } = await supabase
-      .from("user_collection")
-      .upsert(rows, { onConflict: "user_id,card_code" });
-    if (error) return toast.error(error.message);
-    toast.success(`${results.length}장을 컬렉션에 추가했어요`);
-    qc.invalidateQueries({ queryKey: ["collection"] });
-  };
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
@@ -227,7 +197,7 @@ function PacksPage() {
         </div>
       ) : (
         <>
-          <div className="mt-6 flex items-center justify-between">
+          <div className="mt-6">
             <p className="text-sm text-muted-foreground">
               총{" "}
               <span className="font-semibold text-foreground">
@@ -238,15 +208,6 @@ function PacksPage() {
                 {tally.length}
               </span>
             </p>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={addAllToCollection}
-              className="gap-1"
-            >
-              <Plus className="h-4 w-4" />
-              내 컬렉션에 추가
-            </Button>
           </div>
 
           <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
