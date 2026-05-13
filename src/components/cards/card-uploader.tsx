@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Upload, Download, Trash2, Plus, Image as ImageIcon, FileSpreadsheet, Pencil, X, Wand2, ShieldCheck, AlertTriangle, Save, Sparkles } from "lucide-react";
+import { Upload, Download, Trash2, Plus, Image as ImageIcon, FileSpreadsheet, Pencil, X, Wand2, ShieldCheck, AlertTriangle, Save, Sparkles, ScanLine } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import {
   autoFixRow, validateRow, findInternalDuplicates, downloadRowsAsCsv,
   saveDraft, loadDraft, clearDraft,
 } from "./card-utils";
+import { compressToWebp } from "@/lib/image-utils";
 
 type Game = Database["public"]["Enums"]["tcg_game"];
 type CardType = Database["public"]["Enums"]["card_type"];
