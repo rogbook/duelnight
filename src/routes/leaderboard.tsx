@@ -12,16 +12,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Database } from "@/integrations/supabase/types";
+import { GAME_LABEL } from "@/lib/match-stats";
 
 type Game = Database["public"]["Enums"]["tcg_game"];
-type Period = "7" | "30" | "90" | "all";
 
 interface Row {
   user_id: string;
   display_name: string | null;
   username: string | null;
   avatar_url: string | null;
+  rating: number;
   total: number;
   wins: number;
   losses: number;
@@ -29,20 +37,13 @@ interface Row {
   win_rate: number;
 }
 
-const PERIOD_DAYS: Record<Period, number | null> = {
-  "7": 7,
-  "30": 30,
-  "90": 90,
-  all: null,
-};
-
 export const Route = createFileRoute("/leaderboard")({
   head: () => ({
     meta: [
       { title: "리더보드 — TCG Hub" },
       {
         name: "description",
-        content: "게임·기간별 사용자 승률 랭킹.",
+        content: "게임별 ELO 랭킹.",
       },
     ],
   }),
@@ -50,17 +51,15 @@ export const Route = createFileRoute("/leaderboard")({
 });
 
 function LeaderboardPage() {
-  const [game, setGame] = useState<Game | "all">("all");
-  const [period, setPeriod] = useState<Period>("30");
+  const [game, setGame] = useState<Game>("optcg");
   const [minTotal, setMinTotal] = useState(5);
+  const [selected, setSelected] = useState<Row | null>(null);
 
   const { data = [], isLoading } = useQuery({
-    queryKey: ["leaderboard", game, period, minTotal],
+    queryKey: ["leaderboard", game, minTotal],
     queryFn: async () => {
-      const days = PERIOD_DAYS[period];
       const { data, error } = await supabase.rpc("get_leaderboard", {
-        ...(game === "all" ? {} : { p_game: game }),
-        ...(days == null ? {} : { p_days: days }),
+        p_game: game,
         p_min_total: minTotal,
         p_limit: 50,
       });
@@ -71,23 +70,13 @@ function LeaderboardPage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl px-6 py-8">
-      <PageHeader title="리더보드" description="게임·기간별 승률 랭킹">
-        <Select value={game} onValueChange={(v) => setGame(v as Game | "all")}>
+      <PageHeader title="리더보드" description="게임별 ELO 랭킹 (각 게임 점수는 독립적으로 집계)">
+        <Select value={game} onValueChange={(v) => setGame(v as Game)}>
           <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">전체</SelectItem>
             <SelectItem value="optcg">원피스</SelectItem>
             <SelectItem value="ptcg">포켓몬</SelectItem>
             <SelectItem value="dtcg">디지몬</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={period} onValueChange={(v) => setPeriod(v as Period)}>
-          <SelectTrigger className="w-[100px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="7">7일</SelectItem>
-            <SelectItem value="30">30일</SelectItem>
-            <SelectItem value="90">90일</SelectItem>
-            <SelectItem value="all">전체</SelectItem>
           </SelectContent>
         </Select>
         <Select
@@ -111,35 +100,53 @@ function LeaderboardPage() {
           <EmptyState
             icon={Trophy}
             title="조건에 맞는 랭커가 없어요"
-            description="기간/판수 조건을 조정해보세요."
+            description="다른 게임을 선택하거나 최소 판수 조건을 낮춰보세요."
           />
         </div>
       ) : (
         <ol className="mt-6 divide-y divide-border rounded-lg border border-border bg-card">
           {data.map((r, i) => (
-            <li key={r.user_id} className="flex items-center gap-3 px-4 py-3">
-              <RankBadge rank={i + 1} />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">
-                  {r.display_name || r.username || "익명"}
-                  {r.username && (
-                    <span className="ml-2 text-xs text-muted-foreground">@{r.username}</span>
-                  )}
-                </p>
-                <p className="text-[11px] text-muted-foreground">
-                  {r.total}판 · {r.wins}승 {r.losses}패
-                  {r.draws ? ` ${r.draws}무` : ""}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-base font-semibold tabular-nums">
-                  {Number(r.win_rate).toFixed(1)}%
-                </p>
-              </div>
+            <li key={r.user_id}>
+              <button
+                type="button"
+                onClick={() => setSelected(r)}
+                className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40"
+              >
+                <RankBadge rank={i + 1} />
+                <Avatar className="h-9 w-9">
+                  <AvatarImage src={r.avatar_url ?? undefined} />
+                  <AvatarFallback>
+                    {(r.display_name ?? r.username ?? "?").slice(0, 1)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">
+                    {r.display_name || r.username || "익명"}
+                    {r.username && (
+                      <span className="ml-2 text-xs text-muted-foreground">@{r.username}</span>
+                    )}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {r.total}판 · {r.wins}승 {r.losses}패
+                    {r.draws ? ` ${r.draws}무` : ""} · 승률 {Number(r.win_rate).toFixed(1)}%
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-base font-semibold tabular-nums">{r.rating}</p>
+                  <p className="text-[10px] text-muted-foreground">ELO</p>
+                </div>
+              </button>
             </li>
           ))}
         </ol>
       )}
+
+      <UserMatchesDialog
+        open={!!selected}
+        onOpenChange={(o) => !o && setSelected(null)}
+        user={selected}
+        game={game}
+      />
     </div>
   );
 }
@@ -162,4 +169,114 @@ function RankBadge({ rank }: { rank: number }) {
       {rank}
     </span>
   );
+}
+
+function UserMatchesDialog({
+  open,
+  onOpenChange,
+  user,
+  game,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  user: Row | null;
+  game: Game;
+}) {
+  const { data: matches = [], isLoading } = useQuery({
+    queryKey: ["user-recent", user?.user_id, game],
+    enabled: !!user?.user_id,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_user_recent_matches", {
+        p_user_id: user!.user_id,
+        p_game: game,
+        p_limit: 20,
+      });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        {user && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-3">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={user.avatar_url ?? undefined} />
+                  <AvatarFallback>
+                    {(user.display_name ?? user.username ?? "?").slice(0, 1)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p>{user.display_name || user.username || "익명"}</p>
+                  <p className="text-xs font-normal text-muted-foreground">
+                    {GAME_LABEL[game]} · ELO {user.rating} · {user.total}판
+                  </p>
+                </div>
+              </DialogTitle>
+            </DialogHeader>
+
+            <section>
+              <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                최근 대전 ({matches.length})
+              </h3>
+              {isLoading ? (
+                <p className="text-sm text-muted-foreground">불러오는 중...</p>
+              ) : matches.length === 0 ? (
+                <p className="text-sm text-muted-foreground">기록 없음</p>
+              ) : (
+                <ul className="divide-y divide-border rounded-md border border-border bg-card">
+                  {matches.map((m) => (
+                    <li key={m.id} className="flex items-center justify-between px-3 py-2 text-xs">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate">
+                          <span className="font-medium">{m.my_deck}</span>
+                          <span className="mx-1 text-muted-foreground">vs</span>
+                          {m.opp_leader || m.opp_deck || "—"}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {new Date(m.played_at).toLocaleDateString("ko-KR")} ·{" "}
+                          {m.went_first ? "선공" : "후공"}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <ResultPill r={m.result as "win" | "loss" | "draw"} />
+                        {m.points_delta != null && (
+                          <span
+                            className={
+                              "tabular-nums text-[11px] font-medium " +
+                              (m.points_delta > 0
+                                ? "text-emerald-600"
+                                : m.points_delta < 0
+                                  ? "text-rose-600"
+                                  : "text-muted-foreground")
+                            }
+                          >
+                            {m.points_delta > 0 ? "+" : ""}
+                            {m.points_delta}
+                          </span>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ResultPill({ r }: { r: "win" | "loss" | "draw" }) {
+  const map = {
+    win: "bg-emerald-500/10 text-emerald-600",
+    loss: "bg-rose-500/10 text-rose-600",
+    draw: "bg-muted text-muted-foreground",
+  } as const;
+  const label = { win: "승", loss: "패", draw: "무" }[r];
+  return <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${map[r]}`}>{label}</span>;
 }
