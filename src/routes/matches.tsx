@@ -1,6 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Swords, Trash2, Plus, Wand2, Pencil, Download, Upload, X, Eye } from "lucide-react";
+import { Swords, Trash2, Plus, Wand2, Pencil, Download, Upload, X, Eye, CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+import { OpponentSearch, type FoundUser } from "@/components/opponent-search";
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -958,9 +965,13 @@ function NewMatchDialog({
     went_first: String(lastMatch?.went_first ?? true),
     result: "win" as Result,
     notes: "",
+    tournament_note: "",
     deck_id: (lastMatch?.deck_id ?? "") as string,
+    opponent_deck_id: "" as string,
+    played_at: new Date(),
   });
   const [form, setForm] = useState(initial);
+  const [opponent, setOpponent] = useState<FoundUser | null>(null);
 
   const { data: decks = [] } = useQuery({
     queryKey: ["decks-for-match", user?.id, form.game],
@@ -977,14 +988,51 @@ function NewMatchDialog({
     },
   });
 
-  // When opening, refresh defaults from the most recent match (if any).
+  // Opponent's saved (public) decks
+  const { data: oppDecks = [] } = useQuery({
+    queryKey: ["opp-decks-for-match", opponent?.id, form.game],
+    enabled: !!opponent && open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("decks")
+        .select("id,name,leader,game,is_public")
+        .eq("user_id", opponent!.id)
+        .eq("game", form.game)
+        .eq("is_public", true)
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // Current ratings preview (ELO delta estimate)
+  const { data: ratings } = useQuery({
+    queryKey: ["ratings-preview", user?.id, opponent?.id, form.game],
+    enabled: !!user && !!opponent && open,
+    queryFn: async () => {
+      const ids = [user!.id, opponent!.id];
+      const { data } = await supabase
+        .from("user_ratings")
+        .select("user_id,rating")
+        .in("user_id", ids)
+        .eq("game", form.game);
+      const me = data?.find((r) => r.user_id === user!.id)?.rating ?? 1000;
+      const op = data?.find((r) => r.user_id === opponent!.id)?.rating ?? 1000;
+      return { me, op };
+    },
+  });
+
+  const expected = ratings ? 1 / (1 + Math.pow(10, (ratings.op - ratings.me) / 400)) : 0.5;
+  const sSelf = form.result === "win" ? 1 : form.result === "loss" ? 0 : 0.5;
+  const previewDelta = Math.round(32 * (sSelf - expected));
+
   useEffect(() => {
     if (!open) return;
     setForm(initial());
+    setOpponent(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, lastMatch?.id]);
 
-  // W / L / D keyboard shortcuts while dialog is open.
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -992,9 +1040,7 @@ function NewMatchDialog({
       if (target && /^(input|textarea|select)$/i.test(target.tagName)) return;
       const map: Record<string, Result> = { w: "win", l: "loss", d: "draw" };
       const r = map[e.key.toLowerCase()];
-      if (r) {
-        setForm((f) => ({ ...f, result: r }));
-      }
+      if (r) setForm((f) => ({ ...f, result: r }));
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -1006,13 +1052,22 @@ function NewMatchDialog({
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    const myDeck = finalize(form.my_deck);
+    const myDeck = form.deck_id
+      ? (decks.find((d) => d.id === form.deck_id)?.name ?? form.my_deck)
+      : finalize(form.my_deck);
     if (!myDeck) {
-      toast.error("내 덱 이름을 입력해 주세요");
+      toast.error("내 덱을 선택하거나 입력해 주세요");
       return;
     }
-    const oppLeader = finalize(form.opp_leader);
-    const oppDeck = finalize(form.opp_deck);
+    let oppLeader = finalize(form.opp_leader);
+    let oppDeck = finalize(form.opp_deck);
+    if (form.opponent_deck_id) {
+      const od = oppDecks.find((d) => d.id === form.opponent_deck_id);
+      if (od) {
+        oppDeck = od.name;
+        oppLeader = od.leader || oppLeader;
+      }
+    }
     const { error } = await supabase.from("matches").insert({
       user_id: user.id,
       game: form.game,
@@ -1024,12 +1079,16 @@ function NewMatchDialog({
       result: form.result,
       notes: form.notes.trim() || null,
       deck_id: form.deck_id || null,
+      played_at: form.played_at.toISOString(),
+      opponent_user_id: opponent?.id ?? null,
+      opponent_deck_id: form.opponent_deck_id || null,
+      tournament_note: form.tournament_note.trim() || null,
     });
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("기록됨");
+    toast.success(opponent ? `기록됨 (예상 ${previewDelta >= 0 ? "+" : ""}${previewDelta}점)` : "기록됨");
     setOpen(false);
     qc.invalidateQueries({ queryKey: ["matches"] });
     onCreated();
@@ -1043,156 +1102,220 @@ function NewMatchDialog({
           전적 추가
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>전적 기록</DialogTitle>
         </DialogHeader>
-        <form onSubmit={submit} className="grid grid-cols-2 gap-3">
-          <div className="flex flex-col gap-1.5">
-            <Label>게임</Label>
-            <Select
-              value={form.game}
-              onValueChange={(v) => setForm({ ...form, game: v as Game })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="optcg">원피스</SelectItem>
-                <SelectItem value="ptcg">포켓몬</SelectItem>
-                <SelectItem value="dtcg">디지몬</SelectItem>
-              </SelectContent>
-            </Select>
+        <form onSubmit={submit} className="space-y-4">
+          {/* 1) 날짜 + 게임 + 이벤트 */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <Label>날짜</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className={cn("justify-start text-left font-normal", !form.played_at && "text-muted-foreground")}
+                  >
+                    <CalendarIcon className="mr-1 h-4 w-4" />
+                    {format(form.played_at, "MM/dd")}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={form.played_at}
+                    onSelect={(d) => d && setForm({ ...form, played_at: d })}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>게임</Label>
+              <Select value={form.game} onValueChange={(v) => setForm({ ...form, game: v as Game, deck_id: "", opponent_deck_id: "" })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="optcg">원피스</SelectItem>
+                  <SelectItem value="ptcg">포켓몬</SelectItem>
+                  <SelectItem value="dtcg">디지몬</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>이벤트</Label>
+              <Select value={form.event} onValueChange={(v) => setForm({ ...form, event: v as EventT })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="friendly">친선</SelectItem>
+                  <SelectItem value="shop">매장 대회</SelectItem>
+                  <SelectItem value="official">공식 대회</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>이벤트</Label>
-            <Select
-              value={form.event}
-              onValueChange={(v) => setForm({ ...form, event: v as EventT })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="friendly">친선</SelectItem>
-                <SelectItem value="shop">매장 대회</SelectItem>
-                <SelectItem value="official">공식 대회</SelectItem>
-              </SelectContent>
-            </Select>
+
+          {/* 2) 선/후, 결과 (게임 바로 밑) */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <Label>선/후</Label>
+              <Select value={form.went_first} onValueChange={(v) => setForm({ ...form, went_first: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="true">선공</SelectItem>
+                  <SelectItem value="false">후공</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>결과 (W/L/D)</Label>
+              <Select value={form.result} onValueChange={(v) => setForm({ ...form, result: v as Result })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="win">승</SelectItem>
+                  <SelectItem value="loss">패</SelectItem>
+                  <SelectItem value="draw">무</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          {decks.length > 0 && (
-            <div className="col-span-2 flex flex-col gap-1.5">
-              <Label>내 덱 선택 (선택사항)</Label>
+
+          {/* 3) 내 덱 (저장된 덱 우선, 없으면 직접 입력) */}
+          <div className="flex flex-col gap-1.5">
+            <Label>내 덱</Label>
+            {decks.length > 0 ? (
               <Select
-                value={form.deck_id || "none"}
+                value={form.deck_id || "manual"}
                 onValueChange={(v) => {
-                  if (v === "none") {
+                  if (v === "manual") {
                     setForm({ ...form, deck_id: "" });
                     return;
                   }
                   const d = decks.find((x) => x.id === v);
-                  setForm({
-                    ...form,
-                    deck_id: v,
-                    my_deck: d?.leader || d?.name || form.my_deck,
-                  });
+                  setForm({ ...form, deck_id: v, my_deck: d?.name ?? form.my_deck });
                 }}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="내 덱 목록에서 선택" />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="저장된 덱 선택" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">직접 입력</SelectItem>
                   {decks.map((d) => (
                     <SelectItem key={d.id} value={d.id}>
-                      {d.name}
-                      {d.leader ? ` · ${d.leader}` : ""}
+                      {d.name}{d.leader ? ` · ${d.leader}` : ""}
                     </SelectItem>
                   ))}
+                  <SelectItem value="manual">직접 입력...</SelectItem>
                 </SelectContent>
               </Select>
+            ) : null}
+            {(decks.length === 0 || !form.deck_id) && (
+              <>
+                <Input
+                  value={form.my_deck}
+                  onChange={(e) => setForm({ ...form, my_deck: e.target.value })}
+                  placeholder={decks.length === 0 ? "저장된 덱이 없습니다 — 직접 입력" : "예: 적 루피"}
+                  required
+                />
+                {!keepRaw && (
+                  <CanonicalHint raw={form.my_deck} game={form.game} onApply={(v) => setForm({ ...form, my_deck: v })} />
+                )}
+              </>
+            )}
+          </div>
+
+          {/* 4) 상대 정보 — 사용자 태그 + 상대 덱 */}
+          <div className="space-y-2 rounded-md border border-border p-3">
+            <Label>상대</Label>
+            <OpponentSearch
+              selected={opponent}
+              onSelect={(u) => {
+                setOpponent(u);
+                setForm({ ...form, opponent_deck_id: "" });
+              }}
+              onClear={() => {
+                setOpponent(null);
+                setForm({ ...form, opponent_deck_id: "" });
+              }}
+            />
+
+            {opponent && oppDecks.length > 0 && (
+              <Select
+                value={form.opponent_deck_id || "manual"}
+                onValueChange={(v) => setForm({ ...form, opponent_deck_id: v === "manual" ? "" : v })}
+              >
+                <SelectTrigger><SelectValue placeholder="상대 저장 덱" /></SelectTrigger>
+                <SelectContent>
+                  {oppDecks.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>
+                      {d.name}{d.leader ? ` · ${d.leader}` : ""}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="manual">직접 입력...</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+            {opponent && oppDecks.length === 0 && (
+              <p className="text-[11px] text-muted-foreground">
+                이 사용자가 공개한 덱이 없습니다. 직접 입력하면 상대가 나중에 자기 덱 정보를 수정할 수 있어요.
+              </p>
+            )}
+
+            {!form.opponent_deck_id && (
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  value={form.opp_leader}
+                  onChange={(e) => setForm({ ...form, opp_leader: e.target.value })}
+                  placeholder="상대 리더"
+                />
+                <Input
+                  value={form.opp_deck}
+                  onChange={(e) => setForm({ ...form, opp_deck: e.target.value })}
+                  placeholder="상대 덱 타입"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* 5) 대회 메모 + ELO 미리보기 */}
+          {form.event !== "friendly" && (
+            <div className="flex flex-col gap-1.5">
+              <Label>대회 메모</Label>
+              <Textarea
+                value={form.tournament_note}
+                onChange={(e) => setForm({ ...form, tournament_note: e.target.value })}
+                placeholder="라운드, 매장명, 비고 등"
+                rows={2}
+              />
             </div>
           )}
-          <div className="col-span-2 flex flex-col gap-1.5">
-            <Label>내 덱 (리더/덱 이름)</Label>
-            <Input
-              value={form.my_deck}
-              onChange={(e) => setForm({ ...form, my_deck: e.target.value })}
-              placeholder="예: 적 루피"
-              required
+
+          <div className="flex flex-col gap-1.5">
+            <Label>경기 메모</Label>
+            <Textarea
+              value={form.notes}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              placeholder="기억해 두고 싶은 점"
+              rows={2}
             />
-            {!keepRaw && (
-              <CanonicalHint
-                raw={form.my_deck}
-                game={form.game}
-                onApply={(v) => setForm({ ...form, my_deck: v })}
-              />
-            )}
           </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>상대 리더</Label>
-            <Input
-              value={form.opp_leader}
-              onChange={(e) =>
-                setForm({ ...form, opp_leader: e.target.value })
-              }
-              placeholder="예: 검은수염"
-            />
-            {!keepRaw && (
-              <CanonicalHint
-                raw={form.opp_leader}
-                game={form.game}
-                onApply={(v) => setForm({ ...form, opp_leader: v })}
-              />
-            )}
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>상대 덱 타입</Label>
-            <Input
-              value={form.opp_deck}
-              onChange={(e) => setForm({ ...form, opp_deck: e.target.value })}
-              placeholder="선택"
-            />
-            {!keepRaw && (
-              <CanonicalHint
-                raw={form.opp_deck}
-                game={form.game}
-                onApply={(v) => setForm({ ...form, opp_deck: v })}
-              />
-            )}
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>선/후</Label>
-            <Select
-              value={form.went_first}
-              onValueChange={(v) => setForm({ ...form, went_first: v })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="true">선공</SelectItem>
-                <SelectItem value="false">후공</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>결과</Label>
-            <Select
-              value={form.result}
-              onValueChange={(v) => setForm({ ...form, result: v as Result })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="win">승</SelectItem>
-                <SelectItem value="loss">패</SelectItem>
-                <SelectItem value="draw">무</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="col-span-2 mt-2 flex items-center justify-between gap-2">
+
+          {opponent && ratings && (
+            <div className="rounded-md bg-muted/40 px-3 py-2 text-xs">
+              <p className="text-muted-foreground">
+                ELO 미리보기 — 내 점수 <span className="font-medium text-foreground">{ratings.me}</span> vs{" "}
+                <span className="font-medium text-foreground">{ratings.op}</span>
+              </p>
+              <p className="mt-0.5">
+                예상 변화:{" "}
+                <span className={cn("font-semibold", previewDelta > 0 ? "text-emerald-600" : previewDelta < 0 ? "text-rose-600" : "")}>
+                  {previewDelta > 0 ? "+" : ""}{previewDelta}점
+                </span>
+                <span className="ml-2 text-muted-foreground">(K=32, 기대승률 {Math.round(expected * 100)}%)</span>
+              </p>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between gap-2 pt-2">
             <label className="flex items-center gap-2 text-xs text-muted-foreground">
               <input
                 type="checkbox"
@@ -1203,9 +1326,7 @@ function NewMatchDialog({
               원문 그대로 저장
             </label>
             <div className="flex gap-2">
-              <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
-                취소
-              </Button>
+              <Button type="button" variant="ghost" onClick={() => setOpen(false)}>취소</Button>
               <Button type="submit">저장</Button>
             </div>
           </div>
