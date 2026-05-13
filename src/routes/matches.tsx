@@ -1,6 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Swords, Trash2, Plus, Wand2, Pencil, Download, Upload, X, Eye } from "lucide-react";
+import { Swords, Trash2, Plus, Wand2, Pencil, Download, Upload, X, Eye, CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+import { OpponentSearch, type FoundUser } from "@/components/opponent-search";
+import { OpponentDetailDialog } from "@/components/opponent-detail-dialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
