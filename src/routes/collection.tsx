@@ -9,10 +9,24 @@ import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"];
+type Game = Database["public"]["Enums"]["tcg_game"];
+
+const GAMES: { id: Game; label: string }[] = [
+  { id: "optcg", label: "원피스" },
+  { id: "ptcg", label: "포켓몬" },
+  { id: "dtcg", label: "디지몬" },
+];
 
 export const Route = createFileRoute("/collection")({
   head: () => ({
@@ -28,13 +42,16 @@ function CollectionPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [q, setQ] = useState("");
+  const [game, setGame] = useState<Game>("optcg");
+  const [setCode, setSetCode] = useState<string>("all");
 
   const { data: cards = [] } = useQuery({
-    queryKey: ["collection-cards"],
+    queryKey: ["collection-cards", game],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cards")
         .select("*")
+        .eq("game", game)
         .order("code", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Card[];
@@ -56,6 +73,17 @@ function CollectionPage() {
     },
   });
 
+  const sets = useMemo(() => {
+    const s = new Set<string>();
+    for (const c of cards) s.add(c.set_code);
+    return Array.from(s).sort((a, b) => b.localeCompare(a));
+  }, [cards]);
+
+  const scopedCards = useMemo(
+    () => (setCode === "all" ? cards : cards.filter((c) => c.set_code === setCode)),
+    [cards, setCode],
+  );
+
   const setProgress = useMemo(() => {
     const map = new Map<string, { total: number; have: number }>();
     for (const c of cards) {
@@ -67,26 +95,26 @@ function CollectionPage() {
     return Array.from(map.entries()).sort(([a], [b]) => b.localeCompare(a));
   }, [cards, owned]);
 
-  const totalCards = cards.length;
+  const totalCards = scopedCards.length;
   const haveUnique = useMemo(
-    () => cards.filter((c) => (owned.get(c.code) ?? 0) > 0).length,
-    [cards, owned],
+    () => scopedCards.filter((c) => (owned.get(c.code) ?? 0) > 0).length,
+    [scopedCards, owned],
   );
   const haveTotal = useMemo(
     () =>
-      Array.from(owned.values()).reduce((s, n) => s + n, 0),
-    [owned],
+      scopedCards.reduce((s, c) => s + (owned.get(c.code) ?? 0), 0),
+    [scopedCards, owned],
   );
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
-    if (!term) return cards;
-    return cards.filter(
+    if (!term) return scopedCards;
+    return scopedCards.filter(
       (c) =>
         c.name.toLowerCase().includes(term) ||
         c.code.toLowerCase().includes(term),
     );
-  }, [cards, q]);
+  }, [scopedCards, q]);
 
   const setQty = async (code: string, next: number) => {
     if (!user) {
@@ -132,18 +160,55 @@ function CollectionPage() {
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
       <PageHeader
         title="내 컬렉션"
-        description="보유 카드와 세트별 진행률을 관리하세요"
+        description="게임을 선택하고 발매된 세트별 진행률을 관리하세요"
       >
         <Button asChild variant="outline" size="sm">
           <Link to="/packs">팩 시뮬레이터</Link>
         </Button>
       </PageHeader>
 
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <div className="inline-flex items-center gap-1 rounded-lg border border-border bg-card p-1">
+          {GAMES.map((g) => (
+            <button
+              key={g.id}
+              onClick={() => {
+                setGame(g.id);
+                setSetCode("all");
+                setQ("");
+              }}
+              className={
+                "rounded-md px-3 py-1.5 text-xs font-medium transition-colors " +
+                (game === g.id
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground")
+              }
+            >
+              {g.label}
+            </button>
+          ))}
+        </div>
+
+        <Select value={setCode} onValueChange={setSetCode}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="세트 선택" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">전체 세트</SelectItem>
+            {sets.map((s) => (
+              <SelectItem key={s} value={s}>
+                {s}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-3">
         <Stat label="보유 종류" value={`${haveUnique} / ${totalCards}`} />
         <Stat label="총 보유 매수" value={`${haveTotal}`} />
         <Stat
-          label="전체 진행률"
+          label="진행률"
           value={`${totalCards === 0 ? 0 : Math.round((haveUnique / totalCards) * 100)}%`}
         />
       </div>
@@ -151,7 +216,7 @@ function CollectionPage() {
       <section className="mt-6">
         <h2 className="text-sm font-semibold">세트별 진행률</h2>
         {setProgress.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">카드 데이터가 없습니다.</p>
+          <p className="mt-2 text-sm text-muted-foreground">해당 게임의 카드 데이터가 없습니다.</p>
         ) : (
           <ul className="mt-3 space-y-2">
             {setProgress.map(([set, p]) => (
@@ -160,7 +225,12 @@ function CollectionPage() {
                 className="rounded-lg border border-border bg-card p-3"
               >
                 <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium">{set}</span>
+                  <button
+                    onClick={() => setSetCode(set)}
+                    className="font-medium hover:underline"
+                  >
+                    {set}
+                  </button>
                   <span className="text-muted-foreground">
                     {p.have} / {p.total}
                   </span>
@@ -177,7 +247,9 @@ function CollectionPage() {
 
       <section className="mt-8">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold">카드별 수량</h2>
+          <h2 className="text-sm font-semibold">
+            카드별 수량 {setCode !== "all" && <span className="text-muted-foreground">· {setCode}</span>}
+          </h2>
           <div className="relative w-64 max-w-full">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
