@@ -1,0 +1,4 @@
+code,set_code,game,name,type,colors,cost,power,counter,attribute,rarity,effect,image_url
+OP01-001,OP01,optcg,몽키 D 루피,leader,red,,5000,,타격,L,4코스트 효과 예시,/cards/OP01-001.png
+OP01-002,OP01,optcg,로로노아 조로,character,red|green,3,5000,1000,슬래시,SR,효과 텍스트 예시,/cards/OP01-002.png
+OP01-003,OP01,optcg,나미,character,blue,2,3000,2000,특수,R,드로우 효과 예시,
