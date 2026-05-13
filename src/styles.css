@@ -141,8 +141,46 @@
     border-color: var(--color-border);
   }
 
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    /* iOS 네이티브 앱 컨테이너에서 노치/홈 인디케이터 영역 회피 */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* 모바일(≤640px)에서 기본 본문 폰트를 살짝 키워 앱에서도 가독성 확보 */
+  @media (max-width: 640px) {
+    html {
+      font-size: 15px;
+    }
+  }
+}
+
+/*
+ * 모바일에서 모든 페이지의 공통 컨테이너(px-6 py-8) 여백을 자동으로 축소.
+ * 페이지마다 따로 고치지 않아도 앱/모바일 웹에서 좌우 여백이 답답하지 않도록 함.
+ */
+@media (max-width: 640px) {
+  main > div.px-6,
+  main > div[class*=" px-6"],
+  main > div[class^="px-6"] {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  main > div.py-8,
+  main > div[class*=" py-8"],
+  main > div[class^="py-8"] {
+    padding-top: 1.25rem;
+    padding-bottom: 1.25rem;
+  }
+  /* 홈 인디케이터 회피용 하단 안전 영역 */
+  main {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
