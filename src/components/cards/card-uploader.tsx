@@ -638,9 +638,16 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
           <Input type="file" accept="image/*" onChange={onPickImage} disabled={imgUploading} />
           {r.image_url && <img src={r.image_url} alt="" className="h-12 w-9 rounded object-cover" />}
         </div>
-        {r.image_url && (
-          <Input value={r.image_url} onChange={e => setR({ ...r, image_url: e.target.value || null })} className="text-xs font-mono" />
-        )}
+        <Input
+          value={r.image_url ?? ""}
+          onChange={e => setR({ ...r, image_url: e.target.value || null })}
+          onBlur={e => setR({ ...r, image_url: normalizeImageUrl(e.target.value) })}
+          placeholder="이미지 URL 또는 구글 드라이브 공유 링크 (예: https://drive.google.com/file/d/...)"
+          className="text-xs font-mono"
+        />
+        <p className="text-[11px] text-muted-foreground">
+          구글 드라이브 링크는 자동으로 표시 가능한 주소로 변환됩니다. 파일은 <b>"링크가 있는 모든 사용자"</b> 공개로 설정해 주세요.
+        </p>
       </div>
       <div className="md:col-span-2 flex justify-end">
         <Button onClick={submit}><Plus className="mr-1 h-4 w-4" />표에 추가</Button>
