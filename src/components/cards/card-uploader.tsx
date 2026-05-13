@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Upload, Download, Trash2, Plus, Image as ImageIcon, FileSpreadsheet, Pencil, X, Wand2, ShieldCheck, AlertTriangle, Save, Sparkles } from "lucide-react";
+import { Upload, Download, Trash2, Plus, Image as ImageIcon, FileSpreadsheet, Pencil, X, Wand2, ShieldCheck, AlertTriangle, Save, Sparkles, ScanLine } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import {
   autoFixRow, validateRow, findInternalDuplicates, downloadRowsAsCsv,
   saveDraft, loadDraft, clearDraft,
 } from "./card-utils";
+import { compressToWebp } from "@/lib/image-utils";
 
 type Game = Database["public"]["Enums"]["tcg_game"];
 type CardType = Database["public"]["Enums"]["card_type"];
@@ -344,25 +345,96 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
     const newRows: CardRow[] = [];
     let done = 0;
     try {
-      for (const f of files) {
-        if (!f.type.startsWith("image/")) { done++; continue; }
-        const code = extractCodeFromFilename(f.name);
+      for (const original of files) {
+        if (!original.type.startsWith("image/")) { done++; continue; }
+        // WebP 변환 + 800px 리사이즈로 업로드 비용 절감
+        const f = await compressToWebp(original, { maxWidth: 800, quality: 0.82 });
+        const code = extractCodeFromFilename(original.name);
         const setCode = code.split("-")[0] || "";
-        const path = `${setCode || "misc"}/${code}-${Date.now()}.${f.name.split(".").pop()}`;
+        const path = `${setCode || "misc"}/${code}-${Date.now()}.webp`;
         const { error: upErr } = await supabase.storage.from("card-images").upload(path, f, {
-          cacheControl: "3600", upsert: false,
+          cacheControl: "3600", upsert: false, contentType: "image/webp",
         });
-        if (upErr) { toast.error(`${f.name}: ${upErr.message}`); done++; continue; }
+        if (upErr) { toast.error(`${original.name}: ${upErr.message}`); done++; continue; }
         const { data: pub } = supabase.storage.from("card-images").getPublicUrl(path);
         newRows.push({
-          ...emptyRow(), code, set_code: setCode, name: code, image_url: pub.publicUrl,
+          ...emptyRow(), code, set_code: setCode, name: "", image_url: pub.publicUrl,
         });
         done++;
         setProgress({ done, total: files.length });
       }
       setRows(prev => [...prev, ...newRows]);
       setDupChecked(false);
-      toast.success(`이미지 ${newRows.length}장 업로드. 표에서 정보를 채워주세요.`);
+      toast.success(`이미지 ${newRows.length}장 업로드 (WebP 변환 완료). "이름 비어있는 행 OCR"로 자동 채울 수 있어요.`);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /** 단일 행 OCR: image_url을 Gemini Vision으로 분석해 빈 필드만 채움 */
+  const ocrRow = async (idx: number): Promise<boolean> => {
+    const r = rows[idx];
+    if (!r?.image_url) return false;
+    try {
+      const res = await fetch("/api/card-ocr", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image_url: r.image_url, game_hint: r.game }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || `OCR 실패 (${res.status})`);
+      const d = json.data ?? {};
+      const patch: Partial<CardRow> = {};
+      if (!r.name && d.name) patch.name = String(d.name);
+      if (!r.code && d.code) patch.code = String(d.code).toUpperCase();
+      if (!r.set_code && d.set_code) patch.set_code = String(d.set_code).toUpperCase();
+      if (d.type && VALID_TYPES.includes(d.type as CardType)) patch.type = d.type as CardType;
+      if (Array.isArray(d.colors) && d.colors.length && r.colors.length === 0) patch.colors = (d.colors as unknown[]).map(String);
+      if (d.cost != null && r.cost == null) patch.cost = Number(d.cost);
+      if (d.power != null && r.power == null) patch.power = Number(d.power);
+      if (d.counter != null && r.counter == null) patch.counter = Number(d.counter);
+      if (d.attribute && !r.attribute) patch.attribute = String(d.attribute);
+      if (d.rarity && !r.rarity) patch.rarity = String(d.rarity).toUpperCase();
+      if (d.effect && !r.effect) patch.effect = String(d.effect);
+      updateRow(idx, patch);
+      return true;
+    } catch (e) {
+      toast.error(`${idx + 1}행 OCR 실패: ${(e as Error).message}`);
+      return false;
+    }
+  };
+
+  /** 선택된 행을 순차적으로 OCR */
+  const ocrSelected = async () => {
+    const targets = Array.from(selected).sort((a, b) => a - b);
+    if (targets.length === 0) { toast.error("선택된 행이 없습니다"); return; }
+    setBusy(true);
+    setProgress({ done: 0, total: targets.length });
+    let ok = 0;
+    try {
+      for (let i = 0; i < targets.length; i++) {
+        if (await ocrRow(targets[i])) ok++;
+        setProgress({ done: i + 1, total: targets.length });
+      }
+      toast.success(`OCR 완료: ${ok}/${targets.length}건 (이미 입력된 필드는 보존)`);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /** 이름이 비어있고 image_url만 있는 행을 모두 OCR */
+  const ocrUnmatched = async () => {
+    const targets = rows.map((r, i) => (!r.name && r.image_url ? i : -1)).filter(i => i >= 0);
+    if (targets.length === 0) { toast.info("이름 비어있는 행이 없습니다"); return; }
+    setBusy(true);
+    setProgress({ done: 0, total: targets.length });
+    let ok = 0;
+    try {
+      for (let i = 0; i < targets.length; i++) {
+        if (await ocrRow(targets[i])) ok++;
+        setProgress({ done: i + 1, total: targets.length });
+      }
+      toast.success(`자동 매칭: ${ok}/${targets.length}건 채움`);
     } finally {
       setBusy(false);
     }
@@ -592,6 +664,12 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
                 <Button variant="outline" size="sm" onClick={checkDuplicatesAgainstDb} disabled={busy}>
                   <ShieldCheck className="mr-1 h-4 w-4" />중복 검사
                 </Button>
+                <Button variant="outline" size="sm" onClick={ocrUnmatched} disabled={busy}>
+                  <ScanLine className="mr-1 h-4 w-4" />이름 비어있는 행 OCR
+                </Button>
+                <Button variant="outline" size="sm" onClick={ocrSelected} disabled={busy || selected.size === 0}>
+                  <ScanLine className="mr-1 h-4 w-4" />선택 OCR ({selected.size})
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => setBulkOpen(v => !v)} disabled={selected.size === 0}>
                   <Sparkles className="mr-1 h-4 w-4" />선택 일괄 적용 ({selected.size})
                 </Button>
@@ -720,9 +798,19 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
                       <td className="px-1 py-1"><Input value={r.counter ?? ""} onChange={e => updateRow(i, { counter: num(e.target.value) })} className="h-7 text-xs" /></td>
                       <td className="px-1 py-1"><Input value={r.rarity ?? ""} onChange={e => updateRow(i, { rarity: e.target.value || null })} className={`h-7 text-xs w-16 ${fieldErr("rarity") ? errCls : ""}`} /></td>
                       <td className="px-1 py-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeRow(i)}>
-                          <X className="h-3.5 w-3.5" />
-                        </Button>
+                        <div className="flex gap-0.5">
+                          <Button
+                            variant="ghost" size="icon" className="h-7 w-7"
+                            disabled={busy || !r.image_url}
+                            title="이미지에서 자동 인식 (OCR)"
+                            onClick={async () => { setBusy(true); try { await ocrRow(i); } finally { setBusy(false); } }}
+                          >
+                            <ScanLine className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeRow(i)}>
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                     );
