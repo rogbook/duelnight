@@ -2,10 +2,13 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, Layers } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { GAME_LABEL } from "@/lib/match-stats";
+import { colorHex, colorLabel, type Game } from "@/lib/deck-colors";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Deck = Tables<"decks">;
 type Profile = Tables<"profiles">;
+type CardRow = Tables<"cards">;
+type DeckCard = Tables<"deck_cards">;
 
 const SITE = "https://tcg-hub.lovable.app";
 
