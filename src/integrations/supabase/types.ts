@@ -152,9 +152,45 @@ export type Database = {
         }
         Relationships: []
       }
+      deck_cards: {
+        Row: {
+          card_code: string
+          created_at: string
+          deck_id: string
+          id: string
+          position: number
+          quantity: number
+        }
+        Insert: {
+          card_code: string
+          created_at?: string
+          deck_id: string
+          id?: string
+          position?: number
+          quantity?: number
+        }
+        Update: {
+          card_code?: string
+          created_at?: string
+          deck_id?: string
+          id?: string
+          position?: number
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deck_cards_deck_id_fkey"
+            columns: ["deck_id"]
+            isOneToOne: false
+            referencedRelation: "decks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       decks: {
         Row: {
           archetype: string | null
+          colors: string[]
           created_at: string
           game: Database["public"]["Enums"]["tcg_game"]
           id: string
@@ -167,6 +203,7 @@ export type Database = {
         }
         Insert: {
           archetype?: string | null
+          colors?: string[]
           created_at?: string
           game: Database["public"]["Enums"]["tcg_game"]
           id?: string
@@ -179,6 +216,7 @@ export type Database = {
         }
         Update: {
           archetype?: string | null
+          colors?: string[]
           created_at?: string
           game?: Database["public"]["Enums"]["tcg_game"]
           id?: string

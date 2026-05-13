@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Layers, Plus, Pencil, Trash2 } from "lucide-react";
+import { Layers, Plus, Pencil, Trash2, Search, X, Check } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -24,13 +24,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { toast } from "sonner";
 import { GAME_LABEL } from "@/lib/match-stats";
 import { normalizeDeckName } from "@/lib/normalize-deck";
-import type { Database, Tables } from "@/integrations/supabase/types";
+import {
+  COLORS_BY_GAME,
+  HAS_LEADER,
+  REQUIRES_MULTI_COLOR,
+  colorHex,
+  colorLabel,
+  type Game,
+} from "@/lib/deck-colors";
+import type { Tables } from "@/integrations/supabase/types";
 
-type Game = Database["public"]["Enums"]["tcg_game"];
 type Deck = Tables<"decks">;
+type CardRow = Tables<"cards">;
+type DeckCard = Tables<"deck_cards">;
 
 export const Route = createFileRoute("/decks")({
   head: () => ({
@@ -130,7 +144,7 @@ function DecksPage() {
               className="rounded-lg border border-border bg-card p-4"
             >
               <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <Link
                     to="/decks/$id"
                     params={{ id: d.id }}
@@ -141,8 +155,14 @@ function DecksPage() {
                   <p className="mt-0.5 text-[11px] text-muted-foreground">
                     {GAME_LABEL[d.game]}
                     {d.leader ? ` · ${d.leader}` : ""}
-                    {d.archetype ? ` · ${d.archetype}` : ""}
                   </p>
+                  {d.colors && d.colors.length > 0 && (
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {d.colors.map((c) => (
+                        <ColorChip key={c} game={d.game} colorId={c} />
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-1">
                   <DeckDialog
@@ -175,6 +195,18 @@ function DecksPage() {
         </ul>
       )}
     </div>
+  );
+}
+
+function ColorChip({ game, colorId }: { game: Game; colorId: string }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+      <span
+        className="h-2 w-2 rounded-full ring-1 ring-border"
+        style={{ backgroundColor: colorHex(game, colorId) }}
+      />
+      {colorLabel(game, colorId)}
+    </span>
   );
 }
 
@@ -228,39 +260,54 @@ function DeckDialog({
   onSaved: () => void;
 }) {
   const { user } = useAuth();
+  const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState<"info" | "recipe">("info");
   const [form, setForm] = useState({
     game: (deck?.game ?? "optcg") as Game,
     name: deck?.name ?? "",
     leader: deck?.leader ?? "",
-    archetype: deck?.archetype ?? "",
+    colors: (deck?.colors ?? []) as string[],
     notes: deck?.notes ?? "",
     is_public: deck?.is_public ?? false,
   });
 
+  // Reset on open
   useEffect(() => {
-    if (open && deck) {
+    if (!open) return;
+    if (deck) {
       setForm({
         game: deck.game,
         name: deck.name,
         leader: deck.leader ?? "",
-        archetype: deck.archetype ?? "",
+        colors: deck.colors ?? [],
         notes: deck.notes ?? "",
         is_public: deck.is_public,
       });
-    }
-    if (open && !deck) {
+    } else {
       setForm({
         game: "optcg",
         name: "",
         leader: "",
-        archetype: "",
+        colors: [],
         notes: "",
         is_public: false,
       });
     }
+    setTab("info");
   }, [open, deck]);
+
+  const palette = COLORS_BY_GAME[form.game];
+
+  const toggleColor = (id: string) => {
+    setForm((f) => ({
+      ...f,
+      colors: f.colors.includes(id)
+        ? f.colors.filter((x) => x !== id)
+        : [...f.colors, id],
+    }));
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -270,27 +317,43 @@ function DeckDialog({
       toast.error("덱 이름을 입력해 주세요");
       return;
     }
+    if (REQUIRES_MULTI_COLOR[form.game] && form.colors.length < 2) {
+      toast.error("색상(타입)을 2개 이상 선택해 주세요");
+      return;
+    }
     setBusy(true);
     const payload = {
       game: form.game,
       name,
-      leader: form.leader.trim()
-        ? normalizeDeckName(form.leader, form.game) || form.leader.trim()
-        : null,
-      archetype: form.archetype.trim() || null,
+      leader:
+        HAS_LEADER[form.game] && form.leader.trim()
+          ? normalizeDeckName(form.leader, form.game) || form.leader.trim()
+          : null,
+      archetype: null as string | null,
+      colors: form.colors,
       notes: form.notes.trim() || null,
       is_public: form.is_public,
     };
-    const { error } =
+    const result =
       mode === "create"
-        ? await supabase.from("decks").insert({ ...payload, user_id: user.id })
-        : await supabase.from("decks").update(payload).eq("id", deck!.id);
+        ? await supabase
+            .from("decks")
+            .insert({ ...payload, user_id: user.id })
+            .select("id")
+            .single()
+        : await supabase
+            .from("decks")
+            .update(payload)
+            .eq("id", deck!.id)
+            .select("id")
+            .single();
     setBusy(false);
-    if (error) {
-      toast.error(error.message);
+    if (result.error) {
+      toast.error(result.error.message);
       return;
     }
     toast.success(mode === "create" ? "덱이 추가되었어요" : "덱이 수정되었어요");
+    qc.invalidateQueries({ queryKey: ["deck-cards"] });
     setOpen(false);
     onSaved();
   };
@@ -311,74 +374,147 @@ function DeckDialog({
           </button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{mode === "create" ? "덱 추가" : "덱 수정"}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={submit} className="grid grid-cols-2 gap-3">
-          <div className="flex flex-col gap-1.5">
-            <Label>게임</Label>
-            <Select
-              value={form.game}
-              onValueChange={(v) => setForm({ ...form, game: v as Game })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="optcg">원피스</SelectItem>
-                <SelectItem value="ptcg">포켓몬</SelectItem>
-                <SelectItem value="dtcg">디지몬</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>아키타입</Label>
-            <Input
-              value={form.archetype}
-              onChange={(e) => setForm({ ...form, archetype: e.target.value })}
-              placeholder="예: 어그로"
-            />
-          </div>
-          <div className="col-span-2 flex flex-col gap-1.5">
-            <Label>덱 이름</Label>
-            <Input
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="예: 적 루피 어그로"
-              required
-            />
-          </div>
-          <div className="col-span-2 flex flex-col gap-1.5">
-            <Label>리더</Label>
-            <Input
-              value={form.leader}
-              onChange={(e) => setForm({ ...form, leader: e.target.value })}
-              placeholder="예: 적 루피"
-            />
-          </div>
-          <div className="col-span-2 flex flex-col gap-1.5">
-            <Label>메모</Label>
-            <Textarea
-              value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              rows={3}
-              placeholder="구성, 운영 포인트 등"
-            />
-          </div>
-          <div className="col-span-2 flex items-center justify-between">
-            <label className="flex items-center gap-2 text-xs text-muted-foreground">
-              <input
-                type="checkbox"
-                className="h-3.5 w-3.5"
-                checked={form.is_public}
-                onChange={(e) =>
-                  setForm({ ...form, is_public: e.target.checked })
+
+        <div className="mb-3 inline-flex rounded-md border border-border p-0.5 text-xs">
+          <button
+            type="button"
+            onClick={() => setTab("info")}
+            className={`rounded px-3 py-1 ${
+              tab === "info"
+                ? "bg-foreground text-background"
+                : "text-muted-foreground"
+            }`}
+          >
+            기본 정보
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab("recipe")}
+            disabled={mode === "create"}
+            className={`rounded px-3 py-1 ${
+              tab === "recipe"
+                ? "bg-foreground text-background"
+                : "text-muted-foreground"
+            } disabled:opacity-40`}
+            title={
+              mode === "create" ? "먼저 저장한 뒤 카드를 등록할 수 있어요" : ""
+            }
+          >
+            덱 레시피
+          </button>
+        </div>
+
+        {tab === "info" ? (
+          <form onSubmit={submit} className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <Label>게임</Label>
+              <Select
+                value={form.game}
+                onValueChange={(v) =>
+                  setForm({
+                    ...form,
+                    game: v as Game,
+                    colors: [],
+                    leader: HAS_LEADER[v as Game] ? form.leader : "",
+                  })
                 }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="optcg">원피스</SelectItem>
+                  <SelectItem value="ptcg">포켓몬</SelectItem>
+                  <SelectItem value="dtcg">디지몬</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>공개 여부</Label>
+              <label className="flex h-10 items-center gap-2 rounded-md border border-input px-3 text-xs text-muted-foreground">
+                <input
+                  type="checkbox"
+                  className="h-3.5 w-3.5"
+                  checked={form.is_public}
+                  onChange={(e) =>
+                    setForm({ ...form, is_public: e.target.checked })
+                  }
+                />
+                공개 (다른 사용자도 볼 수 있음)
+              </label>
+            </div>
+
+            <div className="col-span-2 flex flex-col gap-1.5">
+              <Label>
+                색상 / 타입{" "}
+                {REQUIRES_MULTI_COLOR[form.game] && (
+                  <span className="ml-1 text-[10px] text-muted-foreground">
+                    (2개 이상 선택)
+                  </span>
+                )}
+              </Label>
+              <div className="flex flex-wrap gap-1.5">
+                {palette.map((c) => {
+                  const active = form.colors.includes(c.id);
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => toggleColor(c.id)}
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition ${
+                        active
+                          ? "border-foreground bg-foreground text-background"
+                          : "border-border text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <span
+                        className="h-2.5 w-2.5 rounded-full ring-1 ring-border"
+                        style={{ backgroundColor: c.hex }}
+                      />
+                      {c.label}
+                      {active && <Check className="h-3 w-3" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="col-span-2 flex flex-col gap-1.5">
+              <Label>덱 이름</Label>
+              <Input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="예: 적 루피 어그로"
+                required
               />
-              공개 (다른 사용자도 볼 수 있음)
-            </label>
-            <div className="flex gap-2">
+            </div>
+
+            {HAS_LEADER[form.game] && (
+              <div className="col-span-2 flex flex-col gap-1.5">
+                <Label>리더</Label>
+                <LeaderPicker
+                  game={form.game}
+                  value={form.leader}
+                  onChange={(v) => setForm({ ...form, leader: v })}
+                />
+              </div>
+            )}
+
+            <div className="col-span-2 flex flex-col gap-1.5">
+              <Label>메모</Label>
+              <Textarea
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                rows={3}
+                placeholder="구성, 운영 포인트 등"
+              />
+            </div>
+
+            <div className="col-span-2 flex justify-end gap-2 pt-1">
               <Button
                 type="button"
                 variant="ghost"
@@ -390,9 +526,337 @@ function DeckDialog({
                 {busy ? "저장 중..." : "저장"}
               </Button>
             </div>
-          </div>
-        </form>
+          </form>
+        ) : deck ? (
+          <RecipeEditor deck={deck} />
+        ) : null}
       </DialogContent>
     </Dialog>
+  );
+}
+
+/* ───────────── Leader picker (OPTCG, searchable) ───────────── */
+
+function LeaderPicker({
+  game,
+  value,
+  onChange,
+}: {
+  game: Game;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+
+  const { data: leaders = [], isFetching } = useQuery({
+    queryKey: ["leaders", game, q],
+    enabled: open,
+    queryFn: async () => {
+      let query = supabase
+        .from("cards")
+        .select("code,name,colors,image_url")
+        .eq("game", game)
+        .eq("type", "leader")
+        .order("code", { ascending: true })
+        .limit(50);
+      if (q.trim()) {
+        const t = q.trim();
+        query = query.or(`name.ilike.%${t}%,code.ilike.%${t}%`);
+      }
+      const { data, error } = await query;
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          className="justify-between font-normal"
+        >
+          <span className={value ? "" : "text-muted-foreground"}>
+            {value || "리더 선택…"}
+          </span>
+          {value && (
+            <X
+              className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground"
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange("");
+              }}
+            />
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+        <div className="border-b border-border p-2">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              autoFocus
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="리더 검색 (이름·코드)"
+              className="h-8 pl-7 text-xs"
+            />
+          </div>
+        </div>
+        <ul className="max-h-64 overflow-y-auto py-1">
+          {isFetching && (
+            <li className="px-3 py-2 text-xs text-muted-foreground">
+              검색 중…
+            </li>
+          )}
+          {!isFetching && leaders.length === 0 && (
+            <li className="px-3 py-2 text-xs text-muted-foreground">
+              일치하는 리더 없음
+            </li>
+          )}
+          {leaders.map((l) => (
+            <li key={l.code}>
+              <button
+                type="button"
+                onClick={() => {
+                  onChange(`${l.name} (${l.code})`);
+                  setOpen(false);
+                }}
+                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-accent"
+              >
+                {l.image_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={l.image_url}
+                    alt=""
+                    className="h-8 w-6 rounded object-cover"
+                    loading="lazy"
+                  />
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium">{l.name}</p>
+                  <p className="truncate text-[10px] text-muted-foreground">
+                    {l.code}
+                  </p>
+                </div>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+/* ───────────── Recipe editor (deck cards) ───────────── */
+
+function RecipeEditor({ deck }: { deck: Deck }) {
+  const qc = useQueryClient();
+  const [q, setQ] = useState("");
+
+  const { data: deckCards = [], refetch } = useQuery({
+    queryKey: ["deck-cards", deck.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("deck_cards")
+        .select("*")
+        .eq("deck_id", deck.id)
+        .order("position", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as DeckCard[];
+    },
+  });
+
+  const codes = deckCards.map((c) => c.card_code);
+  const { data: cardMap = new Map<string, CardRow>() } = useQuery({
+    queryKey: ["deck-cards-meta", deck.id, codes.sort().join(",")],
+    enabled: codes.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cards")
+        .select("*")
+        .in("code", codes);
+      if (error) throw error;
+      const m = new Map<string, CardRow>();
+      for (const c of data ?? []) m.set(c.code, c as CardRow);
+      return m;
+    },
+  });
+
+  const { data: searchResults = [], isFetching } = useQuery({
+    queryKey: ["deck-search", deck.game, q],
+    enabled: q.trim().length > 0,
+    queryFn: async () => {
+      const t = q.trim();
+      const { data, error } = await supabase
+        .from("cards")
+        .select("code,name,type,image_url,colors")
+        .eq("game", deck.game)
+        .or(`name.ilike.%${t}%,code.ilike.%${t}%`)
+        .order("code", { ascending: true })
+        .limit(20);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const total = useMemo(
+    () => deckCards.reduce((s, c) => s + c.quantity, 0),
+    [deckCards],
+  );
+
+  const addCard = async (code: string) => {
+    const existing = deckCards.find((c) => c.card_code === code);
+    if (existing) {
+      await updateQty(existing.id, existing.quantity + 1);
+      return;
+    }
+    const { error } = await supabase.from("deck_cards").insert({
+      deck_id: deck.id,
+      card_code: code,
+      quantity: 1,
+      position: deckCards.length,
+    });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    refetch();
+    qc.invalidateQueries({ queryKey: ["deck-cards"] });
+  };
+
+  const updateQty = async (id: string, qty: number) => {
+    if (qty < 1) {
+      await supabase.from("deck_cards").delete().eq("id", id);
+    } else {
+      await supabase.from("deck_cards").update({ quantity: qty }).eq("id", id);
+    }
+    refetch();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-md border border-border p-3">
+        <p className="text-xs text-muted-foreground">
+          현재 덱 카드 <span className="font-semibold text-foreground">{deckCards.length}</span>종 ·{" "}
+          총 <span className="font-semibold text-foreground">{total}</span>장
+        </p>
+        {deckCards.length === 0 ? (
+          <p className="mt-2 text-xs text-muted-foreground">
+            아래 검색으로 카드를 추가해 주세요.
+          </p>
+        ) : (
+          <ul className="mt-2 max-h-48 space-y-1 overflow-y-auto">
+            {deckCards.map((dc) => {
+              const card = cardMap.get(dc.card_code);
+              return (
+                <li
+                  key={dc.id}
+                  className="flex items-center gap-2 rounded border border-border bg-card px-2 py-1.5 text-xs"
+                >
+                  {card?.image_url && (
+                    <img
+                      src={card.image_url}
+                      alt=""
+                      className="h-7 w-5 rounded object-cover"
+                      loading="lazy"
+                    />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">
+                      {card?.name ?? dc.card_code}
+                    </p>
+                    <p className="truncate text-[10px] text-muted-foreground">
+                      {dc.card_code}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => updateQty(dc.id, dc.quantity - 1)}
+                      className="rounded border border-border px-2 py-0.5 text-xs hover:bg-accent"
+                    >
+                      −
+                    </button>
+                    <span className="w-6 text-center text-xs font-medium">
+                      {dc.quantity}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => updateQty(dc.id, dc.quantity + 1)}
+                      className="rounded border border-border px-2 py-0.5 text-xs hover:bg-accent"
+                    >
+                      +
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateQty(dc.id, 0)}
+                      className="ml-1 rounded p-1 text-muted-foreground hover:text-destructive"
+                      aria-label="삭제"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
+      <div>
+        <Label className="text-xs">카드 검색 추가</Label>
+        <div className="relative mt-1.5">
+          <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="카드명 또는 코드 (예: OP01-001)"
+            className="h-9 pl-7 text-xs"
+          />
+        </div>
+        {q.trim() && (
+          <ul className="mt-2 max-h-56 space-y-1 overflow-y-auto rounded-md border border-border p-1">
+            {isFetching && (
+              <li className="px-2 py-1.5 text-xs text-muted-foreground">
+                검색 중…
+              </li>
+            )}
+            {!isFetching && searchResults.length === 0 && (
+              <li className="px-2 py-1.5 text-xs text-muted-foreground">
+                결과 없음
+              </li>
+            )}
+            {searchResults.map((c) => (
+              <li key={c.code}>
+                <button
+                  type="button"
+                  onClick={() => addCard(c.code)}
+                  className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs hover:bg-accent"
+                >
+                  {c.image_url && (
+                    <img
+                      src={c.image_url}
+                      alt=""
+                      className="h-8 w-6 rounded object-cover"
+                      loading="lazy"
+                    />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">{c.name}</p>
+                    <p className="truncate text-[10px] text-muted-foreground">
+                      {c.code} · {c.type}
+                    </p>
+                  </div>
+                  <Plus className="h-4 w-4 text-muted-foreground" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
   );
 }

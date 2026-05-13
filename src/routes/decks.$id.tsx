@@ -2,10 +2,13 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, Layers } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { GAME_LABEL } from "@/lib/match-stats";
+import { colorHex, colorLabel, type Game } from "@/lib/deck-colors";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Deck = Tables<"decks">;
 type Profile = Tables<"profiles">;
+type CardRow = Tables<"cards">;
+type DeckCard = Tables<"deck_cards">;
 
 const SITE = "https://tcg-hub.lovable.app";
 
@@ -19,15 +22,37 @@ export const Route = createFileRoute("/decks/$id")({
     if (error) throw error;
     if (!deck) throw notFound();
     let author: Profile | null = null;
+    let deckCards: DeckCard[] = [];
+    let cardMeta: Record<string, CardRow> = {};
     if (deck.is_public) {
-      const { data: p } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", deck.user_id)
-        .maybeSingle();
+      const [{ data: p }, { data: dc }] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", deck.user_id).maybeSingle(),
+        supabase
+          .from("deck_cards")
+          .select("*")
+          .eq("deck_id", deck.id)
+          .order("position", { ascending: true }),
+      ]);
       author = (p as Profile | null) ?? null;
+      deckCards = (dc ?? []) as DeckCard[];
+      if (deckCards.length > 0) {
+        const codes = deckCards.map((c) => c.card_code);
+        const { data: cards } = await supabase
+          .from("cards")
+          .select("*")
+          .in("code", codes);
+        cardMeta = Object.fromEntries(
+          (cards ?? []).map((c) => [c.code, c as CardRow]),
+        );
+      }
     }
-    return { deck: deck as Deck, author, isPublic: deck.is_public };
+    return {
+      deck: deck as Deck,
+      author,
+      isPublic: deck.is_public,
+      deckCards,
+      cardMeta,
+    };
   },
   head: ({ loaderData }) => {
     const d = loaderData?.deck;
@@ -67,7 +92,13 @@ export const Route = createFileRoute("/decks/$id")({
 });
 
 function DeckDetailPage() {
-  const { deck, author, isPublic } = Route.useLoaderData();
+  const { deck, author, isPublic, deckCards, cardMeta } = Route.useLoaderData() as {
+    deck: Deck;
+    author: Profile | null;
+    isPublic: boolean;
+    deckCards: DeckCard[];
+    cardMeta: Record<string, CardRow>;
+  };
 
   if (!isPublic) {
     return (
@@ -87,6 +118,8 @@ function DeckDetailPage() {
     );
   }
 
+  const totalCards = deckCards.reduce((s, c) => s + c.quantity, 0);
+
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">
       <Link
@@ -98,11 +131,27 @@ function DeckDetailPage() {
       <div className="mt-4 rounded-lg border border-border bg-card p-6">
         <p className="text-xs text-muted-foreground">{GAME_LABEL[deck.game]}</p>
         <h1 className="mt-1 text-2xl font-semibold">{deck.name}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {deck.leader && <>리더: <span className="text-foreground">{deck.leader}</span></>}
-          {deck.leader && deck.archetype && <span className="mx-1.5">·</span>}
-          {deck.archetype && <>아키타입: <span className="text-foreground">{deck.archetype}</span></>}
-        </p>
+        {deck.colors && deck.colors.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {deck.colors.map((c) => (
+              <span
+                key={c}
+                className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground"
+              >
+                <span
+                  className="h-2 w-2 rounded-full ring-1 ring-border"
+                  style={{ backgroundColor: colorHex(deck.game as Game, c) }}
+                />
+                {colorLabel(deck.game as Game, c)}
+              </span>
+            ))}
+          </div>
+        )}
+        {deck.leader && (
+          <p className="mt-2 text-sm text-muted-foreground">
+            리더: <span className="text-foreground">{deck.leader}</span>
+          </p>
+        )}
         {deck.notes && (
           <div className="mt-4">
             <p className="text-xs font-semibold text-muted-foreground">메모</p>
@@ -118,6 +167,50 @@ function DeckDetailPage() {
           <span>{new Date(deck.updated_at).toLocaleDateString("ko-KR")}</span>
         </div>
       </div>
+
+      {deckCards.length > 0 && (
+        <div className="mt-6 rounded-lg border border-border bg-card p-6">
+          <h2 className="text-sm font-semibold">
+            덱 레시피{" "}
+            <span className="font-normal text-muted-foreground">
+              ({deckCards.length}종 · 총 {totalCards}장)
+            </span>
+          </h2>
+          <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {deckCards.map((dc) => {
+              const card = cardMeta[dc.card_code];
+              return (
+                <li
+                  key={dc.id}
+                  className="flex items-center gap-2 rounded border border-border p-2 text-xs"
+                >
+                  {card?.image_url ? (
+                    <img
+                      src={card.image_url}
+                      alt=""
+                      className="h-12 w-9 rounded object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="h-12 w-9 rounded bg-muted" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">
+                      {card?.name ?? dc.card_code}
+                    </p>
+                    <p className="truncate text-[10px] text-muted-foreground">
+                      {dc.card_code}
+                    </p>
+                  </div>
+                  <span className="rounded bg-muted px-1.5 py-0.5 text-[11px] font-semibold">
+                    ×{dc.quantity}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
