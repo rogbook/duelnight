@@ -26,8 +26,8 @@ import { Route as CollectionRouteImport } from './routes/collection'
 import { Route as CardsRouteImport } from './routes/cards'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AnnouncementsRouteImport } from './routes/announcements'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as TierIdRouteImport } from './routes/tier.$id'
 import { Route as StoresIdRouteImport } from './routes/stores.$id'
 import { Route as LfgIdRouteImport } from './routes/lfg.$id'
@@ -124,14 +124,14 @@ const AnnouncementsRoute = AnnouncementsRouteImport.update({
   path: '/announcements',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TierIdRoute = TierIdRouteImport.update({
@@ -187,7 +187,6 @@ const AdminCardsRoute = AdminCardsRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
   '/announcements': typeof AnnouncementsRouteWithChildren
   '/calendar': typeof CalendarRoute
   '/cards': typeof CardsRouteWithChildren
@@ -215,10 +214,10 @@ export interface FileRoutesByFullPath {
   '/lfg/$id': typeof LfgIdRoute
   '/stores/$id': typeof StoresIdRoute
   '/tier/$id': typeof TierIdRoute
+  '/admin/': typeof AdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
   '/announcements': typeof AnnouncementsRouteWithChildren
   '/calendar': typeof CalendarRoute
   '/cards': typeof CardsRouteWithChildren
@@ -246,11 +245,11 @@ export interface FileRoutesByTo {
   '/lfg/$id': typeof LfgIdRoute
   '/stores/$id': typeof StoresIdRoute
   '/tier/$id': typeof TierIdRoute
+  '/admin': typeof AdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
   '/announcements': typeof AnnouncementsRouteWithChildren
   '/calendar': typeof CalendarRoute
   '/cards': typeof CardsRouteWithChildren
@@ -278,12 +277,12 @@ export interface FileRoutesById {
   '/lfg/$id': typeof LfgIdRoute
   '/stores/$id': typeof StoresIdRoute
   '/tier/$id': typeof TierIdRoute
+  '/admin/': typeof AdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/admin'
     | '/announcements'
     | '/calendar'
     | '/cards'
@@ -311,10 +310,10 @@ export interface FileRouteTypes {
     | '/lfg/$id'
     | '/stores/$id'
     | '/tier/$id'
+    | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/admin'
     | '/announcements'
     | '/calendar'
     | '/cards'
@@ -342,10 +341,10 @@ export interface FileRouteTypes {
     | '/lfg/$id'
     | '/stores/$id'
     | '/tier/$id'
+    | '/admin'
   id:
     | '__root__'
     | '/'
-    | '/admin'
     | '/announcements'
     | '/calendar'
     | '/cards'
@@ -373,11 +372,11 @@ export interface FileRouteTypes {
     | '/lfg/$id'
     | '/stores/$id'
     | '/tier/$id'
+    | '/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRouteWithChildren
   AnnouncementsRoute: typeof AnnouncementsRouteWithChildren
   CalendarRoute: typeof CalendarRoute
   CardsRoute: typeof CardsRouteWithChildren
@@ -397,6 +396,7 @@ export interface RootRouteChildren {
   TierRoute: typeof TierRouteWithChildren
   ApiCoachRoute: typeof ApiCoachRoute
   EventsIdRoute: typeof EventsIdRoute
+  AdminIndexRoute: typeof AdminIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -520,18 +520,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AnnouncementsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tier/$id': {
@@ -607,16 +607,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AdminRouteChildren {
-  AdminCardsRoute: typeof AdminCardsRoute
-}
-
-const AdminRouteChildren: AdminRouteChildren = {
-  AdminCardsRoute: AdminCardsRoute,
-}
-
-const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
-
 interface AnnouncementsRouteChildren {
   AnnouncementsIdRoute: typeof AnnouncementsIdRoute
 }
@@ -684,7 +674,6 @@ const TierRouteWithChildren = TierRoute._addFileChildren(TierRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRouteWithChildren,
   AnnouncementsRoute: AnnouncementsRouteWithChildren,
   CalendarRoute: CalendarRoute,
   CardsRoute: CardsRouteWithChildren,
@@ -704,7 +693,18 @@ const rootRouteChildren: RootRouteChildren = {
   TierRoute: TierRouteWithChildren,
   ApiCoachRoute: ApiCoachRoute,
   EventsIdRoute: EventsIdRoute,
+  AdminIndexRoute: AdminIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
