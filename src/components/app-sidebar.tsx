@@ -84,6 +84,19 @@ export function AppSidebar() {
     return true;
   });
 
+  // 모든 메뉴 중 currentPath와 가장 길게 일치하는 url을 활성으로 처리
+  const allItems = [
+    ...mainItems, ...cardItems, ...playItems, ...communityItems,
+    ...filteredAccountItems, ...(isAdmin ? adminItems : []),
+  ];
+  const activeUrl = allItems
+    .filter((it) =>
+      it.url === "/"
+        ? currentPath === "/"
+        : currentPath === it.url || currentPath.startsWith(it.url + "/"),
+    )
+    .sort((a, b) => b.url.length - a.url.length)[0]?.url;
+
   const renderGroup = (
     label: string,
     items: typeof mainItems,
@@ -92,22 +105,16 @@ export function AppSidebar() {
       {!collapsed && <SidebarGroupLabel>{label}</SidebarGroupLabel>}
       <SidebarGroupContent>
         <SidebarMenu>
-          {items.map((item) => {
-            const active =
-              item.url === "/"
-                ? currentPath === "/"
-                : currentPath.startsWith(item.url);
-            return (
-              <SidebarMenuItem key={item.url}>
-                <SidebarMenuButton asChild isActive={active}>
-                  <Link to={item.url} className="flex items-center gap-2">
-                    <item.icon className="h-4 w-4" />
-                    {!collapsed && <span>{item.title}</span>}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            );
-          })}
+          {items.map((item) => (
+            <SidebarMenuItem key={item.url}>
+              <SidebarMenuButton asChild isActive={item.url === activeUrl}>
+                <Link to={item.url} className="flex items-center gap-2">
+                  <item.icon className="h-4 w-4" />
+                  {!collapsed && <span>{item.title}</span>}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
