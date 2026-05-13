@@ -39,7 +39,7 @@ const mainItems = [
 
 const cardItems = [
   { title: "카드 DB", url: "/cards", icon: Library },
-  { title: "카드 대량 등록", url: "/cards/upload", icon: Upload },
+  { title: "카드 등록", url: "/cards/upload", icon: Upload },
   { title: "덱 빌더", url: "/decks", icon: Layers },
   { title: "내 컬렉션", url: "/collection", icon: PackageOpen },
   { title: "팩 시뮬레이터", url: "/packs", icon: Sparkles },
