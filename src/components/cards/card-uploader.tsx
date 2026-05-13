@@ -571,7 +571,7 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
 
   const submit = () => {
     if (!r.code || !r.set_code || !r.name) { toast.error("코드, 세트, 이름은 필수입니다"); return; }
-    onAdd(r);
+    onAdd({ ...r, image_url: normalizeImageUrl(r.image_url) });
     setR(emptyRow());
     toast.success("표에 추가됨");
   };
