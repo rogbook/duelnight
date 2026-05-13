@@ -635,6 +635,13 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
               <table className="w-full text-xs">
                 <thead className="sticky top-0 bg-card border-b border-border">
                   <tr className="text-left">
+                    <th className="px-2 py-2 w-8">
+                      <Checkbox
+                        checked={rows.length > 0 && selected.size === rows.length}
+                        onCheckedChange={toggleSelectAll}
+                        aria-label="전체 선택"
+                      />
+                    </th>
                     <th className="px-2 py-2 w-12">이미지</th>
                     <th className="px-2 py-2">코드*</th>
                     <th className="px-2 py-2">세트*</th>
@@ -650,8 +657,23 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((r, i) => (
-                    <tr key={i} className="border-b border-border/40">
+                  {rows.map((r, i) => {
+                    const issues = issuesByRow[i] ?? [];
+                    const fieldErr = (f: string) => issues.some(x => x.level === "error" && x.field === f);
+                    const codeUpper = (r.code || "").toUpperCase();
+                    const isInternalDup = internalDups.has(codeUpper);
+                    const isDbDup = dupChecked && existingCodes.has(codeUpper);
+                    const errCls = "border-destructive focus-visible:ring-destructive/40";
+                    const rowBg = isInternalDup ? "bg-destructive/5" : isDbDup ? "bg-amber-500/5" : "";
+                    return (
+                    <tr key={i} className={`border-b border-border/40 ${rowBg}`}>
+                      <td className="px-2 py-1">
+                        <Checkbox
+                          checked={selected.has(i)}
+                          onCheckedChange={() => toggleSelect(i)}
+                          aria-label={`${i + 1}행 선택`}
+                        />
+                      </td>
                       <td className="px-2 py-1">
                         <div className="flex flex-col gap-1">
                           {r.image_url ? (
