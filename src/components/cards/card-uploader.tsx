@@ -317,10 +317,17 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
     }
 
     // 드라이브 연결 확인
-    getDriveConnectionFn().then(res => {
-      setDriveConnected(res.connected);
-      if (res.email) setDriveEmail(res.email);
-    });
+    getDriveConnectionFn()
+      .then(res => {
+        if (res) {
+          setDriveConnected(res.connected);
+          if (res.email) setDriveEmail(res.email);
+        }
+      })
+      .catch(err => {
+        console.error("Failed to check Google Drive connection:", err);
+        // 에러가 발생해도 페이지 전체가 깨지지 않도록 무시하거나 초기 상태 유지
+      });
 
     // 드라이브 연결 성공 파라미터 확인
     const url = new URL(window.location.href);
