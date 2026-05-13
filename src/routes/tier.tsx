@@ -11,10 +11,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { Database } from "@/integrations/supabase/types";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"];
 type TierList = Database["public"]["Tables"]["tier_lists"]["Row"];
+type Game = Database["public"]["Enums"]["tcg_game"];
+
+const GAME_OPTIONS: { value: Game; label: string }[] = [
+  { value: "optcg", label: "원피스" },
+  { value: "ptcg", label: "포켓몬" },
+  { value: "dtcg", label: "디지몬" },
+];
 
 const TIERS = ["S", "A", "B", "C", "D"] as const;
 type Tier = (typeof TIERS)[number] | "pool";
@@ -52,18 +66,38 @@ function TierPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
 
+  const [game, setGame] = useState<Game>("optcg");
+  const [setCode, setSetCode] = useState<string>("all");
+
   const { data: leaders = [] } = useQuery({
-    queryKey: ["tier-leaders"],
+    queryKey: ["tier-leaders", game],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("cards")
-        .select("*")
-        .eq("type", "leader")
-        .order("code", { ascending: true });
+      let q = supabase.from("cards").select("*").eq("game", game);
+      // 원피스는 리더 카드만, 그 외 게임은 모든 카드 후보
+      if (game === "optcg") q = q.eq("type", "leader");
+      const { data, error } = await q.order("code", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Card[];
     },
   });
+
+  const setOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const c of leaders) if (c.set_code) set.add(c.set_code);
+    return [...set].sort();
+  }, [leaders]);
+
+  // setCode가 현재 game에 없으면 리셋
+  useEffect(() => {
+    if (setCode !== "all" && !setOptions.includes(setCode)) {
+      setSetCode("all");
+    }
+  }, [setOptions, setCode]);
+
+  const filteredLeaders = useMemo(
+    () => (setCode === "all" ? leaders : leaders.filter((c) => c.set_code === setCode)),
+    [leaders, setCode],
+  );
 
   const { data: myLists = [] } = useQuery({
     queryKey: ["tier-lists-mine", user?.id],
@@ -97,7 +131,7 @@ function TierPage() {
     () => new Set(TIERS.flatMap((t) => placements[t])),
     [placements],
   );
-  const pool = leaders.filter((c) => !placedCodes.has(c.code));
+  const pool = filteredLeaders.filter((c) => !placedCodes.has(c.code));
   const cardByCode = useMemo(() => {
     const m = new Map<string, Card>();
     for (const c of leaders) m.set(c.code, c);
@@ -123,6 +157,7 @@ function TierPage() {
     setTitle("내 티어표");
     setIsPublic(true);
     setPlacements(emptyPlacements());
+    setSetCode("all");
   };
 
   const load = (l: TierList) => {
@@ -130,6 +165,8 @@ function TierPage() {
     setEditingId(l.id);
     setTitle(l.title);
     setIsPublic(l.is_public);
+    setGame(l.game);
+    setSetCode("all");
     setPlacements({
       S: raw.S ?? [],
       A: raw.A ?? [],
@@ -148,7 +185,7 @@ function TierPage() {
       title: title.trim(),
       is_public: isPublic,
       placements: placements as unknown as Database["public"]["Tables"]["tier_lists"]["Insert"]["placements"],
-      game: "optcg" as const,
+      game,
     };
     if (editingId) {
       const { error } = await supabase
@@ -225,7 +262,7 @@ function TierPage() {
         </div>
       </PageHeader>
 
-      <div className="mt-6 grid gap-3 rounded-lg border border-border bg-card p-4 sm:grid-cols-[1fr_auto]">
+      <div className="mt-6 grid gap-3 rounded-lg border border-border bg-card p-4 sm:grid-cols-[1fr_auto_auto_auto]">
         <div className="space-y-1">
           <Label htmlFor="tier-title">제목</Label>
           <Input
@@ -234,6 +271,37 @@ function TierPage() {
             onChange={(e) => setTitle(e.target.value)}
             placeholder="예: 2026년 5월 메타 티어"
           />
+        </div>
+        <div className="space-y-1">
+          <Label>게임</Label>
+          <Select value={game} onValueChange={(v) => setGame(v as Game)}>
+            <SelectTrigger className="w-[120px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {GAME_OPTIONS.map((g) => (
+                <SelectItem key={g.value} value={g.value}>
+                  {g.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label>세트</Label>
+          <Select value={setCode} onValueChange={setSetCode}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">전체 세트</SelectItem>
+              {setOptions.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="flex items-end gap-2">
           <Switch id="tier-public" checked={isPublic} onCheckedChange={setIsPublic} />
