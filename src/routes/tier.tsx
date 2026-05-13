@@ -131,7 +131,7 @@ function TierPage() {
     () => new Set(TIERS.flatMap((t) => placements[t])),
     [placements],
   );
-  const pool = leaders.filter((c) => !placedCodes.has(c.code));
+  const pool = filteredLeaders.filter((c) => !placedCodes.has(c.code));
   const cardByCode = useMemo(() => {
     const m = new Map<string, Card>();
     for (const c of leaders) m.set(c.code, c);
