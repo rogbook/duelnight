@@ -185,6 +185,23 @@ function ProfilePage() {
           />
         </div>
         <div className="md:col-span-2 flex flex-col gap-1.5">
+          <Label htmlFor="primary_game">주 게임 (캘린더 상단·알림 대상)</Label>
+          <Select
+            value={form.primary_game || "none"}
+            onValueChange={(v) =>
+              setForm({ ...form, primary_game: v === "none" ? "" : (v as Game) })
+            }
+          >
+            <SelectTrigger id="primary_game"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">선택 안 함</SelectItem>
+              <SelectItem value="optcg">원피스</SelectItem>
+              <SelectItem value="ptcg">포켓몬</SelectItem>
+              <SelectItem value="dtcg">디지몬</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="md:col-span-2 flex flex-col gap-1.5">
           <Label htmlFor="bio">자기소개</Label>
           <Textarea
             id="bio"
