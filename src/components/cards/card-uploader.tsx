@@ -268,9 +268,56 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
   const [errors, setErrors] = useState<{ line: number; reason: string }[]>([]);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
+  const [existingCodes, setExistingCodes] = useState<Set<string>>(new Set());
+  const [dupChecked, setDupChecked] = useState(false);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkPatch, setBulkPatch] = useState<Partial<CardRow>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const valid = useMemo(() => rows.filter(r => r.code && r.set_code && r.name), [rows]);
+  const issuesByRow = useMemo(() => rows.map((r) => validateRow(r as CardRow)), [rows]);
+  const internalDups = useMemo(() => findInternalDuplicates(rows as CardRow[]), [rows]);
+  const dbDupCount = useMemo(
+    () => (dupChecked ? rows.filter(r => existingCodes.has((r.code || "").toUpperCase())).length : 0),
+    [rows, existingCodes, dupChecked],
+  );
+  const errorRowsList = useMemo(
+    () => rows.filter((_, i) => issuesByRow[i].some(x => x.level === "error")),
+    [rows, issuesByRow],
+  );
+
+  // 임시저장 복구 (마운트 1회)
+  useEffect(() => {
+    const draft = loadDraft();
+    if (draft && draft.rows.length) {
+      const ago = Math.round((Date.now() - draft.savedAt) / 60000);
+      toast("이전 작업 복구됨", {
+        description: `${draft.rows.length}건 (${ago}분 전 저장). "전체 비우기"로 삭제할 수 있어요.`,
+      });
+      setRows(draft.rows as CardRow[]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 자동 저장 (debounce)
+  useEffect(() => {
+    const t = setTimeout(() => saveDraft(rows as CardRow[]), 600);
+    return () => clearTimeout(t);
+  }, [rows]);
+
+  // Ctrl/Cmd+Enter → 등록
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        if (!busy && valid.length > 0) submit();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [busy, valid.length]);
 
   const onUploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -280,6 +327,7 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
       const { rows: r, errors: er } = await parseFile(f);
       setRows(prev => [...prev, ...r]);
       setErrors(er);
+      setDupChecked(false);
       toast.success(`${r.length}건 불러옴 (오류 ${er.length}건)`);
     } catch (err) {
       toast.error("파일 읽기 실패: " + (err as Error).message);
@@ -313,6 +361,7 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
         setProgress({ done, total: files.length });
       }
       setRows(prev => [...prev, ...newRows]);
+      setDupChecked(false);
       toast.success(`이미지 ${newRows.length}장 업로드. 표에서 정보를 채워주세요.`);
     } finally {
       setBusy(false);
@@ -322,8 +371,75 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
   const updateRow = (idx: number, patch: Partial<CardRow>) => {
     setRows(prev => prev.map((r, i) => (i === idx ? { ...r, ...patch } : r)));
   };
-  const removeRow = (idx: number) => setRows(prev => prev.filter((_, i) => i !== idx));
+  const removeRow = (idx: number) => {
+    setRows(prev => prev.filter((_, i) => i !== idx));
+    setSelected(prev => {
+      const next = new Set<number>();
+      prev.forEach(s => { if (s < idx) next.add(s); else if (s > idx) next.add(s - 1); });
+      return next;
+    });
+  };
   const addBlank = () => setRows(prev => [...prev, emptyRow()]);
+  const clearAll = () => { setRows([]); setErrors([]); setSelected(new Set()); setDupChecked(false); clearDraft(); };
+
+  const applyAutoFix = () => {
+    setRows(prev => prev.map((r) => autoFixRow(r as CardRow)));
+    toast.success("자동 보정 완료 (코드 대문자, 색상 한글→영문, 레어도 정리)");
+  };
+
+  const checkDuplicatesAgainstDb = async () => {
+    const codes = Array.from(new Set(rows.map(r => (r.code || "").trim().toUpperCase()).filter(Boolean)));
+    if (codes.length === 0) { toast.error("코드가 입력된 행이 없습니다"); return; }
+    setBusy(true);
+    try {
+      const found = new Set<string>();
+      for (let i = 0; i < codes.length; i += 500) {
+        const slice = codes.slice(i, i + 500);
+        const { data, error } = await supabase.from("cards").select("code").in("code", slice);
+        if (error) throw error;
+        for (const r of data ?? []) found.add(String(r.code).toUpperCase());
+      }
+      setExistingCodes(found);
+      setDupChecked(true);
+      toast.success(found.size
+        ? `이미 등록된 코드 ${found.size}건 발견${isAdmin ? " (등록 시 덮어쓰기)" : " (등록 시 건너뜀)"}`
+        : "DB 중복 없음");
+    } catch (e) {
+      toast.error("중복 검사 실패: " + (e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const exportErrorsCsv = () => {
+    if (errorRowsList.length === 0) { toast.info("오류 행이 없습니다"); return; }
+    downloadRowsAsCsv(`카드등록_오류_${Date.now()}.csv`, errorRowsList as CardRow[]);
+  };
+
+  const toggleSelect = (i: number) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i); else next.add(i);
+      return next;
+    });
+  };
+  const toggleSelectAll = () => {
+    setSelected(prev => prev.size === rows.length ? new Set() : new Set(rows.map((_, i) => i)));
+  };
+  const applyBulk = () => {
+    if (selected.size === 0) { toast.error("선택된 행이 없습니다"); return; }
+    const patch: Partial<CardRow> = {};
+    if (bulkPatch.set_code) patch.set_code = (bulkPatch.set_code as string).trim().toUpperCase();
+    if (bulkPatch.game) patch.game = bulkPatch.game;
+    if (bulkPatch.type) patch.type = bulkPatch.type;
+    if (bulkPatch.rarity) patch.rarity = (bulkPatch.rarity as string).trim().toUpperCase();
+    if (bulkPatch.attribute) patch.attribute = (bulkPatch.attribute as string).trim();
+    if (Object.keys(patch).length === 0) { toast.error("적용할 값을 입력하세요"); return; }
+    setRows(prev => prev.map((r, i) => selected.has(i) ? { ...r, ...patch } : r));
+    toast.success(`${selected.size}건에 적용됨`);
+    setBulkOpen(false);
+    setBulkPatch({});
+  };
 
   const submit = async () => {
     if (valid.length === 0) { toast.error("등록할 유효한 카드가 없습니다"); return; }
@@ -333,7 +449,10 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
       const CHUNK = 200;
       let inserted = 0, skipped = 0;
       for (let i = 0; i < valid.length; i += CHUNK) {
-        const slice = valid.slice(i, i + CHUNK).map(r => ({ ...r, image_url: normalizeImageUrl(r.image_url) }));
+        const slice = valid.slice(i, i + CHUNK).map(r => ({
+          ...autoFixRow(r as CardRow),
+          image_url: normalizeImageUrl(r.image_url),
+        }));
         if (isAdmin) {
           const { error } = await supabase.from("cards").upsert(slice, { onConflict: "code" });
           if (error) throw error;
@@ -352,15 +471,13 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
       }
       toast.success(skipped ? `${inserted}장 등록 · ${skipped}장 중복 건너뜀` : `${inserted}장 등록 완료`);
       onComplete?.({ inserted, skipped });
-      setRows([]);
-      setErrors([]);
+      clearAll();
     } catch (e) {
       toast.error((e as Error).message ?? "등록 실패");
     } finally {
       setBusy(false);
     }
   };
-
   return (
     <div className="space-y-4">
       <Tabs defaultValue="single">
