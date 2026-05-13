@@ -145,23 +145,78 @@ async function parseFile(f: File): Promise<{ rows: CardRow[]; errors: { line: nu
   return { rows: out, errors };
 }
 
+const SAMPLE_ROWS = [
+  {
+    코드: "OP01-001", 세트: "OP01", 게임: "원피스", 이름: "몽키 D 루피",
+    종류: "리더", 색상: "red", 비용: "", 파워: 5000, 카운터: "",
+    속성: "타격", 레어도: "L", 효과: "[활성 메인] 효과 텍스트 예시", 이미지: "https://example.com/op01-001.png",
+  },
+  {
+    코드: "OP01-002", 세트: "OP01", 게임: "원피스", 이름: "로로노아 조로",
+    종류: "캐릭터", 색상: "red|green", 비용: 3, 파워: 5000, 카운터: 1000,
+    속성: "슬래시", 레어도: "SR", 효과: "효과 텍스트 예시", 이미지: "",
+  },
+  {
+    코드: "OP01-003", 세트: "OP01", 게임: "원피스", 이름: "나미",
+    종류: "캐릭터", 색상: "blue", 비용: 2, 파워: 3000, 카운터: 2000,
+    속성: "특수", 레어도: "R", 효과: "드로우 효과 예시", 이미지: "",
+  },
+];
+
+const FIELD_GUIDE = [
+  { 필드명: "코드", 필수: "예", 설명: "카드 고유 코드 (중복 불가, 키)", 예시: "OP01-001" },
+  { 필드명: "세트", 필수: "예", 설명: "확장팩/세트 코드", 예시: "OP01, EB01" },
+  { 필드명: "게임", 필수: "예", 설명: "원피스/포켓몬/디지몬 중 하나", 예시: "원피스 (또는 optcg)" },
+  { 필드명: "이름", 필수: "예", 설명: "카드 이름", 예시: "몽키 D 루피" },
+  { 필드명: "종류", 필수: "예", 설명: "리더/캐릭터/이벤트/스테이지/DON!!", 예시: "리더, 캐릭터" },
+  { 필드명: "색상", 필수: "아니오", 설명: "여러 색은 | 또는 , 로 구분", 예시: "red 또는 red|green" },
+  { 필드명: "비용", 필수: "아니오", 설명: "코스트 (숫자)", 예시: "3" },
+  { 필드명: "파워", 필수: "아니오", 설명: "파워 (숫자)", 예시: "5000" },
+  { 필드명: "카운터", 필수: "아니오", 설명: "카운터 값 (숫자)", 예시: "1000, 2000" },
+  { 필드명: "속성", 필수: "아니오", 설명: "타격/슬래시/특수 등", 예시: "타격" },
+  { 필드명: "레어도", 필수: "아니오", 설명: "L/C/UC/R/SR/SEC 등", 예시: "SR" },
+  { 필드명: "효과", 필수: "아니오", 설명: "효과 텍스트", 예시: "효과 텍스트 예시" },
+  { 필드명: "이미지", 필수: "아니오", 설명: "이미지 URL (없으면 비워두기)", 예시: "https://..." },
+];
+
+function autoFitCols(rows: Record<string, unknown>[]) {
+  if (!rows.length) return [];
+  const keys = Object.keys(rows[0]);
+  return keys.map((k) => {
+    const max = Math.max(k.length, ...rows.map((r) => String(r[k] ?? "").length));
+    return { wch: Math.min(Math.max(max + 2, 8), 40) };
+  });
+}
+
 function downloadSampleXlsx() {
-  const data = [
-    {
-      코드: "OP01-001", 세트: "OP01", 게임: "원피스", 이름: "몽키 D 루피",
-      종류: "리더", 색상: "red", 비용: "", 파워: 5000, 카운터: "",
-      속성: "타격", 레어도: "L", 효과: "효과 텍스트", 이미지: "https://...",
-    },
-    {
-      코드: "OP01-002", 세트: "OP01", 게임: "원피스", 이름: "로로노아 조로",
-      종류: "캐릭터", 색상: "red|green", 비용: 3, 파워: 5000, 카운터: 1000,
-      속성: "슬래시", 레어도: "SR", 효과: "효과 텍스트", 이미지: "",
-    },
-  ];
-  const ws = XLSX.utils.json_to_sheet(data);
+  const wsData = XLSX.utils.json_to_sheet(SAMPLE_ROWS);
+  wsData["!cols"] = autoFitCols(SAMPLE_ROWS);
+  const wsGuide = XLSX.utils.json_to_sheet(FIELD_GUIDE);
+  wsGuide["!cols"] = autoFitCols(FIELD_GUIDE);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, wsData, "카드샘플");
+  XLSX.utils.book_append_sheet(wb, wsGuide, "필드설명");
+  XLSX.writeFile(wb, "카드업로드_샘플.xlsx");
+}
+
+function downloadFieldGuideCsv() {
+  const ws = XLSX.utils.json_to_sheet(FIELD_GUIDE);
+  const csv = XLSX.utils.sheet_to_csv(ws);
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "카드필드_설명.csv"; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function downloadEmptyTemplateXlsx() {
+  const headers = Object.keys(SAMPLE_ROWS[0]);
+  const empty = [Object.fromEntries(headers.map((h) => [h, ""]))];
+  const ws = XLSX.utils.json_to_sheet(empty);
+  ws["!cols"] = headers.map((h) => ({ wch: Math.max(h.length + 2, 10) }));
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "카드");
-  XLSX.writeFile(wb, "카드샘플.xlsx");
+  XLSX.writeFile(wb, "카드업로드_빈양식.xlsx");
 }
 
 function extractCodeFromFilename(name: string): string {
@@ -305,9 +360,18 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
             <CardContent className="space-y-3">
               <div className="flex flex-wrap gap-2">
                 <Button variant="outline" size="sm" onClick={downloadSampleXlsx}>
-                  <Download className="mr-1 h-4 w-4" /> 샘플 엑셀 다운로드
+                  <Download className="mr-1 h-4 w-4" /> 샘플 엑셀(.xlsx) 다운로드
+                </Button>
+                <Button variant="outline" size="sm" onClick={downloadEmptyTemplateXlsx}>
+                  <Download className="mr-1 h-4 w-4" /> 빈 양식(.xlsx) 다운로드
+                </Button>
+                <Button variant="ghost" size="sm" onClick={downloadFieldGuideCsv}>
+                  <Download className="mr-1 h-4 w-4" /> 필드 설명(.csv)
                 </Button>
               </div>
+              <p className="text-xs text-muted-foreground">
+                샘플 파일에는 <b>카드샘플</b> 시트(예시 3건)와 <b>필드설명</b> 시트(필드명·필수 여부·설명·예시)가 함께 들어 있어요.
+              </p>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="xlsx-file">파일 선택 (xlsx, xls, csv 최대 10MB)</Label>
                 <Input
