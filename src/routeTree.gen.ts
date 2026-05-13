@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TierRouteImport } from './routes/tier'
 import { Route as StoresRouteImport } from './routes/stores'
+import { Route as StoreRouteImport } from './routes/store'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProfileRouteImport } from './routes/profile'
@@ -47,6 +48,11 @@ const TierRoute = TierRouteImport.update({
 const StoresRoute = StoresRouteImport.update({
   id: '/stores',
   path: '/stores',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoreRoute = StoreRouteImport.update({
+  id: '/store',
+  path: '/store',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -202,6 +208,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/store': typeof StoreRoute
   '/stores': typeof StoresRouteWithChildren
   '/tier': typeof TierRouteWithChildren
   '/admin/cards': typeof AdminCardsRoute
@@ -233,6 +240,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/store': typeof StoreRoute
   '/stores': typeof StoresRouteWithChildren
   '/tier': typeof TierRouteWithChildren
   '/admin/cards': typeof AdminCardsRoute
@@ -265,6 +273,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/store': typeof StoreRoute
   '/stores': typeof StoresRouteWithChildren
   '/tier': typeof TierRouteWithChildren
   '/admin/cards': typeof AdminCardsRoute
@@ -298,6 +307,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reset-password'
     | '/sitemap.xml'
+    | '/store'
     | '/stores'
     | '/tier'
     | '/admin/cards'
@@ -329,6 +339,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reset-password'
     | '/sitemap.xml'
+    | '/store'
     | '/stores'
     | '/tier'
     | '/admin/cards'
@@ -360,6 +371,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reset-password'
     | '/sitemap.xml'
+    | '/store'
     | '/stores'
     | '/tier'
     | '/admin/cards'
@@ -392,6 +404,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  StoreRoute: typeof StoreRoute
   StoresRoute: typeof StoresRouteWithChildren
   TierRoute: typeof TierRouteWithChildren
   AdminCardsRoute: typeof AdminCardsRoute
@@ -414,6 +427,13 @@ declare module '@tanstack/react-router' {
       path: '/stores'
       fullPath: '/stores'
       preLoaderRoute: typeof StoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/store': {
+      id: '/store'
+      path: '/store'
+      fullPath: '/store'
+      preLoaderRoute: typeof StoreRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -690,6 +710,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  StoreRoute: StoreRoute,
   StoresRoute: StoresRouteWithChildren,
   TierRoute: TierRouteWithChildren,
   AdminCardsRoute: AdminCardsRoute,
@@ -700,13 +721,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
