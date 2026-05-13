@@ -635,6 +635,13 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
               <table className="w-full text-xs">
                 <thead className="sticky top-0 bg-card border-b border-border">
                   <tr className="text-left">
+                    <th className="px-2 py-2 w-8">
+                      <Checkbox
+                        checked={rows.length > 0 && selected.size === rows.length}
+                        onCheckedChange={toggleSelectAll}
+                        aria-label="전체 선택"
+                      />
+                    </th>
                     <th className="px-2 py-2 w-12">이미지</th>
                     <th className="px-2 py-2">코드*</th>
                     <th className="px-2 py-2">세트*</th>
@@ -650,8 +657,23 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((r, i) => (
-                    <tr key={i} className="border-b border-border/40">
+                  {rows.map((r, i) => {
+                    const issues = issuesByRow[i] ?? [];
+                    const fieldErr = (f: string) => issues.some(x => x.level === "error" && x.field === f);
+                    const codeUpper = (r.code || "").toUpperCase();
+                    const isInternalDup = internalDups.has(codeUpper);
+                    const isDbDup = dupChecked && existingCodes.has(codeUpper);
+                    const errCls = "border-destructive focus-visible:ring-destructive/40";
+                    const rowBg = isInternalDup ? "bg-destructive/5" : isDbDup ? "bg-amber-500/5" : "";
+                    return (
+                    <tr key={i} className={`border-b border-border/40 ${rowBg}`}>
+                      <td className="px-2 py-1">
+                        <Checkbox
+                          checked={selected.has(i)}
+                          onCheckedChange={() => toggleSelect(i)}
+                          aria-label={`${i + 1}행 선택`}
+                        />
+                      </td>
                       <td className="px-2 py-1">
                         <div className="flex flex-col gap-1">
                           {r.image_url ? (
@@ -666,33 +688,45 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
                           />
                         </div>
                       </td>
-                      <td className="px-1 py-1"><Input value={r.code} onChange={e => updateRow(i, { code: e.target.value })} className="h-7 text-xs" /></td>
-                      <td className="px-1 py-1"><Input value={r.set_code} onChange={e => updateRow(i, { set_code: e.target.value })} className="h-7 text-xs w-20" /></td>
+                      <td className="px-1 py-1">
+                        <Input
+                          value={r.code}
+                          onChange={e => updateRow(i, { code: e.target.value })}
+                          className={`h-7 text-xs ${fieldErr("code") || isInternalDup || isDbDup ? errCls : ""}`}
+                        />
+                        {(isInternalDup || isDbDup) && (
+                          <Badge variant={isInternalDup ? "destructive" : "secondary"} className="mt-1 text-[9px] px-1 py-0">
+                            {isInternalDup ? "내부 중복" : "DB 중복"}
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="px-1 py-1"><Input value={r.set_code} onChange={e => updateRow(i, { set_code: e.target.value })} className={`h-7 text-xs w-20 ${fieldErr("set_code") ? errCls : ""}`} /></td>
                       <td className="px-1 py-1">
                         <Select value={r.game} onValueChange={v => updateRow(i, { game: v as Game })}>
                           <SelectTrigger className="h-7 text-xs w-24"><SelectValue /></SelectTrigger>
                           <SelectContent>{VALID_GAMES.map(g => <SelectItem key={g} value={g}>{GAME_LABEL[g]}</SelectItem>)}</SelectContent>
                         </Select>
                       </td>
-                      <td className="px-1 py-1"><Input value={r.name} onChange={e => updateRow(i, { name: e.target.value })} className="h-7 text-xs min-w-[140px]" /></td>
+                      <td className="px-1 py-1"><Input value={r.name} onChange={e => updateRow(i, { name: e.target.value })} className={`h-7 text-xs min-w-[140px] ${fieldErr("name") ? errCls : ""}`} /></td>
                       <td className="px-1 py-1">
                         <Select value={r.type} onValueChange={v => updateRow(i, { type: v as CardType })}>
                           <SelectTrigger className="h-7 text-xs w-24"><SelectValue /></SelectTrigger>
                           <SelectContent>{VALID_TYPES.map(t => <SelectItem key={t} value={t}>{TYPE_LABEL[t]}</SelectItem>)}</SelectContent>
                         </Select>
                       </td>
-                      <td className="px-1 py-1"><Input value={r.colors.join("|")} onChange={e => updateRow(i, { colors: e.target.value.split(/[|,;]/).map(s => s.trim()).filter(Boolean) })} placeholder="red|green" className="h-7 text-xs w-24" /></td>
+                      <td className="px-1 py-1"><Input value={r.colors.join("|")} onChange={e => updateRow(i, { colors: e.target.value.split(/[|,;]/).map(s => s.trim()).filter(Boolean) })} placeholder="red|green" className={`h-7 text-xs w-24 ${fieldErr("colors") ? errCls : ""}`} /></td>
                       <td className="px-1 py-1"><Input value={r.cost ?? ""} onChange={e => updateRow(i, { cost: num(e.target.value) })} className="h-7 text-xs" /></td>
                       <td className="px-1 py-1"><Input value={r.power ?? ""} onChange={e => updateRow(i, { power: num(e.target.value) })} className="h-7 text-xs" /></td>
                       <td className="px-1 py-1"><Input value={r.counter ?? ""} onChange={e => updateRow(i, { counter: num(e.target.value) })} className="h-7 text-xs" /></td>
-                      <td className="px-1 py-1"><Input value={r.rarity ?? ""} onChange={e => updateRow(i, { rarity: e.target.value || null })} className="h-7 text-xs w-16" /></td>
+                      <td className="px-1 py-1"><Input value={r.rarity ?? ""} onChange={e => updateRow(i, { rarity: e.target.value || null })} className={`h-7 text-xs w-16 ${fieldErr("rarity") ? errCls : ""}`} /></td>
                       <td className="px-1 py-1">
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeRow(i)}>
                           <X className="h-3.5 w-3.5" />
                         </Button>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
