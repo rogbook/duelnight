@@ -582,6 +582,48 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          id: string
+          imp_uid: string | null
+          order_id: string
+          provider: string
+          receipt_url: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          id?: string
+          imp_uid?: string | null
+          order_id: string
+          provider: string
+          receipt_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          imp_uid?: string | null
+          order_id?: string
+          provider?: string
+          receipt_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -732,6 +774,24 @@ export type Database = {
         }
         Relationships: []
       }
+      user_credits: {
+        Row: {
+          balance: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_ratings: {
         Row: {
           game: Database["public"]["Enums"]["tcg_game"]
@@ -842,6 +902,16 @@ export type Database = {
           granted_at: string
           user_id: string
         }[]
+      }
+      process_successful_payment: {
+        Args: {
+          p_amount: number
+          p_imp_uid?: string
+          p_order_id: string
+          p_provider: string
+          p_user_id: string
+        }
+        Returns: undefined
       }
       revoke_admin_by_email: { Args: { _email: string }; Returns: string }
       search_users: {
