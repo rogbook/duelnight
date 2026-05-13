@@ -262,7 +262,7 @@ function TierPage() {
         </div>
       </PageHeader>
 
-      <div className="mt-6 grid gap-3 rounded-lg border border-border bg-card p-4 sm:grid-cols-[1fr_auto]">
+      <div className="mt-6 grid gap-3 rounded-lg border border-border bg-card p-4 sm:grid-cols-[1fr_auto_auto_auto]">
         <div className="space-y-1">
           <Label htmlFor="tier-title">제목</Label>
           <Input
@@ -271,6 +271,37 @@ function TierPage() {
             onChange={(e) => setTitle(e.target.value)}
             placeholder="예: 2026년 5월 메타 티어"
           />
+        </div>
+        <div className="space-y-1">
+          <Label>게임</Label>
+          <Select value={game} onValueChange={(v) => setGame(v as Game)}>
+            <SelectTrigger className="w-[120px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {GAME_OPTIONS.map((g) => (
+                <SelectItem key={g.value} value={g.value}>
+                  {g.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label>세트</Label>
+          <Select value={setCode} onValueChange={setSetCode}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">전체 세트</SelectItem>
+              {setOptions.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="flex items-end gap-2">
           <Switch id="tier-public" checked={isPublic} onCheckedChange={setIsPublic} />
