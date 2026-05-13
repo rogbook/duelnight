@@ -145,33 +145,6 @@ function PacksPage() {
     });
   }, [results]);
 
-  const addAllToCollection = async () => {
-    if (!user) {
-      toast.error("로그인이 필요합니다");
-      return;
-    }
-    if (tally.length === 0) return;
-    const codes = tally.map((t) => t.card.code);
-    const { data: existing, error: e1 } = await supabase
-      .from("user_collection")
-      .select("card_code, quantity")
-      .eq("user_id", user.id)
-      .in("card_code", codes);
-    if (e1) return toast.error(e1.message);
-    const have = new Map<string, number>();
-    for (const r of existing ?? []) have.set(r.card_code, r.quantity);
-    const rows = tally.map((t) => ({
-      user_id: user.id,
-      card_code: t.card.code,
-      quantity: (have.get(t.card.code) ?? 0) + t.count,
-    }));
-    const { error } = await supabase
-      .from("user_collection")
-      .upsert(rows, { onConflict: "user_id,card_code" });
-    if (error) return toast.error(error.message);
-    toast.success(`${results.length}장을 컬렉션에 추가했어요`);
-    qc.invalidateQueries({ queryKey: ["collection"] });
-  };
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
