@@ -2037,7 +2037,7 @@ function OpponentSelfEditForm({
       _match_id: match.id,
       _opp_deck: oppDeck.trim(),
       _opp_leader: oppLeader.trim(),
-      _opp_deck_id: deckId && deckId !== "_manual_" ? deckId : null,
+      _opp_deck_id: (deckId && deckId !== "_manual_" ? deckId : null) as string,
     });
     setBusy(false);
     if (error) {
