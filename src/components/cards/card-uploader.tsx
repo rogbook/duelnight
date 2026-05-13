@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from "react";
-import { Upload, Download, Trash2, Plus, Image as ImageIcon, FileSpreadsheet, Pencil, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Upload, Download, Trash2, Plus, Image as ImageIcon, FileSpreadsheet, Pencil, X, Wand2, ShieldCheck, AlertTriangle, Save, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
@@ -10,8 +10,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import {
+  autoFixRow, validateRow, findInternalDuplicates, downloadRowsAsCsv,
+  saveDraft, loadDraft, clearDraft,
+} from "./card-utils";
 
 type Game = Database["public"]["Enums"]["tcg_game"];
 type CardType = Database["public"]["Enums"]["card_type"];
@@ -262,9 +268,56 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
   const [errors, setErrors] = useState<{ line: number; reason: string }[]>([]);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
+  const [existingCodes, setExistingCodes] = useState<Set<string>>(new Set());
+  const [dupChecked, setDupChecked] = useState(false);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkPatch, setBulkPatch] = useState<Partial<CardRow>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const valid = useMemo(() => rows.filter(r => r.code && r.set_code && r.name), [rows]);
+  const issuesByRow = useMemo(() => rows.map((r) => validateRow(r as CardRow)), [rows]);
+  const internalDups = useMemo(() => findInternalDuplicates(rows as CardRow[]), [rows]);
+  const dbDupCount = useMemo(
+    () => (dupChecked ? rows.filter(r => existingCodes.has((r.code || "").toUpperCase())).length : 0),
+    [rows, existingCodes, dupChecked],
+  );
+  const errorRowsList = useMemo(
+    () => rows.filter((_, i) => issuesByRow[i].some(x => x.level === "error")),
+    [rows, issuesByRow],
+  );
+
+  // 임시저장 복구 (마운트 1회)
+  useEffect(() => {
+    const draft = loadDraft();
+    if (draft && draft.rows.length) {
+      const ago = Math.round((Date.now() - draft.savedAt) / 60000);
+      toast("이전 작업 복구됨", {
+        description: `${draft.rows.length}건 (${ago}분 전 저장). "전체 비우기"로 삭제할 수 있어요.`,
+      });
+      setRows(draft.rows as CardRow[]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 자동 저장 (debounce)
+  useEffect(() => {
+    const t = setTimeout(() => saveDraft(rows as CardRow[]), 600);
+    return () => clearTimeout(t);
+  }, [rows]);
+
+  // Ctrl/Cmd+Enter → 등록
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        if (!busy && valid.length > 0) submit();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [busy, valid.length]);
 
   const onUploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -274,6 +327,7 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
       const { rows: r, errors: er } = await parseFile(f);
       setRows(prev => [...prev, ...r]);
       setErrors(er);
+      setDupChecked(false);
       toast.success(`${r.length}건 불러옴 (오류 ${er.length}건)`);
     } catch (err) {
       toast.error("파일 읽기 실패: " + (err as Error).message);
@@ -307,6 +361,7 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
         setProgress({ done, total: files.length });
       }
       setRows(prev => [...prev, ...newRows]);
+      setDupChecked(false);
       toast.success(`이미지 ${newRows.length}장 업로드. 표에서 정보를 채워주세요.`);
     } finally {
       setBusy(false);
@@ -316,8 +371,75 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
   const updateRow = (idx: number, patch: Partial<CardRow>) => {
     setRows(prev => prev.map((r, i) => (i === idx ? { ...r, ...patch } : r)));
   };
-  const removeRow = (idx: number) => setRows(prev => prev.filter((_, i) => i !== idx));
+  const removeRow = (idx: number) => {
+    setRows(prev => prev.filter((_, i) => i !== idx));
+    setSelected(prev => {
+      const next = new Set<number>();
+      prev.forEach(s => { if (s < idx) next.add(s); else if (s > idx) next.add(s - 1); });
+      return next;
+    });
+  };
   const addBlank = () => setRows(prev => [...prev, emptyRow()]);
+  const clearAll = () => { setRows([]); setErrors([]); setSelected(new Set()); setDupChecked(false); clearDraft(); };
+
+  const applyAutoFix = () => {
+    setRows(prev => prev.map((r) => autoFixRow(r as CardRow)));
+    toast.success("자동 보정 완료 (코드 대문자, 색상 한글→영문, 레어도 정리)");
+  };
+
+  const checkDuplicatesAgainstDb = async () => {
+    const codes = Array.from(new Set(rows.map(r => (r.code || "").trim().toUpperCase()).filter(Boolean)));
+    if (codes.length === 0) { toast.error("코드가 입력된 행이 없습니다"); return; }
+    setBusy(true);
+    try {
+      const found = new Set<string>();
+      for (let i = 0; i < codes.length; i += 500) {
+        const slice = codes.slice(i, i + 500);
+        const { data, error } = await supabase.from("cards").select("code").in("code", slice);
+        if (error) throw error;
+        for (const r of data ?? []) found.add(String(r.code).toUpperCase());
+      }
+      setExistingCodes(found);
+      setDupChecked(true);
+      toast.success(found.size
+        ? `이미 등록된 코드 ${found.size}건 발견${isAdmin ? " (등록 시 덮어쓰기)" : " (등록 시 건너뜀)"}`
+        : "DB 중복 없음");
+    } catch (e) {
+      toast.error("중복 검사 실패: " + (e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const exportErrorsCsv = () => {
+    if (errorRowsList.length === 0) { toast.info("오류 행이 없습니다"); return; }
+    downloadRowsAsCsv(`카드등록_오류_${Date.now()}.csv`, errorRowsList as CardRow[]);
+  };
+
+  const toggleSelect = (i: number) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i); else next.add(i);
+      return next;
+    });
+  };
+  const toggleSelectAll = () => {
+    setSelected(prev => prev.size === rows.length ? new Set() : new Set(rows.map((_, i) => i)));
+  };
+  const applyBulk = () => {
+    if (selected.size === 0) { toast.error("선택된 행이 없습니다"); return; }
+    const patch: Partial<CardRow> = {};
+    if (bulkPatch.set_code) patch.set_code = (bulkPatch.set_code as string).trim().toUpperCase();
+    if (bulkPatch.game) patch.game = bulkPatch.game;
+    if (bulkPatch.type) patch.type = bulkPatch.type;
+    if (bulkPatch.rarity) patch.rarity = (bulkPatch.rarity as string).trim().toUpperCase();
+    if (bulkPatch.attribute) patch.attribute = (bulkPatch.attribute as string).trim();
+    if (Object.keys(patch).length === 0) { toast.error("적용할 값을 입력하세요"); return; }
+    setRows(prev => prev.map((r, i) => selected.has(i) ? { ...r, ...patch } : r));
+    toast.success(`${selected.size}건에 적용됨`);
+    setBulkOpen(false);
+    setBulkPatch({});
+  };
 
   const submit = async () => {
     if (valid.length === 0) { toast.error("등록할 유효한 카드가 없습니다"); return; }
@@ -327,7 +449,10 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
       const CHUNK = 200;
       let inserted = 0, skipped = 0;
       for (let i = 0; i < valid.length; i += CHUNK) {
-        const slice = valid.slice(i, i + CHUNK).map(r => ({ ...r, image_url: normalizeImageUrl(r.image_url) }));
+        const slice = valid.slice(i, i + CHUNK).map(r => ({
+          ...autoFixRow(r as CardRow),
+          image_url: normalizeImageUrl(r.image_url),
+        }));
         if (isAdmin) {
           const { error } = await supabase.from("cards").upsert(slice, { onConflict: "code" });
           if (error) throw error;
@@ -346,15 +471,13 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
       }
       toast.success(skipped ? `${inserted}장 등록 · ${skipped}장 중복 건너뜀` : `${inserted}장 등록 완료`);
       onComplete?.({ inserted, skipped });
-      setRows([]);
-      setErrors([]);
+      clearAll();
     } catch (e) {
       toast.error((e as Error).message ?? "등록 실패");
     } finally {
       setBusy(false);
     }
   };
-
   return (
     <div className="space-y-4">
       <Tabs defaultValue="single">
@@ -453,17 +576,59 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
 
       {rows.length > 0 && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-base">미리보기 · 편집 ({rows.length}건)</CardTitle>
-              <CardDescription>표에서 직접 수정할 수 있습니다. 유효한 행 {valid.length}건이 등록됩니다.</CardDescription>
+          <CardHeader className="flex flex-col gap-3">
+            <div className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-base">미리보기 · 편집 ({rows.length}건)</CardTitle>
+                <CardDescription>
+                  유효 {valid.length}건 · 오류 {errorRowsList.length}건
+                  {internalDups.size > 0 && <span className="text-amber-600"> · 내부 중복 코드 {internalDups.size}종</span>}
+                  {dupChecked && <span className="text-amber-600"> · DB 중복 {dbDupCount}건</span>}
+                  <span className="text-muted-foreground"> · 자동 임시저장됨 (Ctrl+Enter로 등록)</span>
+                </CardDescription>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" size="sm" onClick={applyAutoFix}><Wand2 className="mr-1 h-4 w-4" />자동 보정</Button>
+                <Button variant="outline" size="sm" onClick={checkDuplicatesAgainstDb} disabled={busy}>
+                  <ShieldCheck className="mr-1 h-4 w-4" />중복 검사
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setBulkOpen(v => !v)} disabled={selected.size === 0}>
+                  <Sparkles className="mr-1 h-4 w-4" />선택 일괄 적용 ({selected.size})
+                </Button>
+                <Button variant="ghost" size="sm" onClick={exportErrorsCsv}>
+                  <AlertTriangle className="mr-1 h-4 w-4" />오류행 CSV
+                </Button>
+                <Button variant="ghost" size="sm" onClick={addBlank}><Plus className="mr-1 h-4 w-4" />빈 행</Button>
+                <Button variant="ghost" size="sm" onClick={clearAll}>
+                  <Trash2 className="mr-1 h-4 w-4" />전체 비우기
+                </Button>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={addBlank}><Plus className="mr-1 h-4 w-4" />빈 행</Button>
-              <Button variant="ghost" size="sm" onClick={() => { setRows([]); setErrors([]); }}>
-                <Trash2 className="mr-1 h-4 w-4" />전체 비우기
-              </Button>
-            </div>
+            {bulkOpen && (
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-2 rounded-md border bg-muted/30 p-3">
+                <Input placeholder="세트 (예: OP01)" value={(bulkPatch.set_code as string) ?? ""} onChange={e => setBulkPatch(p => ({ ...p, set_code: e.target.value }))} />
+                <Select value={(bulkPatch.game as string) ?? ""} onValueChange={v => setBulkPatch(p => ({ ...p, game: v as Game }))}>
+                  <SelectTrigger><SelectValue placeholder="게임" /></SelectTrigger>
+                  <SelectContent>{VALID_GAMES.map(g => <SelectItem key={g} value={g}>{GAME_LABEL[g]}</SelectItem>)}</SelectContent>
+                </Select>
+                <Select value={(bulkPatch.type as string) ?? ""} onValueChange={v => setBulkPatch(p => ({ ...p, type: v as CardType }))}>
+                  <SelectTrigger><SelectValue placeholder="종류" /></SelectTrigger>
+                  <SelectContent>{VALID_TYPES.map(t => <SelectItem key={t} value={t}>{TYPE_LABEL[t]}</SelectItem>)}</SelectContent>
+                </Select>
+                <Input placeholder="레어도 (예: SR)" value={(bulkPatch.rarity as string) ?? ""} onChange={e => setBulkPatch(p => ({ ...p, rarity: e.target.value }))} />
+                <Button onClick={applyBulk}>{selected.size}건에 적용</Button>
+              </div>
+            )}
+            {(errorRowsList.length > 0 || internalDups.size > 0) && (
+              <div className="text-xs text-muted-foreground space-y-1 max-h-32 overflow-y-auto">
+                {Array.from(internalDups.entries()).slice(0, 5).map(([code, idxs]) => (
+                  <div key={code}><Badge variant="destructive" className="mr-1">중복</Badge>{code} — {idxs.map(i => i + 1).join(", ")}행</div>
+                ))}
+                {issuesByRow.map((iss, i) => iss.filter(x => x.level === "error").slice(0, 1).map((x, j) => (
+                  <div key={`${i}-${j}`}><Badge variant="destructive" className="mr-1">{i + 1}행</Badge>{x.field}: {x.message}</div>
+                )))}
+              </div>
+            )}
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
