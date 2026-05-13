@@ -56,6 +56,7 @@ const playItems = [
 const communityItems = [
   { title: "매장 찾기", url: "/stores", icon: MapPin },
   { title: "오프라인 매칭", url: "/lfg", icon: Users },
+  { title: "친구", url: "/friends", icon: UserPlus },
   { title: "공지사항", url: "/announcements", icon: Megaphone },
 ];
 
