@@ -47,6 +47,42 @@ export type Database = {
         }
         Relationships: []
       }
+      card_audit_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          after_data: Json | null
+          before_data: Json | null
+          card_code: string
+          card_id: string | null
+          created_at: string
+          id: string
+          note: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          after_data?: Json | null
+          before_data?: Json | null
+          card_code: string
+          card_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          after_data?: Json | null
+          before_data?: Json | null
+          card_code?: string
+          card_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+        }
+        Relationships: []
+      }
       card_favorites: {
         Row: {
           card_code: string
@@ -110,7 +146,12 @@ export type Database = {
           name: string
           power: number | null
           rarity: string | null
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
           set_code: string
+          status: Database["public"]["Enums"]["card_status"]
+          submitted_by: string | null
           type: Database["public"]["Enums"]["card_type"]
           updated_at: string
         }
@@ -128,7 +169,12 @@ export type Database = {
           name: string
           power?: number | null
           rarity?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           set_code: string
+          status?: Database["public"]["Enums"]["card_status"]
+          submitted_by?: string | null
           type: Database["public"]["Enums"]["card_type"]
           updated_at?: string
         }
@@ -146,7 +192,12 @@ export type Database = {
           name?: string
           power?: number | null
           rarity?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           set_code?: string
+          status?: Database["public"]["Enums"]["card_status"]
+          submitted_by?: string | null
           type?: Database["public"]["Enums"]["card_type"]
           updated_at?: string
         }
@@ -913,6 +964,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      review_card: {
+        Args: { _approve: boolean; _code: string; _note?: string }
+        Returns: undefined
+      }
       revoke_admin_by_email: { Args: { _email: string }; Returns: string }
       search_users: {
         Args: { lim?: number; q: string }
@@ -937,6 +992,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      card_status: "pending" | "approved" | "rejected"
       card_type: "leader" | "character" | "event" | "stage" | "don"
       event_kind: "tournament" | "release" | "match"
       friendship_status: "pending" | "accepted"
@@ -1073,6 +1129,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      card_status: ["pending", "approved", "rejected"],
       card_type: ["leader", "character", "event", "stage", "don"],
       event_kind: ["tournament", "release", "match"],
       friendship_status: ["pending", "accepted"],
