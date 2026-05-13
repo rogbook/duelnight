@@ -157,6 +157,7 @@ function TierPage() {
     setTitle("내 티어표");
     setIsPublic(true);
     setPlacements(emptyPlacements());
+    setSetCode("all");
   };
 
   const load = (l: TierList) => {
@@ -164,6 +165,8 @@ function TierPage() {
     setEditingId(l.id);
     setTitle(l.title);
     setIsPublic(l.is_public);
+    setGame(l.game);
+    setSetCode("all");
     setPlacements({
       S: raw.S ?? [],
       A: raw.A ?? [],
