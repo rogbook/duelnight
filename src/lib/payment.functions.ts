@@ -67,10 +67,9 @@ async function recordSuccessfulPayment(params: {
  * PortOne 결제 검증 서버 함수
  */
 export const verifyPortOnePayment = createServerFn({ method: "POST" })
-  .validator(z.object({ imp_uid: z.string(), merchant_uid: z.string(), amount: z.number() }))
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
-    const { imp_uid, merchant_uid, amount } = data;
+    const { imp_uid, merchant_uid, amount } = data as { imp_uid: string; merchant_uid: string; amount: number };
     const userId = context.userId;
 
     try {
@@ -128,10 +127,9 @@ export const verifyPortOnePayment = createServerFn({ method: "POST" })
  * PayPal 결제 검증 서버 함수
  */
 export const verifyPayPalPayment = createServerFn({ method: "POST" })
-  .validator(z.object({ order_id: z.string(), amount: z.number() }))
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
-    const { order_id, amount } = data;
+    const { order_id, amount } = data as { order_id: string; amount: number };
     const userId = context.userId;
 
     try {
