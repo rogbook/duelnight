@@ -25,7 +25,7 @@ const emailSchema = z
   .email({ message: "올바른 이메일 형식이 아닙니다" })
   .max(255);
 
-export const Route = createFileRoute("/admin")({
+export const Route = createFileRoute("/admin/")({
   head: () => ({
     meta: [
       { title: "관리자 — TCG Hub" },
