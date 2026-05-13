@@ -13,6 +13,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/sonner";
+import { NotificationBell } from "@/components/notification-bell";
 import { supabase } from "@/integrations/supabase/client";
 
 function AuthHeaderButton() {
@@ -164,6 +165,7 @@ function RootComponent() {
               <header className="flex h-14 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur">
                 <SidebarTrigger />
                 <div className="flex-1" />
+                <NotificationBell />
                 <AuthHeaderButton />
               </header>
               <main className="flex-1">
