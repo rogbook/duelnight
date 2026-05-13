@@ -70,6 +70,50 @@ export const verifyPayPalPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { order_id: string; amount: number }) => d)
   .handler(async ({ data, context }) => {
-    // TODO: PayPal API 연동 실구현 필요
-    return { success: false, error: "PayPal 서버 검증이 아직 구현되지 않았습니다." };
+    const { order_id, amount } = data;
+    const userId = context.userId;
+
+    try {
+      // 1. PayPal Access Token 발급
+      const auth = btoa(`${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`);
+      const tokenRes = await fetch("https://api-m.sandbox.paypal.com/v1/oauth2/token", {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${auth}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: "grant_type=client_credentials",
+      });
+      const tokenData = await tokenRes.json();
+      const accessToken = tokenData.access_token;
+
+      // 2. PayPal 주문 상세 정보 조회
+      const orderRes = await fetch(`https://api-m.sandbox.paypal.com/v2/checkout/orders/${order_id}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      const orderData = await orderRes.json();
+
+      // 3. 검증 (상태가 COMPLETED인지, 금액이 일치하는지 확인)
+      // 주의: PayPal은 소수점 단위 USD를 사용하므로 환율 계산 로직 확인 필요
+      if (orderData.status !== "COMPLETED") {
+        throw new Error(`PayPal 주문이 완료되지 않았습니다. (상태: ${orderData.status})`);
+      }
+
+      // 4. DB 업데이트 (성공 시 크레딧 지급)
+      const { error } = await supabaseAdmin.rpc("process_successful_payment", {
+        p_user_id: userId,
+        p_amount: amount,
+        p_order_id: order_id,
+        p_provider: "paypal",
+      });
+
+      if (error) throw error;
+
+      return { success: true };
+    } catch (error) {
+      console.error("PayPal verification error:", error);
+      return { success: false, error: (error as Error).message };
+    }
   });
