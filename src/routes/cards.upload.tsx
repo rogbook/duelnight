@@ -305,13 +305,25 @@ function CardsUploadPage() {
           ) : (
             <p>• 동일 <code>code</code>가 이미 있으면 추가되지 않고 건너뜁니다. 기존 카드 수정은 관리자에게 요청하세요.</p>
           )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => downloadFile("cards-sample.csv", SAMPLE_CSV, "text/csv")}
-          >
-            <Download className="mr-1 h-4 w-4" /> 샘플 CSV 다운로드
-          </Button>
+          <div className="flex flex-wrap gap-2 pt-1">
+            <Button variant="outline" size="sm" asChild>
+              <a href="/templates/cards-sample.csv" download>
+                <Download className="mr-1 h-4 w-4" /> 샘플 CSV 다운로드
+              </a>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <a href="/templates/cards-sample.json" download>
+                <Download className="mr-1 h-4 w-4" /> 샘플 JSON 다운로드
+              </a>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => downloadFile("cards-sample.csv", SAMPLE_CSV, "text/csv")}
+            >
+              인라인 CSV 복사 다운로드
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
