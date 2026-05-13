@@ -11,10 +11,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { Database } from "@/integrations/supabase/types";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"];
 type TierList = Database["public"]["Tables"]["tier_lists"]["Row"];
+type Game = Database["public"]["Enums"]["tcg_game"];
+
+const GAME_OPTIONS: { value: Game; label: string }[] = [
+  { value: "optcg", label: "원피스" },
+  { value: "ptcg", label: "포켓몬" },
+  { value: "dtcg", label: "디지몬" },
+];
 
 const TIERS = ["S", "A", "B", "C", "D"] as const;
 type Tier = (typeof TIERS)[number] | "pool";
