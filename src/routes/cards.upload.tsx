@@ -232,6 +232,7 @@ function CardsUploadPage() {
           inserted += added;
           skipped += slice.length - added;
         }
+        setProgress({ done: Math.min(i + CHUNK, parsed.rows.length), total: parsed.rows.length });
       }
       setResult({ inserted, skipped });
       toast.success(
