@@ -2,6 +2,66 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+const CREDIT_PACK_AMOUNTS = new Set([10000, 45000, 85000]);
+
+function assertValidCreditPackAmount(amount: number) {
+  if (!Number.isFinite(amount) || !CREDIT_PACK_AMOUNTS.has(amount)) {
+    throw new Error("유효하지 않은 결제 금액입니다.");
+  }
+}
+
+async function recordSuccessfulPayment(params: {
+  userId: string;
+  amount: number;
+  orderId: string;
+  provider: "portone" | "paypal";
+  impUid?: string;
+}) {
+  const creditsToAdd = Math.floor(params.amount / 10);
+
+  const { data: existingPayment, error: existingPaymentError } = await supabaseAdmin
+    .from("payments")
+    .select("id")
+    .eq("order_id", params.orderId)
+    .eq("status", "completed")
+    .maybeSingle();
+
+  if (existingPaymentError) throw existingPaymentError;
+  if (existingPayment) return;
+
+  const { error: paymentError } = await supabaseAdmin.from("payments").upsert(
+    {
+      user_id: params.userId,
+      order_id: params.orderId,
+      imp_uid: params.impUid ?? null,
+      amount: params.amount,
+      provider: params.provider,
+      status: "completed",
+    },
+    { onConflict: "order_id" },
+  );
+
+  if (paymentError) throw paymentError;
+
+  const { data: creditRow, error: creditReadError } = await supabaseAdmin
+    .from("user_credits")
+    .select("balance")
+    .eq("user_id", params.userId)
+    .maybeSingle();
+
+  if (creditReadError) throw creditReadError;
+
+  const { error: creditWriteError } = await supabaseAdmin
+    .from("user_credits")
+    .upsert({
+      user_id: params.userId,
+      balance: (creditRow?.balance ?? 0) + creditsToAdd,
+      updated_at: new Date().toISOString(),
+    });
+
+  if (creditWriteError) throw creditWriteError;
+}
+
 /**
  * PortOne 결제 검증 서버 함수
  */
@@ -13,6 +73,8 @@ export const verifyPortOnePayment = createServerFn({ method: "POST" })
     const userId = context.userId;
 
     try {
+      assertValidCreditPackAmount(amount);
+
       // 1. PortOne 토큰 발급
       // 서버 환경변수(Lovable Cloud Secrets)에서 키를 가져옴
       const tokenRes = await fetch("https://api.iamport.kr/users/getToken", {
@@ -46,15 +108,13 @@ export const verifyPortOnePayment = createServerFn({ method: "POST" })
       }
 
       // 4. DB 업데이트 (미들웨어에서 추출한 인증된 userId 사용 및 Admin 권한으로 실행)
-      const { error } = await supabaseAdmin.rpc("process_successful_payment", {
-        p_user_id: userId,
-        p_amount: amount,
-        p_order_id: merchant_uid,
-        p_provider: "portone",
-        p_imp_uid: imp_uid,
+      await recordSuccessfulPayment({
+        userId,
+        amount,
+        orderId: merchant_uid,
+        provider: "portone",
+        impUid: imp_uid,
       });
-
-      if (error) throw error;
 
       return { success: true };
     } catch (error) {
@@ -74,6 +134,8 @@ export const verifyPayPalPayment = createServerFn({ method: "POST" })
     const userId = context.userId;
 
     try {
+      assertValidCreditPackAmount(amount);
+
       // 1. PayPal Access Token 발급
       const auth = btoa(`${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`);
       const tokenRes = await fetch("https://api-m.sandbox.paypal.com/v1/oauth2/token", {
@@ -102,14 +164,12 @@ export const verifyPayPalPayment = createServerFn({ method: "POST" })
       }
 
       // 4. DB 업데이트 (성공 시 크레딧 지급)
-      const { error } = await supabaseAdmin.rpc("process_successful_payment", {
-        p_user_id: userId,
-        p_amount: amount,
-        p_order_id: order_id,
-        p_provider: "paypal",
+      await recordSuccessfulPayment({
+        userId,
+        amount,
+        orderId: order_id,
+        provider: "paypal",
       });
-
-      if (error) throw error;
 
       return { success: true };
     } catch (error) {
