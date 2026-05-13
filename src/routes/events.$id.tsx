@@ -100,7 +100,7 @@ export const Route = createFileRoute("/events/$id")({
 });
 
 function EventDetailPage() {
-  const { event } = Route.useLoaderData();
+  const { event } = Route.useLoaderData() as { event: Event };
   const { user } = useAuth();
   const fmt = (iso: string) => new Date(iso).toLocaleString("ko-KR");
 
