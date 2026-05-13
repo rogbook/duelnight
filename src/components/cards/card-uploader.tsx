@@ -20,6 +20,13 @@ import {
   saveDraft, loadDraft, clearDraft,
 } from "./card-utils";
 import { compressToWebp } from "@/lib/image-utils";
+import { 
+  getDriveAuthUrlFn, 
+  getDriveConnectionFn, 
+  listDriveFolderFn, 
+  disconnectDriveFn,
+  importDriveFilesFn
+} from "@/lib/google-drive.functions";
 
 type Game = Database["public"]["Enums"]["tcg_game"];
 type CardType = Database["public"]["Enums"]["card_type"];
@@ -278,6 +285,14 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [editIdx, setEditIdx] = useState<number | null>(null);
 
+  // Google Drive 연동 상태
+  const [driveConnected, setDriveConnected] = useState(false);
+  const [driveEmail, setDriveEmail] = useState<string | null>(null);
+  const [driveFolderUrl, setDriveFolderUrl] = useState("");
+  const [driveFiles, setDriveFiles] = useState<any[]>([]);
+  const [selectedDriveFiles, setSelectedDriveFiles] = useState<Set<string>>(new Set());
+  const [loadingDrive, setLoadingDrive] = useState(false);
+
   const valid = useMemo(() => rows.filter(r => r.code && r.set_code && r.name), [rows]);
   const issuesByRow = useMemo(() => rows.map((r) => validateRow(r as CardRow)), [rows]);
   const internalDups = useMemo(() => findInternalDuplicates(rows as CardRow[]), [rows]);
@@ -290,7 +305,7 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
     [rows, issuesByRow],
   );
 
-  // 임시저장 복구 (마운트 1회)
+  // 임시저장 및 드라이브 상태 확인
   useEffect(() => {
     const draft = loadDraft();
     if (draft && draft.rows.length) {
@@ -299,6 +314,20 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
         description: `${draft.rows.length}건 (${ago}분 전 저장). "전체 비우기"로 삭제할 수 있어요.`,
       });
       setRows(draft.rows as CardRow[]);
+    }
+
+    // 드라이브 연결 확인
+    getDriveConnectionFn().then(res => {
+      setDriveConnected(res.connected);
+      if (res.email) setDriveEmail(res.email);
+    });
+
+    // 드라이브 연결 성공 파라미터 확인
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("drive") === "connected") {
+      toast.success("Google Drive가 연결되었습니다.");
+      url.searchParams.delete("drive");
+      window.history.replaceState({}, "", url.pathname);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -562,13 +591,86 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
       setBusy(false);
     }
   };
+
+  const connectDrive = async () => {
+    try {
+      const { url } = await getDriveAuthUrlFn();
+      window.location.href = url;
+    } catch (e) {
+      toast.error("인증 URL 생성 실패: " + (e as Error).message);
+    }
+  };
+
+  const disconnectDrive = async () => {
+    try {
+      await disconnectDriveFn();
+      setDriveConnected(false);
+      setDriveEmail(null);
+      setDriveFiles([]);
+      toast.success("연결이 해제되었습니다.");
+    } catch (e) {
+      toast.error("연결 해제 실패: " + (e as Error).message);
+    }
+  };
+
+  const previewDriveFolder = async () => {
+    if (!driveFolderUrl) { toast.error("폴더 URL을 입력하세요"); return; }
+    setLoadingDrive(true);
+    try {
+      const res = await listDriveFolderFn({ data: { folderUrl: driveFolderUrl } });
+      setDriveFiles(res.files);
+      setSelectedDriveFiles(new Set(res.files.map((f: any) => f.id)));
+      toast.success(`이미지 ${res.files.length}건을 찾았습니다.`);
+    } catch (e) {
+      toast.error("목록 조회 실패: " + (e as Error).message);
+    } finally {
+      setLoadingDrive(false);
+    }
+  };
+
+  const importDriveFiles = async () => {
+    const targets = Array.from(selectedDriveFiles);
+    if (targets.length === 0) { toast.error("선택된 파일이 없습니다"); return; }
+    setBusy(true);
+    setProgress({ done: 0, total: targets.length });
+    try {
+      // 5개씩 묶어서 처리
+      const CHUNK = 5;
+      const newRows: CardRow[] = [];
+      for (let i = 0; i < targets.length; i += CHUNK) {
+        const slice = targets.slice(i, i + CHUNK);
+        const res = await importDriveFilesFn({ data: { fileIds: slice } });
+        for (const item of res.results) {
+          const code = extractCodeFromFilename(item.name);
+          newRows.push({
+            ...emptyRow(),
+            code,
+            set_code: code.split("-")[0] || "",
+            name: "",
+            image_url: item.url,
+          });
+        }
+        setProgress({ done: Math.min(i + CHUNK, targets.length), total: targets.length });
+      }
+      setRows(prev => [...prev, ...newRows]);
+      toast.success(`${newRows.length}건 가져오기 완료. "이름 비어있는 행 OCR"로 정보를 채워보세요.`);
+      setDriveFiles([]);
+      setDriveFolderUrl("");
+    } catch (e) {
+      toast.error("가져오기 실패: " + (e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <Tabs defaultValue="single">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="single"><Plus className="mr-1 h-4 w-4" />한 장씩 입력</TabsTrigger>
           <TabsTrigger value="excel"><FileSpreadsheet className="mr-1 h-4 w-4" />엑셀/CSV</TabsTrigger>
-          <TabsTrigger value="images"><ImageIcon className="mr-1 h-4 w-4" />이미지 대량</TabsTrigger>
+          <TabsTrigger value="images"><ImageIcon className="mr-1 h-4 w-4" />파일 업로드</TabsTrigger>
+          <TabsTrigger value="drive"><ImageIcon className="mr-1 h-4 w-4" />Google Drive</TabsTrigger>
         </TabsList>
 
         <TabsContent value="single">
@@ -640,6 +742,96 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
                     <span>{progress.done}/{progress.total}</span>
                   </div>
                   <Progress value={(progress.done / progress.total) * 100} />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="drive">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Google Drive 연동</CardTitle>
+              <CardDescription>
+                본인 드라이브 폴더의 카드 이미지들을 일괄적으로 가져옵니다.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {!driveConnected ? (
+                <div className="flex flex-col items-center justify-center py-8 border-2 border-dashed rounded-lg bg-muted/20">
+                  <ImageIcon className="h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-sm text-muted-foreground mb-4">Google Drive 계정을 연결해야 합니다.</p>
+                  <Button onClick={connectDrive}>
+                    <Plus className="mr-2 h-4 w-4" /> Google Drive 연결하기
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 border rounded-md bg-muted/10">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-600/20">연결됨</Badge>
+                      <span className="text-sm font-medium">{driveEmail}</span>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={disconnectDrive} className="text-destructive hover:text-destructive">연결 해제</Button>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Input 
+                      placeholder="Google Drive 폴더 주소 (예: https://drive.google.com/drive/folders/...)" 
+                      value={driveFolderUrl}
+                      onChange={e => setDriveFolderUrl(e.target.value)}
+                    />
+                    <Button onClick={previewDriveFolder} disabled={loadingDrive || !driveFolderUrl}>
+                      {loadingDrive ? "조회 중…" : "미리보기"}
+                    </Button>
+                  </div>
+
+                  {driveFiles.length > 0 && (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">이미지 {driveFiles.length}개 발견</span>
+                        <div className="flex items-center gap-2">
+                          <Checkbox 
+                            id="all-drive" 
+                            checked={selectedDriveFiles.size === driveFiles.length}
+                            onCheckedChange={(checked) => {
+                              if (checked) setSelectedDriveFiles(new Set(driveFiles.map(f => f.id)));
+                              else setSelectedDriveFiles(new Set());
+                            }}
+                          />
+                          <Label htmlFor="all-drive" className="text-xs">전체 선택</Label>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-5 md:grid-cols-10 gap-2 max-h-60 overflow-y-auto p-1 border rounded-md bg-muted/5">
+                        {driveFiles.map(f => (
+                          <div 
+                            key={f.id} 
+                            className={`relative group cursor-pointer rounded border ${selectedDriveFiles.has(f.id) ? "border-primary ring-1 ring-primary" : "border-border"}`}
+                            onClick={() => {
+                              setSelectedDriveFiles(prev => {
+                                const next = new Set(prev);
+                                if (next.has(f.id)) next.delete(f.id);
+                                else next.add(f.id);
+                                return next;
+                              });
+                            }}
+                          >
+                            <img src={f.thumbnailLink} alt="" className="w-full aspect-[3/4] object-cover rounded-sm" />
+                            <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Checkbox checked={selectedDriveFiles.has(f.id)} readOnly />
+                            </div>
+                            <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-[8px] text-white p-0.5 truncate">
+                              {f.name}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <Button className="w-full" onClick={importDriveFiles} disabled={busy || selectedDriveFiles.size === 0}>
+                        {busy ? `가져오는 중… (${progress.done}/${progress.total})` : `선택한 ${selectedDriveFiles.size}개 이미지 가져오기`}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
