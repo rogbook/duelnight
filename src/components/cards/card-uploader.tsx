@@ -360,9 +360,18 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
             <CardContent className="space-y-3">
               <div className="flex flex-wrap gap-2">
                 <Button variant="outline" size="sm" onClick={downloadSampleXlsx}>
-                  <Download className="mr-1 h-4 w-4" /> 샘플 엑셀 다운로드
+                  <Download className="mr-1 h-4 w-4" /> 샘플 엑셀(.xlsx) 다운로드
+                </Button>
+                <Button variant="outline" size="sm" onClick={downloadEmptyTemplateXlsx}>
+                  <Download className="mr-1 h-4 w-4" /> 빈 양식(.xlsx) 다운로드
+                </Button>
+                <Button variant="ghost" size="sm" onClick={downloadFieldGuideCsv}>
+                  <Download className="mr-1 h-4 w-4" /> 필드 설명(.csv)
                 </Button>
               </div>
+              <p className="text-xs text-muted-foreground">
+                샘플 파일에는 <b>카드샘플</b> 시트(예시 3건)와 <b>필드설명</b> 시트(필드명·필수 여부·설명·예시)가 함께 들어 있어요.
+              </p>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="xlsx-file">파일 선택 (xlsx, xls, csv 최대 10MB)</Label>
                 <Input
