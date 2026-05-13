@@ -1,9 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const getDriveAuthUrlFn = createServerFn({ method: "GET" })
-  .validator(z.any())
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { getGoogleAuthUrl } = await import("./google-drive.server");
@@ -12,7 +10,6 @@ export const getDriveAuthUrlFn = createServerFn({ method: "GET" })
   });
 
 export const getDriveConnectionFn = createServerFn({ method: "GET" })
-  .validator(z.any())
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -27,9 +24,9 @@ export const getDriveConnectionFn = createServerFn({ method: "GET" })
   });
 
 export const listDriveFolderFn = createServerFn({ method: "POST" })
-  .validator(z.object({ folderUrl: z.string() }))
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
+    const { folderUrl } = data as { folderUrl: string };
     const { getValidAccessToken } = await import("./google-drive.server");
     const token = await getValidAccessToken(context.userId);
     if (!token) throw new Error("Google Drive not connected");
@@ -45,7 +42,7 @@ export const listDriveFolderFn = createServerFn({ method: "POST" })
       return id;
     };
 
-    const fid = folderId(data.folderUrl);
+    const fid = folderId(folderUrl);
     const query = `'${fid}' in parents and mimeType contains 'image/' and trashed = false`;
     const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,thumbnailLink,mimeType)&pageSize=100`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -61,7 +58,6 @@ export const listDriveFolderFn = createServerFn({ method: "POST" })
   });
 
 export const disconnectDriveFn = createServerFn({ method: "POST" })
-  .validator(z.any())
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -84,9 +80,9 @@ export const disconnectDriveFn = createServerFn({ method: "POST" })
   });
 
 export const importDriveFilesFn = createServerFn({ method: "POST" })
-  .validator(z.object({ fileIds: z.array(z.string()) }))
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
+    const { fileIds } = data as { fileIds: string[] };
     const { getValidAccessToken } = await import("./google-drive.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     
@@ -94,7 +90,7 @@ export const importDriveFilesFn = createServerFn({ method: "POST" })
     if (!token) throw new Error("Google Drive not connected");
 
     const results = [];
-    for (const fileId of data.fileIds) {
+    for (const fileId of fileIds) {
       try {
         const metaRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=name,mimeType`, {
           headers: { Authorization: `Bearer ${token}` },
