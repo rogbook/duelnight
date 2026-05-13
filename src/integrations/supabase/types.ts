@@ -674,8 +674,7 @@ export type Database = {
       claim_admin_if_none: { Args: never; Returns: boolean }
       get_leaderboard: {
         Args: {
-          p_days?: number
-          p_game?: Database["public"]["Enums"]["tcg_game"]
+          p_game: Database["public"]["Enums"]["tcg_game"]
           p_limit?: number
           p_min_total?: number
         }
@@ -684,11 +683,31 @@ export type Database = {
           display_name: string
           draws: number
           losses: number
+          rating: number
           total: number
           user_id: string
           username: string
           win_rate: number
           wins: number
+        }[]
+      }
+      get_user_recent_matches: {
+        Args: {
+          p_game: Database["public"]["Enums"]["tcg_game"]
+          p_limit?: number
+          p_user_id: string
+        }
+        Returns: {
+          event: Database["public"]["Enums"]["match_event"]
+          game: Database["public"]["Enums"]["tcg_game"]
+          id: string
+          my_deck: string
+          opp_deck: string
+          opp_leader: string
+          played_at: string
+          points_delta: number
+          result: Database["public"]["Enums"]["match_result"]
+          went_first: boolean
         }[]
       }
       grant_admin_by_email: { Args: { _email: string }; Returns: string }
