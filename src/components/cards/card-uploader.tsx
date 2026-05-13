@@ -849,6 +849,15 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
           </Button>
         </div>
       )}
+
+      <ImageEditDialog
+        open={editIdx !== null}
+        imageUrl={editIdx !== null ? rows[editIdx]?.image_url ?? null : null}
+        setCode={editIdx !== null ? rows[editIdx]?.set_code : undefined}
+        cardCode={editIdx !== null ? rows[editIdx]?.code : undefined}
+        onClose={() => setEditIdx(null)}
+        onSaved={(url) => { if (editIdx !== null) updateRow(editIdx, { image_url: url }); }}
+      />
     </div>
   );
 }
