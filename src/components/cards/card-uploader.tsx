@@ -576,17 +576,59 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
 
       {rows.length > 0 && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-base">미리보기 · 편집 ({rows.length}건)</CardTitle>
-              <CardDescription>표에서 직접 수정할 수 있습니다. 유효한 행 {valid.length}건이 등록됩니다.</CardDescription>
+          <CardHeader className="flex flex-col gap-3">
+            <div className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-base">미리보기 · 편집 ({rows.length}건)</CardTitle>
+                <CardDescription>
+                  유효 {valid.length}건 · 오류 {errorRowsList.length}건
+                  {internalDups.size > 0 && <span className="text-amber-600"> · 내부 중복 코드 {internalDups.size}종</span>}
+                  {dupChecked && <span className="text-amber-600"> · DB 중복 {dbDupCount}건</span>}
+                  <span className="text-muted-foreground"> · 자동 임시저장됨 (Ctrl+Enter로 등록)</span>
+                </CardDescription>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" size="sm" onClick={applyAutoFix}><Wand2 className="mr-1 h-4 w-4" />자동 보정</Button>
+                <Button variant="outline" size="sm" onClick={checkDuplicatesAgainstDb} disabled={busy}>
+                  <ShieldCheck className="mr-1 h-4 w-4" />중복 검사
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setBulkOpen(v => !v)} disabled={selected.size === 0}>
+                  <Sparkles className="mr-1 h-4 w-4" />선택 일괄 적용 ({selected.size})
+                </Button>
+                <Button variant="ghost" size="sm" onClick={exportErrorsCsv}>
+                  <AlertTriangle className="mr-1 h-4 w-4" />오류행 CSV
+                </Button>
+                <Button variant="ghost" size="sm" onClick={addBlank}><Plus className="mr-1 h-4 w-4" />빈 행</Button>
+                <Button variant="ghost" size="sm" onClick={clearAll}>
+                  <Trash2 className="mr-1 h-4 w-4" />전체 비우기
+                </Button>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={addBlank}><Plus className="mr-1 h-4 w-4" />빈 행</Button>
-              <Button variant="ghost" size="sm" onClick={() => { setRows([]); setErrors([]); }}>
-                <Trash2 className="mr-1 h-4 w-4" />전체 비우기
-              </Button>
-            </div>
+            {bulkOpen && (
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-2 rounded-md border bg-muted/30 p-3">
+                <Input placeholder="세트 (예: OP01)" value={(bulkPatch.set_code as string) ?? ""} onChange={e => setBulkPatch(p => ({ ...p, set_code: e.target.value }))} />
+                <Select value={(bulkPatch.game as string) ?? ""} onValueChange={v => setBulkPatch(p => ({ ...p, game: v as Game }))}>
+                  <SelectTrigger><SelectValue placeholder="게임" /></SelectTrigger>
+                  <SelectContent>{VALID_GAMES.map(g => <SelectItem key={g} value={g}>{GAME_LABEL[g]}</SelectItem>)}</SelectContent>
+                </Select>
+                <Select value={(bulkPatch.type as string) ?? ""} onValueChange={v => setBulkPatch(p => ({ ...p, type: v as CardType }))}>
+                  <SelectTrigger><SelectValue placeholder="종류" /></SelectTrigger>
+                  <SelectContent>{VALID_TYPES.map(t => <SelectItem key={t} value={t}>{TYPE_LABEL[t]}</SelectItem>)}</SelectContent>
+                </Select>
+                <Input placeholder="레어도 (예: SR)" value={(bulkPatch.rarity as string) ?? ""} onChange={e => setBulkPatch(p => ({ ...p, rarity: e.target.value }))} />
+                <Button onClick={applyBulk}>{selected.size}건에 적용</Button>
+              </div>
+            )}
+            {(errorRowsList.length > 0 || internalDups.size > 0) && (
+              <div className="text-xs text-muted-foreground space-y-1 max-h-32 overflow-y-auto">
+                {Array.from(internalDups.entries()).slice(0, 5).map(([code, idxs]) => (
+                  <div key={code}><Badge variant="destructive" className="mr-1">중복</Badge>{code} — {idxs.map(i => i + 1).join(", ")}행</div>
+                ))}
+                {issuesByRow.map((iss, i) => iss.filter(x => x.level === "error").slice(0, 1).map((x, j) => (
+                  <div key={`${i}-${j}`}><Badge variant="destructive" className="mr-1">{i + 1}행</Badge>{x.field}: {x.message}</div>
+                )))}
+              </div>
+            )}
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
