@@ -209,6 +209,7 @@ function CardsUploadPage() {
     }
     setBusy(true);
     setResult(null);
+    setProgress({ done: 0, total: parsed.rows.length });
     try {
       const CHUNK = 200;
       let inserted = 0;
