@@ -14,6 +14,10 @@ const SITE = "https://tcg-hub.lovable.app";
 
 export const Route = createFileRoute("/decks/$id")({
   loader: async ({ params }) => {
+    // 현재 로그인 사용자 확인
+    const { data: { user } } = await supabase.auth.getUser();
+    const currentUserId = user?.id ?? null;
+
     const { data: deck, error } = await supabase
       .from("decks")
       .select("*")
@@ -21,10 +25,15 @@ export const Route = createFileRoute("/decks/$id")({
       .maybeSingle();
     if (error) throw error;
     if (!deck) throw notFound();
+
+    // 소유자이거나 공개 덱이면 레시피 열람 가능
+    const isOwner = currentUserId === deck.user_id;
+    const canView = deck.is_public || isOwner;
+
     let author: Profile | null = null;
     let deckCards: DeckCard[] = [];
     let cardMeta: Record<string, CardRow> = {};
-    if (deck.is_public) {
+    if (canView) {
       const [{ data: p }, { data: dc }] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", deck.user_id).maybeSingle(),
         supabase
@@ -50,6 +59,8 @@ export const Route = createFileRoute("/decks/$id")({
       deck: deck as Deck,
       author,
       isPublic: deck.is_public,
+      isOwner,
+      canView,
       deckCards,
       cardMeta,
     };
@@ -92,15 +103,17 @@ export const Route = createFileRoute("/decks/$id")({
 });
 
 function DeckDetailPage() {
-  const { deck, author, isPublic, deckCards, cardMeta } = Route.useLoaderData() as {
+  const { deck, author, isPublic, isOwner, canView, deckCards, cardMeta } = Route.useLoaderData() as {
     deck: Deck;
     author: Profile | null;
     isPublic: boolean;
+    isOwner: boolean;
+    canView: boolean;
     deckCards: DeckCard[];
     cardMeta: Record<string, CardRow>;
   };
 
-  if (!isPublic) {
+  if (!canView) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-16 text-center">
         <Layers className="mx-auto h-10 w-10 text-muted-foreground" />
