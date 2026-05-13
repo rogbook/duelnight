@@ -114,6 +114,7 @@ function ProfilePage() {
       display_name: form.display_name.trim() || null,
       avatar_url: form.avatar_url.trim() || null,
       bio: form.bio.trim() || null,
+      primary_game: (form.primary_game || null) as Game | null,
     };
     const { error } = await supabase
       .from("profiles")
