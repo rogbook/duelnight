@@ -1,0 +1,44 @@
+[
+  {
+    "code": "OP01-001",
+    "set_code": "OP01",
+    "game": "optcg",
+    "name": "몽키 D 루피",
+    "type": "leader",
+    "colors": ["red"],
+    "power": 5000,
+    "attribute": "타격",
+    "rarity": "L",
+    "effect": "4코스트 효과 예시",
+    "image_url": "/cards/OP01-001.png"
+  },
+  {
+    "code": "OP01-002",
+    "set_code": "OP01",
+    "game": "optcg",
+    "name": "로로노아 조로",
+    "type": "character",
+    "colors": ["red", "green"],
+    "cost": 3,
+    "power": 5000,
+    "counter": 1000,
+    "attribute": "슬래시",
+    "rarity": "SR",
+    "effect": "효과 텍스트 예시",
+    "image_url": "/cards/OP01-002.png"
+  },
+  {
+    "code": "OP01-003",
+    "set_code": "OP01",
+    "game": "optcg",
+    "name": "나미",
+    "type": "character",
+    "colors": ["blue"],
+    "cost": 2,
+    "power": 3000,
+    "counter": 2000,
+    "attribute": "특수",
+    "rarity": "R",
+    "effect": "드로우 효과 예시"
+  }
+]
