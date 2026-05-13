@@ -1,9 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { Store as StoreIcon, Plus, Trash2, MapPin, Phone, ExternalLink } from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  Store as StoreIcon,
+  Plus,
+  Trash2,
+  MapPin,
+  Phone,
+  ExternalLink,
+  Star,
+  Map as MapIcon,
+} from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsAdmin } from "@/hooks/use-is-admin";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
@@ -11,6 +21,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -35,11 +52,18 @@ type Store = {
   notes: string | null;
 };
 
+const ALL_GAMES: Game[] = ["optcg", "ptcg", "dtcg"];
+
+function mapUrl(s: { name: string; address: string | null; region: string | null }) {
+  const q = encodeURIComponent(s.address || `${s.name} ${s.region ?? ""}`.trim());
+  return `https://www.google.com/maps/search/?api=1&query=${q}`;
+}
+
 export const Route = createFileRoute("/stores")({
   head: () => ({
     meta: [
-      { title: "TCG 매장 — TCG Hub" },
-      { name: "description", content: "지역별 TCG 매장과 취급 게임을 한곳에." },
+      { title: "TCG 매장 찾기 — TCG Hub" },
+      { name: "description", content: "지역별 TCG 매장과 취급 게임을 찾고 즐겨찾기로 저장하세요." },
     ],
   }),
   component: StoresPage,
@@ -47,7 +71,12 @@ export const Route = createFileRoute("/stores")({
 
 function StoresPage() {
   const { user } = useAuth();
+  const { isAdmin } = useIsAdmin();
+  const qc = useQueryClient();
   const [q, setQ] = useState("");
+  const [game, setGame] = useState<Game | "all">("all");
+  const [region, setRegion] = useState<string>("all");
+  const [favOnly, setFavOnly] = useState(false);
 
   const { data: stores = [], refetch } = useQuery({
     queryKey: ["stores"],
@@ -61,128 +90,243 @@ function StoresPage() {
     },
   });
 
+  const { data: favIds = [] } = useQuery({
+    queryKey: ["store-favorites", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("store_favorites")
+        .select("store_id")
+        .eq("user_id", user!.id);
+      if (error) throw error;
+      return (data ?? []).map((r) => r.store_id as string);
+    },
+  });
+  const favSet = useMemo(() => new Set(favIds), [favIds]);
+
+  const regions = useMemo(() => {
+    const set = new Set<string>();
+    for (const s of stores) if (s.region) set.add(s.region);
+    return Array.from(set).sort();
+  }, [stores]);
+
   const filtered = stores.filter((s) => {
-    if (!q) return true;
-    const hay = `${s.name} ${s.region ?? ""} ${s.address ?? ""}`.toLowerCase();
-    return hay.includes(q.toLowerCase());
+    if (favOnly && !favSet.has(s.id)) return false;
+    if (game !== "all" && !s.games.includes(game)) return false;
+    if (region !== "all" && s.region !== region) return false;
+    if (q) {
+      const hay = `${s.name} ${s.region ?? ""} ${s.address ?? ""}`.toLowerCase();
+      if (!hay.includes(q.toLowerCase())) return false;
+    }
+    return true;
   });
 
+  const toggleFav = async (storeId: string) => {
+    if (!user) {
+      toast.error("로그인이 필요합니다");
+      return;
+    }
+    const isFav = favSet.has(storeId);
+    if (isFav) {
+      const { error } = await supabase
+        .from("store_favorites")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("store_id", storeId);
+      if (error) return toast.error(error.message);
+    } else {
+      const { error } = await supabase
+        .from("store_favorites")
+        .insert({ user_id: user.id, store_id: storeId });
+      if (error) return toast.error(error.message);
+    }
+    qc.invalidateQueries({ queryKey: ["store-favorites", user.id] });
+  };
+
   return (
-    <div className="mx-auto w-full max-w-4xl px-6 py-8">
-      <PageHeader title="TCG 매장" description="지역별 매장과 취급 게임을 공유하세요">
+    <div className="mx-auto w-full max-w-5xl px-6 py-8">
+      <PageHeader title="TCG 매장 찾기" description="지역·게임으로 매장을 찾고 즐겨찾기로 저장하세요">
         <Input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="이름·지역 검색"
+          placeholder="이름·지역·주소"
           className="w-[180px]"
         />
-        {user ? (
-          <NewStoreDialog onCreated={() => refetch()} />
-        ) : (
-          <Button asChild size="sm">
-            <Link to="/login">로그인하고 등록</Link>
-          </Button>
-        )}
+        {isAdmin && <NewStoreDialog onCreated={() => refetch()} />}
       </PageHeader>
+
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <Select value={game} onValueChange={(v) => setGame(v as Game | "all")}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="게임" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">전체 게임</SelectItem>
+            {ALL_GAMES.map((g) => (
+              <SelectItem key={g} value={g}>
+                {GAME_LABEL[g]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={region} onValueChange={setRegion}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="지역" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">전체 지역</SelectItem>
+            {regions.map((r) => (
+              <SelectItem key={r} value={r}>
+                {r}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {user && (
+          <label className="ml-1 inline-flex items-center gap-2 text-sm">
+            <Checkbox
+              checked={favOnly}
+              onCheckedChange={(v) => setFavOnly(!!v)}
+            />
+            즐겨찾기만
+          </label>
+        )}
+        <span className="ml-auto text-xs text-muted-foreground">{filtered.length}곳</span>
+      </div>
 
       {filtered.length === 0 ? (
         <div className="mt-6">
           <EmptyState
             icon={StoreIcon}
-            title="등록된 매장이 없어요"
-            description="첫 매장을 등록해 주세요."
+            title="조건에 맞는 매장이 없어요"
+            description={isAdmin ? "관리자 페이지에서 매장을 등록해 주세요." : "필터를 조정해 보세요."}
           />
         </div>
       ) : (
         <ul className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2">
-          {filtered.map((s) => (
-            <li key={s.id} className="rounded-lg border border-border bg-card p-4 transition hover:border-primary/40">
-              <div className="flex items-start justify-between gap-2">
-                <Link to="/stores/$id" params={{ id: s.id }} className="min-w-0 flex-1">
-                  <h3 className="text-sm font-semibold hover:underline">{s.name}</h3>
-                  {s.region && (
-                    <p className="mt-0.5 inline-flex items-center gap-1 text-xs text-muted-foreground">
-                      <MapPin className="h-3 w-3" />
-                      {s.region}
-                    </p>
-                  )}
-                </Link>
-                {user?.id === s.user_id && (
-                  <button
-                    onClick={async (e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      if (!confirm("매장을 삭제할까요?")) return;
-                      const { error } = await supabase
-                        .from("stores")
-                        .delete()
-                        .eq("id", s.id);
-                      if (error) toast.error(error.message);
-                      else {
-                        toast.success("삭제됨");
-                        refetch();
+          {filtered.map((s) => {
+            const isFav = favSet.has(s.id);
+            return (
+              <li
+                key={s.id}
+                className="rounded-lg border border-border bg-card p-4 transition hover:border-primary/40"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <Link to="/stores/$id" params={{ id: s.id }} className="min-w-0 flex-1">
+                    <h3 className="text-sm font-semibold hover:underline">{s.name}</h3>
+                    {s.region && (
+                      <p className="mt-0.5 inline-flex items-center gap-1 text-xs text-muted-foreground">
+                        <MapPin className="h-3 w-3" />
+                        {s.region}
+                      </p>
+                    )}
+                  </Link>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleFav(s.id);
+                      }}
+                      title={isFav ? "즐겨찾기 해제" : "즐겨찾기"}
+                      className={
+                        isFav
+                          ? "text-yellow-500"
+                          : "text-muted-foreground hover:text-yellow-500"
                       }
-                    }}
-                    className="text-muted-foreground hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                    >
+                      <Star className={`h-4 w-4 ${isFav ? "fill-current" : ""}`} />
+                    </button>
+                    {isAdmin && (
+                      <button
+                        onClick={async (e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (!confirm("매장을 삭제할까요?")) return;
+                          const { error } = await supabase
+                            .from("stores")
+                            .delete()
+                            .eq("id", s.id);
+                          if (error) toast.error(error.message);
+                          else {
+                            toast.success("삭제됨");
+                            refetch();
+                          }
+                        }}
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {s.address && (
+                  <p className="mt-2 text-xs text-muted-foreground">{s.address}</p>
                 )}
-              </div>
-              {s.address && (
-                <p className="mt-2 text-xs text-muted-foreground">{s.address}</p>
-              )}
-              <div className="mt-2 flex flex-wrap gap-1">
-                {s.games.map((g) => (
-                  <span
-                    key={g}
-                    className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
-                  >
-                    {GAME_LABEL[g]}
-                  </span>
-                ))}
-              </div>
-              <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                {s.phone && (
-                  <span className="inline-flex items-center gap-1">
-                    <Phone className="h-3 w-3" />
-                    {s.phone}
-                  </span>
-                )}
-                {s.url && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {s.games.map((g) => (
+                    <span
+                      key={g}
+                      className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
+                    >
+                      {GAME_LABEL[g]}
+                    </span>
+                  ))}
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                  {s.phone && (
+                    <a
+                      href={`tel:${s.phone}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-1 hover:text-foreground"
+                    >
+                      <Phone className="h-3 w-3" />
+                      {s.phone}
+                    </a>
+                  )}
                   <a
-                    href={s.url}
+                    href={mapUrl(s)}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="inline-flex items-center gap-1 text-foreground hover:underline"
+                    className="inline-flex items-center gap-1 hover:text-foreground"
                   >
-                    <ExternalLink className="h-3 w-3" />
-                    링크
+                    <MapIcon className="h-3 w-3" />
+                    지도
                   </a>
+                  {s.url && (
+                    <a
+                      href={s.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-1 hover:text-foreground"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      링크
+                    </a>
+                  )}
+                  <Link
+                    to="/stores/$id"
+                    params={{ id: s.id }}
+                    className="ml-auto text-primary hover:underline"
+                  >
+                    상세 →
+                  </Link>
+                </div>
+                {s.notes && (
+                  <p className="mt-2 line-clamp-3 whitespace-pre-wrap text-xs text-foreground/80">
+                    {s.notes}
+                  </p>
                 )}
-                <Link
-                  to="/stores/$id"
-                  params={{ id: s.id }}
-                  className="ml-auto text-primary hover:underline"
-                >
-                  상세 →
-                </Link>
-              </div>
-              {s.notes && (
-                <p className="mt-2 line-clamp-3 whitespace-pre-wrap text-xs text-foreground/80">
-                  {s.notes}
-                </p>
-              )}
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
   );
 }
-
-const ALL_GAMES: Game[] = ["optcg", "ptcg", "dtcg"];
 
 function NewStoreDialog({ onCreated }: { onCreated: () => void }) {
   const { user } = useAuth();
@@ -241,7 +385,7 @@ function NewStoreDialog({ onCreated }: { onCreated: () => void }) {
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle>매장 등록</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>매장 등록 (관리자)</DialogTitle></DialogHeader>
         <form onSubmit={submit} className="space-y-3">
           <div className="flex flex-col gap-1.5">
             <Label>매장 이름</Label>
