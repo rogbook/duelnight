@@ -616,6 +616,7 @@ function RecentList({
               <th className="px-3 py-2 text-left font-medium">상대</th>
               <th className="px-3 py-2 text-left font-medium">선/후</th>
               <th className="px-3 py-2 text-left font-medium">결과</th>
+              <th className="px-3 py-2 text-left font-medium">점수</th>
               <th className="px-3 py-2"></th>
             </tr>
           </thead>
