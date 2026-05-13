@@ -798,9 +798,19 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
                       <td className="px-1 py-1"><Input value={r.counter ?? ""} onChange={e => updateRow(i, { counter: num(e.target.value) })} className="h-7 text-xs" /></td>
                       <td className="px-1 py-1"><Input value={r.rarity ?? ""} onChange={e => updateRow(i, { rarity: e.target.value || null })} className={`h-7 text-xs w-16 ${fieldErr("rarity") ? errCls : ""}`} /></td>
                       <td className="px-1 py-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeRow(i)}>
-                          <X className="h-3.5 w-3.5" />
-                        </Button>
+                        <div className="flex gap-0.5">
+                          <Button
+                            variant="ghost" size="icon" className="h-7 w-7"
+                            disabled={busy || !r.image_url}
+                            title="이미지에서 자동 인식 (OCR)"
+                            onClick={async () => { setBusy(true); try { await ocrRow(i); } finally { setBusy(false); } }}
+                          >
+                            <ScanLine className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeRow(i)}>
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                     );
