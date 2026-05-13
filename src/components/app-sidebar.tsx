@@ -129,8 +129,6 @@ export function AppSidebar() {
         {renderGroup("커뮤니티", communityItems)}
         {renderGroup("계정", accountItems)}
         {isAdmin && renderGroup("관리", adminItems)}
-        {isAdmin && renderGroup("더미 데이터 운영", adminDataItems)}
-        {isAdmin && renderGroup("데모", sandboxItems)}
       </SidebarContent>
     </Sidebar>
   );
