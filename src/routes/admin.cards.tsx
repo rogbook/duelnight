@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { downloadFile } from "@/lib/csv";
@@ -187,6 +188,7 @@ function AdminCardsPage() {
   const { isAdmin, isLoading } = useIsAdmin();
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [result, setResult] = useState<{ inserted: number; updated?: number } | null>(null);
 
   const parsed = useMemo(() => parseInput(text), [text]);
@@ -209,8 +211,8 @@ function AdminCardsPage() {
     }
     setBusy(true);
     setResult(null);
+    setProgress({ done: 0, total: parsed.rows.length });
     try {
-      // Chunk inserts to avoid request size limits
       const CHUNK = 200;
       let inserted = 0;
       for (let i = 0; i < parsed.rows.length; i += CHUNK) {
@@ -218,6 +220,7 @@ function AdminCardsPage() {
         const { error } = await supabase.from("cards").upsert(slice, { onConflict: "code" });
         if (error) throw error;
         inserted += slice.length;
+        setProgress({ done: inserted, total: parsed.rows.length });
       }
       setResult({ inserted });
       toast.success(`${inserted}장 등록/업데이트 완료`);
@@ -299,7 +302,7 @@ function AdminCardsPage() {
         <CardContent className="space-y-3">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="file">CSV/JSON 파일 (최대 5MB)</Label>
-            <Input id="file" type="file" accept=".csv,.json,text/csv,application/json" onChange={onFile} />
+            <Input id="file" type="file" accept=".csv,.json,text/csv,application/json" onChange={onFile} disabled={busy} />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="text">또는 직접 붙여넣기</Label>
@@ -310,8 +313,20 @@ function AdminCardsPage() {
               rows={10}
               placeholder={SAMPLE_CSV}
               className="font-mono text-xs"
+              disabled={busy}
             />
           </div>
+          {busy && progress.total > 0 && (
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>업로드 중…</span>
+                <span>
+                  {progress.done.toLocaleString()} / {progress.total.toLocaleString()}건 ({Math.round((progress.done / progress.total) * 100)}%)
+                </span>
+              </div>
+              <Progress value={(progress.done / progress.total) * 100} />
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <div className="text-sm">
               <span className="font-medium text-emerald-600">{parsed.rows.length}</span>건 유효
@@ -324,13 +339,15 @@ function AdminCardsPage() {
             </div>
             <div className="flex gap-2">
               {text && (
-                <Button variant="ghost" size="sm" onClick={() => setText("")}>
+                <Button variant="ghost" size="sm" onClick={() => setText("")} disabled={busy}>
                   <Trash2 className="mr-1 h-4 w-4" /> 비우기
                 </Button>
               )}
               <Button onClick={upload} disabled={busy || parsed.rows.length === 0}>
                 <Upload className="mr-1 h-4 w-4" />
-                {busy ? "업로드 중…" : `${parsed.rows.length}건 업로드`}
+                {busy
+                  ? `업로드 중… ${progress.total ? Math.round((progress.done / progress.total) * 100) : 0}%`
+                  : `${parsed.rows.length}건 업로드`}
               </Button>
             </div>
           </div>
