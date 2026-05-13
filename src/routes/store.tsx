@@ -43,10 +43,15 @@ const CREDIT_PACKS = [
 ];
 
 function StorePage() {
+  const { session } = useAuth();
   const [selectedPack, setSelectedPack] = useState<typeof CREDIT_PACKS[0] | null>(null);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
   const handlePurchase = (pack: typeof CREDIT_PACKS[0]) => {
+    if (!session) {
+      toast.error("로그인이 필요한 서비스입니다.");
+      return;
+    }
     setSelectedPack(pack);
     setIsPaymentOpen(true);
   };

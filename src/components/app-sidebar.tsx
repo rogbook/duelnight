@@ -76,6 +76,12 @@ export function AppSidebar() {
     select: (router) => router.location.pathname,
   });
   const { isAdmin } = useIsAdmin();
+  const { user } = useAuth();
+
+  const filteredAccountItems = accountItems.filter(item => {
+    if (item.url === "/store" && !user) return false;
+    return true;
+  });
 
   const renderGroup = (
     label: string,
@@ -130,7 +136,7 @@ export function AppSidebar() {
         {renderGroup("카드", cardItems)}
         {renderGroup("플레이", playItems)}
         {renderGroup("커뮤니티", communityItems)}
-        {renderGroup("계정", accountItems)}
+        {renderGroup("계정", filteredAccountItems)}
         {isAdmin && renderGroup("관리", adminItems)}
       </SidebarContent>
     </Sidebar>
