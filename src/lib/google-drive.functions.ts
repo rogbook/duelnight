@@ -1,7 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const getDriveAuthUrlFn = createServerFn({ method: "GET" })
+  .validator(z.any())
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { getGoogleAuthUrl } = await import("./google-drive.server");
@@ -10,6 +12,7 @@ export const getDriveAuthUrlFn = createServerFn({ method: "GET" })
   });
 
 export const getDriveConnectionFn = createServerFn({ method: "GET" })
+  .validator(z.any())
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -24,8 +27,8 @@ export const getDriveConnectionFn = createServerFn({ method: "GET" })
   });
 
 export const listDriveFolderFn = createServerFn({ method: "POST" })
+  .validator(z.object({ folderUrl: z.string() }))
   .middleware([requireSupabaseAuth])
-  .validator((d: { folderUrl: string }) => d)
   .handler(async ({ data, context }) => {
     const { getValidAccessToken } = await import("./google-drive.server");
     const token = await getValidAccessToken(context.userId);
@@ -58,6 +61,7 @@ export const listDriveFolderFn = createServerFn({ method: "POST" })
   });
 
 export const disconnectDriveFn = createServerFn({ method: "POST" })
+  .validator(z.any())
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -80,8 +84,8 @@ export const disconnectDriveFn = createServerFn({ method: "POST" })
   });
 
 export const importDriveFilesFn = createServerFn({ method: "POST" })
+  .validator(z.object({ fileIds: z.array(z.string()) }))
   .middleware([requireSupabaseAuth])
-  .validator((d: { fileIds: string[] }) => d)
   .handler(async ({ data, context }) => {
     const { getValidAccessToken } = await import("./google-drive.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
