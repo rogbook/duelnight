@@ -664,6 +664,12 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
                 <Button variant="outline" size="sm" onClick={checkDuplicatesAgainstDb} disabled={busy}>
                   <ShieldCheck className="mr-1 h-4 w-4" />중복 검사
                 </Button>
+                <Button variant="outline" size="sm" onClick={ocrUnmatched} disabled={busy}>
+                  <ScanLine className="mr-1 h-4 w-4" />이름 비어있는 행 OCR
+                </Button>
+                <Button variant="outline" size="sm" onClick={ocrSelected} disabled={busy || selected.size === 0}>
+                  <ScanLine className="mr-1 h-4 w-4" />선택 OCR ({selected.size})
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => setBulkOpen(v => !v)} disabled={selected.size === 0}>
                   <Sparkles className="mr-1 h-4 w-4" />선택 일괄 적용 ({selected.size})
                 </Button>
