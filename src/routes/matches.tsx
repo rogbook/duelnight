@@ -642,6 +642,25 @@ function RecentList({
                 <td className="px-3 py-2">
                   <ResultBadge r={m.result} />
                 </td>
+                <td className="px-3 py-2">
+                  {m.points_delta != null ? (
+                    <span
+                      className={
+                        "tabular-nums text-xs font-medium " +
+                        (m.points_delta > 0
+                          ? "text-emerald-600"
+                          : m.points_delta < 0
+                            ? "text-rose-600"
+                            : "text-muted-foreground")
+                      }
+                    >
+                      {m.points_delta > 0 ? "+" : ""}
+                      {m.points_delta}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
+                </td>
                 <td className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-end gap-2">
                     <button
