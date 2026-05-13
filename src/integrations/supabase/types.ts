@@ -336,42 +336,136 @@ export type Database = {
         }
         Relationships: []
       }
+      lfg_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          post_id: string
+          read_at: string | null
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          post_id: string
+          read_at?: string | null
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+          read_at?: string | null
+          recipient_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lfg_messages_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "lfg_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lfg_participants: {
+        Row: {
+          created_at: string
+          id: string
+          message: string | null
+          post_id: string
+          status: Database["public"]["Enums"]["lfg_participant_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          post_id: string
+          status?: Database["public"]["Enums"]["lfg_participant_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          post_id?: string
+          status?: Database["public"]["Enums"]["lfg_participant_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lfg_participants_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "lfg_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lfg_posts: {
         Row: {
           body: string | null
+          category: Database["public"]["Enums"]["lfg_category"]
           contact: string | null
           created_at: string
+          duration_minutes: number | null
           game: Database["public"]["Enums"]["tcg_game"]
+          games_count: number | null
           id: string
+          kakao_link: string | null
           location: string | null
           meet_at: string | null
+          quick_match: boolean
           status: string
+          store_id: string | null
           title: string
           updated_at: string
           user_id: string
         }
         Insert: {
           body?: string | null
+          category?: Database["public"]["Enums"]["lfg_category"]
           contact?: string | null
           created_at?: string
+          duration_minutes?: number | null
           game: Database["public"]["Enums"]["tcg_game"]
+          games_count?: number | null
           id?: string
+          kakao_link?: string | null
           location?: string | null
           meet_at?: string | null
+          quick_match?: boolean
           status?: string
+          store_id?: string | null
           title: string
           updated_at?: string
           user_id: string
         }
         Update: {
           body?: string | null
+          category?: Database["public"]["Enums"]["lfg_category"]
           contact?: string | null
           created_at?: string
+          duration_minutes?: number | null
           game?: Database["public"]["Enums"]["tcg_game"]
+          games_count?: number | null
           id?: string
+          kakao_link?: string | null
           location?: string | null
           meet_at?: string | null
+          quick_match?: boolean
           status?: string
+          store_id?: string | null
           title?: string
           updated_at?: string
           user_id?: string
@@ -776,6 +870,8 @@ export type Database = {
       card_type: "leader" | "character" | "event" | "stage" | "don"
       event_kind: "tournament" | "release" | "match"
       friendship_status: "pending" | "accepted"
+      lfg_category: "friendly" | "tier" | "tournament_practice"
+      lfg_participant_status: "pending" | "accepted" | "rejected" | "cancelled"
       match_event: "friendly" | "shop" | "official"
       match_result: "win" | "loss" | "draw"
       tcg_game: "optcg" | "ptcg" | "dtcg"
@@ -910,6 +1006,8 @@ export const Constants = {
       card_type: ["leader", "character", "event", "stage", "don"],
       event_kind: ["tournament", "release", "match"],
       friendship_status: ["pending", "accepted"],
+      lfg_category: ["friendly", "tier", "tournament_practice"],
+      lfg_participant_status: ["pending", "accepted", "rejected", "cancelled"],
       match_event: ["friendly", "shop", "official"],
       match_result: ["win", "loss", "draw"],
       tcg_game: ["optcg", "ptcg", "dtcg"],
