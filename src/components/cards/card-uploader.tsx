@@ -327,7 +327,7 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
       const CHUNK = 200;
       let inserted = 0, skipped = 0;
       for (let i = 0; i < valid.length; i += CHUNK) {
-        const slice = valid.slice(i, i + CHUNK);
+        const slice = valid.slice(i, i + CHUNK).map(r => ({ ...r, image_url: normalizeImageUrl(r.image_url) }));
         if (isAdmin) {
           const { error } = await supabase.from("cards").upsert(slice, { onConflict: "code" });
           if (error) throw error;
