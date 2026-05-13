@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -66,8 +67,8 @@ async function recordSuccessfulPayment(params: {
  * PortOne 결제 검증 서버 함수
  */
 export const verifyPortOnePayment = createServerFn({ method: "POST" })
+  .validator(z.object({ imp_uid: z.string(), merchant_uid: z.string(), amount: z.number() }))
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { imp_uid: string; merchant_uid: string; amount: number }) => d)
   .handler(async ({ data, context }) => {
     const { imp_uid, merchant_uid, amount } = data;
     const userId = context.userId;
@@ -127,8 +128,8 @@ export const verifyPortOnePayment = createServerFn({ method: "POST" })
  * PayPal 결제 검증 서버 함수
  */
 export const verifyPayPalPayment = createServerFn({ method: "POST" })
+  .validator(z.object({ order_id: z.string(), amount: z.number() }))
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { order_id: string; amount: number }) => d)
   .handler(async ({ data, context }) => {
     const { order_id, amount } = data;
     const userId = context.userId;

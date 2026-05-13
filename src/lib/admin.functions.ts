@@ -8,6 +8,7 @@ const emailInput = z.object({
 
 /** 호출자가 admin인지 서버에서 검증해 boolean 반환. */
 export const checkIsAdmin = createServerFn({ method: "POST" })
+  .validator(z.any())
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
@@ -23,6 +24,7 @@ export const checkIsAdmin = createServerFn({ method: "POST" })
 
 /** 시스템에 admin이 한 명도 없을 때 호출자를 첫 admin으로 등록. */
 export const claimFirstAdmin = createServerFn({ method: "POST" })
+  .validator(z.any())
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase } = context;
@@ -33,8 +35,8 @@ export const claimFirstAdmin = createServerFn({ method: "POST" })
 
 /** 이메일로 admin 권한 부여. RPC 내부에서 호출자가 admin인지 다시 검증함. */
 export const grantAdmin = createServerFn({ method: "POST" })
+  .validator(emailInput)
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => emailInput.parse(input))
   .handler(async ({ context, data }) => {
     const { supabase } = context;
     // 1차 방어: 서버에서 호출자 admin 여부 확인
@@ -56,8 +58,8 @@ export const grantAdmin = createServerFn({ method: "POST" })
 
 /** 이메일로 admin 권한 해제. */
 export const revokeAdmin = createServerFn({ method: "POST" })
+  .validator(emailInput)
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => emailInput.parse(input))
   .handler(async ({ context, data }) => {
     const { supabase } = context;
     const { data: me } = await supabase
@@ -77,6 +79,7 @@ export const revokeAdmin = createServerFn({ method: "POST" })
 
 /** 관리자 목록 조회. RPC가 admin만 허용. */
 export const listAdmins = createServerFn({ method: "POST" })
+  .validator(z.any())
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase } = context;
@@ -93,7 +96,9 @@ export const listAdmins = createServerFn({ method: "POST" })
   });
 
 /** 관리자 존재 여부. 비로그인도 호출 가능해야 부트스트랩 안내가 가능. */
-export const anyAdminExists = createServerFn({ method: "POST" }).handler(
+export const anyAdminExists = createServerFn({ method: "POST" })
+  .validator(z.any())
+  .handler(
   async () => {
     const { supabaseAdmin } = await import(
       "@/integrations/supabase/client.server"
