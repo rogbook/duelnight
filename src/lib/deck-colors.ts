@@ -51,9 +51,9 @@ export const HAS_LEADER: Record<Game, boolean> = {
 
 // Games requiring at least 2 colors selected
 export const REQUIRES_MULTI_COLOR: Record<Game, boolean> = {
-  optcg: true,
+  optcg: false,
   ptcg: false,
-  dtcg: true,
+  dtcg: false,
 };
 
 export function colorLabel(game: Game, id: string): string {

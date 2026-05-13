@@ -317,6 +317,10 @@ function DeckDialog({
       toast.error("덱 이름을 입력해 주세요");
       return;
     }
+    if (form.colors.length === 0) {
+      toast.error("색상(타입)을 1개 이상 선택해 주세요");
+      return;
+    }
     if (REQUIRES_MULTI_COLOR[form.game] && form.colors.length < 2) {
       toast.error("색상(타입)을 2개 이상 선택해 주세요");
       return;
@@ -451,11 +455,9 @@ function DeckDialog({
             <div className="col-span-2 flex flex-col gap-1.5">
               <Label>
                 색상 / 타입{" "}
-                {REQUIRES_MULTI_COLOR[form.game] && (
-                  <span className="ml-1 text-[10px] text-muted-foreground">
-                    (2개 이상 선택)
-                  </span>
-                )}
+                <span className="ml-1 text-[10px] text-muted-foreground">
+                  ({REQUIRES_MULTI_COLOR[form.game] ? "2개" : "1개"} 이상 선택)
+                </span>
               </Label>
               <div className="flex flex-wrap gap-1.5">
                 {palette.map((c) => {
