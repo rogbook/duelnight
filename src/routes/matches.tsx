@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { OpponentSearch, type FoundUser } from "@/components/opponent-search";
+import { OpponentDetailDialog } from "@/components/opponent-detail-dialog";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -198,10 +199,12 @@ function MatchesPage() {
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <EventTable rows={stats.byEvent} />
-        <OpponentTable rows={stats.topOpponents} />
+        <OpponentTable rows={stats.topOpponents} allRows={rows} game={game} />
       </div>
 
       <RecentList rows={rows} onDeleted={() => refetch()} />
+
+      <TaggedAsOpponentSection onSaved={() => refetch()} />
     </div>
   );
 }
@@ -469,36 +472,94 @@ function EventTable({ rows }: { rows: EventStat[] }) {
   );
 }
 
-function OpponentTable({ rows }: { rows: OpponentFreq[] }) {
+function OpponentTable({
+  rows,
+  allRows,
+  game,
+}: {
+  rows: OpponentFreq[];
+  allRows: Match[];
+  game: Game | "all";
+}) {
+  const [selected, setSelected] = useState<{ name: string; userId?: string | null } | null>(null);
+
+  const matchesFor = (oppName: string) =>
+    allRows.filter((m) => (m.opp_leader || m.opp_deck || "") === oppName);
+
+  const userIdFor = (oppName: string): string | null => {
+    const found = allRows.find(
+      (m) => (m.opp_leader || m.opp_deck || "") === oppName && m.opponent_user_id,
+    );
+    return found?.opponent_user_id ?? null;
+  };
+
+  // Pick a representative game from filtered set; fallback to optcg if "all"
+  const dialogGame: Game =
+    game !== "all"
+      ? game
+      : (selected
+          ? matchesFor(selected.name)[0]?.game ?? "optcg"
+          : "optcg");
+
   return (
     <div className="rounded-lg border border-border bg-card">
       <div className="border-b border-border px-4 py-3">
         <h3 className="text-sm font-medium">상대 메타 Top</h3>
-        <p className="text-[11px] text-muted-foreground">자주 만난 상대 · 그 상대 대상 내 승률</p>
+        <p className="text-[11px] text-muted-foreground">자주 만난 상대 · 그 상대 대상 내 승률 · 클릭하여 상세 보기</p>
       </div>
       {rows.length === 0 ? (
         <p className="px-4 py-8 text-center text-xs text-muted-foreground">데이터 없음</p>
       ) : (
         <ul className="divide-y divide-border">
           {rows.map((r) => (
-            <li key={r.opponent} className="px-4 py-3">
-              <div className="flex items-center justify-between gap-3">
-                <span className="truncate text-sm">{r.opponent}</span>
-                <span className="text-xs text-muted-foreground">
-                  <span className="mr-2 font-medium text-foreground">{fmtPct(r.stats)}</span>
-                  {r.count}회 · {fmtPctVal(r.share)}
-                </span>
-              </div>
-              <div className="mt-1 h-1.5 w-full overflow-hidden rounded bg-muted">
-                <div
-                  className="h-full bg-foreground/70"
-                  style={{ width: `${Math.round(r.share * 100)}%` }}
-                />
-              </div>
+            <li key={r.opponent}>
+              <button
+                type="button"
+                onClick={() =>
+                  setSelected({ name: r.opponent, userId: userIdFor(r.opponent) })
+                }
+                className="block w-full px-4 py-3 text-left transition hover:bg-muted/30"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="truncate text-sm">{r.opponent}</span>
+                  <span className="text-xs text-muted-foreground">
+                    <span className="mr-2 font-medium text-foreground">{fmtPct(r.stats)}</span>
+                    {r.count}회 · {fmtPctVal(r.share)}
+                  </span>
+                </div>
+                <div className="mt-1 h-1.5 w-full overflow-hidden rounded bg-muted">
+                  <div
+                    className="h-full bg-foreground/70"
+                    style={{ width: `${Math.round(r.share * 100)}%` }}
+                  />
+                </div>
+              </button>
             </li>
           ))}
         </ul>
       )}
+      <OpponentDetailDialog
+        open={!!selected}
+        onOpenChange={(o) => !o && setSelected(null)}
+        opponent={selected}
+        game={dialogGame}
+        myMatches={
+          selected
+            ? matchesFor(selected.name).map((m) => ({
+                id: m.id,
+                played_at: m.played_at,
+                game: m.game,
+                my_deck: m.my_deck,
+                opp_leader: m.opp_leader,
+                opp_deck: m.opp_deck,
+                result: m.result as "win" | "loss" | "draw",
+                went_first: m.went_first,
+                points_delta: m.points_delta,
+                opponent_user_id: m.opponent_user_id,
+              }))
+            : []
+        }
+      />
     </div>
   );
 }
@@ -555,6 +616,7 @@ function RecentList({
               <th className="px-3 py-2 text-left font-medium">상대</th>
               <th className="px-3 py-2 text-left font-medium">선/후</th>
               <th className="px-3 py-2 text-left font-medium">결과</th>
+              <th className="px-3 py-2 text-left font-medium">점수</th>
               <th className="px-3 py-2"></th>
             </tr>
           </thead>
@@ -579,6 +641,25 @@ function RecentList({
                 <td className="px-3 py-2">{m.went_first ? "선공" : "후공"}</td>
                 <td className="px-3 py-2">
                   <ResultBadge r={m.result} />
+                </td>
+                <td className="px-3 py-2">
+                  {m.points_delta != null ? (
+                    <span
+                      className={
+                        "tabular-nums text-xs font-medium " +
+                        (m.points_delta > 0
+                          ? "text-emerald-600"
+                          : m.points_delta < 0
+                            ? "text-rose-600"
+                            : "text-muted-foreground")
+                      }
+                    >
+                      {m.points_delta > 0 ? "+" : ""}
+                      {m.points_delta}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
                 </td>
                 <td className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-end gap-2">
@@ -1813,5 +1894,197 @@ function ImportExportButton({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ===== Tagged-as-opponent section =====
+// Lists matches where the current user was tagged as the opponent,
+// letting them fill in their own deck info via update_opponent_match RPC.
+function TaggedAsOpponentSection({ onSaved }: { onSaved: () => void }) {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+
+  const { data: rows = [], refetch } = useQuery({
+    queryKey: ["matches-as-opponent", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("matches")
+        .select("*")
+        .eq("opponent_user_id", user!.id)
+        .order("played_at", { ascending: false })
+        .limit(30);
+      if (error) throw error;
+      return data as Match[];
+    },
+  });
+
+  const [editing, setEditing] = useState<Match | null>(null);
+
+  const { data: myDecks = [] } = useQuery({
+    queryKey: ["my-decks-for-opp", user?.id, editing?.game],
+    enabled: !!user && !!editing,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("decks")
+        .select("id,name,leader,game")
+        .eq("user_id", user!.id)
+        .eq("game", editing!.game)
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  if (!user || rows.length === 0) return null;
+
+  return (
+    <section className="mt-8">
+      <h2 className="text-sm font-medium">내가 상대로 태그된 경기</h2>
+      <p className="text-[11px] text-muted-foreground">
+        다른 사용자가 나를 상대로 기록한 경기예요. 내 덱 정보를 채우면 통계에 반영됩니다.
+      </p>
+      <div className="mt-3 overflow-hidden rounded-lg border border-border bg-card">
+        <table className="w-full text-sm">
+          <thead className="border-b border-border bg-muted/30 text-xs text-muted-foreground">
+            <tr>
+              <th className="px-3 py-2 text-left font-medium">일자</th>
+              <th className="px-3 py-2 text-left font-medium">게임</th>
+              <th className="px-3 py-2 text-left font-medium">상대 덱</th>
+              <th className="px-3 py-2 text-left font-medium">기록된 내 덱</th>
+              <th className="px-3 py-2"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((m) => (
+              <tr key={m.id} className="border-b border-border last:border-0">
+                <td className="px-3 py-2 text-muted-foreground">
+                  {new Date(m.played_at).toLocaleDateString("ko-KR")}
+                </td>
+                <td className="px-3 py-2">{GAME_LABEL[m.game]}</td>
+                <td className="px-3 py-2">{m.my_deck}</td>
+                <td className="px-3 py-2 text-muted-foreground">
+                  {m.opp_leader || m.opp_deck || (
+                    <span className="italic">미입력</span>
+                  )}
+                </td>
+                <td className="px-3 py-2 text-right">
+                  <Button size="sm" variant="outline" onClick={() => setEditing(m)}>
+                    <Pencil className="mr-1 h-3.5 w-3.5" />
+                    수정
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>내 덱 정보 입력</DialogTitle>
+          </DialogHeader>
+          {editing && (
+            <OpponentSelfEditForm
+              match={editing}
+              myDecks={myDecks}
+              onClose={() => setEditing(null)}
+              onSaved={() => {
+                setEditing(null);
+                refetch();
+                qc.invalidateQueries({ queryKey: ["matches"] });
+                onSaved();
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </section>
+  );
+}
+
+function OpponentSelfEditForm({
+  match,
+  myDecks,
+  onClose,
+  onSaved,
+}: {
+  match: Match;
+  myDecks: Array<{ id: string; name: string; leader: string | null; game: Game }>;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [deckId, setDeckId] = useState<string>(match.opponent_deck_id ?? "");
+  const [oppLeader, setOppLeader] = useState(match.opp_leader ?? "");
+  const [oppDeck, setOppDeck] = useState(match.opp_deck ?? "");
+  const [busy, setBusy] = useState(false);
+
+  const onPickDeck = (id: string) => {
+    setDeckId(id);
+    if (id === "_manual_") return;
+    const d = myDecks.find((x) => x.id === id);
+    if (d) {
+      setOppDeck(d.name);
+      setOppLeader(d.leader ?? "");
+    }
+  };
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    const { error } = await supabase.rpc("update_opponent_match", {
+      _match_id: match.id,
+      _opp_deck: oppDeck.trim(),
+      _opp_leader: oppLeader.trim(),
+      _opp_deck_id: (deckId && deckId !== "_manual_" ? deckId : null) as string,
+    });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("저장됨");
+    onSaved();
+  };
+
+  return (
+    <form onSubmit={submit} className="grid gap-3">
+      {myDecks.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <Label>내 덱 선택</Label>
+          <Select value={deckId || "_manual_"} onValueChange={onPickDeck}>
+            <SelectTrigger>
+              <SelectValue placeholder="덱 선택" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="_manual_">직접 입력</SelectItem>
+              {myDecks.map((d) => (
+                <SelectItem key={d.id} value={d.id}>
+                  {d.name}
+                  {d.leader ? ` · ${d.leader}` : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      <div className="flex flex-col gap-1.5">
+        <Label>덱 이름</Label>
+        <Input value={oppDeck} onChange={(e) => setOppDeck(e.target.value)} />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label>리더 / 아키타입</Label>
+        <Input value={oppLeader} onChange={(e) => setOppLeader(e.target.value)} />
+      </div>
+      <div className="mt-2 flex justify-end gap-2">
+        <Button type="button" variant="ghost" onClick={onClose}>
+          취소
+        </Button>
+        <Button type="submit" disabled={busy}>
+          {busy ? "저장 중..." : "저장"}
+        </Button>
+      </div>
+    </form>
   );
 }
