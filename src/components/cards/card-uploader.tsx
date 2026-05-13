@@ -688,33 +688,45 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
                           />
                         </div>
                       </td>
-                      <td className="px-1 py-1"><Input value={r.code} onChange={e => updateRow(i, { code: e.target.value })} className="h-7 text-xs" /></td>
-                      <td className="px-1 py-1"><Input value={r.set_code} onChange={e => updateRow(i, { set_code: e.target.value })} className="h-7 text-xs w-20" /></td>
+                      <td className="px-1 py-1">
+                        <Input
+                          value={r.code}
+                          onChange={e => updateRow(i, { code: e.target.value })}
+                          className={`h-7 text-xs ${fieldErr("code") || isInternalDup || isDbDup ? errCls : ""}`}
+                        />
+                        {(isInternalDup || isDbDup) && (
+                          <Badge variant={isInternalDup ? "destructive" : "secondary"} className="mt-1 text-[9px] px-1 py-0">
+                            {isInternalDup ? "내부 중복" : "DB 중복"}
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="px-1 py-1"><Input value={r.set_code} onChange={e => updateRow(i, { set_code: e.target.value })} className={`h-7 text-xs w-20 ${fieldErr("set_code") ? errCls : ""}`} /></td>
                       <td className="px-1 py-1">
                         <Select value={r.game} onValueChange={v => updateRow(i, { game: v as Game })}>
                           <SelectTrigger className="h-7 text-xs w-24"><SelectValue /></SelectTrigger>
                           <SelectContent>{VALID_GAMES.map(g => <SelectItem key={g} value={g}>{GAME_LABEL[g]}</SelectItem>)}</SelectContent>
                         </Select>
                       </td>
-                      <td className="px-1 py-1"><Input value={r.name} onChange={e => updateRow(i, { name: e.target.value })} className="h-7 text-xs min-w-[140px]" /></td>
+                      <td className="px-1 py-1"><Input value={r.name} onChange={e => updateRow(i, { name: e.target.value })} className={`h-7 text-xs min-w-[140px] ${fieldErr("name") ? errCls : ""}`} /></td>
                       <td className="px-1 py-1">
                         <Select value={r.type} onValueChange={v => updateRow(i, { type: v as CardType })}>
                           <SelectTrigger className="h-7 text-xs w-24"><SelectValue /></SelectTrigger>
                           <SelectContent>{VALID_TYPES.map(t => <SelectItem key={t} value={t}>{TYPE_LABEL[t]}</SelectItem>)}</SelectContent>
                         </Select>
                       </td>
-                      <td className="px-1 py-1"><Input value={r.colors.join("|")} onChange={e => updateRow(i, { colors: e.target.value.split(/[|,;]/).map(s => s.trim()).filter(Boolean) })} placeholder="red|green" className="h-7 text-xs w-24" /></td>
+                      <td className="px-1 py-1"><Input value={r.colors.join("|")} onChange={e => updateRow(i, { colors: e.target.value.split(/[|,;]/).map(s => s.trim()).filter(Boolean) })} placeholder="red|green" className={`h-7 text-xs w-24 ${fieldErr("colors") ? errCls : ""}`} /></td>
                       <td className="px-1 py-1"><Input value={r.cost ?? ""} onChange={e => updateRow(i, { cost: num(e.target.value) })} className="h-7 text-xs" /></td>
                       <td className="px-1 py-1"><Input value={r.power ?? ""} onChange={e => updateRow(i, { power: num(e.target.value) })} className="h-7 text-xs" /></td>
                       <td className="px-1 py-1"><Input value={r.counter ?? ""} onChange={e => updateRow(i, { counter: num(e.target.value) })} className="h-7 text-xs" /></td>
-                      <td className="px-1 py-1"><Input value={r.rarity ?? ""} onChange={e => updateRow(i, { rarity: e.target.value || null })} className="h-7 text-xs w-16" /></td>
+                      <td className="px-1 py-1"><Input value={r.rarity ?? ""} onChange={e => updateRow(i, { rarity: e.target.value || null })} className={`h-7 text-xs w-16 ${fieldErr("rarity") ? errCls : ""}`} /></td>
                       <td className="px-1 py-1">
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeRow(i)}>
                           <X className="h-3.5 w-3.5" />
                         </Button>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
