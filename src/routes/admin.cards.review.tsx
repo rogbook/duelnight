@@ -97,7 +97,7 @@ function PendingQueue() {
 
   const review = async (code: string, approve: boolean) => {
     const note = notes[code]?.trim() || null;
-    const { error } = await supabase.rpc("review_card", { _code: code, _approve: approve, _note: note });
+    const { error } = await supabase.rpc("review_card", { _code: code, _approve: approve, _note: note ?? undefined });
     if (error) { toast.error(error.message); return; }
     toast.success(approve ? `${code} 승인됨` : `${code} 반려됨`);
     setItems(prev => prev.filter(p => p.code !== code));
