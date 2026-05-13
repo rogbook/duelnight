@@ -57,6 +57,7 @@ function ProfilePage() {
     display_name: "",
     avatar_url: "",
     bio: "",
+    primary_game: "" as Game | "",
   });
   const [saving, setSaving] = useState(false);
 
@@ -67,6 +68,7 @@ function ProfilePage() {
         display_name: profile.display_name ?? "",
         avatar_url: profile.avatar_url ?? "",
         bio: profile.bio ?? "",
+        primary_game: (profile.primary_game ?? "") as Game | "",
       });
     }
   }, [profile]);
