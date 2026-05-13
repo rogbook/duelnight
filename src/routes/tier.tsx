@@ -185,7 +185,7 @@ function TierPage() {
       title: title.trim(),
       is_public: isPublic,
       placements: placements as unknown as Database["public"]["Tables"]["tier_lists"]["Insert"]["placements"],
-      game: "optcg" as const,
+      game,
     };
     if (editingId) {
       const { error } = await supabase
