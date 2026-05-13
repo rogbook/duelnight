@@ -20,13 +20,13 @@ function AuthHeaderButton() {
   const { user } = useAuth();
   if (user) {
     return (
-      <div className="flex items-center gap-2">
-        <span className="hidden text-xs text-muted-foreground sm:inline">
+      <div className="flex items-center gap-1.5 sm:gap-2">
+        <span className="hidden max-w-[200px] truncate text-xs text-muted-foreground md:inline">
           {user.email}
         </span>
         <button
           onClick={() => supabase.auth.signOut()}
-          className="rounded-md border border-border px-3 py-1.5 text-xs hover:bg-accent"
+          className="rounded-md border border-border px-2.5 py-1 text-[11px] hover:bg-accent sm:px-3 sm:py-1.5 sm:text-xs"
         >
           로그아웃
         </button>
@@ -36,7 +36,7 @@ function AuthHeaderButton() {
   return (
     <Link
       to="/login"
-      className="rounded-md bg-foreground px-3 py-1.5 text-xs font-medium text-background hover:opacity-90"
+      className="rounded-md bg-foreground px-2.5 py-1 text-[11px] font-medium text-background hover:opacity-90 sm:px-3 sm:py-1.5 sm:text-xs"
     >
       로그인
     </Link>
@@ -162,7 +162,10 @@ function RootComponent() {
           <div className="flex min-h-screen w-full bg-background">
             <AppSidebar />
             <div className="flex flex-1 flex-col">
-              <header className="flex h-14 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur">
+              <header
+                className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-background/80 px-2 backdrop-blur sm:h-14 sm:gap-3 sm:px-4"
+                style={{ paddingTop: "env(safe-area-inset-top)" }}
+              >
                 <SidebarTrigger />
                 <div className="flex-1" />
                 <NotificationBell />
