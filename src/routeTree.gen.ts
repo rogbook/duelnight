@@ -180,9 +180,9 @@ const AnnouncementsIdRoute = AnnouncementsIdRouteImport.update({
   getParentRoute: () => AnnouncementsRoute,
 } as any)
 const AdminCardsRoute = AdminCardsRouteImport.update({
-  id: '/cards',
-  path: '/cards',
-  getParentRoute: () => AdminRoute,
+  id: '/admin/cards',
+  path: '/admin/cards',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -394,6 +394,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StoresRoute: typeof StoresRouteWithChildren
   TierRoute: typeof TierRouteWithChildren
+  AdminCardsRoute: typeof AdminCardsRoute
   ApiCoachRoute: typeof ApiCoachRoute
   EventsIdRoute: typeof EventsIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -599,10 +600,10 @@ declare module '@tanstack/react-router' {
     }
     '/admin/cards': {
       id: '/admin/cards'
-      path: '/cards'
+      path: '/admin/cards'
       fullPath: '/admin/cards'
       preLoaderRoute: typeof AdminCardsRouteImport
-      parentRoute: typeof AdminRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -691,6 +692,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StoresRoute: StoresRouteWithChildren,
   TierRoute: TierRouteWithChildren,
+  AdminCardsRoute: AdminCardsRoute,
   ApiCoachRoute: ApiCoachRoute,
   EventsIdRoute: EventsIdRoute,
   AdminIndexRoute: AdminIndexRoute,
@@ -698,13 +700,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
