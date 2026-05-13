@@ -46,13 +46,20 @@ const COLOR_LABEL: Record<string, string> = {
   yellow: "황",
 };
 
+type Game = Database["public"]["Enums"]["tcg_game"];
+const GAME_LABEL: Record<Game, string> = {
+  optcg: "원피스",
+  ptcg: "포켓몬",
+  dtcg: "디지몬",
+};
+
 export const Route = createFileRoute("/cards")({
   head: () => ({
     meta: [
       { title: "카드 DB — TCG Hub" },
       {
         name: "description",
-        content: "원피스 TCG 카드 데이터베이스 검색·필터·즐겨찾기·평가.",
+        content: "원피스·포켓몬·디지몬 TCG 카드 데이터베이스 검색·필터·즐겨찾기·평가.",
       },
     ],
   }),
