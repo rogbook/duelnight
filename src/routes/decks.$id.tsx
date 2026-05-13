@@ -92,7 +92,13 @@ export const Route = createFileRoute("/decks/$id")({
 });
 
 function DeckDetailPage() {
-  const { deck, author, isPublic, deckCards, cardMeta } = Route.useLoaderData();
+  const { deck, author, isPublic, deckCards, cardMeta } = Route.useLoaderData() as {
+    deck: Deck;
+    author: Profile | null;
+    isPublic: boolean;
+    deckCards: DeckCard[];
+    cardMeta: Record<string, CardRow>;
+  };
 
   if (!isPublic) {
     return (
