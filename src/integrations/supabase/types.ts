@@ -521,6 +521,24 @@ export type Database = {
         }
         Relationships: []
       }
+      store_favorites: {
+        Row: {
+          created_at: string
+          store_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          store_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          store_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       stores: {
         Row: {
           address: string | null

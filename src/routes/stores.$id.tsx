@@ -1,6 +1,10 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowLeft, MapPin, Phone, ExternalLink } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, ExternalLink, Star, Map as MapIcon } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { GAME_LABEL } from "@/lib/match-stats";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -74,6 +78,49 @@ export const Route = createFileRoute("/stores/$id")({
 
 function StoreDetailPage() {
   const { store } = Route.useLoaderData();
+  const { user } = useAuth();
+  const qc = useQueryClient();
+
+  const { data: isFav = false } = useQuery({
+    queryKey: ["store-fav", store.id, user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("store_favorites")
+        .select("store_id")
+        .eq("user_id", user!.id)
+        .eq("store_id", store.id)
+        .maybeSingle();
+      return !!data;
+    },
+  });
+
+  const toggleFav = async () => {
+    if (!user) {
+      toast.error("로그인이 필요합니다");
+      return;
+    }
+    if (isFav) {
+      const { error } = await supabase
+        .from("store_favorites")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("store_id", store.id);
+      if (error) return toast.error(error.message);
+    } else {
+      const { error } = await supabase
+        .from("store_favorites")
+        .insert({ user_id: user.id, store_id: store.id });
+      if (error) return toast.error(error.message);
+    }
+    qc.invalidateQueries({ queryKey: ["store-fav", store.id, user.id] });
+    qc.invalidateQueries({ queryKey: ["store-favorites", user.id] });
+  };
+
+  const mapHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+    store.address || `${store.name} ${store.region ?? ""}`.trim()
+  )}`;
+
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">
       <Link
@@ -83,27 +130,56 @@ function StoreDetailPage() {
         <ArrowLeft className="h-3.5 w-3.5" /> 매장
       </Link>
       <div className="mt-4 rounded-lg border border-border bg-card p-6">
-        <h1 className="text-2xl font-semibold">{store.name}</h1>
-        {store.region && (
-          <p className="mt-1 inline-flex items-center gap-1 text-sm text-muted-foreground">
-            <MapPin className="h-3.5 w-3.5" />
-            {store.region}
-          </p>
-        )}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-2xl font-semibold">{store.name}</h1>
+            {store.region && (
+              <p className="mt-1 inline-flex items-center gap-1 text-sm text-muted-foreground">
+                <MapPin className="h-3.5 w-3.5" />
+                {store.region}
+              </p>
+            )}
+          </div>
+          <Button
+            variant={isFav ? "default" : "outline"}
+            size="sm"
+            onClick={toggleFav}
+            className="shrink-0"
+          >
+            <Star className={`mr-1 h-4 w-4 ${isFav ? "fill-current" : ""}`} />
+            {isFav ? "즐겨찾기됨" : "즐겨찾기"}
+          </Button>
+        </div>
         {store.address && (
           <p className="mt-2 text-sm text-foreground/90">{store.address}</p>
         )}
-        <div className="mt-3 flex flex-wrap gap-1">
-          {store.games.map((g: Store["games"][number]) => (
-            <span
-              key={g}
-              className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
-            >
-              {GAME_LABEL[g]}
-            </span>
-          ))}
+        <div className="mt-3">
+          <p className="text-xs font-medium text-muted-foreground">취급 제품</p>
+          <div className="mt-1 flex flex-wrap gap-1">
+            {store.games.length === 0 ? (
+              <span className="text-xs text-muted-foreground">정보 없음</span>
+            ) : (
+              store.games.map((g: Store["games"][number]) => (
+                <span
+                  key={g}
+                  className="rounded bg-muted px-2 py-0.5 text-xs font-medium text-foreground/80"
+                >
+                  {GAME_LABEL[g]}
+                </span>
+              ))
+            )}
+          </div>
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
+          <a
+            href={mapHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-foreground hover:underline"
+          >
+            <MapIcon className="h-3.5 w-3.5" />
+            지도에서 보기
+          </a>
           {store.phone && (
             <a
               href={`tel:${store.phone}`}
