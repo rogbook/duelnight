@@ -176,15 +176,6 @@ function ProfilePage() {
           />
         </div>
         <div className="md:col-span-2 flex flex-col gap-1.5">
-          <Label htmlFor="avatar_url">아바타 URL</Label>
-          <Input
-            id="avatar_url"
-            value={form.avatar_url}
-            onChange={(e) => setForm({ ...form, avatar_url: e.target.value })}
-            placeholder="https://..."
-          />
-        </div>
-        <div className="md:col-span-2 flex flex-col gap-1.5">
           <Label htmlFor="primary_game">주 게임 (캘린더 상단·알림 대상)</Label>
           <Select
             value={form.primary_game || "none"}
