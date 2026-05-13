@@ -40,6 +40,7 @@ export interface PaymentOptions {
   userEmail?: string;
   userName?: string;
   sandbox?: boolean;
+  custom_data?: any;
 }
 
 const PORTONE_USER_CODE = import.meta.env.VITE_PORTONE_USER_CODE;
@@ -68,6 +69,7 @@ export const processPortOnePayment = async (
         amount: options.amount,
         buyer_email: options.userEmail,
         buyer_name: options.userName,
+        custom_data: options.custom_data,
       },
       (rsp: any) => {
         if (rsp.success) {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,9 +9,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CreditCard, Globe, CheckCircle2, Loader2, FlaskConical, ShieldAlert } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { processPortOnePayment, initPayPalButtons, PaymentOptions } from "@/lib/payment";
+import { verifyPortOnePayment, verifyPayPalPayment } from "@/lib/payment.functions";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -47,19 +47,21 @@ export function PaymentDialog({
         ...options,
         sandbox: isTestMode,
         userEmail: session.user.email,
+        custom_data: { user_id: session.user.id }
       });
 
-      // SERVER-SIDE VERIFICATION
-      const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-payment', {
-        body: { 
-          imp_uid: result.imp_uid, 
+      // SERVER-SIDE VERIFICATION (TanStack Server Function)
+      const verifyResult = await verifyPortOnePayment({
+        data: {
+          imp_uid: result.imp_uid,
           merchant_uid: result.merchant_uid,
-          provider: 'portone'
+          amount: options.amount,
+          user_id: session.user.id
         }
       });
 
-      if (verifyError || !verifyData.success) {
-        throw new Error(verifyError?.message || "결제 검증에 실패했습니다.");
+      if (!verifyResult.success) {
+        throw new Error(verifyResult.error || "결제 검증에 실패했습니다.");
       }
 
       toast.success("결제가 성공적으로 검증되고 완료되었습니다!");
@@ -84,14 +86,18 @@ export function PaymentDialog({
           const buttons = await initPayPalButtons(
             options,
             async (details) => {
-              // Verify PayPal on server
-              const { data, error } = await supabase.functions.invoke('verify-payment', {
-                body: { 
-                  order_id: details.id, 
-                  provider: 'paypal'
+              // Verify PayPal on server (TanStack Server Function)
+              const verifyResult = await verifyPayPalPayment({
+                data: {
+                  order_id: details.id,
+                  amount: options.amount,
+                  user_id: session.user.id
                 }
               });
-              if (error || !data.success) throw new Error("PayPal verification failed");
+
+              if (!verifyResult.success) {
+                throw new Error(verifyResult.error || "PayPal verification failed");
+              }
               
               toast.success("PayPal 결제 검증 완료!");
               onSuccess(details);

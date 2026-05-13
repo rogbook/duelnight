@@ -83,18 +83,11 @@ function LoginPage() {
   };
 
   const signInWithNaver = async () => {
-    // NOTE: Naver requires Custom OIDC configuration in Supabase Dashboard
-    setBusy(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "naver" as any, // Cast as any because it's not in the default type list
-        options: {
-          redirectTo: `${window.location.origin}/matches`,
-        },
-      });
-      if (error) throw error;
+      toast.info("네이버 로그인은 현재 준비 중입니다. 구글 로그인을 이용해 주세요.");
+      // const { error } = await supabase.auth.signInWithOAuth({ ... });
     } catch (err) {
-      toast.error(`네이버 연동 오류: ${(err as Error).message}. (Supabase Custom OIDC 설정이 필요합니다)`);
+      toast.error(`네이버 연동 오류: ${(err as Error).message}`);
     } finally {
       setBusy(false);
     }
@@ -104,15 +97,10 @@ function LoginPage() {
     // NOTE: Kakao requires Custom OIDC configuration in Supabase Dashboard
     setBusy(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "kakao" as any,
-        options: {
-          redirectTo: `${window.location.origin}/matches`,
-        },
-      });
-      if (error) throw error;
+      toast.info("카카오 로그인은 현재 준비 중입니다. 구글 로그인을 이용해 주세요.");
+      // const { error } = await supabase.auth.signInWithOAuth({ ... });
     } catch (err) {
-      toast.error(`카카오 연동 오류: ${(err as Error).message}. (Supabase Custom OIDC 설정이 필요합니다)`);
+      toast.error(`카카오 연동 오류: ${(err as Error).message}`);
     } finally {
       setBusy(false);
     }
