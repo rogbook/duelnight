@@ -15,10 +15,7 @@ import {
   Megaphone,
   ListOrdered,
   Shield,
-  Beaker,
-  Database,
-  Sparkles as SparklesIcon,
-  ClipboardList,
+  Upload,
 } from "lucide-react";
 
 import {
