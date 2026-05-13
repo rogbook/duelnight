@@ -68,6 +68,7 @@ export const Route = createFileRoute("/cards")({
 
 function CardsPage() {
   const { user } = useAuth();
+  const [game, setGame] = useState<Game>("optcg");
   const [q, setQ] = useState("");
   const [type, setType] = useState<string>("all");
   const [setCode, setSetCode] = useState<string>("all");
@@ -77,11 +78,12 @@ function CardsPage() {
   const [selected, setSelected] = useState<Card | null>(null);
 
   const { data: sets = [] } = useQuery({
-    queryKey: ["card-sets"],
+    queryKey: ["card-sets", game],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cards")
         .select("set_code")
+        .eq("game", game)
         .order("set_code", { ascending: false });
       if (error) throw error;
       return Array.from(new Set((data ?? []).map((r) => r.set_code)));
