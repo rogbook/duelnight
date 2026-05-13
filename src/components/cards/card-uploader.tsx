@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Upload, Download, Trash2, Plus, Image as ImageIcon, FileSpreadsheet, Pencil, X, Wand2, ShieldCheck, AlertTriangle, Save, Sparkles, ScanLine } from "lucide-react";
+import { Upload, Download, Trash2, Plus, Image as ImageIcon, FileSpreadsheet, Pencil, X, Wand2, ShieldCheck, AlertTriangle, Save, Sparkles, ScanLine, Crop } from "lucide-react";
+import { ImageEditDialog } from "./image-edit-dialog";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
@@ -275,6 +276,7 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkPatch, setBulkPatch] = useState<Partial<CardRow>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [editIdx, setEditIdx] = useState<number | null>(null);
 
   const valid = useMemo(() => rows.filter(r => r.code && r.set_code && r.name), [rows]);
   const issuesByRow = useMemo(() => rows.map((r) => validateRow(r as CardRow)), [rows]);
@@ -802,6 +804,14 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
                           <Button
                             variant="ghost" size="icon" className="h-7 w-7"
                             disabled={busy || !r.image_url}
+                            title="이미지 회전·크롭"
+                            onClick={() => setEditIdx(i)}
+                          >
+                            <Crop className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost" size="icon" className="h-7 w-7"
+                            disabled={busy || !r.image_url}
                             title="이미지에서 자동 인식 (OCR)"
                             onClick={async () => { setBusy(true); try { await ocrRow(i); } finally { setBusy(false); } }}
                           >
@@ -839,6 +849,15 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
           </Button>
         </div>
       )}
+
+      <ImageEditDialog
+        open={editIdx !== null}
+        imageUrl={editIdx !== null ? rows[editIdx]?.image_url ?? null : null}
+        setCode={editIdx !== null ? rows[editIdx]?.set_code : undefined}
+        cardCode={editIdx !== null ? rows[editIdx]?.code : undefined}
+        onClose={() => setEditIdx(null)}
+        onSaved={(url) => { if (editIdx !== null) updateRow(editIdx, { image_url: url }); }}
+      />
     </div>
   );
 }
