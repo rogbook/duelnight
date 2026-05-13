@@ -10,8 +10,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
-import type { Tables } from "@/integrations/supabase/types";
+import type { Tables, Database } from "@/integrations/supabase/types";
+
+type Game = Database["public"]["Enums"]["tcg_game"];
 
 type Profile = Tables<"profiles">;
 
@@ -48,6 +57,7 @@ function ProfilePage() {
     display_name: "",
     avatar_url: "",
     bio: "",
+    primary_game: "" as Game | "",
   });
   const [saving, setSaving] = useState(false);
 
@@ -58,6 +68,7 @@ function ProfilePage() {
         display_name: profile.display_name ?? "",
         avatar_url: profile.avatar_url ?? "",
         bio: profile.bio ?? "",
+        primary_game: (profile.primary_game ?? "") as Game | "",
       });
     }
   }, [profile]);
@@ -103,6 +114,7 @@ function ProfilePage() {
       display_name: form.display_name.trim() || null,
       avatar_url: form.avatar_url.trim() || null,
       bio: form.bio.trim() || null,
+      primary_game: (form.primary_game || null) as Game | null,
     };
     const { error } = await supabase
       .from("profiles")
@@ -171,6 +183,23 @@ function ProfilePage() {
             onChange={(e) => setForm({ ...form, avatar_url: e.target.value })}
             placeholder="https://..."
           />
+        </div>
+        <div className="md:col-span-2 flex flex-col gap-1.5">
+          <Label htmlFor="primary_game">주 게임 (캘린더 상단·알림 대상)</Label>
+          <Select
+            value={form.primary_game || "none"}
+            onValueChange={(v) =>
+              setForm({ ...form, primary_game: v === "none" ? "" : (v as Game) })
+            }
+          >
+            <SelectTrigger id="primary_game"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">선택 안 함</SelectItem>
+              <SelectItem value="optcg">원피스</SelectItem>
+              <SelectItem value="ptcg">포켓몬</SelectItem>
+              <SelectItem value="dtcg">디지몬</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div className="md:col-span-2 flex flex-col gap-1.5">
           <Label htmlFor="bio">자기소개</Label>

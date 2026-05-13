@@ -16,6 +16,7 @@ import { Route as SandboxRouteImport } from './routes/sandbox'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PacksRouteImport } from './routes/packs'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as MatchesRouteImport } from './routes/matches'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LfgRouteImport } from './routes/lfg'
@@ -72,6 +73,11 @@ const ProfileRoute = ProfileRouteImport.update({
 const PacksRoute = PacksRouteImport.update({
   id: '/packs',
   path: '/packs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MatchesRoute = MatchesRouteImport.update({
@@ -197,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/lfg': typeof LfgRouteWithChildren
   '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
+  '/notifications': typeof NotificationsRoute
   '/packs': typeof PacksRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -228,6 +235,7 @@ export interface FileRoutesByTo {
   '/lfg': typeof LfgRouteWithChildren
   '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
+  '/notifications': typeof NotificationsRoute
   '/packs': typeof PacksRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -260,6 +268,7 @@ export interface FileRoutesById {
   '/lfg': typeof LfgRouteWithChildren
   '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
+  '/notifications': typeof NotificationsRoute
   '/packs': typeof PacksRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -293,6 +302,7 @@ export interface FileRouteTypes {
     | '/lfg'
     | '/login'
     | '/matches'
+    | '/notifications'
     | '/packs'
     | '/profile'
     | '/reset-password'
@@ -324,6 +334,7 @@ export interface FileRouteTypes {
     | '/lfg'
     | '/login'
     | '/matches'
+    | '/notifications'
     | '/packs'
     | '/profile'
     | '/reset-password'
@@ -355,6 +366,7 @@ export interface FileRouteTypes {
     | '/lfg'
     | '/login'
     | '/matches'
+    | '/notifications'
     | '/packs'
     | '/profile'
     | '/reset-password'
@@ -387,6 +399,7 @@ export interface RootRouteChildren {
   LfgRoute: typeof LfgRouteWithChildren
   LoginRoute: typeof LoginRoute
   MatchesRoute: typeof MatchesRoute
+  NotificationsRoute: typeof NotificationsRoute
   PacksRoute: typeof PacksRoute
   ProfileRoute: typeof ProfileRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -447,6 +460,13 @@ declare module '@tanstack/react-router' {
       path: '/packs'
       fullPath: '/packs'
       preLoaderRoute: typeof PacksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/matches': {
@@ -695,6 +715,7 @@ const rootRouteChildren: RootRouteChildren = {
   LfgRoute: LfgRouteWithChildren,
   LoginRoute: LoginRoute,
   MatchesRoute: MatchesRoute,
+  NotificationsRoute: NotificationsRoute,
   PacksRoute: PacksRoute,
   ProfileRoute: ProfileRoute,
   ResetPasswordRoute: ResetPasswordRoute,
