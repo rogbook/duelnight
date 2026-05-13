@@ -69,8 +69,6 @@ function rarityWeight(r: string | null | undefined): number {
 }
 
 function PacksPage() {
-  const { user } = useAuth();
-  const qc = useQueryClient();
   const [setCode, setSetCode] = useState<string>("");
   const [packs, setPacks] = useState<number>(1);
   const [results, setResults] = useState<Card[]>([]);
