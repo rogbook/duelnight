@@ -150,6 +150,7 @@ function toRow(obj: Record<string, unknown>): { row?: CardRow; error?: string } 
       (out as Record<string, unknown>)[target] = sv.trim() || null;
     }
   }
+  if (out.image_url) out.image_url = normalizeImageUrl(out.image_url);
   if (!out.code) return { error: "코드 누락" };
   if (!out.set_code) return { error: "세트 누락" };
   if (!out.name) return { error: "이름 누락" };
