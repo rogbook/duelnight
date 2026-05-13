@@ -46,13 +46,20 @@ const COLOR_LABEL: Record<string, string> = {
   yellow: "황",
 };
 
+type Game = Database["public"]["Enums"]["tcg_game"];
+const GAME_LABEL: Record<Game, string> = {
+  optcg: "원피스",
+  ptcg: "포켓몬",
+  dtcg: "디지몬",
+};
+
 export const Route = createFileRoute("/cards")({
   head: () => ({
     meta: [
       { title: "카드 DB — TCG Hub" },
       {
         name: "description",
-        content: "원피스 TCG 카드 데이터베이스 검색·필터·즐겨찾기·평가.",
+        content: "원피스·포켓몬·디지몬 TCG 카드 데이터베이스 검색·필터·즐겨찾기·평가.",
       },
     ],
   }),
@@ -61,6 +68,7 @@ export const Route = createFileRoute("/cards")({
 
 function CardsPage() {
   const { user } = useAuth();
+  const [game, setGame] = useState<Game>("optcg");
   const [q, setQ] = useState("");
   const [type, setType] = useState<string>("all");
   const [setCode, setSetCode] = useState<string>("all");
@@ -70,11 +78,12 @@ function CardsPage() {
   const [selected, setSelected] = useState<Card | null>(null);
 
   const { data: sets = [] } = useQuery({
-    queryKey: ["card-sets"],
+    queryKey: ["card-sets", game],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cards")
         .select("set_code")
+        .eq("game", game)
         .order("set_code", { ascending: false });
       if (error) throw error;
       return Array.from(new Set((data ?? []).map((r) => r.set_code)));
@@ -94,13 +103,14 @@ function CardsPage() {
     },
   });
 
-  const filters = { q, type, setCode, color, favOnly, page };
+  const filters = { game, q, type, setCode, color, favOnly, page };
   const { data, isFetching } = useQuery({
     queryKey: ["cards", filters, Array.from(favSet).sort().join(",")],
     queryFn: async () => {
       let query = supabase
         .from("cards")
         .select("*", { count: "exact" })
+        .eq("game", game)
         .order("code", { ascending: true });
       if (type !== "all") query = query.eq("type", type as Card["type"]);
       if (setCode !== "all") query = query.eq("set_code", setCode);
@@ -130,7 +140,28 @@ function CardsPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
-      <PageHeader title="카드 DB" description="OPTCG 카드 검색·필터·즐겨찾기" />
+      <PageHeader title="카드 DB" description={`${GAME_LABEL[game]} 카드 검색·필터·즐겨찾기`}>
+        <div className="inline-flex rounded-md border border-border bg-card p-0.5">
+          {(Object.keys(GAME_LABEL) as Game[]).map((g) => (
+            <button
+              key={g}
+              type="button"
+              onClick={() => {
+                setGame(g);
+                setSetCode("all");
+                resetPage();
+              }}
+              className={`rounded px-3 py-1 text-xs font-medium transition ${
+                game === g
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {GAME_LABEL[g]}
+            </button>
+          ))}
+        </div>
+      </PageHeader>
 
       <div className="mt-6 space-y-3 rounded-lg border border-border bg-card p-4">
         <div className="relative">
