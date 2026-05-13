@@ -804,6 +804,14 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
                           <Button
                             variant="ghost" size="icon" className="h-7 w-7"
                             disabled={busy || !r.image_url}
+                            title="이미지 회전·크롭"
+                            onClick={() => setEditIdx(i)}
+                          >
+                            <Crop className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost" size="icon" className="h-7 w-7"
+                            disabled={busy || !r.image_url}
                             title="이미지에서 자동 인식 (OCR)"
                             onClick={async () => { setBusy(true); try { await ocrRow(i); } finally { setBusy(false); } }}
                           >
