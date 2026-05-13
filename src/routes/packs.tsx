@@ -197,7 +197,7 @@ function PacksPage() {
         </div>
       ) : (
         <>
-          <div className="mt-6 flex items-center justify-between">
+          <div className="mt-6">
             <p className="text-sm text-muted-foreground">
               총{" "}
               <span className="font-semibold text-foreground">
@@ -208,15 +208,6 @@ function PacksPage() {
                 {tally.length}
               </span>
             </p>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={addAllToCollection}
-              className="gap-1"
-            >
-              <Plus className="h-4 w-4" />
-              내 컬렉션에 추가
-            </Button>
           </div>
 
           <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
