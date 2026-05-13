@@ -268,7 +268,7 @@ function CardsUploadPage() {
           </CardHeader>
           <CardContent>
             <Button asChild variant="outline">
-              <Link to="/auth">로그인</Link>
+              <Link to="/login">로그인</Link>
             </Button>
           </CardContent>
         </Card>
