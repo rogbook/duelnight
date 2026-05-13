@@ -211,8 +211,8 @@ function AdminCardsPage() {
     }
     setBusy(true);
     setResult(null);
+    setProgress({ done: 0, total: parsed.rows.length });
     try {
-      // Chunk inserts to avoid request size limits
       const CHUNK = 200;
       let inserted = 0;
       for (let i = 0; i < parsed.rows.length; i += CHUNK) {
@@ -220,6 +220,7 @@ function AdminCardsPage() {
         const { error } = await supabase.from("cards").upsert(slice, { onConflict: "code" });
         if (error) throw error;
         inserted += slice.length;
+        setProgress({ done: inserted, total: parsed.rows.length });
       }
       setResult({ inserted });
       toast.success(`${inserted}장 등록/업데이트 완료`);
