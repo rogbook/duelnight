@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Coins, Zap, ShieldCheck, Gem } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 import { PaymentDialog } from "@/components/payment/PaymentDialog";
 import { toast } from "sonner";
 
