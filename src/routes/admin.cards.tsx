@@ -56,6 +56,11 @@ function AdminCardsPage() {
         title="카드 DB 업로드 (관리자)"
         description="한 장씩 폼 입력 · 엑셀/CSV 업로드 · 이미지 대량 업로드 후 표에서 편집할 수 있습니다. 같은 코드는 자동 갱신됩니다."
       />
+      <div className="mt-4">
+        <Button asChild variant="outline" size="sm">
+          <Link to="/admin/cards/review">검수 큐 · 감사 로그 →</Link>
+        </Button>
+      </div>
       <div className="mt-6">
         <CardUploader isAdmin />
       </div>
