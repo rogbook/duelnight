@@ -114,8 +114,25 @@ function CardDetailPage() {
           )}
         </div>
         <div>
-          <p className="text-xs text-muted-foreground">{card.code}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-xs text-muted-foreground">{card.code}</p>
+            {card.status === "pending" && (
+              <span className="rounded-md bg-yellow-500/15 px-2 py-0.5 text-[10px] font-semibold text-yellow-600 dark:text-yellow-400">
+                검수 중
+              </span>
+            )}
+            {card.status === "rejected" && (
+              <span className="rounded-md bg-destructive/15 px-2 py-0.5 text-[10px] font-semibold text-destructive">
+                반려됨
+              </span>
+            )}
+          </div>
           <h1 className="mt-1 text-2xl font-semibold">{card.name}</h1>
+          {card.status === "rejected" && card.review_note && (
+            <p className="mt-2 rounded-md border border-destructive/30 bg-destructive/5 p-2 text-xs text-destructive">
+              반려 사유: {card.review_note}
+            </p>
+          )}
           <div className="mt-3 flex flex-wrap gap-1.5">
             <Tag>{TYPE_LABEL[card.type] ?? card.type}</Tag>
             {card.colors.map((c: string) => (
