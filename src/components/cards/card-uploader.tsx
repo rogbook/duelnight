@@ -100,6 +100,32 @@ function num(v: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** 구글 드라이브 공유 링크를 직접 표시 가능한 이미지 URL로 변환합니다.
+ *  지원: /file/d/ID/view, open?id=ID, uc?id=ID, thumbnail?id=ID
+ *  주의: 드라이브 파일은 "링크가 있는 모든 사용자" 공개 상태여야 합니다. */
+export function normalizeImageUrl(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const url = String(raw).trim();
+  if (!url) return null;
+  if (!/^https?:\/\//i.test(url)) return url; // 상대경로 등은 그대로
+  try {
+    const u = new URL(url);
+    const host = u.hostname.toLowerCase();
+    if (host.endsWith("drive.google.com") || host.endsWith("docs.google.com")) {
+      let id = u.searchParams.get("id");
+      if (!id) {
+        const m = u.pathname.match(/\/(?:file|d)\/d\/([^/]+)/) || u.pathname.match(/\/d\/([^/]+)/);
+        if (m) id = m[1];
+      }
+      if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w1200`;
+    }
+    return url;
+  } catch {
+    return url;
+  }
+}
+
+
 function toRow(obj: Record<string, unknown>): { row?: CardRow; error?: string } {
   const out = emptyRow();
   for (const [k, v] of Object.entries(obj)) {
