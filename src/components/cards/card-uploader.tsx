@@ -520,12 +520,18 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
     setBusy(true);
     setProgress({ done: 0, total: valid.length });
     try {
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth.user?.id ?? null;
+      if (!uid) { toast.error("로그인이 필요합니다"); return; }
       const CHUNK = 200;
       let inserted = 0, skipped = 0;
       for (let i = 0; i < valid.length; i += CHUNK) {
         const slice = valid.slice(i, i + CHUNK).map(r => ({
           ...autoFixRow(r as CardRow),
           image_url: normalizeImageUrl(r.image_url),
+          ...(isAdmin
+            ? { status: "approved" as const }
+            : { status: "pending" as const, submitted_by: uid }),
         }));
         if (isAdmin) {
           const { error } = await supabase.from("cards").upsert(slice, { onConflict: "code" });
@@ -543,7 +549,11 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
         }
         setProgress({ done: Math.min(i + CHUNK, valid.length), total: valid.length });
       }
-      toast.success(skipped ? `${inserted}장 등록 · ${skipped}장 중복 건너뜀` : `${inserted}장 등록 완료`);
+      toast.success(
+        isAdmin
+          ? (skipped ? `${inserted}장 등록 · ${skipped}장 중복 건너뜀` : `${inserted}장 등록 완료`)
+          : `${inserted}장 검수 대기로 제출됨${skipped ? ` · ${skipped}장 중복 건너뜀` : ""}`,
+      );
       onComplete?.({ inserted, skipped });
       clearAll();
     } catch (e) {

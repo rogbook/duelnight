@@ -40,6 +40,7 @@ import { Route as ApiCoachRouteImport } from './routes/api/coach'
 import { Route as ApiCardOcrRouteImport } from './routes/api/card-ocr'
 import { Route as AnnouncementsIdRouteImport } from './routes/announcements.$id'
 import { Route as AdminCardsRouteImport } from './routes/admin.cards'
+import { Route as AdminCardsReviewRouteImport } from './routes/admin.cards.review'
 
 const TierRoute = TierRouteImport.update({
   id: '/tier',
@@ -196,6 +197,11 @@ const AdminCardsRoute = AdminCardsRouteImport.update({
   path: '/admin/cards',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminCardsReviewRoute = AdminCardsReviewRouteImport.update({
+  id: '/review',
+  path: '/review',
+  getParentRoute: () => AdminCardsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -217,7 +223,7 @@ export interface FileRoutesByFullPath {
   '/store': typeof StoreRoute
   '/stores': typeof StoresRouteWithChildren
   '/tier': typeof TierRouteWithChildren
-  '/admin/cards': typeof AdminCardsRoute
+  '/admin/cards': typeof AdminCardsRouteWithChildren
   '/announcements/$id': typeof AnnouncementsIdRoute
   '/api/card-ocr': typeof ApiCardOcrRoute
   '/api/coach': typeof ApiCoachRoute
@@ -229,6 +235,7 @@ export interface FileRoutesByFullPath {
   '/stores/$id': typeof StoresIdRoute
   '/tier/$id': typeof TierIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/cards/review': typeof AdminCardsReviewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -250,7 +257,7 @@ export interface FileRoutesByTo {
   '/store': typeof StoreRoute
   '/stores': typeof StoresRouteWithChildren
   '/tier': typeof TierRouteWithChildren
-  '/admin/cards': typeof AdminCardsRoute
+  '/admin/cards': typeof AdminCardsRouteWithChildren
   '/announcements/$id': typeof AnnouncementsIdRoute
   '/api/card-ocr': typeof ApiCardOcrRoute
   '/api/coach': typeof ApiCoachRoute
@@ -262,6 +269,7 @@ export interface FileRoutesByTo {
   '/stores/$id': typeof StoresIdRoute
   '/tier/$id': typeof TierIdRoute
   '/admin': typeof AdminIndexRoute
+  '/admin/cards/review': typeof AdminCardsReviewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -284,7 +292,7 @@ export interface FileRoutesById {
   '/store': typeof StoreRoute
   '/stores': typeof StoresRouteWithChildren
   '/tier': typeof TierRouteWithChildren
-  '/admin/cards': typeof AdminCardsRoute
+  '/admin/cards': typeof AdminCardsRouteWithChildren
   '/announcements/$id': typeof AnnouncementsIdRoute
   '/api/card-ocr': typeof ApiCardOcrRoute
   '/api/coach': typeof ApiCoachRoute
@@ -296,6 +304,7 @@ export interface FileRoutesById {
   '/stores/$id': typeof StoresIdRoute
   '/tier/$id': typeof TierIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/cards/review': typeof AdminCardsReviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -331,6 +340,7 @@ export interface FileRouteTypes {
     | '/stores/$id'
     | '/tier/$id'
     | '/admin/'
+    | '/admin/cards/review'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -364,6 +374,7 @@ export interface FileRouteTypes {
     | '/stores/$id'
     | '/tier/$id'
     | '/admin'
+    | '/admin/cards/review'
   id:
     | '__root__'
     | '/'
@@ -397,6 +408,7 @@ export interface FileRouteTypes {
     | '/stores/$id'
     | '/tier/$id'
     | '/admin/'
+    | '/admin/cards/review'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -419,7 +431,7 @@ export interface RootRouteChildren {
   StoreRoute: typeof StoreRoute
   StoresRoute: typeof StoresRouteWithChildren
   TierRoute: typeof TierRouteWithChildren
-  AdminCardsRoute: typeof AdminCardsRoute
+  AdminCardsRoute: typeof AdminCardsRouteWithChildren
   ApiCardOcrRoute: typeof ApiCardOcrRoute
   ApiCoachRoute: typeof ApiCoachRoute
   CardsCodeRoute: typeof CardsCodeRoute
@@ -647,6 +659,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCardsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/cards/review': {
+      id: '/admin/cards/review'
+      path: '/review'
+      fullPath: '/admin/cards/review'
+      preLoaderRoute: typeof AdminCardsReviewRouteImport
+      parentRoute: typeof AdminCardsRoute
+    }
   }
 }
 
@@ -703,6 +722,18 @@ const TierRouteChildren: TierRouteChildren = {
 
 const TierRouteWithChildren = TierRoute._addFileChildren(TierRouteChildren)
 
+interface AdminCardsRouteChildren {
+  AdminCardsReviewRoute: typeof AdminCardsReviewRoute
+}
+
+const AdminCardsRouteChildren: AdminCardsRouteChildren = {
+  AdminCardsReviewRoute: AdminCardsReviewRoute,
+}
+
+const AdminCardsRouteWithChildren = AdminCardsRoute._addFileChildren(
+  AdminCardsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnnouncementsRoute: AnnouncementsRouteWithChildren,
@@ -723,7 +754,7 @@ const rootRouteChildren: RootRouteChildren = {
   StoreRoute: StoreRoute,
   StoresRoute: StoresRouteWithChildren,
   TierRoute: TierRouteWithChildren,
-  AdminCardsRoute: AdminCardsRoute,
+  AdminCardsRoute: AdminCardsRouteWithChildren,
   ApiCardOcrRoute: ApiCardOcrRoute,
   ApiCoachRoute: ApiCoachRoute,
   CardsCodeRoute: CardsCodeRoute,
