@@ -34,8 +34,8 @@ import { Route as StoresIdRouteImport } from './routes/stores.$id'
 import { Route as LfgIdRouteImport } from './routes/lfg.$id'
 import { Route as EventsIdRouteImport } from './routes/events.$id'
 import { Route as DecksIdRouteImport } from './routes/decks.$id'
-import { Route as CardsUploadRouteImport } from './routes/cards.upload'
-import { Route as CardsCodeRouteImport } from './routes/cards.$code'
+import { Route as CardsUploadRouteImport } from './routes/cards_.upload'
+import { Route as CardsCodeRouteImport } from './routes/cards_.$code'
 import { Route as ApiCoachRouteImport } from './routes/api/coach'
 import { Route as AnnouncementsIdRouteImport } from './routes/announcements.$id'
 import { Route as AdminCardsRouteImport } from './routes/admin.cards'
@@ -166,14 +166,14 @@ const DecksIdRoute = DecksIdRouteImport.update({
   getParentRoute: () => DecksRoute,
 } as any)
 const CardsUploadRoute = CardsUploadRouteImport.update({
-  id: '/upload',
-  path: '/upload',
-  getParentRoute: () => CardsRoute,
+  id: '/cards_/upload',
+  path: '/cards/upload',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const CardsCodeRoute = CardsCodeRouteImport.update({
-  id: '/$code',
-  path: '/$code',
-  getParentRoute: () => CardsRoute,
+  id: '/cards_/$code',
+  path: '/cards/$code',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiCoachRoute = ApiCoachRouteImport.update({
   id: '/api/coach',
@@ -195,7 +195,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/announcements': typeof AnnouncementsRouteWithChildren
   '/calendar': typeof CalendarRoute
-  '/cards': typeof CardsRouteWithChildren
+  '/cards': typeof CardsRoute
   '/collection': typeof CollectionRoute
   '/decks': typeof DecksRouteWithChildren
   '/friends': typeof FriendsRoute
@@ -227,7 +227,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/announcements': typeof AnnouncementsRouteWithChildren
   '/calendar': typeof CalendarRoute
-  '/cards': typeof CardsRouteWithChildren
+  '/cards': typeof CardsRoute
   '/collection': typeof CollectionRoute
   '/decks': typeof DecksRouteWithChildren
   '/friends': typeof FriendsRoute
@@ -260,7 +260,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/announcements': typeof AnnouncementsRouteWithChildren
   '/calendar': typeof CalendarRoute
-  '/cards': typeof CardsRouteWithChildren
+  '/cards': typeof CardsRoute
   '/collection': typeof CollectionRoute
   '/decks': typeof DecksRouteWithChildren
   '/friends': typeof FriendsRoute
@@ -279,8 +279,8 @@ export interface FileRoutesById {
   '/admin/cards': typeof AdminCardsRoute
   '/announcements/$id': typeof AnnouncementsIdRoute
   '/api/coach': typeof ApiCoachRoute
-  '/cards/$code': typeof CardsCodeRoute
-  '/cards/upload': typeof CardsUploadRoute
+  '/cards_/$code': typeof CardsCodeRoute
+  '/cards_/upload': typeof CardsUploadRoute
   '/decks/$id': typeof DecksIdRoute
   '/events/$id': typeof EventsIdRoute
   '/lfg/$id': typeof LfgIdRoute
@@ -377,8 +377,8 @@ export interface FileRouteTypes {
     | '/admin/cards'
     | '/announcements/$id'
     | '/api/coach'
-    | '/cards/$code'
-    | '/cards/upload'
+    | '/cards_/$code'
+    | '/cards_/upload'
     | '/decks/$id'
     | '/events/$id'
     | '/lfg/$id'
@@ -391,7 +391,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnnouncementsRoute: typeof AnnouncementsRouteWithChildren
   CalendarRoute: typeof CalendarRoute
-  CardsRoute: typeof CardsRouteWithChildren
+  CardsRoute: typeof CardsRoute
   CollectionRoute: typeof CollectionRoute
   DecksRoute: typeof DecksRouteWithChildren
   FriendsRoute: typeof FriendsRoute
@@ -409,6 +409,8 @@ export interface RootRouteChildren {
   TierRoute: typeof TierRouteWithChildren
   AdminCardsRoute: typeof AdminCardsRoute
   ApiCoachRoute: typeof ApiCoachRoute
+  CardsCodeRoute: typeof CardsCodeRoute
+  CardsUploadRoute: typeof CardsUploadRoute
   EventsIdRoute: typeof EventsIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
@@ -590,19 +592,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DecksIdRouteImport
       parentRoute: typeof DecksRoute
     }
-    '/cards/upload': {
-      id: '/cards/upload'
-      path: '/upload'
+    '/cards_/upload': {
+      id: '/cards_/upload'
+      path: '/cards/upload'
       fullPath: '/cards/upload'
       preLoaderRoute: typeof CardsUploadRouteImport
-      parentRoute: typeof CardsRoute
+      parentRoute: typeof rootRouteImport
     }
-    '/cards/$code': {
-      id: '/cards/$code'
-      path: '/$code'
+    '/cards_/$code': {
+      id: '/cards_/$code'
+      path: '/cards/$code'
       fullPath: '/cards/$code'
       preLoaderRoute: typeof CardsCodeRouteImport
-      parentRoute: typeof CardsRoute
+      parentRoute: typeof rootRouteImport
     }
     '/api/coach': {
       id: '/api/coach'
@@ -639,18 +641,6 @@ const AnnouncementsRouteChildren: AnnouncementsRouteChildren = {
 const AnnouncementsRouteWithChildren = AnnouncementsRoute._addFileChildren(
   AnnouncementsRouteChildren,
 )
-
-interface CardsRouteChildren {
-  CardsCodeRoute: typeof CardsCodeRoute
-  CardsUploadRoute: typeof CardsUploadRoute
-}
-
-const CardsRouteChildren: CardsRouteChildren = {
-  CardsCodeRoute: CardsCodeRoute,
-  CardsUploadRoute: CardsUploadRoute,
-}
-
-const CardsRouteWithChildren = CardsRoute._addFileChildren(CardsRouteChildren)
 
 interface DecksRouteChildren {
   DecksIdRoute: typeof DecksIdRoute
@@ -697,7 +687,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnnouncementsRoute: AnnouncementsRouteWithChildren,
   CalendarRoute: CalendarRoute,
-  CardsRoute: CardsRouteWithChildren,
+  CardsRoute: CardsRoute,
   CollectionRoute: CollectionRoute,
   DecksRoute: DecksRouteWithChildren,
   FriendsRoute: FriendsRoute,
@@ -715,6 +705,8 @@ const rootRouteChildren: RootRouteChildren = {
   TierRoute: TierRouteWithChildren,
   AdminCardsRoute: AdminCardsRoute,
   ApiCoachRoute: ApiCoachRoute,
+  CardsCodeRoute: CardsCodeRoute,
+  CardsUploadRoute: CardsUploadRoute,
   EventsIdRoute: EventsIdRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
