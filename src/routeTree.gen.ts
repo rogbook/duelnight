@@ -33,6 +33,7 @@ import { Route as StoresIdRouteImport } from './routes/stores.$id'
 import { Route as LfgIdRouteImport } from './routes/lfg.$id'
 import { Route as EventsIdRouteImport } from './routes/events.$id'
 import { Route as DecksIdRouteImport } from './routes/decks.$id'
+import { Route as CardsUploadRouteImport } from './routes/cards.upload'
 import { Route as CardsCodeRouteImport } from './routes/cards.$code'
 import { Route as ApiCoachRouteImport } from './routes/api/coach'
 import { Route as AnnouncementsIdRouteImport } from './routes/announcements.$id'
@@ -158,6 +159,11 @@ const DecksIdRoute = DecksIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => DecksRoute,
 } as any)
+const CardsUploadRoute = CardsUploadRouteImport.update({
+  id: '/upload',
+  path: '/upload',
+  getParentRoute: () => CardsRoute,
+} as any)
 const CardsCodeRoute = CardsCodeRouteImport.update({
   id: '/$code',
   path: '/$code',
@@ -203,6 +209,7 @@ export interface FileRoutesByFullPath {
   '/announcements/$id': typeof AnnouncementsIdRoute
   '/api/coach': typeof ApiCoachRoute
   '/cards/$code': typeof CardsCodeRoute
+  '/cards/upload': typeof CardsUploadRoute
   '/decks/$id': typeof DecksIdRoute
   '/events/$id': typeof EventsIdRoute
   '/lfg/$id': typeof LfgIdRoute
@@ -233,6 +240,7 @@ export interface FileRoutesByTo {
   '/announcements/$id': typeof AnnouncementsIdRoute
   '/api/coach': typeof ApiCoachRoute
   '/cards/$code': typeof CardsCodeRoute
+  '/cards/upload': typeof CardsUploadRoute
   '/decks/$id': typeof DecksIdRoute
   '/events/$id': typeof EventsIdRoute
   '/lfg/$id': typeof LfgIdRoute
@@ -264,6 +272,7 @@ export interface FileRoutesById {
   '/announcements/$id': typeof AnnouncementsIdRoute
   '/api/coach': typeof ApiCoachRoute
   '/cards/$code': typeof CardsCodeRoute
+  '/cards/upload': typeof CardsUploadRoute
   '/decks/$id': typeof DecksIdRoute
   '/events/$id': typeof EventsIdRoute
   '/lfg/$id': typeof LfgIdRoute
@@ -296,6 +305,7 @@ export interface FileRouteTypes {
     | '/announcements/$id'
     | '/api/coach'
     | '/cards/$code'
+    | '/cards/upload'
     | '/decks/$id'
     | '/events/$id'
     | '/lfg/$id'
@@ -326,6 +336,7 @@ export interface FileRouteTypes {
     | '/announcements/$id'
     | '/api/coach'
     | '/cards/$code'
+    | '/cards/upload'
     | '/decks/$id'
     | '/events/$id'
     | '/lfg/$id'
@@ -356,6 +367,7 @@ export interface FileRouteTypes {
     | '/announcements/$id'
     | '/api/coach'
     | '/cards/$code'
+    | '/cards/upload'
     | '/decks/$id'
     | '/events/$id'
     | '/lfg/$id'
@@ -557,6 +569,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DecksIdRouteImport
       parentRoute: typeof DecksRoute
     }
+    '/cards/upload': {
+      id: '/cards/upload'
+      path: '/upload'
+      fullPath: '/cards/upload'
+      preLoaderRoute: typeof CardsUploadRouteImport
+      parentRoute: typeof CardsRoute
+    }
     '/cards/$code': {
       id: '/cards/$code'
       path: '/$code'
@@ -612,10 +631,12 @@ const AnnouncementsRouteWithChildren = AnnouncementsRoute._addFileChildren(
 
 interface CardsRouteChildren {
   CardsCodeRoute: typeof CardsCodeRoute
+  CardsUploadRoute: typeof CardsUploadRoute
 }
 
 const CardsRouteChildren: CardsRouteChildren = {
   CardsCodeRoute: CardsCodeRoute,
+  CardsUploadRoute: CardsUploadRoute,
 }
 
 const CardsRouteWithChildren = CardsRoute._addFileChildren(CardsRouteChildren)
