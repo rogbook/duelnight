@@ -309,6 +309,33 @@ export type Database = {
           },
         ]
       }
+      friendships: {
+        Row: {
+          addressee_id: string
+          created_at: string
+          id: string
+          requester_id: string
+          status: Database["public"]["Enums"]["friendship_status"]
+          updated_at: string
+        }
+        Insert: {
+          addressee_id: string
+          created_at?: string
+          id?: string
+          requester_id: string
+          status?: Database["public"]["Enums"]["friendship_status"]
+          updated_at?: string
+        }
+        Update: {
+          addressee_id?: string
+          created_at?: string
+          id?: string
+          requester_id?: string
+          status?: Database["public"]["Enums"]["friendship_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       lfg_posts: {
         Row: {
           body: string | null
@@ -362,8 +389,15 @@ export type Database = {
           notes: string | null
           opp_deck: string | null
           opp_leader: string | null
+          opponent_deck_id: string | null
+          opponent_points_delta: number | null
+          opponent_pre_rating: number | null
+          opponent_user_id: string | null
           played_at: string
+          points_delta: number | null
+          pre_rating: number | null
           result: Database["public"]["Enums"]["match_result"]
+          tournament_note: string | null
           user_id: string
           went_first: boolean
         }
@@ -377,8 +411,15 @@ export type Database = {
           notes?: string | null
           opp_deck?: string | null
           opp_leader?: string | null
+          opponent_deck_id?: string | null
+          opponent_points_delta?: number | null
+          opponent_pre_rating?: number | null
+          opponent_user_id?: string | null
           played_at?: string
+          points_delta?: number | null
+          pre_rating?: number | null
           result: Database["public"]["Enums"]["match_result"]
+          tournament_note?: string | null
           user_id: string
           went_first?: boolean
         }
@@ -392,8 +433,15 @@ export type Database = {
           notes?: string | null
           opp_deck?: string | null
           opp_leader?: string | null
+          opponent_deck_id?: string | null
+          opponent_points_delta?: number | null
+          opponent_pre_rating?: number | null
+          opponent_user_id?: string | null
           played_at?: string
+          points_delta?: number | null
+          pre_rating?: number | null
           result?: Database["public"]["Enums"]["match_result"]
+          tournament_note?: string | null
           user_id?: string
           went_first?: boolean
         }
@@ -572,6 +620,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_ratings: {
+        Row: {
+          game: Database["public"]["Enums"]["tcg_game"]
+          matches_count: number
+          rating: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          game: Database["public"]["Enums"]["tcg_game"]
+          matches_count?: number
+          rating?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          game?: Database["public"]["Enums"]["tcg_game"]
+          matches_count?: number
+          rating?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -641,11 +713,32 @@ export type Database = {
         }[]
       }
       revoke_admin_by_email: { Args: { _email: string }; Returns: string }
+      search_users: {
+        Args: { lim?: number; q: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          friendship_status: string
+          id: string
+          primary_game: Database["public"]["Enums"]["tcg_game"]
+          username: string
+        }[]
+      }
+      update_opponent_match: {
+        Args: {
+          _match_id: string
+          _opp_deck: string
+          _opp_deck_id: string
+          _opp_leader: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
       card_type: "leader" | "character" | "event" | "stage" | "don"
       event_kind: "tournament" | "release" | "match"
+      friendship_status: "pending" | "accepted"
       match_event: "friendly" | "shop" | "official"
       match_result: "win" | "loss" | "draw"
       tcg_game: "optcg" | "ptcg" | "dtcg"
@@ -779,6 +872,7 @@ export const Constants = {
       app_role: ["admin", "moderator", "user"],
       card_type: ["leader", "character", "event", "stage", "don"],
       event_kind: ["tournament", "release", "match"],
+      friendship_status: ["pending", "accepted"],
       match_event: ["friendly", "shop", "official"],
       match_result: ["win", "loss", "draw"],
       tcg_game: ["optcg", "ptcg", "dtcg"],
