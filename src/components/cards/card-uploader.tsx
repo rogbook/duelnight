@@ -487,10 +487,18 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
                   {rows.map((r, i) => (
                     <tr key={i} className="border-b border-border/40">
                       <td className="px-2 py-1">
-                        {r.image_url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={r.image_url} alt="" className="h-10 w-7 rounded object-cover" />
-                        ) : <div className="h-10 w-7 rounded bg-muted" />}
+                        <div className="flex flex-col gap-1">
+                          {r.image_url ? (
+                            <img src={r.image_url} alt="" className="h-10 w-7 rounded object-cover" />
+                          ) : <div className="h-10 w-7 rounded bg-muted" />}
+                          <Input
+                            value={r.image_url ?? ""}
+                            onChange={e => updateRow(i, { image_url: e.target.value || null })}
+                            onBlur={e => updateRow(i, { image_url: normalizeImageUrl(e.target.value) })}
+                            placeholder="이미지 URL / 구글 드라이브 링크"
+                            className="h-6 text-[10px] font-mono w-44"
+                          />
+                        </div>
                       </td>
                       <td className="px-1 py-1"><Input value={r.code} onChange={e => updateRow(i, { code: e.target.value })} className="h-7 text-xs" /></td>
                       <td className="px-1 py-1"><Input value={r.set_code} onChange={e => updateRow(i, { set_code: e.target.value })} className="h-7 text-xs w-20" /></td>
