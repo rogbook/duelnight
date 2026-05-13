@@ -100,6 +100,32 @@ function num(v: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** 구글 드라이브 공유 링크를 직접 표시 가능한 이미지 URL로 변환합니다.
+ *  지원: /file/d/ID/view, open?id=ID, uc?id=ID, thumbnail?id=ID
+ *  주의: 드라이브 파일은 "링크가 있는 모든 사용자" 공개 상태여야 합니다. */
+export function normalizeImageUrl(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const url = String(raw).trim();
+  if (!url) return null;
+  if (!/^https?:\/\//i.test(url)) return url; // 상대경로 등은 그대로
+  try {
+    const u = new URL(url);
+    const host = u.hostname.toLowerCase();
+    if (host.endsWith("drive.google.com") || host.endsWith("docs.google.com")) {
+      let id = u.searchParams.get("id");
+      if (!id) {
+        const m = u.pathname.match(/\/(?:file|d)\/d\/([^/]+)/) || u.pathname.match(/\/d\/([^/]+)/);
+        if (m) id = m[1];
+      }
+      if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w1200`;
+    }
+    return url;
+  } catch {
+    return url;
+  }
+}
+
+
 function toRow(obj: Record<string, unknown>): { row?: CardRow; error?: string } {
   const out = emptyRow();
   for (const [k, v] of Object.entries(obj)) {
@@ -124,6 +150,7 @@ function toRow(obj: Record<string, unknown>): { row?: CardRow; error?: string } 
       (out as Record<string, unknown>)[target] = sv.trim() || null;
     }
   }
+  if (out.image_url) out.image_url = normalizeImageUrl(out.image_url);
   if (!out.code) return { error: "코드 누락" };
   if (!out.set_code) return { error: "세트 누락" };
   if (!out.name) return { error: "이름 누락" };
@@ -300,7 +327,7 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
       const CHUNK = 200;
       let inserted = 0, skipped = 0;
       for (let i = 0; i < valid.length; i += CHUNK) {
-        const slice = valid.slice(i, i + CHUNK);
+        const slice = valid.slice(i, i + CHUNK).map(r => ({ ...r, image_url: normalizeImageUrl(r.image_url) }));
         if (isAdmin) {
           const { error } = await supabase.from("cards").upsert(slice, { onConflict: "code" });
           if (error) throw error;
@@ -354,7 +381,8 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
             <CardHeader>
               <CardTitle className="text-base">엑셀(.xlsx) 또는 CSV 파일 업로드</CardTitle>
               <CardDescription>
-                한국어 헤더를 자동 인식합니다: 코드, 세트, 게임, 이름, 종류, 색상, 비용, 파워, 카운터, 속성, 레어도, 효과, 이미지
+                한국어 헤더를 자동 인식합니다: 코드, 세트, 게임, 이름, 종류, 색상, 비용, 파워, 카운터, 속성, 레어도, 효과, 이미지.
+                이미지 칸에는 일반 URL 또는 <b>구글 드라이브 공유 링크</b>를 넣을 수 있습니다 (자동 변환, 공개 권한 필요).
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -460,10 +488,18 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
                   {rows.map((r, i) => (
                     <tr key={i} className="border-b border-border/40">
                       <td className="px-2 py-1">
-                        {r.image_url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={r.image_url} alt="" className="h-10 w-7 rounded object-cover" />
-                        ) : <div className="h-10 w-7 rounded bg-muted" />}
+                        <div className="flex flex-col gap-1">
+                          {r.image_url ? (
+                            <img src={r.image_url} alt="" className="h-10 w-7 rounded object-cover" />
+                          ) : <div className="h-10 w-7 rounded bg-muted" />}
+                          <Input
+                            value={r.image_url ?? ""}
+                            onChange={e => updateRow(i, { image_url: e.target.value || null })}
+                            onBlur={e => updateRow(i, { image_url: normalizeImageUrl(e.target.value) })}
+                            placeholder="이미지 URL / 구글 드라이브 링크"
+                            className="h-6 text-[10px] font-mono w-44"
+                          />
+                        </div>
                       </td>
                       <td className="px-1 py-1"><Input value={r.code} onChange={e => updateRow(i, { code: e.target.value })} className="h-7 text-xs" /></td>
                       <td className="px-1 py-1"><Input value={r.set_code} onChange={e => updateRow(i, { set_code: e.target.value })} className="h-7 text-xs w-20" /></td>
@@ -544,7 +580,7 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
 
   const submit = () => {
     if (!r.code || !r.set_code || !r.name) { toast.error("코드, 세트, 이름은 필수입니다"); return; }
-    onAdd(r);
+    onAdd({ ...r, image_url: normalizeImageUrl(r.image_url) });
     setR(emptyRow());
     toast.success("표에 추가됨");
   };
@@ -611,9 +647,16 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
           <Input type="file" accept="image/*" onChange={onPickImage} disabled={imgUploading} />
           {r.image_url && <img src={r.image_url} alt="" className="h-12 w-9 rounded object-cover" />}
         </div>
-        {r.image_url && (
-          <Input value={r.image_url} onChange={e => setR({ ...r, image_url: e.target.value || null })} className="text-xs font-mono" />
-        )}
+        <Input
+          value={r.image_url ?? ""}
+          onChange={e => setR({ ...r, image_url: e.target.value || null })}
+          onBlur={e => setR({ ...r, image_url: normalizeImageUrl(e.target.value) })}
+          placeholder="이미지 URL 또는 구글 드라이브 공유 링크 (예: https://drive.google.com/file/d/...)"
+          className="text-xs font-mono"
+        />
+        <p className="text-[11px] text-muted-foreground">
+          구글 드라이브 링크는 자동으로 표시 가능한 주소로 변환됩니다. 파일은 <b>"링크가 있는 모든 사용자"</b> 공개로 설정해 주세요.
+        </p>
       </div>
       <div className="md:col-span-2 flex justify-end">
         <Button onClick={submit}><Plus className="mr-1 h-4 w-4" />표에 추가</Button>
