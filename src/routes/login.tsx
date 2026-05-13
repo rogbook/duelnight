@@ -82,6 +82,40 @@ function LoginPage() {
     }
   };
 
+  const signInWithNaver = async () => {
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "naver",
+        options: {
+          redirectTo: `${window.location.origin}/matches`,
+        },
+      });
+      if (error) throw error;
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const signInWithKakao = async () => {
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "kakao",
+        options: {
+          redirectTo: `${window.location.origin}/matches`,
+        },
+      });
+      if (error) throw error;
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const comingSoon = (name: string) => () =>
     toast.info(`${name} 로그인은 곧 지원될 예정입니다.`);
 
@@ -113,26 +147,26 @@ function LoginPage() {
         <Button
           type="button"
           variant="outline"
-          onClick={comingSoon("네이버")}
+          onClick={signInWithNaver}
+          disabled={busy}
           className="w-full"
         >
           <span className="mr-2 inline-flex h-4 w-4 items-center justify-center rounded-sm bg-[#03C75A] text-[10px] font-bold text-white">
             N
           </span>
           네이버로 계속하기
-          <span className="ml-2 text-[10px] text-muted-foreground">준비 중</span>
         </Button>
         <Button
           type="button"
           variant="outline"
-          onClick={comingSoon("카카오")}
+          onClick={signInWithKakao}
+          disabled={busy}
           className="w-full"
         >
           <span className="mr-2 inline-flex h-4 w-4 items-center justify-center rounded-sm bg-[#FEE500] text-[10px] font-bold text-[#3C1E1E]">
             K
           </span>
           카카오로 계속하기
-          <span className="ml-2 text-[10px] text-muted-foreground">준비 중</span>
         </Button>
       </div>
 
