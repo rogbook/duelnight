@@ -199,10 +199,12 @@ function MatchesPage() {
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <EventTable rows={stats.byEvent} />
-        <OpponentTable rows={stats.topOpponents} />
+        <OpponentTable rows={stats.topOpponents} allRows={rows} game={game} />
       </div>
 
       <RecentList rows={rows} onDeleted={() => refetch()} />
+
+      <TaggedAsOpponentSection onSaved={() => refetch()} />
     </div>
   );
 }
