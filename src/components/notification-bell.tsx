@@ -30,7 +30,7 @@ export function NotificationBell() {
     enabled: !!user,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("notifications" as never)
+        .from("notifications")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(15);
@@ -62,7 +62,7 @@ export function NotificationBell() {
 
   const markAllRead = async () => {
     await supabase
-      .from("notifications" as never)
+      .from("notifications")
       .update({ read_at: new Date().toISOString() })
       .is("read_at", null);
     qc.invalidateQueries({ queryKey: ["notifications"] });
@@ -118,7 +118,7 @@ export function NotificationBell() {
                       onClick={async () => {
                         if (!n.read_at) {
                           await supabase
-                            .from("notifications" as never)
+                            .from("notifications")
                             .update({ read_at: new Date().toISOString() })
                             .eq("id", n.id);
                           qc.invalidateQueries({ queryKey: ["notifications"] });
