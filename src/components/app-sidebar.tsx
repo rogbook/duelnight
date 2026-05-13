@@ -16,6 +16,7 @@ import {
   ListOrdered,
   Shield,
   Upload,
+  ShoppingCart,
 } from "lucide-react";
 
 import {
@@ -59,6 +60,7 @@ const communityItems = [
 ];
 
 const accountItems = [
+  { title: "상점", url: "/store", icon: ShoppingCart },
   { title: "프로필", url: "/profile", icon: User },
 ];
 
