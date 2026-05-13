@@ -10,6 +10,7 @@ import {
   Trophy,
   MapPin,
   Users,
+  UserPlus,
   User,
   Megaphone,
   ListOrdered,
