@@ -526,8 +526,15 @@ function CommentsSection({
     else refetch();
   };
 
-  const roots = comments.filter((c) => !c.parent_id);
-  const repliesOf = (id: string) => comments.filter((c) => c.parent_id === id);
+  const roots = comments
+    .filter((c) => !c.parent_id)
+    .slice()
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const repliesOf = (id: string) =>
+    comments
+      .filter((c) => c.parent_id === id)
+      .slice()
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
   return (
     <section className="mt-6 rounded-lg border border-border bg-card p-4">
