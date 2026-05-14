@@ -22,6 +22,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as LfgRouteImport } from './routes/lfg'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as FriendsRouteImport } from './routes/friends'
+import { Route as DecksRouteImport } from './routes/decks'
 import { Route as CollectionRouteImport } from './routes/collection'
 import { Route as CardsRouteImport } from './routes/cards'
 import { Route as CalendarRouteImport } from './routes/calendar'
@@ -110,6 +111,11 @@ const FriendsRoute = FriendsRouteImport.update({
   path: '/friends',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DecksRoute = DecksRouteImport.update({
+  id: '/decks',
+  path: '/decks',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CollectionRoute = CollectionRouteImport.update({
   id: '/collection',
   path: '/collection',
@@ -136,9 +142,9 @@ const IndexRoute = IndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const DecksIndexRoute = DecksIndexRouteImport.update({
-  id: '/decks/',
-  path: '/decks/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => DecksRoute,
 } as any)
 const CardsIndexRoute = CardsIndexRouteImport.update({
   id: '/',
@@ -171,9 +177,9 @@ const EventsIdRoute = EventsIdRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const DecksIdRoute = DecksIdRouteImport.update({
-  id: '/decks/$id',
-  path: '/decks/$id',
-  getParentRoute: () => rootRouteImport,
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => DecksRoute,
 } as any)
 const CardsCodeRoute = CardsCodeRouteImport.update({
   id: '/cards_/$code',
@@ -227,6 +233,7 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof CalendarRoute
   '/cards': typeof CardsRouteWithChildren
   '/collection': typeof CollectionRoute
+  '/decks': typeof DecksRouteWithChildren
   '/friends': typeof FriendsRoute
   '/leaderboard': typeof LeaderboardRoute
   '/lfg': typeof LfgRouteWithChildren
@@ -301,6 +308,7 @@ export interface FileRoutesById {
   '/calendar': typeof CalendarRoute
   '/cards': typeof CardsRouteWithChildren
   '/collection': typeof CollectionRoute
+  '/decks': typeof DecksRouteWithChildren
   '/friends': typeof FriendsRoute
   '/leaderboard': typeof LeaderboardRoute
   '/lfg': typeof LfgRouteWithChildren
@@ -340,6 +348,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/cards'
     | '/collection'
+    | '/decks'
     | '/friends'
     | '/leaderboard'
     | '/lfg'
@@ -413,6 +422,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/cards'
     | '/collection'
+    | '/decks'
     | '/friends'
     | '/leaderboard'
     | '/lfg'
@@ -451,6 +461,7 @@ export interface RootRouteChildren {
   CalendarRoute: typeof CalendarRoute
   CardsRoute: typeof CardsRouteWithChildren
   CollectionRoute: typeof CollectionRoute
+  DecksRoute: typeof DecksRouteWithChildren
   FriendsRoute: typeof FriendsRoute
   LeaderboardRoute: typeof LeaderboardRoute
   LfgRoute: typeof LfgRouteWithChildren
@@ -468,10 +479,8 @@ export interface RootRouteChildren {
   ApiCardOcrRoute: typeof ApiCardOcrRoute
   ApiCoachRoute: typeof ApiCoachRoute
   CardsCodeRoute: typeof CardsCodeRoute
-  DecksIdRoute: typeof DecksIdRoute
   EventsIdRoute: typeof EventsIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
-  DecksIndexRoute: typeof DecksIndexRoute
   ApiDriveAuthRoute: typeof ApiDriveAuthRoute
   AuthGoogleDriveCallbackRoute: typeof AuthGoogleDriveCallbackRoute
 }
@@ -569,6 +578,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FriendsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/decks': {
+      id: '/decks'
+      path: '/decks'
+      fullPath: '/decks'
+      preLoaderRoute: typeof DecksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/collection': {
       id: '/collection'
       path: '/collection'
@@ -606,10 +622,10 @@ declare module '@tanstack/react-router' {
     }
     '/decks/': {
       id: '/decks/'
-      path: '/decks'
+      path: '/'
       fullPath: '/decks/'
       preLoaderRoute: typeof DecksIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof DecksRoute
     }
     '/cards/': {
       id: '/cards/'
@@ -655,10 +671,10 @@ declare module '@tanstack/react-router' {
     }
     '/decks/$id': {
       id: '/decks/$id'
-      path: '/decks/$id'
+      path: '/$id'
       fullPath: '/decks/$id'
       preLoaderRoute: typeof DecksIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof DecksRoute
     }
     '/cards_/$code': {
       id: '/cards_/$code'
@@ -750,6 +766,18 @@ const CardsRouteChildren: CardsRouteChildren = {
 
 const CardsRouteWithChildren = CardsRoute._addFileChildren(CardsRouteChildren)
 
+interface DecksRouteChildren {
+  DecksIdRoute: typeof DecksIdRoute
+  DecksIndexRoute: typeof DecksIndexRoute
+}
+
+const DecksRouteChildren: DecksRouteChildren = {
+  DecksIdRoute: DecksIdRoute,
+  DecksIndexRoute: DecksIndexRoute,
+}
+
+const DecksRouteWithChildren = DecksRoute._addFileChildren(DecksRouteChildren)
+
 interface LfgRouteChildren {
   LfgIdRoute: typeof LfgIdRoute
 }
@@ -799,6 +827,7 @@ const rootRouteChildren: RootRouteChildren = {
   CalendarRoute: CalendarRoute,
   CardsRoute: CardsRouteWithChildren,
   CollectionRoute: CollectionRoute,
+  DecksRoute: DecksRouteWithChildren,
   FriendsRoute: FriendsRoute,
   LeaderboardRoute: LeaderboardRoute,
   LfgRoute: LfgRouteWithChildren,
@@ -816,10 +845,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCardOcrRoute: ApiCardOcrRoute,
   ApiCoachRoute: ApiCoachRoute,
   CardsCodeRoute: CardsCodeRoute,
-  DecksIdRoute: DecksIdRoute,
   EventsIdRoute: EventsIdRoute,
   AdminIndexRoute: AdminIndexRoute,
-  DecksIndexRoute: DecksIndexRoute,
   ApiDriveAuthRoute: ApiDriveAuthRoute,
   AuthGoogleDriveCallbackRoute: AuthGoogleDriveCallbackRoute,
 }
