@@ -23,7 +23,7 @@ type Deck     = Tables<"decks">;
 type CardRow  = Tables<"cards">;
 type DeckCard = Tables<"deck_cards">;
 
-export function RecipeEditor({ deck }: { deck: Deck }) {
+export function RecipeEditor({ deck, onSaved }: { deck: Deck; onSaved?: () => void }) {
   const qc  = useQueryClient();
   const game = deck.game as Game;
 
