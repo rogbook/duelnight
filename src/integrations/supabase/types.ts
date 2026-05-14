@@ -843,6 +843,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_drive_tokens: {
+        Row: {
+          access_token: string
+          connected_email: string | null
+          created_at: string
+          expires_at: string
+          refresh_token: string
+          scope: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          connected_email?: string | null
+          created_at?: string
+          expires_at: string
+          refresh_token?: string
+          scope?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          connected_email?: string | null
+          created_at?: string
+          expires_at?: string
+          refresh_token?: string
+          scope?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_ratings: {
         Row: {
           game: Database["public"]["Enums"]["tcg_game"]

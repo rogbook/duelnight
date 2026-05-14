@@ -67,7 +67,7 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
     queryFn: async () => {
       let qb = supabase.from("cards").select("*").eq("game", game).order("name", { ascending: true }).limit(150);
       if (q.trim())           qb = qb.or(`name.ilike.%${q.trim()}%,code.ilike.%${q.trim()}%`);
-      if (filterType  !== "all") qb = qb.eq("type", filterType);
+      if (filterType  !== "all") qb = qb.eq("type", filterType as "character" | "don" | "event" | "leader" | "stage");
       if (filterColor !== "all") qb = qb.contains("colors", [filterColor]);
       if (filterSet   !== "all") qb = qb.eq("set_code", filterSet);
       if (filterRarity!== "all") qb = qb.eq("rarity", filterRarity);
@@ -105,7 +105,7 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
     if (game !== "dtcg") return 0;
     return deckCards.reduce((s, dc) => {
       const card = cardMap.get(dc.card_code);
-      return card?.type === "digitama" ? s + dc.quantity : s;
+      return (card?.type as string) === "digitama" ? s + dc.quantity : s;
     }, 0);
   }, [deckCards, cardMap, game]);
 
