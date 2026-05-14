@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CardUploader } from "@/components/cards/card-uploader";
 
-export const Route = createFileRoute("/cards_/upload")({
+export const Route = createFileRoute("/cards/upload")({
   head: () => ({
     meta: [
       { title: "카드 등록 — TCG Hub" },
