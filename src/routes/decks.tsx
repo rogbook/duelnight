@@ -45,8 +45,6 @@ import {
 import type { Tables } from "@/integrations/supabase/types";
 
 type Deck = Tables<"decks">;
-type CardRow = Tables<"cards">;
-type DeckCard = Tables<"deck_cards">;
 
 export const Route = createFileRoute("/decks")({
   head: () => ({
