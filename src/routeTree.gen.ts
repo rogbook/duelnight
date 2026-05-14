@@ -28,6 +28,7 @@ import { Route as CardsRouteImport } from './routes/cards'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AnnouncementsRouteImport } from './routes/announcements'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DecksIndexRouteImport } from './routes/decks.index'
 import { Route as CardsIndexRouteImport } from './routes/cards.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as TierIdRouteImport } from './routes/tier.$id'
@@ -139,6 +140,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const DecksIndexRoute = DecksIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DecksRoute,
 } as any)
 const CardsIndexRoute = CardsIndexRouteImport.update({
   id: '/',
@@ -254,6 +260,7 @@ export interface FileRoutesByFullPath {
   '/tier/$id': typeof TierIdRoute
   '/admin/': typeof AdminIndexRoute
   '/cards/': typeof CardsIndexRoute
+  '/decks/': typeof DecksIndexRoute
   '/admin/cards/review': typeof AdminCardsReviewRoute
   '/api/drive/auth': typeof ApiDriveAuthRoute
   '/auth/google-drive/callback': typeof AuthGoogleDriveCallbackRoute
@@ -263,7 +270,6 @@ export interface FileRoutesByTo {
   '/announcements': typeof AnnouncementsRouteWithChildren
   '/calendar': typeof CalendarRoute
   '/collection': typeof CollectionRoute
-  '/decks': typeof DecksRouteWithChildren
   '/friends': typeof FriendsRoute
   '/leaderboard': typeof LeaderboardRoute
   '/lfg': typeof LfgRouteWithChildren
@@ -290,6 +296,7 @@ export interface FileRoutesByTo {
   '/tier/$id': typeof TierIdRoute
   '/admin': typeof AdminIndexRoute
   '/cards': typeof CardsIndexRoute
+  '/decks': typeof DecksIndexRoute
   '/admin/cards/review': typeof AdminCardsReviewRoute
   '/api/drive/auth': typeof ApiDriveAuthRoute
   '/auth/google-drive/callback': typeof AuthGoogleDriveCallbackRoute
@@ -328,6 +335,7 @@ export interface FileRoutesById {
   '/tier/$id': typeof TierIdRoute
   '/admin/': typeof AdminIndexRoute
   '/cards/': typeof CardsIndexRoute
+  '/decks/': typeof DecksIndexRoute
   '/admin/cards/review': typeof AdminCardsReviewRoute
   '/api/drive/auth': typeof ApiDriveAuthRoute
   '/auth/google-drive/callback': typeof AuthGoogleDriveCallbackRoute
@@ -367,6 +375,7 @@ export interface FileRouteTypes {
     | '/tier/$id'
     | '/admin/'
     | '/cards/'
+    | '/decks/'
     | '/admin/cards/review'
     | '/api/drive/auth'
     | '/auth/google-drive/callback'
@@ -376,7 +385,6 @@ export interface FileRouteTypes {
     | '/announcements'
     | '/calendar'
     | '/collection'
-    | '/decks'
     | '/friends'
     | '/leaderboard'
     | '/lfg'
@@ -403,6 +411,7 @@ export interface FileRouteTypes {
     | '/tier/$id'
     | '/admin'
     | '/cards'
+    | '/decks'
     | '/admin/cards/review'
     | '/api/drive/auth'
     | '/auth/google-drive/callback'
@@ -440,6 +449,7 @@ export interface FileRouteTypes {
     | '/tier/$id'
     | '/admin/'
     | '/cards/'
+    | '/decks/'
     | '/admin/cards/review'
     | '/api/drive/auth'
     | '/auth/google-drive/callback'
@@ -610,6 +620,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/decks/': {
+      id: '/decks/'
+      path: '/'
+      fullPath: '/decks/'
+      preLoaderRoute: typeof DecksIndexRouteImport
+      parentRoute: typeof DecksRoute
+    }
     '/cards/': {
       id: '/cards/'
       path: '/'
@@ -751,10 +768,12 @@ const CardsRouteWithChildren = CardsRoute._addFileChildren(CardsRouteChildren)
 
 interface DecksRouteChildren {
   DecksIdRoute: typeof DecksIdRoute
+  DecksIndexRoute: typeof DecksIndexRoute
 }
 
 const DecksRouteChildren: DecksRouteChildren = {
   DecksIdRoute: DecksIdRoute,
+  DecksIndexRoute: DecksIndexRoute,
 }
 
 const DecksRouteWithChildren = DecksRoute._addFileChildren(DecksRouteChildren)
