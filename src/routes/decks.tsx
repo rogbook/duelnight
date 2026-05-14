@@ -320,21 +320,20 @@ function DeckDialog({
     }));
   };
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
+  const persist = async (): Promise<Deck | null> => {
+    if (!user) return null;
     const name = form.name.trim();
     if (!name) {
       toast.error("덱 이름을 입력해 주세요");
-      return;
+      return null;
     }
     if (form.colors.length === 0) {
       toast.error("색상(타입)을 1개 이상 선택해 주세요");
-      return;
+      return null;
     }
     if (REQUIRES_MULTI_COLOR[form.game] && form.colors.length < 2) {
       toast.error("색상(타입)을 2개 이상 선택해 주세요");
-      return;
+      return null;
     }
     setBusy(true);
     const payload = {
@@ -349,28 +348,48 @@ function DeckDialog({
       notes: form.notes.trim() || null,
       is_public: form.is_public,
     };
-    const result =
-      mode === "create"
-        ? await supabase
-            .from("decks")
-            .insert({ ...payload, user_id: user.id })
-            .select("id")
-            .single()
-        : await supabase
-            .from("decks")
-            .update(payload)
-            .eq("id", deck!.id)
-            .select("id")
-            .single();
+    const targetId = mode === "edit" ? deck!.id : createdDeck?.id;
+    const result = targetId
+      ? await supabase
+          .from("decks")
+          .update(payload)
+          .eq("id", targetId)
+          .select("*")
+          .single()
+      : await supabase
+          .from("decks")
+          .insert({ ...payload, user_id: user.id })
+          .select("*")
+          .single();
     setBusy(false);
     if (result.error) {
       toast.error(result.error.message);
+      return null;
+    }
+    qc.invalidateQueries({ queryKey: ["deck-cards"] });
+    onSaved();
+    return result.data as Deck;
+  };
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const saved = await persist();
+    if (!saved) return;
+    toast.success(mode === "create" && !createdDeck ? "덱이 추가되었어요" : "덱이 수정되었어요");
+    if (mode === "create") setCreatedDeck(saved);
+    setOpen(false);
+  };
+
+  const handleRecipeTab = async () => {
+    if (mode === "edit" || createdDeck) {
+      setTab("recipe");
       return;
     }
-    toast.success(mode === "create" ? "덱이 추가되었어요" : "덱이 수정되었어요");
-    qc.invalidateQueries({ queryKey: ["deck-cards"] });
-    setOpen(false);
-    onSaved();
+    const saved = await persist();
+    if (!saved) return;
+    toast.success("덱이 저장되었어요. 이제 카드를 등록할 수 있어요.");
+    setCreatedDeck(saved);
+    setTab("recipe");
   };
 
   return (
