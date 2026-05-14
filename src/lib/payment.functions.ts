@@ -135,8 +135,9 @@ export const verifyPortOnePayment = createServerFn({ method: "POST" })
 
 /** PayPal 결제 검증 서버 함수 */
 export const verifyPayPalPayment = createServerFn({ method: "POST" })
+  .inputValidator((d: { order_id: string; amount: number }) => d)
   .handler(async ({ data }) => {
-    const { order_id, amount } = data as { order_id: string; amount: number };
+    const { order_id, amount } = data;
     const userId = await getAuthenticatedUserId();
 
     try {
