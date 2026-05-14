@@ -561,8 +561,8 @@ function DeckDialog({
               </Button>
             </div>
           </form>
-        ) : deck ? (
-          <RecipeEditor deck={deck} />
+        ) : (deck ?? createdDeck) ? (
+          <RecipeEditor deck={(deck ?? createdDeck)!} />
         ) : null}
       </DialogContent>
     </Dialog>
