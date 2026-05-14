@@ -15,6 +15,7 @@ import {
   ChevronDown,
   ChevronUp,
   CornerDownRight,
+  Loader2,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
