@@ -244,12 +244,18 @@ function PostCard({
   const closed = p.status === "closed";
   return (
     <li
-      className={`rounded-lg border bg-card p-4 transition hover:border-primary/40 ${
+      className={`relative rounded-lg border bg-card p-4 transition hover:border-primary/40 ${
         highlight ? "border-amber-500/50 bg-amber-500/5" : "border-border"
       } ${closed ? "opacity-70" : ""}`}
     >
+      <Link
+        to="/lfg/$id"
+        params={{ id: p.id }}
+        className="absolute inset-0 z-10 rounded-lg"
+        aria-label={p.title}
+      />
       <div className="flex items-start justify-between gap-3">
-        <Link to="/lfg/$id" params={{ id: p.id }} className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
               {GAME_LABEL[p.game]}
