@@ -67,7 +67,7 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
 
   /* ── Search results ── */
   const { data: searchResults = [], isFetching } = useQuery({
-    queryKey: ["deck-search", game, q, filterType, filterColor, filterSet, filterRarity, filterLevel],
+    queryKey: ["deck-search", game, q, filterType, filterColor, filterSet, filterRarity, filterLevel, filterTrainer, filterEnergy, filterWeak, filterResist],
     queryFn: async () => {
       let qb = supabase.from("cards").select("*").eq("game", game).order("name", { ascending: true }).limit(150);
       if (q.trim())           qb = qb.or(`name.ilike.%${q.trim()}%,code.ilike.%${q.trim()}%`);
@@ -86,6 +86,25 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
           // 포켓몬 진화 단계 필터링 (기본, 1진화 등)
           qb = qb.ilike("attribute", `%${filterLevel}%`);
         }
+      }
+
+      // PTCG 트레이너스 서브타입 (서포터/아이템/포켓몬의 도구/스타디움)
+      if (game === "ptcg" && filterType === "trainer" && filterTrainer !== "all") {
+        qb = qb.ilike("attribute", `%${filterTrainer}%`);
+      }
+
+      // PTCG 에너지 구분 (기본/특수)
+      if (game === "ptcg" && filterType === "energy" && filterEnergy !== "all") {
+        if (filterEnergy === "special") qb = qb.ilike("name", "%특수%");
+        else                            qb = qb.not("name", "ilike", "%특수%");
+      }
+
+      // PTCG 약점/저항 (effect/attribute 텍스트 매칭)
+      if (game === "ptcg" && filterWeak !== "all") {
+        qb = qb.or(`effect.ilike.%약점%${filterWeak}%,attribute.ilike.%약점%${filterWeak}%`);
+      }
+      if (game === "ptcg" && filterResist !== "all") {
+        qb = qb.or(`effect.ilike.%저항%${filterResist}%,attribute.ilike.%저항%${filterResist}%`);
       }
 
       const { data, error } = await qb;
