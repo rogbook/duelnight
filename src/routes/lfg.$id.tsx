@@ -719,14 +719,19 @@ function CommentItem({
                   </p>
                 </div>
                 <p className="mt-1 whitespace-pre-wrap text-xs">{r.body}</p>
-                {canDel && (
-                  <button
-                    onClick={() => onDelete(r.id)}
-                    className="mt-1 text-[11px] text-muted-foreground hover:text-destructive"
-                  >
-                    삭제
-                  </button>
-                )}
+                <div className="mt-1 flex items-center gap-3">
+                  {canDel && (
+                    <button
+                      onClick={() => onDelete(r.id)}
+                      className="text-[11px] text-muted-foreground hover:text-destructive"
+                    >
+                      삭제
+                    </button>
+                  )}
+                  {meId && meId !== r.user_id && (
+                    <ReportButton commentId={r.id} meId={meId} size="xs" />
+                  )}
+                </div>
               </li>
             );
           })}
