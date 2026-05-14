@@ -33,6 +33,10 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
   const [filterSet,    setFilterSet]    = useState("all");
   const [filterRarity, setFilterRarity] = useState("all");
   const [filterLevel,  setFilterLevel]  = useState("all");
+  const [filterTrainer,setFilterTrainer]= useState("all"); // PTCG: 서포터/아이템/도구/스타디움
+  const [filterEnergy, setFilterEnergy] = useState("all"); // PTCG: 기본/특수
+  const [filterWeak,   setFilterWeak]   = useState("all"); // PTCG: 약점 색상
+  const [filterResist, setFilterResist] = useState("all"); // PTCG: 저항 색상
   const [zoomUrl,      setZoomUrl]      = useState<string | null>(null);
 
   /* ── Deck cards ── */
