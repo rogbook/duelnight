@@ -16,6 +16,7 @@ import {
   ChevronUp,
   CornerDownRight,
   Loader2,
+  Flag,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -664,6 +665,9 @@ function CommentItem({
             삭제
           </button>
         )}
+        {meId && meId !== comment.user_id && (
+          <ReportButton commentId={comment.id} meId={meId} />
+        )}
       </div>
 
       {replyOpen && meId && (
@@ -715,14 +719,19 @@ function CommentItem({
                   </p>
                 </div>
                 <p className="mt-1 whitespace-pre-wrap text-xs">{r.body}</p>
-                {canDel && (
-                  <button
-                    onClick={() => onDelete(r.id)}
-                    className="mt-1 text-[11px] text-muted-foreground hover:text-destructive"
-                  >
-                    삭제
-                  </button>
-                )}
+                <div className="mt-1 flex items-center gap-3">
+                  {canDel && (
+                    <button
+                      onClick={() => onDelete(r.id)}
+                      className="text-[11px] text-muted-foreground hover:text-destructive"
+                    >
+                      삭제
+                    </button>
+                  )}
+                  {meId && meId !== r.user_id && (
+                    <ReportButton commentId={r.id} meId={meId} size="xs" />
+                  )}
+                </div>
               </li>
             );
           })}
@@ -888,5 +897,91 @@ function ChatDialog({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ReportButton({
+  commentId,
+  meId,
+  size = "sm",
+}: {
+  commentId: string;
+  meId: string | null;
+  size?: "sm" | "xs";
+}) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  if (!meId) return null;
+
+  const submit = async () => {
+    const trimmed = reason.trim();
+    if (!trimmed) {
+      toast.error("신고 사유를 입력해 주세요.");
+      return;
+    }
+    setSubmitting(true);
+    const { error } = await supabase.from("lfg_comment_reports").insert({
+      comment_id: commentId,
+      reporter_id: meId,
+      reason: trimmed,
+    });
+    setSubmitting(false);
+    if (error) {
+      if (error.code === "23505") {
+        toast.error("이미 신고한 댓글입니다.");
+      } else {
+        toast.error(error.message);
+      }
+      return;
+    }
+    toast.success("신고가 접수되었어요. 관리자 검토 후 처리됩니다.");
+    setOpen(false);
+    setReason("");
+  };
+
+  const cls =
+    size === "xs"
+      ? "inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-destructive"
+      : "inline-flex items-center gap-1 hover:text-destructive";
+
+  return (
+    <>
+      <button onClick={() => setOpen(true)} className={cls}>
+        <Flag className="h-3 w-3" />
+        신고
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>댓글 신고</DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground">
+            욕설/스팸/허위 정보 등 신고 사유를 간단히 적어주세요. 관리자가 검토합니다.
+          </p>
+          <Textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="신고 사유를 입력하세요"
+            rows={3}
+            maxLength={500}
+            autoFocus
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setOpen(false)}>
+              취소
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={submit}
+              disabled={submitting || !reason.trim()}
+            >
+              신고하기
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
