@@ -99,9 +99,10 @@ export const disconnectDriveFn = createServerFn({ method: "POST" })
   });
 
 export const importDriveFilesFn = createServerFn({ method: "POST" })
+  .inputValidator((d: { fileIds: string[] }) => d)
   .handler(async ({ data }) => {
     const userId = await getAuthenticatedUserId();
-    const { fileIds } = data as { fileIds: string[] };
+    const { fileIds } = data;
     const { getValidAccessToken } = await import("./google-drive.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     
