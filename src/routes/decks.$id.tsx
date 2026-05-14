@@ -292,7 +292,7 @@ function DeckDetailPage() {
       {isEditing ? (
         <div className="mt-6 rounded-lg border border-border bg-card p-6">
           <h2 className="mb-4 text-sm font-semibold">덱 레시피 편집</h2>
-          <RecipeEditor deck={deck} />
+          <RecipeEditor deck={deck} onSaved={() => navigate({ to: "/decks" })} />
         </div>
       ) : deckCards.length > 0 && (
         <div className="mt-6 rounded-lg border border-border bg-card p-6">
