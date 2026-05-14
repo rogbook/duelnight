@@ -42,9 +42,10 @@ export const getDriveConnectionFn = createServerFn({ method: "GET" })
   });
 
 export const listDriveFolderFn = createServerFn({ method: "POST" })
+  .inputValidator((d: { folderUrl: string }) => d)
   .handler(async ({ data }) => {
     const userId = await getAuthenticatedUserId();
-    const { folderUrl } = data as { folderUrl: string };
+    const { folderUrl } = data;
     const { getValidAccessToken } = await import("./google-drive.server");
     const token = await getValidAccessToken(userId);
     if (!token) throw new Error("Google Drive not connected");
