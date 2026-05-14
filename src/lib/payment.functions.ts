@@ -82,8 +82,9 @@ async function recordSuccessfulPayment(params: {
 
 /** PortOne 결제 검증 서버 함수 */
 export const verifyPortOnePayment = createServerFn({ method: "POST" })
+  .inputValidator((d: { imp_uid: string; merchant_uid: string; amount: number }) => d)
   .handler(async ({ data }) => {
-    const { imp_uid, merchant_uid, amount } = data as { imp_uid: string; merchant_uid: string; amount: number };
+    const { imp_uid, merchant_uid, amount } = data;
     const userId = await getAuthenticatedUserId();
 
     try {
