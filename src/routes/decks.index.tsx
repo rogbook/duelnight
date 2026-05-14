@@ -46,7 +46,7 @@ import type { Tables } from "@/integrations/supabase/types";
 
 type Deck = Tables<"decks">;
 
-export const Route = createFileRoute("/decks")({
+export const Route = createFileRoute("/decks/")({
   head: () => ({
     meta: [
       { title: "덱 빌더 — TCG Hub" },
