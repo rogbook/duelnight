@@ -105,7 +105,7 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
     if (game !== "dtcg") return 0;
     return deckCards.reduce((s, dc) => {
       const card = cardMap.get(dc.card_code);
-      return card?.type === "digitama" ? s + dc.quantity : s;
+      return (card?.type as string) === "digitama" ? s + dc.quantity : s;
     }, 0);
   }, [deckCards, cardMap, game]);
 
