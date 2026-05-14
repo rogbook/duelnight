@@ -388,5 +388,3 @@ function ConversationView({
     </div>
   );
 }
-
-export { MessageSquare };
