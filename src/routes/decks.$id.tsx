@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, Layers, Pencil, Check } from "lucide-react";
+import { ArrowLeft, Layers, Pencil, Check, Copy, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { RecipeEditor } from "@/components/decks/recipe-editor";
 import { supabase } from "@/integrations/supabase/client";
 import { GAME_LABEL } from "@/lib/match-stats";
@@ -63,6 +64,7 @@ export const Route = createFileRoute("/decks/$id")({
       isPublic: deck.is_public,
       isOwner,
       canView,
+      currentUserId,
       deckCards,
       cardMeta,
     };
@@ -105,18 +107,62 @@ export const Route = createFileRoute("/decks/$id")({
 });
 
 function DeckDetailPage() {
-  const { deck, author, isPublic, isOwner, canView, deckCards, cardMeta } = Route.useLoaderData() as {
+  const { deck, author, isPublic, isOwner, canView, currentUserId, deckCards, cardMeta } = Route.useLoaderData() as {
     deck: Deck;
     author: Profile | null;
     isPublic: boolean;
     isOwner: boolean;
     canView: boolean;
+    currentUserId: string | null;
     deckCards: DeckCard[];
     cardMeta: Record<string, CardRow>;
   };
 
   const [isEditing, setIsEditing] = useState(false);
+  const [copying, setCopying] = useState(false);
   const navigate = useNavigate();
+
+  const canCopy = !!currentUserId && !isOwner && isPublic;
+
+  const handleCopy = async () => {
+    if (!currentUserId) return;
+    setCopying(true);
+    try {
+      const { data: newDeck, error: e1 } = await supabase
+        .from("decks")
+        .insert({
+          user_id: currentUserId,
+          game: deck.game,
+          name: `${deck.name} (복사본)`,
+          colors: deck.colors,
+          leader: deck.leader,
+          archetype: deck.archetype,
+          notes: deck.notes,
+          is_public: false,
+        })
+        .select()
+        .single();
+      if (e1 || !newDeck) throw e1 ?? new Error("덱 생성 실패");
+
+      if (deckCards.length > 0) {
+        const rows = deckCards.map((dc, i) => ({
+          deck_id: newDeck.id,
+          card_code: dc.card_code,
+          quantity: dc.quantity,
+          position: i,
+        }));
+        const { error: e2 } = await supabase.from("deck_cards").insert(rows);
+        if (e2) throw e2;
+      }
+      toast.success("내 덱에 복사되었습니다");
+      navigate({ to: "/decks/$id", params: { id: newDeck.id } });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "복사 실패");
+    } finally {
+      setCopying(false);
+    }
+  };
+
 
   if (!canView) {
     return (
@@ -185,22 +231,41 @@ function DeckDetailPage() {
           <span>{new Date(deck.updated_at).toLocaleDateString("ko-KR")}</span>
         </div>
         
-        {isOwner && (
-          <div className="mt-4 border-t pt-4">
-            <button
-              onClick={() => setIsEditing(!isEditing)}
-              className="flex w-full items-center justify-center gap-2 rounded-md bg-muted px-4 py-2 text-sm font-medium hover:bg-muted/80"
-            >
-              {isEditing ? (
-                <>
-                  <Check className="h-4 w-4" /> 조회 모드로 전환
-                </>
-              ) : (
-                <>
-                  <Pencil className="h-4 w-4" /> 레시피 편집하기
-                </>
-              )}
-            </button>
+        {(isOwner || canCopy) && (
+          <div className="mt-4 flex flex-col gap-2 border-t pt-4 sm:flex-row">
+            {isOwner && (
+              <button
+                onClick={() => setIsEditing(!isEditing)}
+                className="flex flex-1 items-center justify-center gap-2 rounded-md bg-muted px-4 py-2 text-sm font-medium hover:bg-muted/80"
+              >
+                {isEditing ? (
+                  <>
+                    <Check className="h-4 w-4" /> 조회 모드로 전환
+                  </>
+                ) : (
+                  <>
+                    <Pencil className="h-4 w-4" /> 레시피 편집하기
+                  </>
+                )}
+              </button>
+            )}
+            {canCopy && (
+              <button
+                onClick={handleCopy}
+                disabled={copying}
+                className="flex flex-1 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-60"
+              >
+                {copying ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> 복사 중...
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4" /> 내 덱에 복사
+                  </>
+                )}
+              </button>
+            )}
           </div>
         )}
       </div>
