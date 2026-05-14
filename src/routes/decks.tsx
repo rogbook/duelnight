@@ -273,6 +273,7 @@ function DeckDialog({
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<"info" | "recipe">("info");
+  const [createdDeck, setCreatedDeck] = useState<Deck | null>(null);
   const [form, setForm] = useState({
     game: (deck?.game ?? "optcg") as Game,
     name: deck?.name ?? "",
