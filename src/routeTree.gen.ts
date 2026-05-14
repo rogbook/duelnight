@@ -42,6 +42,7 @@ import { Route as CardsUploadRouteImport } from './routes/cards.upload'
 import { Route as ApiCoachRouteImport } from './routes/api/coach'
 import { Route as ApiCardOcrRouteImport } from './routes/api/card-ocr'
 import { Route as AnnouncementsIdRouteImport } from './routes/announcements.$id'
+import { Route as AdminReportsRouteImport } from './routes/admin.reports'
 import { Route as AdminCardsRouteImport } from './routes/admin.cards'
 import { Route as AuthGoogleDriveCallbackRouteImport } from './routes/auth.google-drive.callback'
 import { Route as ApiDriveAuthRouteImport } from './routes/api.drive.auth'
@@ -212,6 +213,11 @@ const AnnouncementsIdRoute = AnnouncementsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AnnouncementsRoute,
 } as any)
+const AdminReportsRoute = AdminReportsRouteImport.update({
+  id: '/admin/reports',
+  path: '/admin/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminCardsRoute = AdminCardsRouteImport.update({
   id: '/admin/cards',
   path: '/admin/cards',
@@ -255,6 +261,7 @@ export interface FileRoutesByFullPath {
   '/stores': typeof StoresRouteWithChildren
   '/tier': typeof TierRouteWithChildren
   '/admin/cards': typeof AdminCardsRouteWithChildren
+  '/admin/reports': typeof AdminReportsRoute
   '/announcements/$id': typeof AnnouncementsIdRoute
   '/api/card-ocr': typeof ApiCardOcrRoute
   '/api/coach': typeof ApiCoachRoute
@@ -292,6 +299,7 @@ export interface FileRoutesByTo {
   '/stores': typeof StoresRouteWithChildren
   '/tier': typeof TierRouteWithChildren
   '/admin/cards': typeof AdminCardsRouteWithChildren
+  '/admin/reports': typeof AdminReportsRoute
   '/announcements/$id': typeof AnnouncementsIdRoute
   '/api/card-ocr': typeof ApiCardOcrRoute
   '/api/coach': typeof ApiCoachRoute
@@ -332,6 +340,7 @@ export interface FileRoutesById {
   '/stores': typeof StoresRouteWithChildren
   '/tier': typeof TierRouteWithChildren
   '/admin/cards': typeof AdminCardsRouteWithChildren
+  '/admin/reports': typeof AdminReportsRoute
   '/announcements/$id': typeof AnnouncementsIdRoute
   '/api/card-ocr': typeof ApiCardOcrRoute
   '/api/coach': typeof ApiCoachRoute
@@ -373,6 +382,7 @@ export interface FileRouteTypes {
     | '/stores'
     | '/tier'
     | '/admin/cards'
+    | '/admin/reports'
     | '/announcements/$id'
     | '/api/card-ocr'
     | '/api/coach'
@@ -410,6 +420,7 @@ export interface FileRouteTypes {
     | '/stores'
     | '/tier'
     | '/admin/cards'
+    | '/admin/reports'
     | '/announcements/$id'
     | '/api/card-ocr'
     | '/api/coach'
@@ -449,6 +460,7 @@ export interface FileRouteTypes {
     | '/stores'
     | '/tier'
     | '/admin/cards'
+    | '/admin/reports'
     | '/announcements/$id'
     | '/api/card-ocr'
     | '/api/coach'
@@ -489,6 +501,7 @@ export interface RootRouteChildren {
   StoresRoute: typeof StoresRouteWithChildren
   TierRoute: typeof TierRouteWithChildren
   AdminCardsRoute: typeof AdminCardsRouteWithChildren
+  AdminReportsRoute: typeof AdminReportsRoute
   ApiCardOcrRoute: typeof ApiCardOcrRoute
   ApiCoachRoute: typeof ApiCoachRoute
   CardsCodeRoute: typeof CardsCodeRoute
@@ -731,6 +744,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AnnouncementsIdRouteImport
       parentRoute: typeof AnnouncementsRoute
     }
+    '/admin/reports': {
+      id: '/admin/reports'
+      path: '/admin/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AdminReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/cards': {
       id: '/admin/cards'
       path: '/admin/cards'
@@ -863,6 +883,7 @@ const rootRouteChildren: RootRouteChildren = {
   StoresRoute: StoresRouteWithChildren,
   TierRoute: TierRouteWithChildren,
   AdminCardsRoute: AdminCardsRouteWithChildren,
+  AdminReportsRoute: AdminReportsRoute,
   ApiCardOcrRoute: ApiCardOcrRoute,
   ApiCoachRoute: ApiCoachRoute,
   CardsCodeRoute: CardsCodeRoute,

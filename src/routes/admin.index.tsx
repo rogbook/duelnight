@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { UserPlus, UserMinus, Crown, Lock, LogIn } from "lucide-react";
+import { UserPlus, UserMinus, Crown, Lock, LogIn, Flag } from "lucide-react";
 import { z } from "zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -193,7 +193,22 @@ function AdminPage() {
 
       {amAdmin && (
         <>
-          <section className="mt-6 rounded-lg border border-border bg-card p-4">
+          <section className="mt-6 grid gap-3 sm:grid-cols-2">
+            <Link
+              to="/admin/reports"
+              className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/40 hover:bg-primary/5"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
+                <Flag className="h-5 w-5 text-destructive" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold">댓글 신고 검토</p>
+                <p className="text-xs text-muted-foreground">대기 중인 신고를 확인하고 처리합니다.</p>
+              </div>
+            </Link>
+          </section>
+
+          <section className="mt-4 rounded-lg border border-border bg-card p-4">
             <h2 className="text-sm font-semibold">관리자 권한 부여</h2>
             <p className="mt-1 text-xs text-muted-foreground">
               해당 이메일로 가입된 사용자에게 admin 역할을 추가합니다. (서버에서 권한 재검증)
