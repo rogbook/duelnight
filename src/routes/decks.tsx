@@ -306,6 +306,7 @@ function DeckDialog({
       });
     }
     setTab("info");
+    setCreatedDeck(null);
   }, [open, deck]);
 
   const palette = COLORS_BY_GAME[form.game];
