@@ -64,6 +64,7 @@ export const Route = createFileRoute("/decks/$id")({
       isPublic: deck.is_public,
       isOwner,
       canView,
+      currentUserId,
       deckCards,
       cardMeta,
     };
