@@ -96,6 +96,25 @@ export const Route = createFileRoute("/decks/$id")({
     };
   },
   component: DeckDetailPage,
+  errorComponent: ({ error, reset }) => (
+    <div className="mx-auto max-w-3xl px-6 py-16 text-center">
+      <h1 className="text-2xl font-semibold">덱을 불러오지 못했어요</h1>
+      <p className="mt-2 text-sm text-muted-foreground break-words">
+        {error instanceof Error ? error.message : String(error)}
+      </p>
+      <div className="mt-6 flex items-center justify-center gap-2">
+        <button
+          onClick={() => reset()}
+          className="rounded-md bg-foreground px-3 py-1.5 text-sm text-background"
+        >
+          다시 시도
+        </button>
+        <Link to="/decks" className="text-sm text-primary hover:underline">
+          덱 빌더로
+        </Link>
+      </div>
+    </div>
+  ),
   notFoundComponent: () => (
     <div className="mx-auto max-w-3xl px-6 py-16 text-center">
       <h1 className="text-2xl font-semibold">덱을 찾을 수 없어요</h1>
