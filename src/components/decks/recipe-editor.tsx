@@ -100,17 +100,18 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
         else                            qb = qb.not("name", "ilike", "%특수%");
       }
 
-      // PTCG 약점/저항 (effect/attribute 텍스트 매칭)
-      if (game === "ptcg" && filterWeak !== "all") {
-        qb = qb.or(`effect.ilike.%약점%${filterWeak}%,attribute.ilike.%약점%${filterWeak}%`);
-      }
-      if (game === "ptcg" && filterResist !== "all") {
-        qb = qb.or(`effect.ilike.%저항%${filterResist}%,attribute.ilike.%저항%${filterResist}%`);
-      }
+      // 약점/저항은 자유 텍스트라 SQL ilike로는 오탐이 잦으므로 클라이언트에서 정규식 후처리한다.
 
       const { data, error } = await qb;
       if (error) throw error;
-      return data ?? [];
+      let rows = (data ?? []) as CardRow[];
+      if (game === "ptcg" && filterWeak !== "all") {
+        rows = rows.filter((c) => hasWeakness(c, filterWeak));
+      }
+      if (game === "ptcg" && filterResist !== "all") {
+        rows = rows.filter((c) => hasResistance(c, filterResist));
+      }
+      return rows;
     },
   });
 
