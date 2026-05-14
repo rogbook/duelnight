@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,10 +17,20 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+
+  // 로그인 성공 후 AuthContext에 user가 반영되면 자동으로 이동
+  // (race condition 방지: navigate를 user 상태 변화에 종속시킴)
+  useEffect(() => {
+    if (user) {
+      navigate({ to: "/matches" });
+    }
+  }, [user, navigate]);
+
 
   const forgotPassword = async () => {
     const target = email.trim();
@@ -57,7 +68,7 @@ function LoginPage() {
           password,
         });
         if (error) throw error;
-        navigate({ to: "/matches" });
+        // navigate는 user 상태 변화 useEffect에서 처리 (race 방지)
       }
     } catch (err) {
       toast.error((err as Error).message);
