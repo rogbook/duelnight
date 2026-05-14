@@ -68,7 +68,7 @@ function LoginPage() {
           password,
         });
         if (error) throw error;
-        navigate({ to: "/matches" });
+        // navigate는 user 상태 변화 useEffect에서 처리 (race 방지)
       }
     } catch (err) {
       toast.error((err as Error).message);
