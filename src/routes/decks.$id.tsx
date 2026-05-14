@@ -107,18 +107,62 @@ export const Route = createFileRoute("/decks/$id")({
 });
 
 function DeckDetailPage() {
-  const { deck, author, isPublic, isOwner, canView, deckCards, cardMeta } = Route.useLoaderData() as {
+  const { deck, author, isPublic, isOwner, canView, currentUserId, deckCards, cardMeta } = Route.useLoaderData() as {
     deck: Deck;
     author: Profile | null;
     isPublic: boolean;
     isOwner: boolean;
     canView: boolean;
+    currentUserId: string | null;
     deckCards: DeckCard[];
     cardMeta: Record<string, CardRow>;
   };
 
   const [isEditing, setIsEditing] = useState(false);
+  const [copying, setCopying] = useState(false);
   const navigate = useNavigate();
+
+  const canCopy = !!currentUserId && !isOwner && isPublic;
+
+  const handleCopy = async () => {
+    if (!currentUserId) return;
+    setCopying(true);
+    try {
+      const { data: newDeck, error: e1 } = await supabase
+        .from("decks")
+        .insert({
+          user_id: currentUserId,
+          game: deck.game,
+          name: `${deck.name} (복사본)`,
+          colors: deck.colors,
+          leader: deck.leader,
+          archetype: deck.archetype,
+          notes: deck.notes,
+          is_public: false,
+        })
+        .select()
+        .single();
+      if (e1 || !newDeck) throw e1 ?? new Error("덱 생성 실패");
+
+      if (deckCards.length > 0) {
+        const rows = deckCards.map((dc, i) => ({
+          deck_id: newDeck.id,
+          card_code: dc.card_code,
+          quantity: dc.quantity,
+          position: i,
+        }));
+        const { error: e2 } = await supabase.from("deck_cards").insert(rows);
+        if (e2) throw e2;
+      }
+      toast.success("내 덱에 복사되었습니다");
+      navigate({ to: "/decks/$id", params: { id: newDeck.id } });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "복사 실패");
+    } finally {
+      setCopying(false);
+    }
+  };
+
 
   if (!canView) {
     return (
