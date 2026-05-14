@@ -174,9 +174,9 @@ const StoresIdRoute = StoresIdRouteImport.update({
   getParentRoute: () => StoresRoute,
 } as any)
 const LfgIdRoute = LfgIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => LfgRoute,
+  id: '/lfg/$id',
+  path: '/lfg/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const EventsIdRoute = EventsIdRouteImport.update({
   id: '/events/$id',
@@ -505,6 +505,7 @@ export interface RootRouteChildren {
   ApiCoachRoute: typeof ApiCoachRoute
   CardsCodeRoute: typeof CardsCodeRoute
   EventsIdRoute: typeof EventsIdRoute
+  LfgIdRoute: typeof LfgIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
   LfgIndexRoute: typeof LfgIndexRoute
   ApiDriveAuthRoute: typeof ApiDriveAuthRoute
@@ -690,10 +691,10 @@ declare module '@tanstack/react-router' {
     }
     '/lfg/$id': {
       id: '/lfg/$id'
-      path: '/$id'
+      path: '/lfg/$id'
       fullPath: '/lfg/$id'
       preLoaderRoute: typeof LfgIdRouteImport
-      parentRoute: typeof LfgRoute
+      parentRoute: typeof rootRouteImport
     }
     '/events/$id': {
       id: '/events/$id'
@@ -877,6 +878,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCoachRoute: ApiCoachRoute,
   CardsCodeRoute: CardsCodeRoute,
   EventsIdRoute: EventsIdRoute,
+  LfgIdRoute: LfgIdRoute,
   AdminIndexRoute: AdminIndexRoute,
   LfgIndexRoute: LfgIndexRoute,
   ApiDriveAuthRoute: ApiDriveAuthRoute,
@@ -885,13 +887,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
