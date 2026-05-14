@@ -244,12 +244,18 @@ function PostCard({
   const closed = p.status === "closed";
   return (
     <li
-      className={`rounded-lg border bg-card p-4 transition hover:border-primary/40 ${
+      className={`relative rounded-lg border bg-card p-4 transition hover:border-primary/40 ${
         highlight ? "border-amber-500/50 bg-amber-500/5" : "border-border"
       } ${closed ? "opacity-70" : ""}`}
     >
+      <Link
+        to="/lfg/$id"
+        params={{ id: p.id }}
+        className="absolute inset-0 z-10 rounded-lg"
+        aria-label={p.title}
+      />
       <div className="flex items-start justify-between gap-3">
-        <Link to="/lfg/$id" params={{ id: p.id }} className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
               {GAME_LABEL[p.game]}
@@ -310,7 +316,7 @@ function PostCard({
               {p.body}
             </p>
           )}
-        </Link>
+        </div>
         {userId === p.user_id && (
           <button
             onClick={async (e) => {
@@ -324,7 +330,7 @@ function PostCard({
                 onDelete();
               }
             }}
-            className="text-muted-foreground hover:text-destructive"
+            className="relative z-20 text-muted-foreground hover:text-destructive"
             aria-label="삭제"
           >
             <Trash2 className="h-4 w-4" />
