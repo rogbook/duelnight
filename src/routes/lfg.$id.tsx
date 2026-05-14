@@ -12,6 +12,9 @@ import {
   Check,
   X as XIcon,
   Send,
+  ChevronDown,
+  ChevronUp,
+  CornerDownRight,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -437,7 +440,6 @@ function CommentsSection({
   meId: string | null;
 }) {
   const [body, setBody] = useState("");
-  const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const { data: comments = [], refetch } = useQuery({
@@ -479,7 +481,25 @@ function CommentsSection({
     };
   }, [postId, refetch]);
 
-  const submit = async () => {
+  const submitReply = async (parentId: string, text: string) => {
+    if (!meId) return false;
+    const trimmed = text.trim();
+    if (!trimmed) return false;
+    const { error } = await supabase.from("lfg_comments").insert({
+      post_id: postId,
+      user_id: meId,
+      body: trimmed,
+      parent_id: parentId,
+    });
+    if (error) {
+      toast.error(error.message);
+      return false;
+    }
+    refetch();
+    return true;
+  };
+
+  const submitTop = async () => {
     if (!meId) return;
     const text = body.trim();
     if (!text) return;
@@ -488,14 +508,13 @@ function CommentsSection({
       post_id: postId,
       user_id: meId,
       body: text,
-      parent_id: replyTo?.id ?? null,
+      parent_id: null,
     });
     setSubmitting(false);
     if (error) {
       toast.error(error.message);
     } else {
       setBody("");
-      setReplyTo(null);
       refetch();
     }
   };
@@ -515,24 +534,16 @@ function CommentsSection({
 
       {meId ? (
         <div className="mb-4 space-y-2">
-          {replyTo && (
-            <div className="flex items-center justify-between rounded-md bg-muted/50 px-2 py-1 text-xs text-muted-foreground">
-              <span>{replyTo.name}님께 답글 작성 중</span>
-              <button onClick={() => setReplyTo(null)} className="hover:text-foreground">
-                <XIcon className="h-3 w-3" />
-              </button>
-            </div>
-          )}
           <Textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            placeholder={replyTo ? "답글을 입력하세요" : "댓글을 입력하세요"}
+            placeholder="댓글을 입력하세요"
             rows={2}
             maxLength={500}
           />
           <div className="flex justify-end">
-            <Button size="sm" onClick={submit} disabled={submitting || !body.trim()}>
-              {replyTo ? "답글 등록" : "댓글 등록"}
+            <Button size="sm" onClick={submitTop} disabled={submitting || !body.trim()}>
+              댓글 등록
             </Button>
           </div>
         </div>
@@ -557,7 +568,7 @@ function CommentsSection({
               replies={repliesOf(c.id)}
               meId={meId}
               postAuthorId={postAuthorId}
-              onReply={(name) => setReplyTo({ id: c.id, name })}
+              onSubmitReply={submitReply}
               onDelete={remove}
             />
           ))}
@@ -572,18 +583,34 @@ function CommentItem({
   replies,
   meId,
   postAuthorId,
-  onReply,
+  onSubmitReply,
   onDelete,
 }: {
   comment: Comment;
   replies: Comment[];
   meId: string | null;
   postAuthorId: string;
-  onReply: (name: string) => void;
+  onSubmitReply: (parentId: string, body: string) => Promise<boolean>;
   onDelete: (id: string) => void;
 }) {
   const name = comment.profile?.display_name || comment.profile?.username || "익명";
   const canDelete = meId && (meId === comment.user_id || meId === postAuthorId);
+  const [replyOpen, setReplyOpen] = useState(false);
+  const [repliesOpen, setRepliesOpen] = useState(true);
+  const [replyBody, setReplyBody] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const handleSubmitReply = async () => {
+    setSending(true);
+    const ok = await onSubmitReply(comment.id, replyBody);
+    setSending(false);
+    if (ok) {
+      setReplyBody("");
+      setReplyOpen(false);
+      setRepliesOpen(true);
+    }
+  };
+
   return (
     <li className="rounded-md border border-border p-3">
       <div className="flex items-center justify-between gap-2">
@@ -600,10 +627,23 @@ function CommentItem({
         </p>
       </div>
       <p className="mt-1.5 whitespace-pre-wrap text-sm">{comment.body}</p>
-      <div className="mt-1.5 flex gap-3 text-[11px] text-muted-foreground">
+      <div className="mt-1.5 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
         {meId && (
-          <button onClick={() => onReply(name)} className="hover:text-foreground">
-            답글
+          <button
+            onClick={() => setReplyOpen((v) => !v)}
+            className="inline-flex items-center gap-1 hover:text-foreground"
+          >
+            <CornerDownRight className="h-3 w-3" />
+            {replyOpen ? "답글 취소" : "답글"}
+          </button>
+        )}
+        {replies.length > 0 && (
+          <button
+            onClick={() => setRepliesOpen((v) => !v)}
+            className="inline-flex items-center gap-1 hover:text-foreground"
+          >
+            {repliesOpen ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            답글 {replies.length}개 {repliesOpen ? "숨기기" : "보기"}
           </button>
         )}
         {canDelete && (
@@ -612,7 +652,36 @@ function CommentItem({
           </button>
         )}
       </div>
-      {replies.length > 0 && (
+
+      {replyOpen && meId && (
+        <div className="mt-2 space-y-2 rounded-md border border-border bg-muted/20 p-2">
+          <Textarea
+            value={replyBody}
+            onChange={(e) => setReplyBody(e.target.value)}
+            placeholder={`${name}님께 답글 작성`}
+            rows={2}
+            maxLength={500}
+            autoFocus
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setReplyOpen(false);
+                setReplyBody("");
+              }}
+            >
+              취소
+            </Button>
+            <Button size="sm" onClick={handleSubmitReply} disabled={sending || !replyBody.trim()}>
+              답글 등록
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {replies.length > 0 && repliesOpen && (
         <ul className="mt-3 space-y-2 border-l border-border pl-3">
           {replies.map((r) => {
             const rname = r.profile?.display_name || r.profile?.username || "익명";
