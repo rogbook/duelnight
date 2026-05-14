@@ -15,6 +15,7 @@ import {
   ChevronDown,
   ChevronUp,
   CornerDownRight,
+  Loader2,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -442,14 +443,14 @@ function CommentsSection({
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const { data: comments = [], refetch } = useQuery({
+  const { data: comments = [], refetch, isLoading } = useQuery({
     queryKey: ["lfg-comments", postId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("lfg_comments")
         .select("*")
         .eq("post_id", postId)
-        .order("created_at");
+        .order("created_at", { ascending: true });
       if (error) throw error;
       const rows = (data ?? []) as Omit<Comment, "profile">[];
       const ids = Array.from(new Set(rows.map((r) => r.user_id)));
@@ -525,8 +526,15 @@ function CommentsSection({
     else refetch();
   };
 
-  const roots = comments.filter((c) => !c.parent_id);
-  const repliesOf = (id: string) => comments.filter((c) => c.parent_id === id);
+  const roots = comments
+    .filter((c) => !c.parent_id)
+    .slice()
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const repliesOf = (id: string) =>
+    comments
+      .filter((c) => c.parent_id === id)
+      .slice()
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
   return (
     <section className="mt-6 rounded-lg border border-border bg-card p-4">
@@ -557,7 +565,12 @@ function CommentsSection({
         </p>
       )}
 
-      {roots.length === 0 ? (
+      {isLoading ? (
+        <div className="flex items-center justify-center py-6 text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span className="ml-2 text-xs">댓글을 불러오는 중…</span>
+        </div>
+      ) : roots.length === 0 ? (
         <p className="text-sm text-muted-foreground">아직 댓글이 없어요. 가장 먼저 남겨보세요.</p>
       ) : (
         <ul className="space-y-3">
