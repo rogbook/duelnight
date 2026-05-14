@@ -565,7 +565,12 @@ function CommentsSection({
         </p>
       )}
 
-      {roots.length === 0 ? (
+      {isLoading ? (
+        <div className="flex items-center justify-center py-6 text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span className="ml-2 text-xs">댓글을 불러오는 중…</span>
+        </div>
+      ) : roots.length === 0 ? (
         <p className="text-sm text-muted-foreground">아직 댓글이 없어요. 가장 먼저 남겨보세요.</p>
       ) : (
         <ul className="space-y-3">
