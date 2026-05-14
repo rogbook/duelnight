@@ -59,7 +59,7 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   tournament_practice: "대회연습",
 };
 
-export const Route = createFileRoute("/lfg")({
+export const Route = createFileRoute("/lfg/")({
   head: () => ({
     meta: [
       { title: "같이 칠 사람 — TCG Hub" },

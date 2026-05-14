@@ -20,7 +20,6 @@ import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as MatchesRouteImport } from './routes/matches'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as LfgRouteImport } from './routes/lfg'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as FriendsRouteImport } from './routes/friends'
 import { Route as DecksRouteImport } from './routes/decks'
@@ -29,6 +28,7 @@ import { Route as CardsRouteImport } from './routes/cards'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AnnouncementsRouteImport } from './routes/announcements'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LfgIndexRouteImport } from './routes/lfg.index'
 import { Route as DecksIndexRouteImport } from './routes/decks.index'
 import { Route as CardsIndexRouteImport } from './routes/cards.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
@@ -103,11 +103,6 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LfgRoute = LfgRouteImport.update({
-  id: '/lfg',
-  path: '/lfg',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LeaderboardRoute = LeaderboardRouteImport.update({
   id: '/leaderboard',
   path: '/leaderboard',
@@ -148,6 +143,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LfgIndexRoute = LfgIndexRouteImport.update({
+  id: '/lfg/',
+  path: '/lfg/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DecksIndexRoute = DecksIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -174,9 +174,9 @@ const StoresIdRoute = StoresIdRouteImport.update({
   getParentRoute: () => StoresRoute,
 } as any)
 const LfgIdRoute = LfgIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => LfgRoute,
+  id: '/lfg/$id',
+  path: '/lfg/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const EventsIdRoute = EventsIdRouteImport.update({
   id: '/events/$id',
@@ -248,7 +248,6 @@ export interface FileRoutesByFullPath {
   '/decks': typeof DecksRouteWithChildren
   '/friends': typeof FriendsRoute
   '/leaderboard': typeof LeaderboardRoute
-  '/lfg': typeof LfgRouteWithChildren
   '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
   '/messages': typeof MessagesRoute
@@ -275,6 +274,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/cards/': typeof CardsIndexRoute
   '/decks/': typeof DecksIndexRoute
+  '/lfg/': typeof LfgIndexRoute
   '/admin/cards/review': typeof AdminCardsReviewRoute
   '/api/drive/auth': typeof ApiDriveAuthRoute
   '/auth/google-drive/callback': typeof AuthGoogleDriveCallbackRoute
@@ -286,7 +286,6 @@ export interface FileRoutesByTo {
   '/collection': typeof CollectionRoute
   '/friends': typeof FriendsRoute
   '/leaderboard': typeof LeaderboardRoute
-  '/lfg': typeof LfgRouteWithChildren
   '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
   '/messages': typeof MessagesRoute
@@ -313,6 +312,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/cards': typeof CardsIndexRoute
   '/decks': typeof DecksIndexRoute
+  '/lfg': typeof LfgIndexRoute
   '/admin/cards/review': typeof AdminCardsReviewRoute
   '/api/drive/auth': typeof ApiDriveAuthRoute
   '/auth/google-drive/callback': typeof AuthGoogleDriveCallbackRoute
@@ -327,7 +327,6 @@ export interface FileRoutesById {
   '/decks': typeof DecksRouteWithChildren
   '/friends': typeof FriendsRoute
   '/leaderboard': typeof LeaderboardRoute
-  '/lfg': typeof LfgRouteWithChildren
   '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
   '/messages': typeof MessagesRoute
@@ -354,6 +353,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/cards/': typeof CardsIndexRoute
   '/decks/': typeof DecksIndexRoute
+  '/lfg/': typeof LfgIndexRoute
   '/admin/cards/review': typeof AdminCardsReviewRoute
   '/api/drive/auth': typeof ApiDriveAuthRoute
   '/auth/google-drive/callback': typeof AuthGoogleDriveCallbackRoute
@@ -369,7 +369,6 @@ export interface FileRouteTypes {
     | '/decks'
     | '/friends'
     | '/leaderboard'
-    | '/lfg'
     | '/login'
     | '/matches'
     | '/messages'
@@ -396,6 +395,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/cards/'
     | '/decks/'
+    | '/lfg/'
     | '/admin/cards/review'
     | '/api/drive/auth'
     | '/auth/google-drive/callback'
@@ -407,7 +407,6 @@ export interface FileRouteTypes {
     | '/collection'
     | '/friends'
     | '/leaderboard'
-    | '/lfg'
     | '/login'
     | '/matches'
     | '/messages'
@@ -434,6 +433,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/cards'
     | '/decks'
+    | '/lfg'
     | '/admin/cards/review'
     | '/api/drive/auth'
     | '/auth/google-drive/callback'
@@ -447,7 +447,6 @@ export interface FileRouteTypes {
     | '/decks'
     | '/friends'
     | '/leaderboard'
-    | '/lfg'
     | '/login'
     | '/matches'
     | '/messages'
@@ -474,6 +473,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/cards/'
     | '/decks/'
+    | '/lfg/'
     | '/admin/cards/review'
     | '/api/drive/auth'
     | '/auth/google-drive/callback'
@@ -488,7 +488,6 @@ export interface RootRouteChildren {
   DecksRoute: typeof DecksRouteWithChildren
   FriendsRoute: typeof FriendsRoute
   LeaderboardRoute: typeof LeaderboardRoute
-  LfgRoute: typeof LfgRouteWithChildren
   LoginRoute: typeof LoginRoute
   MatchesRoute: typeof MatchesRoute
   MessagesRoute: typeof MessagesRoute
@@ -506,7 +505,9 @@ export interface RootRouteChildren {
   ApiCoachRoute: typeof ApiCoachRoute
   CardsCodeRoute: typeof CardsCodeRoute
   EventsIdRoute: typeof EventsIdRoute
+  LfgIdRoute: typeof LfgIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  LfgIndexRoute: typeof LfgIndexRoute
   ApiDriveAuthRoute: typeof ApiDriveAuthRoute
   AuthGoogleDriveCallbackRoute: typeof AuthGoogleDriveCallbackRoute
 }
@@ -590,13 +591,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lfg': {
-      id: '/lfg'
-      path: '/lfg'
-      fullPath: '/lfg'
-      preLoaderRoute: typeof LfgRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/leaderboard': {
       id: '/leaderboard'
       path: '/leaderboard'
@@ -653,6 +647,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lfg/': {
+      id: '/lfg/'
+      path: '/lfg'
+      fullPath: '/lfg/'
+      preLoaderRoute: typeof LfgIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/decks/': {
       id: '/decks/'
       path: '/'
@@ -690,10 +691,10 @@ declare module '@tanstack/react-router' {
     }
     '/lfg/$id': {
       id: '/lfg/$id'
-      path: '/$id'
+      path: '/lfg/$id'
       fullPath: '/lfg/$id'
       preLoaderRoute: typeof LfgIdRouteImport
-      parentRoute: typeof LfgRoute
+      parentRoute: typeof rootRouteImport
     }
     '/events/$id': {
       id: '/events/$id'
@@ -818,16 +819,6 @@ const DecksRouteChildren: DecksRouteChildren = {
 
 const DecksRouteWithChildren = DecksRoute._addFileChildren(DecksRouteChildren)
 
-interface LfgRouteChildren {
-  LfgIdRoute: typeof LfgIdRoute
-}
-
-const LfgRouteChildren: LfgRouteChildren = {
-  LfgIdRoute: LfgIdRoute,
-}
-
-const LfgRouteWithChildren = LfgRoute._addFileChildren(LfgRouteChildren)
-
 interface StoresRouteChildren {
   StoresIdRoute: typeof StoresIdRoute
 }
@@ -870,7 +861,6 @@ const rootRouteChildren: RootRouteChildren = {
   DecksRoute: DecksRouteWithChildren,
   FriendsRoute: FriendsRoute,
   LeaderboardRoute: LeaderboardRoute,
-  LfgRoute: LfgRouteWithChildren,
   LoginRoute: LoginRoute,
   MatchesRoute: MatchesRoute,
   MessagesRoute: MessagesRoute,
@@ -888,7 +878,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCoachRoute: ApiCoachRoute,
   CardsCodeRoute: CardsCodeRoute,
   EventsIdRoute: EventsIdRoute,
+  LfgIdRoute: LfgIdRoute,
   AdminIndexRoute: AdminIndexRoute,
+  LfgIndexRoute: LfgIndexRoute,
   ApiDriveAuthRoute: ApiDriveAuthRoute,
   AuthGoogleDriveCallbackRoute: AuthGoogleDriveCallbackRoute,
 }
