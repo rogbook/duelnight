@@ -231,22 +231,41 @@ function DeckDetailPage() {
           <span>{new Date(deck.updated_at).toLocaleDateString("ko-KR")}</span>
         </div>
         
-        {isOwner && (
-          <div className="mt-4 border-t pt-4">
-            <button
-              onClick={() => setIsEditing(!isEditing)}
-              className="flex w-full items-center justify-center gap-2 rounded-md bg-muted px-4 py-2 text-sm font-medium hover:bg-muted/80"
-            >
-              {isEditing ? (
-                <>
-                  <Check className="h-4 w-4" /> 조회 모드로 전환
-                </>
-              ) : (
-                <>
-                  <Pencil className="h-4 w-4" /> 레시피 편집하기
-                </>
-              )}
-            </button>
+        {(isOwner || canCopy) && (
+          <div className="mt-4 flex flex-col gap-2 border-t pt-4 sm:flex-row">
+            {isOwner && (
+              <button
+                onClick={() => setIsEditing(!isEditing)}
+                className="flex flex-1 items-center justify-center gap-2 rounded-md bg-muted px-4 py-2 text-sm font-medium hover:bg-muted/80"
+              >
+                {isEditing ? (
+                  <>
+                    <Check className="h-4 w-4" /> 조회 모드로 전환
+                  </>
+                ) : (
+                  <>
+                    <Pencil className="h-4 w-4" /> 레시피 편집하기
+                  </>
+                )}
+              </button>
+            )}
+            {canCopy && (
+              <button
+                onClick={handleCopy}
+                disabled={copying}
+                className="flex flex-1 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-60"
+              >
+                {copying ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> 복사 중...
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4" /> 내 덱에 복사
+                  </>
+                )}
+              </button>
+            )}
           </div>
         )}
       </div>
