@@ -293,6 +293,49 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
             </Select>
           )}
 
+          {game === "ptcg" && filterType === "trainer" && (
+            <Select value={filterTrainer} onValueChange={setFilterTrainer}>
+              <SelectTrigger className="h-8 text-[11px] w-auto min-w-[95px]"><SelectValue placeholder="트레이너" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">트레이너 전체</SelectItem>
+                <SelectItem value="서포터">서포터</SelectItem>
+                <SelectItem value="아이템">아이템</SelectItem>
+                <SelectItem value="도구">포켓몬의 도구</SelectItem>
+                <SelectItem value="스타디움">스타디움</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+
+          {game === "ptcg" && filterType === "energy" && (
+            <Select value={filterEnergy} onValueChange={setFilterEnergy}>
+              <SelectTrigger className="h-8 text-[11px] w-auto min-w-[95px]"><SelectValue placeholder="에너지" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">에너지 전체</SelectItem>
+                <SelectItem value="basic">기본 에너지</SelectItem>
+                <SelectItem value="special">특수 에너지</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+
+          {game === "ptcg" && (
+            <>
+              <Select value={filterWeak} onValueChange={setFilterWeak}>
+                <SelectTrigger className="h-8 text-[11px] w-auto min-w-[85px]"><SelectValue placeholder="약점" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">약점 전체</SelectItem>
+                  {colors.map(c => <SelectItem key={c.id} value={c.label}>약점 {c.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={filterResist} onValueChange={setFilterResist}>
+                <SelectTrigger className="h-8 text-[11px] w-auto min-w-[85px]"><SelectValue placeholder="저항" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">저항 전체</SelectItem>
+                  {colors.map(c => <SelectItem key={c.id} value={c.label}>저항 {c.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </>
+          )}
+
           <Select value={filterSet} onValueChange={setFilterSet}>
             <SelectTrigger className="h-8 text-[11px] w-auto min-w-[85px]"><SelectValue placeholder="세트" /></SelectTrigger>
             <SelectContent>
