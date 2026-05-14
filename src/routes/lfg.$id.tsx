@@ -399,6 +399,9 @@ function LfgDetailPage() {
         </section>
       )}
 
+      {/* Public comments */}
+      <CommentsSection postId={post.id} postAuthorId={post.user_id} meId={user?.id ?? null} />
+
       {/* Chat dialog */}
       {user && chatWith && (
         <ChatDialog
@@ -411,6 +414,239 @@ function LfgDetailPage() {
         />
       )}
     </div>
+  );
+}
+
+type Comment = {
+  id: string;
+  post_id: string;
+  user_id: string;
+  parent_id: string | null;
+  body: string;
+  created_at: string;
+  profile?: Profile | null;
+};
+
+function CommentsSection({
+  postId,
+  postAuthorId,
+  meId,
+}: {
+  postId: string;
+  postAuthorId: string;
+  meId: string | null;
+}) {
+  const [body, setBody] = useState("");
+  const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const { data: comments = [], refetch } = useQuery({
+    queryKey: ["lfg-comments", postId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("lfg_comments")
+        .select("*")
+        .eq("post_id", postId)
+        .order("created_at");
+      if (error) throw error;
+      const rows = (data ?? []) as Omit<Comment, "profile">[];
+      const ids = Array.from(new Set(rows.map((r) => r.user_id)));
+      let map = new Map<string, Profile>();
+      if (ids.length) {
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("id, display_name, username")
+          .in("id", ids);
+        map = new Map(
+          (profs ?? []).map((p) => [p.id, { display_name: p.display_name, username: p.username }]),
+        );
+      }
+      return rows.map((r) => ({ ...r, profile: map.get(r.user_id) ?? null })) as Comment[];
+    },
+  });
+
+  useEffect(() => {
+    const ch = supabase
+      .channel(`lfg-comments-${postId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "lfg_comments", filter: `post_id=eq.${postId}` },
+        () => refetch(),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [postId, refetch]);
+
+  const submit = async () => {
+    if (!meId) return;
+    const text = body.trim();
+    if (!text) return;
+    setSubmitting(true);
+    const { error } = await supabase.from("lfg_comments").insert({
+      post_id: postId,
+      user_id: meId,
+      body: text,
+      parent_id: replyTo?.id ?? null,
+    });
+    setSubmitting(false);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      setBody("");
+      setReplyTo(null);
+      refetch();
+    }
+  };
+
+  const remove = async (id: string) => {
+    const { error } = await supabase.from("lfg_comments").delete().eq("id", id);
+    if (error) toast.error(error.message);
+    else refetch();
+  };
+
+  const roots = comments.filter((c) => !c.parent_id);
+  const repliesOf = (id: string) => comments.filter((c) => c.parent_id === id);
+
+  return (
+    <section className="mt-6 rounded-lg border border-border bg-card p-4">
+      <h2 className="mb-3 text-sm font-semibold">댓글 ({comments.length})</h2>
+
+      {meId ? (
+        <div className="mb-4 space-y-2">
+          {replyTo && (
+            <div className="flex items-center justify-between rounded-md bg-muted/50 px-2 py-1 text-xs text-muted-foreground">
+              <span>{replyTo.name}님께 답글 작성 중</span>
+              <button onClick={() => setReplyTo(null)} className="hover:text-foreground">
+                <XIcon className="h-3 w-3" />
+              </button>
+            </div>
+          )}
+          <Textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder={replyTo ? "답글을 입력하세요" : "댓글을 입력하세요"}
+            rows={2}
+            maxLength={500}
+          />
+          <div className="flex justify-end">
+            <Button size="sm" onClick={submit} disabled={submitting || !body.trim()}>
+              {replyTo ? "답글 등록" : "댓글 등록"}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <p className="mb-4 text-xs text-muted-foreground">
+          댓글을 작성하려면{" "}
+          <Link to="/login" className="text-primary hover:underline">
+            로그인
+          </Link>
+          이 필요해요.
+        </p>
+      )}
+
+      {roots.length === 0 ? (
+        <p className="text-sm text-muted-foreground">아직 댓글이 없어요. 가장 먼저 남겨보세요.</p>
+      ) : (
+        <ul className="space-y-3">
+          {roots.map((c) => (
+            <CommentItem
+              key={c.id}
+              comment={c}
+              replies={repliesOf(c.id)}
+              meId={meId}
+              postAuthorId={postAuthorId}
+              onReply={(name) => setReplyTo({ id: c.id, name })}
+              onDelete={remove}
+            />
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function CommentItem({
+  comment,
+  replies,
+  meId,
+  postAuthorId,
+  onReply,
+  onDelete,
+}: {
+  comment: Comment;
+  replies: Comment[];
+  meId: string | null;
+  postAuthorId: string;
+  onReply: (name: string) => void;
+  onDelete: (id: string) => void;
+}) {
+  const name = comment.profile?.display_name || comment.profile?.username || "익명";
+  const canDelete = meId && (meId === comment.user_id || meId === postAuthorId);
+  return (
+    <li className="rounded-md border border-border p-3">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-medium">
+          {name}
+          {comment.user_id === postAuthorId && (
+            <span className="ml-1.5 rounded bg-primary/10 px-1 py-0.5 text-[9px] font-semibold text-primary">
+              작성자
+            </span>
+          )}
+        </p>
+        <p className="text-[10px] text-muted-foreground">
+          {new Date(comment.created_at).toLocaleString("ko-KR")}
+        </p>
+      </div>
+      <p className="mt-1.5 whitespace-pre-wrap text-sm">{comment.body}</p>
+      <div className="mt-1.5 flex gap-3 text-[11px] text-muted-foreground">
+        {meId && (
+          <button onClick={() => onReply(name)} className="hover:text-foreground">
+            답글
+          </button>
+        )}
+        {canDelete && (
+          <button onClick={() => onDelete(comment.id)} className="hover:text-destructive">
+            삭제
+          </button>
+        )}
+      </div>
+      {replies.length > 0 && (
+        <ul className="mt-3 space-y-2 border-l border-border pl-3">
+          {replies.map((r) => {
+            const rname = r.profile?.display_name || r.profile?.username || "익명";
+            const canDel = meId && (meId === r.user_id || meId === postAuthorId);
+            return (
+              <li key={r.id} className="rounded-md bg-muted/30 p-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium">
+                    {rname}
+                    {r.user_id === postAuthorId && (
+                      <span className="ml-1.5 rounded bg-primary/10 px-1 py-0.5 text-[9px] font-semibold text-primary">
+                        작성자
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {new Date(r.created_at).toLocaleString("ko-KR")}
+                  </p>
+                </div>
+                <p className="mt-1 whitespace-pre-wrap text-xs">{r.body}</p>
+                {canDel && (
+                  <button
+                    onClick={() => onDelete(r.id)}
+                    className="mt-1 text-[11px] text-muted-foreground hover:text-destructive"
+                  >
+                    삭제
+                  </button>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </li>
   );
 }
 
