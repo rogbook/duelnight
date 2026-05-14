@@ -443,14 +443,14 @@ function CommentsSection({
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const { data: comments = [], refetch } = useQuery({
+  const { data: comments = [], refetch, isLoading } = useQuery({
     queryKey: ["lfg-comments", postId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("lfg_comments")
         .select("*")
         .eq("post_id", postId)
-        .order("created_at");
+        .order("created_at", { ascending: true });
       if (error) throw error;
       const rows = (data ?? []) as Omit<Comment, "profile">[];
       const ids = Array.from(new Set(rows.map((r) => r.user_id)));
