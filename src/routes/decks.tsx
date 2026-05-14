@@ -427,15 +427,17 @@ function DeckDialog({
           </button>
           <button
             type="button"
-            onClick={() => setTab("recipe")}
-            disabled={mode === "create" && !deck}
+            onClick={handleRecipeTab}
+            disabled={busy}
             className={`rounded px-3 py-1 ${
               tab === "recipe"
                 ? "bg-foreground text-background"
                 : "text-muted-foreground"
             } disabled:opacity-40`}
             title={
-              mode === "create" ? "먼저 저장한 뒤 카드를 등록할 수 있어요" : ""
+              mode === "create" && !createdDeck
+                ? "클릭하면 먼저 저장한 뒤 카드 등록 화면으로 이동합니다"
+                : ""
             }
           >
             덱 레시피
