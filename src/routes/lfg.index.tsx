@@ -316,7 +316,7 @@ function PostCard({
               {p.body}
             </p>
           )}
-        </Link>
+        </div>
         {userId === p.user_id && (
           <button
             onClick={async (e) => {
@@ -330,7 +330,7 @@ function PostCard({
                 onDelete();
               }
             }}
-            className="text-muted-foreground hover:text-destructive"
+            className="relative z-20 text-muted-foreground hover:text-destructive"
             aria-label="삭제"
           >
             <Trash2 className="h-4 w-4" />
