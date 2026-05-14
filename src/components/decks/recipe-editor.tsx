@@ -16,6 +16,7 @@ import {
   BAN_LIST, checkCanAdd, type Game,
 } from "@/lib/deck-rules";
 import { COLORS_BY_GAME, colorHex } from "@/lib/deck-colors";
+import { hasWeakness, hasResistance } from "@/lib/ptcg-parse";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Deck     = Tables<"decks">;
