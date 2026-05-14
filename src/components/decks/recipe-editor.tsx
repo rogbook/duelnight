@@ -431,6 +431,7 @@ export function RecipeEditor({ deck, onSaved }: { deck: Deck; onSaved?: () => vo
           onClick={() => {
             qc.invalidateQueries({ queryKey: ["decks"] });
             toast.success("덱 레시피가 저장되었습니다.");
+            onSaved?.();
           }}
           className="w-full bg-primary text-primary-foreground py-2.5 rounded-lg font-bold text-sm shadow-md hover:opacity-90 transition-opacity"
         >
