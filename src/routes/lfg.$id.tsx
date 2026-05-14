@@ -665,6 +665,9 @@ function CommentItem({
             삭제
           </button>
         )}
+        {meId && meId !== comment.user_id && (
+          <ReportButton commentId={comment.id} meId={meId} />
+        )}
       </div>
 
       {replyOpen && meId && (
