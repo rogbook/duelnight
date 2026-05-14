@@ -17,6 +17,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PacksRouteImport } from './routes/packs'
 import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as MatchesRouteImport } from './routes/matches'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LfgRouteImport } from './routes/lfg'
@@ -84,6 +85,11 @@ const PacksRoute = PacksRouteImport.update({
 const NotificationsRoute = NotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MessagesRoute = MessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MatchesRoute = MatchesRouteImport.update({
@@ -239,6 +245,7 @@ export interface FileRoutesByFullPath {
   '/lfg': typeof LfgRouteWithChildren
   '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
+  '/messages': typeof MessagesRoute
   '/notifications': typeof NotificationsRoute
   '/packs': typeof PacksRoute
   '/profile': typeof ProfileRoute
@@ -275,6 +282,7 @@ export interface FileRoutesByTo {
   '/lfg': typeof LfgRouteWithChildren
   '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
+  '/messages': typeof MessagesRoute
   '/notifications': typeof NotificationsRoute
   '/packs': typeof PacksRoute
   '/profile': typeof ProfileRoute
@@ -314,6 +322,7 @@ export interface FileRoutesById {
   '/lfg': typeof LfgRouteWithChildren
   '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
+  '/messages': typeof MessagesRoute
   '/notifications': typeof NotificationsRoute
   '/packs': typeof PacksRoute
   '/profile': typeof ProfileRoute
@@ -354,6 +363,7 @@ export interface FileRouteTypes {
     | '/lfg'
     | '/login'
     | '/matches'
+    | '/messages'
     | '/notifications'
     | '/packs'
     | '/profile'
@@ -390,6 +400,7 @@ export interface FileRouteTypes {
     | '/lfg'
     | '/login'
     | '/matches'
+    | '/messages'
     | '/notifications'
     | '/packs'
     | '/profile'
@@ -428,6 +439,7 @@ export interface FileRouteTypes {
     | '/lfg'
     | '/login'
     | '/matches'
+    | '/messages'
     | '/notifications'
     | '/packs'
     | '/profile'
@@ -467,6 +479,7 @@ export interface RootRouteChildren {
   LfgRoute: typeof LfgRouteWithChildren
   LoginRoute: typeof LoginRoute
   MatchesRoute: typeof MatchesRoute
+  MessagesRoute: typeof MessagesRoute
   NotificationsRoute: typeof NotificationsRoute
   PacksRoute: typeof PacksRoute
   ProfileRoute: typeof ProfileRoute
@@ -541,6 +554,13 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/notifications'
       preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/messages': {
+      id: '/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof MessagesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/matches': {
@@ -833,6 +853,7 @@ const rootRouteChildren: RootRouteChildren = {
   LfgRoute: LfgRouteWithChildren,
   LoginRoute: LoginRoute,
   MatchesRoute: MatchesRoute,
+  MessagesRoute: MessagesRoute,
   NotificationsRoute: NotificationsRoute,
   PacksRoute: PacksRoute,
   ProfileRoute: ProfileRoute,
