@@ -10,7 +10,7 @@ import { CardUploader } from "@/components/cards/card-uploader";
 export const Route = createFileRoute("/cards/upload")({
   head: () => ({
     meta: [
-      { title: "카드 등록 — TCG Hub" },
+      { title: "카드 등록 — 덱로그" },
       { name: "description", content: "엑셀·이미지·폼으로 카드 데이터를 간편하게 등록합니다." },
     ],
   }),

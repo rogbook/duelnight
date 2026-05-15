@@ -21,8 +21,8 @@ export const Route = createFileRoute("/announcements/$id")({
   },
   head: ({ loaderData }) => {
     const a = loaderData?.item;
-    if (!a) return { meta: [{ title: "공지를 찾을 수 없음 — TCG Hub" }] };
-    const title = `${a.title} — TCG Hub 공지`;
+    if (!a) return { meta: [{ title: "공지를 찾을 수 없음 — 덱로그" }] };
+    const title = `${a.title} — 덱로그 공지`;
     const desc = a.body.replace(/\s+/g, " ").slice(0, 150);
     const url = `${SITE}/announcements/${a.id}`;
     return {

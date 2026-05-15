@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/admin/cards/review")({
   head: () => ({
     meta: [
-      { title: "카드 검수 큐 — 관리자 — TCG Hub" },
+      { title: "카드 검수 큐 — 관리자 — 덱로그" },
       { name: "description", content: "사용자가 제출한 카드를 검토·승인하고, 변경 이력을 확인합니다." },
     ],
   }),

@@ -129,7 +129,7 @@ export function AppSidebar() {
           </div>
           {!collapsed && (
             <span className="flex items-center gap-1.5 text-sm font-semibold tracking-tight">
-              TCG Hub
+              덱로그
               {isAdmin && (
                 <span className="rounded bg-primary px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary-foreground">
                   Admin

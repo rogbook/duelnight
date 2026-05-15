@@ -62,7 +62,7 @@ function mapUrl(s: { name: string; address: string | null; region: string | null
 export const Route = createFileRoute("/stores")({
   head: () => ({
     meta: [
-      { title: "TCG 매장 찾기 — TCG Hub" },
+      { title: "TCG 매장 찾기 — 덱로그" },
       { name: "description", content: "지역별 TCG 매장과 취급 게임을 찾고 즐겨찾기로 저장하세요." },
     ],
   }),

@@ -28,7 +28,7 @@ const emailSchema = z
 export const Route = createFileRoute("/admin/")({
   head: () => ({
     meta: [
-      { title: "관리자 — TCG Hub" },
+      { title: "관리자 — 덱로그" },
       { name: "description", content: "관리자 권한 부여 및 관리." },
     ],
   }),

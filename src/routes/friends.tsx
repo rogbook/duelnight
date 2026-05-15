@@ -23,7 +23,7 @@ type Row = {
 export const Route = createFileRoute("/friends")({
   head: () => ({
     meta: [
-      { title: "친구 — TCG Hub" },
+      { title: "친구 — 덱로그" },
       { name: "description", content: "친구 요청과 친구 목록을 관리하세요." },
     ],
   }),
