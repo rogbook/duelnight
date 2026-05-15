@@ -45,6 +45,7 @@ export type CardRow = {
   rarity: string | null;
   effect: string | null;
   image_url: string | null;
+  extra_images?: string[];
 };
 
 const VALID_GAMES: Game[] = ["optcg", "ptcg", "dtcg"];
