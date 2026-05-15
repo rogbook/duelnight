@@ -179,8 +179,8 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
 
   return (
     <div className="space-y-4">
-      <Dialog open={!!zoomUrl} onOpenChange={() => setZoomUrl(null)}>
-        <DialogContent className="max-w-xs p-2">
+      <Dialog open={!!zoomUrl} onOpenChange={(o) => { if (!o) setZoomUrl(null); }}>
+        <DialogContent className="max-w-md p-2">
           {zoomUrl && <img src={zoomUrl} alt="확대" className="w-full rounded-lg" />}
         </DialogContent>
       </Dialog>
