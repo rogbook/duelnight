@@ -40,6 +40,102 @@ import type { Tables } from "@/integrations/supabase/types";
 
 type Deck = Tables<"decks">;
 
+function LeaderPicker({
+  game,
+  value,
+  onChange,
+}: {
+  game: Game;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+
+  const { data: leaders = [], isLoading } = useQuery({
+    queryKey: ["leader-options", game],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cards")
+        .select("code,name,image_url")
+        .eq("game", game)
+        .eq("type", "leader")
+        .eq("status", "approved")
+        .order("name", { ascending: true })
+        .limit(500);
+      if (error) throw error;
+      return (data ?? []) as { code: string; name: string; image_url: string | null }[];
+    },
+  });
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return leaders;
+    return leaders.filter((l) => l.name.toLowerCase().includes(q));
+  }, [leaders, query]);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="flex w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background hover:bg-accent/50"
+        >
+          <span className={value ? "text-foreground" : "text-muted-foreground"}>
+            {value || "리더 카드를 선택하세요"}
+          </span>
+          <ChevronsUpDown className="h-4 w-4 opacity-50" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <div className="border-b p-2">
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="리더 이름 검색"
+            className="h-8"
+            autoFocus
+          />
+        </div>
+        <div className="max-h-64 overflow-y-auto py-1">
+          {isLoading ? (
+            <div className="px-3 py-6 text-center text-xs text-muted-foreground">불러오는 중...</div>
+          ) : filtered.length === 0 ? (
+            <div className="px-3 py-6 text-center text-xs text-muted-foreground">
+              {leaders.length === 0
+                ? "등록된 리더 카드가 없습니다. 카드 DB에 추가해 주세요."
+                : "검색 결과가 없습니다."}
+            </div>
+          ) : (
+            filtered.map((l) => (
+              <button
+                key={l.code}
+                type="button"
+                onClick={() => {
+                  onChange(l.name);
+                  setOpen(false);
+                }}
+                className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-accent ${
+                  value === l.name ? "bg-accent/60 font-medium" : ""
+                }`}
+              >
+                {l.image_url ? (
+                  <img src={l.image_url} alt={l.name} className="h-8 w-6 rounded object-cover" />
+                ) : (
+                  <div className="h-8 w-6 rounded bg-muted" />
+                )}
+                <span className="flex-1 truncate">{l.name}</span>
+                <span className="text-[10px] text-muted-foreground">{l.code}</span>
+                {value === l.name && <Check className="h-3.5 w-3.5 text-primary" />}
+              </button>
+            ))
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 interface DeckDialogProps {
   mode: "create" | "edit";
   deck?: Deck;
@@ -252,101 +348,5 @@ export function DeckDialog({ mode, deck, onSaved, trigger }: DeckDialogProps) {
         </form>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function LeaderPicker({
-  game,
-  value,
-  onChange,
-}: {
-  game: Game;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-
-  const { data: leaders = [], isLoading } = useQuery({
-    queryKey: ["leader-options", game],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("cards")
-        .select("code,name,image_url")
-        .eq("game", game)
-        .eq("type", "leader")
-        .eq("status", "approved")
-        .order("name", { ascending: true })
-        .limit(500);
-      if (error) throw error;
-      return (data ?? []) as { code: string; name: string; image_url: string | null }[];
-    },
-  });
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return leaders;
-    return leaders.filter((l) => l.name.toLowerCase().includes(q));
-  }, [leaders, query]);
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className="flex w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background hover:bg-accent/50"
-        >
-          <span className={value ? "text-foreground" : "text-muted-foreground"}>
-            {value || "리더 카드를 선택하세요"}
-          </span>
-          <ChevronsUpDown className="h-4 w-4 opacity-50" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-        <div className="border-b p-2">
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="리더 이름 검색"
-            className="h-8"
-            autoFocus
-          />
-        </div>
-        <div className="max-h-64 overflow-y-auto py-1">
-          {isLoading ? (
-            <div className="px-3 py-6 text-center text-xs text-muted-foreground">불러오는 중...</div>
-          ) : filtered.length === 0 ? (
-            <div className="px-3 py-6 text-center text-xs text-muted-foreground">
-              {leaders.length === 0
-                ? "등록된 리더 카드가 없습니다. 카드 DB에 추가해 주세요."
-                : "검색 결과가 없습니다."}
-            </div>
-          ) : (
-            filtered.map((l) => (
-              <button
-                key={l.code}
-                type="button"
-                onClick={() => {
-                  onChange(l.name);
-                  setOpen(false);
-                }}
-                className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-accent ${
-                  value === l.name ? "bg-accent/60 font-medium" : ""
-                }`}
-              >
-                {l.image_url ? (
-                  <img src={l.image_url} alt={l.name} className="h-8 w-6 rounded object-cover" />
-                ) : (
-                  <div className="h-8 w-6 rounded bg-muted" />
-                )}
-                <span className="flex-1 truncate">{l.name}</span>
-                <span className="text-[10px] text-muted-foreground">{l.code}</span>
-                {value === l.name && <Check className="h-3.5 w-3.5 text-primary" />}
-              </button>
-            ))
-          )}
-        </div>
-      </PopoverContent>
-    </Popover>
   );
 }
