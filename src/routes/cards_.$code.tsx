@@ -142,7 +142,7 @@ function CardDetailPage() {
             <Tag>{card.set_code}</Tag>
           </div>
           <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-            <Stat label="코스트" value={card.cost} />
+            <Stat label={card.type === "leader" ? "라이프" : "코스트"} value={card.cost} />
             <Stat label="파워" value={card.power?.toLocaleString()} />
             <Stat label="카운터" value={card.counter?.toLocaleString()} />
             <Stat label="속성" value={card.attribute} />
