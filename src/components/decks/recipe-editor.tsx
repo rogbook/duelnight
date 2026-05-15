@@ -210,10 +210,10 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
                   <p className="truncate font-medium">{card?.name ?? dc.card_code}</p>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <button onClick={() => updateQty(dc.id, dc.quantity - 1)} className="p-1 hover:bg-muted rounded">-</button>
-                  <span className="w-4 text-center">{dc.quantity}</span>
-                  <button onClick={() => card && addCard(card)} className="p-1 hover:bg-muted rounded">+</button>
-                  <button onClick={() => removeCard(dc.id)} className="ml-1 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
+                  <button onClick={() => updateQty(dc.id, dc.quantity - 1)} className="h-8 w-8 inline-flex items-center justify-center hover:bg-muted rounded touch-manipulation" aria-label="수량 감소">−</button>
+                  <span className="w-5 text-center tabular-nums">{dc.quantity}</span>
+                  <button onClick={() => card && addCard(card)} className="h-8 w-8 inline-flex items-center justify-center hover:bg-muted rounded touch-manipulation" aria-label="수량 증가">+</button>
+                  <button onClick={() => removeCard(dc.id)} className="h-8 w-8 ml-1 inline-flex items-center justify-center text-muted-foreground hover:text-destructive touch-manipulation" aria-label="카드 제거"><Trash2 className="h-3.5 w-3.5" /></button>
                 </div>
               </li>
             );
