@@ -28,6 +28,7 @@ import type { Database } from "@/integrations/supabase/types";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"];
 type Review = Database["public"]["Tables"]["card_reviews"]["Row"];
+type Illustration = Database["public"]["Tables"]["card_illustrations"]["Row"];
 
 const PAGE_SIZE = 24;
 const TYPE_LABEL: Record<string, string> = {
