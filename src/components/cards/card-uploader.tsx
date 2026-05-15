@@ -835,7 +835,7 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
                           >
                             <img src={f.thumbnailLink} alt="" className="w-full aspect-[3/4] object-cover rounded-sm" />
                             <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Checkbox checked={selectedDriveFiles.has(f.id)} readOnly />
+                              <Checkbox checked={selectedDriveFiles.has(f.id)} className="pointer-events-none" />
                             </div>
                             <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-[8px] text-white p-0.5 truncate">
                               {f.name}
