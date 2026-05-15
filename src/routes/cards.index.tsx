@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Library, Search, Star, X, ImageOff } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,6 +28,7 @@ import type { Database } from "@/integrations/supabase/types";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"];
 type Review = Database["public"]["Tables"]["card_reviews"]["Row"];
+type Illustration = Database["public"]["Tables"]["card_illustrations"]["Row"];
 
 const PAGE_SIZE = 24;
 const TYPE_LABEL: Record<string, string> = {
@@ -413,6 +414,39 @@ function CardDetailDialog({
     },
   });
 
+  const { data: illusts = [] } = useQuery({
+    queryKey: ["card-illusts", card?.code],
+    enabled: !!card,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("card_illustrations")
+        .select("*")
+        .eq("card_code", card!.code)
+        .eq("status", "approved")
+        .order("is_primary", { ascending: false })
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as Illustration[];
+    },
+  });
+
+  const gallery = useMemo(() => {
+    const list: { url: string; label: string }[] = [];
+    if (card?.image_url) list.push({ url: card.image_url, label: "기본" });
+    for (const il of illusts) {
+      if (list.some((x) => x.url === il.image_url)) continue;
+      list.push({ url: il.image_url, label: il.variant_label || "얼터" });
+    }
+    return list;
+  }, [card?.image_url, illusts]);
+
+  const [activeUrl, setActiveUrl] = useState<string | null>(null);
+  const displayUrl = activeUrl ?? card?.image_url ?? null;
+
+  useEffect(() => {
+    setActiveUrl(null);
+  }, [card?.code]);
+
   const myReview = reviews.find((r) => r.user_id === user?.id) ?? null;
   const avg = useMemo(() => {
     if (reviews.length === 0) return null;
@@ -466,16 +500,40 @@ function CardDetailDialog({
               </DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 sm:grid-cols-[200px_1fr]">
-              <div className="aspect-[5/7] w-full overflow-hidden rounded-md bg-muted">
-                {card.image_url ? (
-                  <img
-                    src={card.image_url}
-                    alt={card.name}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-muted-foreground">
-                    <ImageOff className="h-8 w-8" />
+              <div>
+                <div className="aspect-[5/7] w-full overflow-hidden rounded-md bg-muted">
+                  {displayUrl ? (
+                    <img
+                      src={displayUrl}
+                      alt={card.name}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-muted-foreground">
+                      <ImageOff className="h-8 w-8" />
+                    </div>
+                  )}
+                </div>
+                {gallery.length > 1 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {gallery.map((g) => (
+                      <button
+                        key={g.url}
+                        type="button"
+                        onClick={() => setActiveUrl(g.url)}
+                        title={g.label}
+                        className={`relative h-14 w-10 overflow-hidden rounded border ${
+                          displayUrl === g.url
+                            ? "border-primary ring-1 ring-primary"
+                            : "border-border"
+                        }`}
+                      >
+                        <img src={g.url} alt={g.label} className="h-full w-full object-cover" />
+                        <span className="absolute inset-x-0 bottom-0 truncate bg-background/80 px-0.5 text-[8px] leading-3">
+                          {g.label}
+                        </span>
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
