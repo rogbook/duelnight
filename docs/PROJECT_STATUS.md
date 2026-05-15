@@ -147,3 +147,8 @@
   - `src/routes/decks.$id.tsx`: `loader` 제거, 클라이언트 `useAuth` + `useQuery`로 권한 판정 및 데이터 페칭 전환. `errorComponent`/`notFoundComponent` 추가.
   - 마이그레이션: `decks` 테이블에 `Admins can view all decks` SELECT 정책 추가 (`has_role(auth.uid(),'admin')`).
 - **카드 멀티 일러스트 작업과의 관계**: 무관. 카드 갤러리/업로더 멀티 이미지 작업은 그대로 유지됨.
+
+### 추가 수정 (같은 날, 후속 보고 반영)
+- **증상 1**: 덱 상세 페이지 클릭 시 무반응. **원인**: `decks.$id.tsx` 컴포넌트에서 조건부 `return` 이후 `useQuery`/`useMemo` 훅을 호출 → 덱 로드 직후 React Hooks 순서 위반으로 컴포넌트 크래시. **수정**: 모든 훅을 조건부 return 이전으로 이동, `enabled: !!deck` 가드 추가.
+- **증상 2**: 덱 레시피 탭이 안 보임. **원인**: 위 크래시로 인해 상세 페이지 자체가 렌더되지 않아 탭도 노출되지 않음. **수정**: 증상 1 수정과 동일.
+- **증상 3**: 덱 추가 다이얼로그의 리더 입력이 일반 텍스트박스라 검색/선택 UX 부재. **수정**: `src/components/decks/deck-dialog.tsx`에 `LeaderPicker` 컴포넌트 추가 — `cards` 테이블의 `status='approved'` & `type='leader'` 카드들을 가져와 검색 가능한 Popover 드롭다운(이미지·코드 포함)으로 선택.
