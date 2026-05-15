@@ -56,7 +56,7 @@ const GAME_LABEL: Record<Game, string> = {
 export const Route = createFileRoute("/cards/")({
   head: () => ({
     meta: [
-      { title: "카드 DB — TCG Hub" },
+      { title: "카드 DB — 덱로그" },
       {
         name: "description",
         content: "원피스·포켓몬·디지몬 TCG 카드 데이터베이스 검색·필터·즐겨찾기·평가.",

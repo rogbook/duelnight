@@ -108,7 +108,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { name: "theme-color", content: "#0b0b0c" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
-      { name: "apple-mobile-web-app-title", content: "TCG Hub" },
+      { name: "apple-mobile-web-app-title", content: "덱로그" },
       { title: "Lovable App" },
       { name: "description", content: "tcghub analyzes game data to provide win rate statistics, AI coaching, and community features." },
       { name: "author", content: "Lovable" },

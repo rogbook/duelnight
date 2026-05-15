@@ -31,8 +31,8 @@ export const Route = createFileRoute("/cards_/$code")({
   },
   head: ({ loaderData }) => {
     const c = loaderData?.card;
-    if (!c) return { meta: [{ title: "카드를 찾을 수 없음 — TCG Hub" }] };
-    const title = `${c.name} (${c.code}) — TCG Hub`;
+    if (!c) return { meta: [{ title: "카드를 찾을 수 없음 — 덱로그" }] };
+    const title = `${c.name} (${c.code}) — 덱로그`;
     const desc =
       (c.effect?.replace(/\s+/g, " ").slice(0, 150) ??
         `${TYPE_LABEL[c.type] ?? c.type} · ${c.set_code}`) +
