@@ -1,6 +1,17 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useMemo, useEffect } from "react";
-import { ArrowLeft, Layers, Pencil, Check, Copy, User, Calendar, Info, List, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Layers,
+  Pencil,
+  Check,
+  Copy,
+  User,
+  Calendar,
+  Info,
+  List,
+  X,
+} from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { RecipeEditor } from "@/components/decks/recipe-editor";
 import { DeckDialog } from "@/components/decks/deck-dialog";
@@ -22,7 +33,10 @@ export const Route = createFileRoute("/decks/$id")({
     <div className="mx-auto max-w-3xl px-6 py-16 text-center">
       <h1 className="text-xl font-bold">덱을 불러오지 못했어요</h1>
       <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
-      <Link to="/decks" className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline">
+      <Link
+        to="/decks"
+        className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+      >
         <ArrowLeft className="h-4 w-4" /> 덱 빌더로 돌아가기
       </Link>
     </div>
@@ -30,7 +44,10 @@ export const Route = createFileRoute("/decks/$id")({
   notFoundComponent: () => (
     <div className="mx-auto max-w-3xl px-6 py-16 text-center">
       <h1 className="text-xl font-bold">덱을 찾을 수 없습니다</h1>
-      <Link to="/decks" className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline">
+      <Link
+        to="/decks"
+        className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+      >
         <ArrowLeft className="h-4 w-4" /> 덱 빌더로 돌아가기
       </Link>
     </div>
@@ -49,14 +66,14 @@ function DeckDetailPage() {
   // ⚠️ 모든 훅은 조건부 return 이전에 호출되어야 함 (React Hooks rule).
 
   // 1. 덱 본체
-  const { data: initialDeck, isLoading: deckLoading, error: deckError } = useQuery({
+  const {
+    data: initialDeck,
+    isLoading: deckLoading,
+    error: deckError,
+  } = useQuery({
     queryKey: ["deck", id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("decks")
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
+      const { data, error } = await supabase.from("decks").select("*").eq("id", id).maybeSingle();
       if (error) throw error;
       return (data as Deck | null) ?? null;
     },
@@ -76,7 +93,11 @@ function DeckDetailPage() {
     queryKey: ["profile", deck?.user_id],
     enabled: !!deck?.user_id,
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("*").eq("id", deck!.user_id).maybeSingle();
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", deck!.user_id)
+        .maybeSingle();
       return data as Profile | null;
     },
   });
@@ -125,7 +146,11 @@ function DeckDetailPage() {
 
   // ===== 여기서부터 조건부 return =====
   if (deckLoading || authLoading) {
-    return <div className="mx-auto max-w-3xl px-6 py-16 text-center text-sm text-muted-foreground">불러오는 중...</div>;
+    return (
+      <div className="mx-auto max-w-3xl px-6 py-16 text-center text-sm text-muted-foreground">
+        불러오는 중...
+      </div>
+    );
   }
 
   if (deckError) {
@@ -133,7 +158,10 @@ function DeckDetailPage() {
       <div className="mx-auto max-w-3xl px-6 py-16 text-center">
         <h1 className="text-xl font-bold">덱을 불러오지 못했어요</h1>
         <p className="mt-2 text-sm text-muted-foreground">{(deckError as Error).message}</p>
-        <Link to="/decks" className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline">
+        <Link
+          to="/decks"
+          className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+        >
           <ArrowLeft className="h-4 w-4" /> 덱 빌더로 돌아가기
         </Link>
       </div>
@@ -145,8 +173,13 @@ function DeckDetailPage() {
       <div className="mx-auto max-w-3xl px-6 py-16 text-center">
         <Layers className="mx-auto h-12 w-12 text-muted-foreground opacity-20" />
         <h1 className="mt-4 text-xl font-bold">덱을 찾을 수 없습니다</h1>
-        <p className="mt-2 text-sm text-muted-foreground">삭제되었거나 접근 권한이 없는 덱입니다.</p>
-        <Link to="/decks" className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline">
+        <p className="mt-2 text-sm text-muted-foreground">
+          삭제되었거나 접근 권한이 없는 덱입니다.
+        </p>
+        <Link
+          to="/decks"
+          className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+        >
           <ArrowLeft className="h-4 w-4" /> 덱 빌더로 돌아가기
         </Link>
       </div>
@@ -159,7 +192,10 @@ function DeckDetailPage() {
         <Layers className="mx-auto h-12 w-12 text-muted-foreground opacity-20" />
         <h1 className="mt-4 text-xl font-bold">비공개 덱입니다</h1>
         <p className="mt-2 text-sm text-muted-foreground">소유자만 열람할 수 있는 덱이에요.</p>
-        <Link to="/decks" className="mt-8 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline">
+        <Link
+          to="/decks"
+          className="mt-8 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+        >
           <ArrowLeft className="h-4 w-4" /> 덱 빌더로 돌아가기
         </Link>
       </div>
@@ -193,21 +229,19 @@ function DeckDetailPage() {
         })
         .select()
         .single();
-      
+
       if (deckErr) throw deckErr;
 
       // 2. Copy cards
       if (deckCards.length > 0) {
-        const { error: cardsErr } = await supabase
-          .from("deck_cards")
-          .insert(
-            deckCards.map(dc => ({
-              deck_id: newDeck.id,
-              card_code: dc.card_code,
-              quantity: dc.quantity,
-              position: dc.position,
-            }))
-          );
+        const { error: cardsErr } = await supabase.from("deck_cards").insert(
+          deckCards.map((dc) => ({
+            deck_id: newDeck.id,
+            card_code: dc.card_code,
+            quantity: dc.quantity,
+            position: dc.position,
+          })),
+        );
         if (cardsErr) throw cardsErr;
       }
 
@@ -247,7 +281,10 @@ function DeckDetailPage() {
 
       {/* Breadcrumb */}
       <nav className="mb-6">
-        <Link to="/decks" className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+        <Link
+          to="/decks"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+        >
           <ArrowLeft className="h-3.5 w-3.5" /> 덱 빌더
         </Link>
       </nav>
@@ -259,13 +296,19 @@ function DeckDetailPage() {
           <div className="w-full md:w-64 bg-muted/30 p-6 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-border">
             {deck.game === "optcg" && leaderCard ? (
               <div className="space-y-3 text-center">
-                <img src={leaderCard.image_url ?? ""} alt={deck.leader!} className="h-64 w-44 rounded-lg object-cover shadow-xl ring-1 ring-border" />
+                <img
+                  src={leaderCard.image_url ?? ""}
+                  alt={deck.leader!}
+                  className="h-64 w-44 rounded-lg object-cover shadow-xl ring-1 ring-border"
+                />
                 <p className="text-xs font-bold text-primary">LEADER</p>
               </div>
             ) : (
               <div className="flex h-64 w-44 flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-background/50 text-muted-foreground">
                 <Layers className="h-10 w-10 opacity-20" />
-                <p className="mt-2 text-[10px] uppercase tracking-widest font-bold">{GAME_LABEL[deck.game]}</p>
+                <p className="mt-2 text-[10px] uppercase tracking-widest font-bold">
+                  {GAME_LABEL[deck.game]}
+                </p>
               </div>
             )}
           </div>
@@ -274,12 +317,20 @@ function DeckDetailPage() {
           <div className="flex-1 p-6 md:p-8 flex flex-col">
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-1">
-                <p className="text-xs font-bold text-primary uppercase tracking-tighter">{GAME_LABEL[deck.game]}</p>
+                <p className="text-xs font-bold text-primary uppercase tracking-tighter">
+                  {GAME_LABEL[deck.game]}
+                </p>
                 <h1 className="text-2xl md:text-3xl font-black tracking-tight">{deck.name}</h1>
                 <div className="mt-3 flex flex-wrap gap-1.5">
-                  {(deck.colors ?? []).map(c => (
-                    <span key={c} className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[11px] font-bold text-foreground ring-1 ring-border">
-                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: colorHex(deck.game as Game, c) }} />
+                  {(deck.colors ?? []).map((c) => (
+                    <span
+                      key={c}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[11px] font-bold text-foreground ring-1 ring-border"
+                    >
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: colorHex(deck.game as Game, c) }}
+                      />
                       {colorLabel(deck.game as Game, c)}
                     </span>
                   ))}
@@ -288,7 +339,7 @@ function DeckDetailPage() {
                   </span>
                 </div>
               </div>
-              
+
               <div className="flex flex-col gap-2 shrink-0">
                 {isOwner ? (
                   <DeckDialog
@@ -305,7 +356,10 @@ function DeckDetailPage() {
                     }
                   />
                 ) : (
-                  <button onClick={onCopy} className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground hover:opacity-90 transition-opacity shadow-lg">
+                  <button
+                    onClick={onCopy}
+                    className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground hover:opacity-90 transition-opacity shadow-lg"
+                  >
                     <Copy className="h-3.5 w-3.5" /> 내 덱으로 복사
                   </button>
                 )}
@@ -314,7 +368,9 @@ function DeckDetailPage() {
 
             {deck.notes && (
               <div className="mt-6">
-                <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1.5">MEMO</p>
+                <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1.5">
+                  MEMO
+                </p>
                 <div className="rounded-xl bg-muted/50 p-4 text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap border border-border/50">
                   {deck.notes}
                 </div>
@@ -325,14 +381,18 @@ function DeckDetailPage() {
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5">
                   <User className="h-3 w-3" />
-                  <span className="font-medium text-foreground">{author?.display_name ?? author?.username ?? "익명"}</span>
+                  <span className="font-medium text-foreground">
+                    {author?.display_name ?? author?.username ?? "익명"}
+                  </span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Calendar className="h-3 w-3" />
                   <span>{new Date(deck.updated_at).toLocaleDateString("ko-KR")}</span>
                 </div>
               </div>
-              <span className="font-bold tracking-tighter">{deck.is_public ? "PUBLIC DECK" : "PRIVATE DECK"}</span>
+              <span className="font-bold tracking-tighter">
+                {deck.is_public ? "PUBLIC DECK" : "PRIVATE DECK"}
+              </span>
             </div>
           </div>
         </div>
@@ -344,7 +404,9 @@ function DeckDetailPage() {
           <button
             onClick={() => setTab("info")}
             className={`flex items-center gap-2 px-6 py-3 text-sm font-bold transition-all border-b-2 ${
-              tab === "info" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+              tab === "info"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             <Info className="h-4 w-4" /> 덱 상세 정보
@@ -352,7 +414,9 @@ function DeckDetailPage() {
           <button
             onClick={() => setTab("recipe")}
             className={`flex items-center gap-2 px-6 py-3 text-sm font-bold transition-all border-b-2 ${
-              tab === "recipe" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+              tab === "recipe"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             <List className="h-4 w-4" /> 덱 레시피 ({deckCards.length}종)
@@ -383,8 +447,8 @@ function DeckDetailPage() {
                   <Check className="h-4 w-4 text-primary" /> 요약
                 </h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  이 덱은 {GAME_LABEL[deck.game]} 환경에서 사용되는 덱입니다.
-                  현재 {totalCards}장의 카드가 등록되어 있으며, {deck.is_public ? "공개" : "비공개"} 상태입니다.
+                  이 덱은 {GAME_LABEL[deck.game]} 환경에서 사용되는 덱입니다. 현재 {totalCards}장의
+                  카드가 등록되어 있으며, {deck.is_public ? "공개" : "비공개"} 상태입니다.
                 </p>
               </div>
             </div>
@@ -408,7 +472,12 @@ function DeckDetailPage() {
                         aria-label={`${card?.name ?? dc.card_code} 확대 보기`}
                       >
                         {card?.image_url ? (
-                          <img src={card.image_url} alt={card?.name ?? dc.card_code} loading="lazy" className="h-full w-full object-cover" />
+                          <img
+                            src={card.image_url}
+                            alt={card?.name ?? dc.card_code}
+                            loading="lazy"
+                            className="h-full w-full object-cover"
+                          />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center p-1 text-[8px] text-muted-foreground text-center break-all">
                             {card?.name ?? dc.card_code}
@@ -428,15 +497,26 @@ function DeckDetailPage() {
                 <RecipeEditor deck={deck} />
               </div>
             )}
-            
+
             {!isOwner && deckCards.length > 0 && (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {deckCards.map((dc) => {
                   const card = cardMeta[dc.card_code];
                   return (
-                    <button key={dc.id} type="button" onClick={() => openZoom(card?.image_url, card?.name ?? dc.card_code)} className="group relative aspect-[2/3] overflow-hidden rounded-lg border border-border bg-muted text-left shadow-sm transition-all hover:shadow-md hover:ring-2 hover:ring-primary/40" aria-label={`${card?.name ?? dc.card_code} 확대 보기`}>
+                    <button
+                      key={dc.id}
+                      type="button"
+                      onClick={() => openZoom(card?.image_url, card?.name ?? dc.card_code)}
+                      className="group relative aspect-[2/3] overflow-hidden rounded-lg border border-border bg-muted text-left shadow-sm transition-all hover:shadow-md hover:ring-2 hover:ring-primary/40"
+                      aria-label={`${card?.name ?? dc.card_code} 확대 보기`}
+                    >
                       {card?.image_url ? (
-                        <img src={card.image_url} alt={card.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" loading="lazy" />
+                        <img
+                          src={card.image_url}
+                          alt={card.name}
+                          className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                          loading="lazy"
+                        />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground p-2 text-center">
                           {card?.name || dc.card_code}
@@ -445,7 +525,9 @@ function DeckDetailPage() {
                       <div className="absolute inset-x-0 bottom-0 bg-black/70 p-2 text-[10px] text-white">
                         <div className="flex items-center justify-between gap-1">
                           <span className="truncate font-bold">{card?.name || dc.card_code}</span>
-                          <span className="bg-primary px-1.5 py-0.5 rounded font-black">×{dc.quantity}</span>
+                          <span className="bg-primary px-1.5 py-0.5 rounded font-black">
+                            ×{dc.quantity}
+                          </span>
                         </div>
                       </div>
                     </button>
