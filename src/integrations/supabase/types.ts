@@ -128,6 +128,59 @@ export type Database = {
         }
         Relationships: []
       }
+      card_illustrations: {
+        Row: {
+          card_code: string
+          created_at: string
+          id: string
+          image_url: string
+          is_primary: boolean
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["card_status"]
+          submitted_by: string | null
+          updated_at: string
+          variant_label: string | null
+        }
+        Insert: {
+          card_code: string
+          created_at?: string
+          id?: string
+          image_url: string
+          is_primary?: boolean
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["card_status"]
+          submitted_by?: string | null
+          updated_at?: string
+          variant_label?: string | null
+        }
+        Update: {
+          card_code?: string
+          created_at?: string
+          id?: string
+          image_url?: string
+          is_primary?: boolean
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["card_status"]
+          submitted_by?: string | null
+          updated_at?: string
+          variant_label?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_illustrations_card_code_fkey"
+            columns: ["card_code"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       card_reviews: {
         Row: {
           body: string | null

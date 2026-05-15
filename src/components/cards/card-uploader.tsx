@@ -67,7 +67,7 @@ const HEADER_ALIASES: Record<string, keyof CardRow> = {
   name: "name", 이름: "name", 카드명: "name", 카드이름: "name",
   type: "type", 종류: "type", 타입: "type",
   colors: "colors", 색상: "colors", 컬러: "colors", 색: "colors",
-  cost: "cost", 비용: "cost", 코스트: "cost",
+  cost: "cost", 비용: "cost", 코스트: "cost", 라이프: "cost", life: "cost",
   power: "power", 파워: "power", 공격력: "power",
   counter: "counter", 카운터: "counter",
   attribute: "attribute", 속성: "attribute",
@@ -522,7 +522,9 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
       setExistingCodes(found);
       setDupChecked(true);
       toast.success(found.size
-        ? `이미 등록된 코드 ${found.size}건 발견${isAdmin ? " (등록 시 덮어쓰기)" : " (등록 시 건너뜀)"}`
+        ? (isAdmin
+            ? `이미 등록된 코드 ${found.size}건 (등록 시 덮어쓰기)`
+            : `이미 등록된 코드 ${found.size}건 — 이미지가 있으면 "추가 일러스트"로, 없으면 건너뜁니다`)
         : "DB 중복 없음");
     } catch (e) {
       toast.error("중복 검사 실패: " + (e as Error).message);
@@ -569,10 +571,27 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
       const { data: auth } = await supabase.auth.getUser();
       const uid = auth.user?.id ?? null;
       if (!uid) { toast.error("로그인이 필요합니다"); return; }
+
+      // DB 중복 + 이미지 있는 행은 "추가 일러스트"로 분기 등록
+      const altIllustrations: { card_code: string; image_url: string }[] = [];
+      const cardRows: CardRow[] = [];
+      let skippedNoImage = 0;
+      for (const r of valid) {
+        const codeUpper = (r.code || "").toUpperCase();
+        const isDup = dupChecked && existingCodes.has(codeUpper);
+        const img = normalizeImageUrl(r.image_url);
+        if (isDup && !isAdmin) {
+          if (img) altIllustrations.push({ card_code: codeUpper, image_url: img });
+          else skippedNoImage++;
+        } else {
+          cardRows.push(r);
+        }
+      }
+
       const CHUNK = 200;
-      let inserted = 0, skipped = 0;
-      for (let i = 0; i < valid.length; i += CHUNK) {
-        const slice = valid.slice(i, i + CHUNK).map(r => ({
+      let inserted = 0, skipped = skippedNoImage;
+      for (let i = 0; i < cardRows.length; i += CHUNK) {
+        const slice = cardRows.slice(i, i + CHUNK).map(r => ({
           ...autoFixRow(r as CardRow),
           image_url: normalizeImageUrl(r.image_url),
           ...(isAdmin
@@ -593,13 +612,36 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
           inserted += added;
           skipped += slice.length - added;
         }
-        setProgress({ done: Math.min(i + CHUNK, valid.length), total: valid.length });
+        setProgress({ done: Math.min(i + CHUNK, cardRows.length), total: valid.length });
       }
-      toast.success(
-        isAdmin
-          ? (skipped ? `${inserted}장 등록 · ${skipped}장 중복 건너뜀` : `${inserted}장 등록 완료`)
-          : `${inserted}장 검수 대기로 제출됨${skipped ? ` · ${skipped}장 중복 건너뜀` : ""}`,
-      );
+
+      // 추가 일러스트 등록 (검수 대기)
+      let illustAdded = 0;
+      if (altIllustrations.length > 0) {
+        const payload = altIllustrations.map(x => ({
+          card_code: x.card_code,
+          image_url: x.image_url,
+          variant_label: "얼터",
+          status: "pending" as const,
+          submitted_by: uid,
+        }));
+        const { data, error } = await supabase
+          .from("card_illustrations")
+          .upsert(payload, { onConflict: "card_code,image_url", ignoreDuplicates: true })
+          .select("id");
+        if (error) {
+          console.error("illustration insert", error);
+          toast.error("추가 일러스트 등록 실패: " + error.message);
+        } else {
+          illustAdded = data?.length ?? 0;
+        }
+      }
+
+      const parts: string[] = [];
+      parts.push(isAdmin ? `${inserted}장 등록` : `${inserted}장 검수 대기로 제출됨`);
+      if (illustAdded) parts.push(`${illustAdded}장 추가 일러스트 검수 대기`);
+      if (skipped) parts.push(`${skipped}장 중복 건너뜀`);
+      toast.success(parts.join(" · "));
       onComplete?.({ inserted, skipped });
       clearAll();
     } catch (e) {
@@ -995,7 +1037,7 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
                         />
                         {(isInternalDup || isDbDup) && (
                           <Badge variant={isInternalDup ? "destructive" : "secondary"} className="mt-1 text-[9px] px-1 py-0">
-                            {isInternalDup ? "내부 중복" : "DB 중복"}
+                            {isInternalDup ? "내부 중복" : (r.image_url ? "추가 일러스트" : "DB 중복")}
                           </Badge>
                         )}
                       </td>
