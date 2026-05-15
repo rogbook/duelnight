@@ -134,3 +134,16 @@
 ---
 
 *본 문서는 `docs/PROJECT_STATUS.md`에 보관되며 `docs/COLLABORATION_GUIDE.md`와 함께 1차 검증·운영 기준 문서로 사용됩니다.*
+
+---
+
+## 10. 변경 이력 (2026-05-15)
+
+### 덱 빌더 상세 페이지 수정
+- **증상**: `/decks/$id` 진입 시 본인 비공개 덱이 "비공개 덱입니다"로 표시되거나 상세가 열리지 않음. 관리자도 타인 비공개 덱 열람 불가.
+- **원인 1 (SSR 세션 부재)**: 라우트 `loader`가 SSR에서 `supabase.auth.getUser()`를 호출 → 서버에는 세션 쿠키가 없어 `currentUserId=null` → 항상 비로그인 판정.
+- **원인 2 (관리자 RLS 부재)**: `decks` SELECT 정책이 `is_public OR auth.uid()=user_id`만 허용 → 관리자도 타인 비공개 덱 조회 불가.
+- **수정 사항**:
+  - `src/routes/decks.$id.tsx`: `loader` 제거, 클라이언트 `useAuth` + `useQuery`로 권한 판정 및 데이터 페칭 전환. `errorComponent`/`notFoundComponent` 추가.
+  - 마이그레이션: `decks` 테이블에 `Admins can view all decks` SELECT 정책 추가 (`has_role(auth.uid(),'admin')`).
+- **카드 멀티 일러스트 작업과의 관계**: 무관. 카드 갤러리/업로더 멀티 이미지 작업은 그대로 유지됨.
