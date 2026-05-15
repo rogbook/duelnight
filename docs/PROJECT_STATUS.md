@@ -158,3 +158,10 @@
 - **원인**: `RecipeEditor`의 `cardMap`을 `Map` 객체로 보관 → SSR 직렬화/구조적 공유 과정에서 `Map` 프로토타입 손실 → `.get()` 호출 시 throw. 결과적으로 `card?.image_url`이 항상 undefined가 되어 이미지/추가 동작이 모두 무력화됨.
 - **수정**: `cardMap`을 `Record<string, CardRow>`로 변경하고 `useMemo`로 `.get()` 호환 래퍼 제공.
 - **태블릿 UX**: +/−/삭제 버튼을 `h-8 w-8` (32px) + `touch-manipulation`으로 확장하여 터치 정확도 개선.
+
+### 자동 검증 스크립트 (덱 상세)
+- 파일: `scripts/verify-deck-detail.ts`
+- 실행: `bun run verify:deck-detail` 또는 `bun run verify:deck-detail <deckId>`
+- 검증: `decks` SELECT → `deck_cards` SELECT → `cards.in(code)` 매칭 → `image_url` 결손율 → optcg `leader` 카드 조회
+- 종료 코드 1 = 실패 (CI에서 그대로 사용 가능)
+- 주의: anon 키로 동작하므로 비공개 덱은 RLS상 검증 불가. 비공개 덱 검증이 필요하면 deckId를 인자로 넘기되 공개로 잠시 전환하거나, 별도 service-role 변형이 필요.
