@@ -1166,6 +1166,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      log_ai_usage: {
+        Args: { _feature: string; _source: string; _user_id: string }
+        Returns: undefined
+      }
       process_successful_payment:
         | {
             Args: {
