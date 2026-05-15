@@ -163,6 +163,99 @@ function PendingQueue() {
   );
 }
 
+type PendingIllust = {
+  id: string; card_code: string; image_url: string;
+  variant_label: string | null; submitted_by: string | null; created_at: string;
+};
+
+function PendingIllusts() {
+  const [items, setItems] = useState<PendingIllust[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [notes, setNotes] = useState<Record<string, string>>({});
+
+  const load = async () => {
+    setBusy(true);
+    const { data, error } = await supabase
+      .from("card_illustrations")
+      .select("id,card_code,image_url,variant_label,submitted_by,created_at")
+      .eq("status", "pending")
+      .order("created_at", { ascending: true })
+      .limit(200);
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    setItems((data ?? []) as PendingIllust[]);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const review = async (id: string, approve: boolean) => {
+    const note = notes[id]?.trim() || null;
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error } = await supabase
+      .from("card_illustrations")
+      .update({
+        status: approve ? "approved" : "rejected",
+        reviewed_by: user?.id ?? null,
+        reviewed_at: new Date().toISOString(),
+        review_note: note,
+      })
+      .eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(approve ? "승인됨" : "반려됨");
+    setItems(prev => prev.filter(p => p.id !== id));
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle className="text-base">대기 중 일러스트 {items.length}건</CardTitle>
+          <CardDescription>같은 카드에 대한 추가 일러스트(얼터/패러랠 등) 검수.</CardDescription>
+        </div>
+        <Button variant="outline" size="sm" onClick={load} disabled={busy}>
+          <RefreshCw className={`h-4 w-4 mr-1 ${busy ? "animate-spin" : ""}`} />새로고침
+        </Button>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {items.length === 0 && <p className="text-sm text-muted-foreground py-6 text-center">대기 중인 일러스트가 없습니다.</p>}
+        {items.map(it => (
+          <div key={it.id} className="flex gap-3 rounded-md border p-3">
+            <img src={it.image_url} alt="" className="h-28 w-20 rounded object-cover bg-muted" />
+            <div className="flex-1 min-w-0 space-y-1.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <Link to="/cards/$code" params={{ code: it.card_code }} className="font-mono text-xs hover:underline">
+                  {it.card_code}
+                </Link>
+                {it.variant_label && <Badge variant="secondary">{it.variant_label}</Badge>}
+                <span className="text-xs text-muted-foreground ml-auto">
+                  {new Date(it.created_at).toLocaleString("ko-KR")}
+                </span>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                제출자 {it.submitted_by?.slice(0, 8) ?? "-"}
+              </div>
+              <div className="flex gap-2 pt-1">
+                <Input
+                  value={notes[it.id] ?? ""}
+                  onChange={e => setNotes(n => ({ ...n, [it.id]: e.target.value }))}
+                  placeholder="검수 메모 (선택)"
+                  className="h-8 text-xs"
+                />
+                <Button size="sm" onClick={() => review(it.id, true)}>
+                  <Check className="h-4 w-4 mr-1" />승인
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => review(it.id, false)}>
+                  <X className="h-4 w-4 mr-1" />반려
+                </Button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
 function AuditLogs() {
   const [logs, setLogs] = useState<AuditRow[]>([]);
   const [busy, setBusy] = useState(false);
