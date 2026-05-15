@@ -330,32 +330,63 @@ function DeckDetailPage() {
         </div>
 
         {tab === "info" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-              <h3 className="text-sm font-black mb-4 flex items-center gap-2">
-                <Layers className="h-4 w-4 text-primary" /> 아키타입 정보
-              </h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center py-2 border-b border-border/50">
-                  <span className="text-xs text-muted-foreground">리더</span>
-                  <span className="text-sm font-bold">{deck.leader || "없음"}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-border/50">
-                  <span className="text-xs text-muted-foreground">아키타입</span>
-                  <span className="text-sm font-bold">{deck.archetype || "정보 없음"}</span>
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+                <h3 className="text-sm font-black mb-4 flex items-center gap-2">
+                  <Layers className="h-4 w-4 text-primary" /> 아키타입 정보
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center py-2 border-b border-border/50">
+                    <span className="text-xs text-muted-foreground">리더</span>
+                    <span className="text-sm font-bold">{deck.leader || "없음"}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-border/50">
+                    <span className="text-xs text-muted-foreground">아키타입</span>
+                    <span className="text-sm font-bold">{deck.archetype || "정보 없음"}</span>
+                  </div>
                 </div>
               </div>
+
+              <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+                <h3 className="text-sm font-black mb-4 flex items-center gap-2">
+                  <Check className="h-4 w-4 text-primary" /> 요약
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  이 덱은 {GAME_LABEL[deck.game]} 환경에서 사용되는 덱입니다.
+                  현재 {totalCards}장의 카드가 등록되어 있으며, {deck.is_public ? "공개" : "비공개"} 상태입니다.
+                </p>
+              </div>
             </div>
-            
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-              <h3 className="text-sm font-black mb-4 flex items-center gap-2">
-                <Check className="h-4 w-4 text-primary" /> 요약
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                이 덱은 {GAME_LABEL[deck.game]} 환경에서 사용되는 덱입니다. 
-                현재 {totalCards}장의 카드가 등록되어 있으며, {deck.is_public ? "공개" : "비공개"} 상태입니다.
-              </p>
-            </div>
+
+            {/* 투입 카드 미리보기 (수량만큼 펼침) */}
+            {deckCards.length > 0 && (
+              <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+                <h3 className="text-sm font-black mb-4 flex items-center gap-2">
+                  <Layers className="h-4 w-4 text-primary" /> 투입 카드 ({totalCards}장)
+                </h3>
+                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+                  {deckCards.flatMap((dc) => {
+                    const card = cardMeta[dc.card_code];
+                    return Array.from({ length: dc.quantity }).map((_, i) => (
+                      <div
+                        key={`${dc.id}-${i}`}
+                        className="relative aspect-[2/3] overflow-hidden rounded border border-border bg-muted shadow-sm"
+                        title={`${card?.name ?? dc.card_code} (${i + 1}/${dc.quantity})`}
+                      >
+                        {card?.image_url ? (
+                          <img src={card.image_url} alt={card?.name ?? dc.card_code} loading="lazy" className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center p-1 text-[8px] text-muted-foreground text-center break-all">
+                            {card?.name ?? dc.card_code}
+                          </div>
+                        )}
+                      </div>
+                    ));
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-6">
