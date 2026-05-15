@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -154,30 +155,41 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isBare = pathname === "/intro" || pathname === "/login";
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <SidebarProvider>
-          <div className="flex min-h-screen w-full bg-background">
-            <AppSidebar />
-            <div className="flex flex-1 flex-col">
-              <header
-                className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-background/80 px-2 backdrop-blur sm:h-14 sm:gap-3 sm:px-4"
-                style={{ paddingTop: "env(safe-area-inset-top)" }}
-              >
-                <SidebarTrigger />
-                <div className="flex-1" />
-                <NotificationBell />
-                <AuthHeaderButton />
-              </header>
-              <main className="flex-1">
-                <Outlet />
-              </main>
+        {isBare ? (
+          <>
+            <main className="min-h-screen bg-background">
+              <Outlet />
+            </main>
+            <Toaster />
+          </>
+        ) : (
+          <SidebarProvider>
+            <div className="flex min-h-screen w-full bg-background">
+              <AppSidebar />
+              <div className="flex flex-1 flex-col">
+                <header
+                  className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-background/80 px-2 backdrop-blur sm:h-14 sm:gap-3 sm:px-4"
+                  style={{ paddingTop: "env(safe-area-inset-top)" }}
+                >
+                  <SidebarTrigger />
+                  <div className="flex-1" />
+                  <NotificationBell />
+                  <AuthHeaderButton />
+                </header>
+                <main className="flex-1">
+                  <Outlet />
+                </main>
+              </div>
             </div>
-          </div>
-          <Toaster />
-        </SidebarProvider>
+            <Toaster />
+          </SidebarProvider>
+        )}
       </AuthProvider>
     </QueryClientProvider>
   );
