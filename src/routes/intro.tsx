@@ -201,7 +201,7 @@ function IntroPage() {
 
       <footer className="border-t border-border">
         <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-3 px-4 py-6 text-xs text-muted-foreground sm:flex-row sm:px-6">
-          <div>© {new Date().getFullYear()} {BRAND.name}. 샘플 브랜드 (테스트용).</div>
+          <div>© {new Date().getFullYear()} {BRAND.name}. 테스트 운영 중.</div>
           <div className="flex items-center gap-3">
             <Link to="/login" className="hover:underline">로그인</Link>
             <a href="#pricing" className="hover:underline">요금</a>
