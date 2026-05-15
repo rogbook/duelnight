@@ -202,11 +202,7 @@ export function DeckDialog({ mode, deck, onSaved, trigger }: DeckDialogProps) {
           {HAS_LEADER[game] && (
             <div className="col-span-2 space-y-2">
               <Label>리더</Label>
-              <Input
-                value={leader}
-                onChange={(e) => setLeader(e.target.value)}
-                placeholder="리더 이름 (예: 루피)"
-              />
+              <LeaderPicker game={game} value={leader} onChange={setLeader} />
             </div>
           )}
 
