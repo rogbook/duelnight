@@ -65,10 +65,12 @@ function ReviewPage() {
       />
       <Tabs defaultValue="queue">
         <TabsList>
-          <TabsTrigger value="queue">검수 대기</TabsTrigger>
+          <TabsTrigger value="queue">카드 검수</TabsTrigger>
+          <TabsTrigger value="illusts">일러스트 검수</TabsTrigger>
           <TabsTrigger value="logs"><History className="h-4 w-4 mr-1" />감사 로그</TabsTrigger>
         </TabsList>
         <TabsContent value="queue"><PendingQueue /></TabsContent>
+        <TabsContent value="illusts"><PendingIllusts /></TabsContent>
         <TabsContent value="logs"><AuditLogs /></TabsContent>
       </Tabs>
     </div>
