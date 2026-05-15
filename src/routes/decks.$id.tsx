@@ -45,7 +45,9 @@ function DeckDetailPage() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<"info" | "recipe">("info");
 
-  // Fetch deck client-side so the user's session (and thus RLS owner access) applies.
+  // ⚠️ 모든 훅은 조건부 return 이전에 호출되어야 함 (React Hooks rule).
+
+  // 1. 덱 본체
   const { data: initialDeck, isLoading: deckLoading, error: deckError } = useQuery({
     queryKey: ["deck", id],
     queryFn: async () => {
@@ -59,12 +61,68 @@ function DeckDetailPage() {
     },
   });
 
-  // Local state mirrors the fetched deck so edits update the UI immediately.
+  // 로컬 상태로 미러링 (수정 즉시 반영)
   const [deck, setDeck] = useState<Deck | null>(null);
   useEffect(() => {
     if (initialDeck) setDeck(initialDeck);
   }, [initialDeck]);
 
+  const isOwner = !!currentUserId && !!deck && currentUserId === deck.user_id;
+  const canView = !!deck && (deck.is_public || isOwner);
+
+  // 2. 작성자 프로필
+  const { data: author } = useQuery({
+    queryKey: ["profile", deck?.user_id],
+    enabled: !!deck?.user_id,
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("*").eq("id", deck!.user_id).maybeSingle();
+      return data as Profile | null;
+    },
+  });
+
+  // 3. 덱 카드 목록
+  const { data: deckCards = [] } = useQuery<DeckCard[]>({
+    queryKey: ["deck-cards", deck?.id],
+    enabled: !!deck && canView,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("deck_cards")
+        .select("*")
+        .eq("deck_id", deck!.id)
+        .order("position", { ascending: true });
+      return (data ?? []) as DeckCard[];
+    },
+  });
+
+  // 4. 카드 메타
+  const codes = useMemo(() => deckCards.map((c) => c.card_code), [deckCards]);
+  const { data: cardMeta = {} } = useQuery<Record<string, CardRow>>({
+    queryKey: ["deck-cards-meta", deck?.id, [...codes].sort().join(",")],
+    enabled: codes.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase.from("cards").select("*").in("code", codes);
+      return Object.fromEntries((data ?? []).map((c) => [c.code, c as CardRow]));
+    },
+  });
+
+  // 5. 리더 카드(원피스)
+  const { data: leaderCard } = useQuery({
+    queryKey: ["leader-card", deck?.game, deck?.leader],
+    enabled: !!deck?.leader && deck?.game === "optcg",
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("cards")
+        .select("*")
+        .eq("game", "optcg")
+        .eq("name", deck!.leader!)
+        .eq("type", "leader")
+        .limit(1)
+        .maybeSingle();
+      return data as CardRow | null;
+    },
+  });
+
+  // ===== 여기서부터 조건부 return =====
   if (deckLoading || authLoading) {
     return <div className="mx-auto max-w-3xl px-6 py-16 text-center text-sm text-muted-foreground">불러오는 중...</div>;
   }
@@ -93,60 +151,6 @@ function DeckDetailPage() {
       </div>
     );
   }
-
-  const isOwner = !!currentUserId && currentUserId === deck.user_id;
-  const canView = deck.is_public || isOwner;
-
-  // Fetch author profile
-  const { data: author } = useQuery({
-    queryKey: ["profile", deck.user_id],
-    queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("*").eq("id", deck.user_id).maybeSingle();
-      return data as Profile | null;
-    },
-  });
-
-  // Fetch deck cards
-  const { data: deckCards = [], refetch: refetchCards } = useQuery<DeckCard[]>({
-    queryKey: ["deck-cards", deck.id],
-    enabled: canView,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("deck_cards")
-        .select("*")
-        .eq("deck_id", deck.id)
-        .order("position", { ascending: true });
-      return (data ?? []) as DeckCard[];
-    },
-  });
-
-  // Fetch card metadata
-  const codes = useMemo(() => deckCards.map((c) => c.card_code), [deckCards]);
-  const { data: cardMeta = {} } = useQuery<Record<string, CardRow>>({
-    queryKey: ["deck-cards-meta", deck.id, [...codes].sort().join(",")],
-    enabled: codes.length > 0,
-    queryFn: async () => {
-      const { data } = await supabase.from("cards").select("*").in("code", codes);
-      return Object.fromEntries((data ?? []).map((c) => [c.code, c as CardRow]));
-    },
-  });
-
-  // Leader card fetch (for One Piece)
-  const { data: leaderCard } = useQuery({
-    queryKey: ["leader-card", deck.game, deck.leader],
-    enabled: !!deck.leader && deck.game === "optcg",
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("cards")
-        .select("*")
-        .eq("game", "optcg")
-        .eq("name", deck.leader!)
-        .eq("type", "leader")
-        .limit(1)
-        .maybeSingle();
-      return data as CardRow | null;
-    },
-  });
 
   if (!canView) {
     return (
