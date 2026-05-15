@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useMemo, useEffect } from "react";
-import { ArrowLeft, Layers, Pencil, Check, Copy, User, Calendar, Info, List } from "lucide-react";
+import { ArrowLeft, Layers, Pencil, Check, Copy, User, Calendar, Info, List, X } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { RecipeEditor } from "@/components/decks/recipe-editor";
 import { DeckDialog } from "@/components/decks/deck-dialog";
@@ -44,6 +44,7 @@ function DeckDetailPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [tab, setTab] = useState<"info" | "recipe">("info");
+  const [zoomCard, setZoomCard] = useState<{ url: string; name: string } | null>(null);
 
   // ⚠️ 모든 훅은 조건부 return 이전에 호출되어야 함 (React Hooks rule).
 
@@ -166,6 +167,10 @@ function DeckDetailPage() {
   }
 
   const totalCards = deckCards.reduce((s, c) => s + c.quantity, 0);
+  const openZoom = (url: string | null | undefined, name: string | null | undefined) => {
+    if (!url) return;
+    setZoomCard({ url, name: name ?? "카드 이미지" });
+  };
 
   const onCopy = async () => {
     if (!currentUserId) return toast.error("로그인이 필요합니다.");
@@ -215,6 +220,31 @@ function DeckDetailPage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl px-6 py-8">
+      {zoomCard && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/90 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${zoomCard.name} 확대 이미지`}
+          onClick={() => setZoomCard(null)}
+        >
+          <button
+            type="button"
+            className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition-opacity hover:opacity-80"
+            onClick={() => setZoomCard(null)}
+            aria-label="확대 이미지 닫기"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <img
+            src={zoomCard.url}
+            alt={`${zoomCard.name} 확대`}
+            className="max-h-[88vh] max-w-[92vw] rounded-lg border border-border bg-card object-contain shadow-lg"
+            onClick={(event) => event.stopPropagation()}
+          />
+        </div>
+      )}
+
       {/* Breadcrumb */}
       <nav className="mb-6">
         <Link to="/decks" className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
@@ -369,10 +399,13 @@ function DeckDetailPage() {
                   {deckCards.flatMap((dc) => {
                     const card = cardMeta[dc.card_code];
                     return Array.from({ length: dc.quantity }).map((_, i) => (
-                      <div
+                      <button
                         key={`${dc.id}-${i}`}
-                        className="relative aspect-[2/3] overflow-hidden rounded border border-border bg-muted shadow-sm"
+                        type="button"
+                        onClick={() => openZoom(card?.image_url, card?.name ?? dc.card_code)}
+                        className="relative aspect-[2/3] overflow-hidden rounded border border-border bg-muted shadow-sm transition-all hover:ring-2 hover:ring-primary/40"
                         title={`${card?.name ?? dc.card_code} (${i + 1}/${dc.quantity})`}
+                        aria-label={`${card?.name ?? dc.card_code} 확대 보기`}
                       >
                         {card?.image_url ? (
                           <img src={card.image_url} alt={card?.name ?? dc.card_code} loading="lazy" className="h-full w-full object-cover" />
@@ -381,7 +414,7 @@ function DeckDetailPage() {
                             {card?.name ?? dc.card_code}
                           </div>
                         )}
-                      </div>
+                      </button>
                     ));
                   })}
                 </div>
@@ -401,7 +434,7 @@ function DeckDetailPage() {
                 {deckCards.map((dc) => {
                   const card = cardMeta[dc.card_code];
                   return (
-                    <div key={dc.id} className="group relative aspect-[2/3] overflow-hidden rounded-lg border border-border bg-muted shadow-sm hover:shadow-md transition-all">
+                    <button key={dc.id} type="button" onClick={() => openZoom(card?.image_url, card?.name ?? dc.card_code)} className="group relative aspect-[2/3] overflow-hidden rounded-lg border border-border bg-muted text-left shadow-sm transition-all hover:shadow-md hover:ring-2 hover:ring-primary/40" aria-label={`${card?.name ?? dc.card_code} 확대 보기`}>
                       {card?.image_url ? (
                         <img src={card.image_url} alt={card.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" loading="lazy" />
                       ) : (
@@ -415,7 +448,7 @@ function DeckDetailPage() {
                           <span className="bg-primary px-1.5 py-0.5 rounded font-black">×{dc.quantity}</span>
                         </div>
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
