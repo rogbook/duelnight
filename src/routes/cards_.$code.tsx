@@ -1,9 +1,11 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { ArrowLeft, ImageOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"];
+type Illustration = Database["public"]["Tables"]["card_illustrations"]["Row"];
 
 const SITE = "https://tcg-hub.lovable.app";
 const TYPE_LABEL: Record<string, string> = {
@@ -91,6 +93,32 @@ export const Route = createFileRoute("/cards_/$code")({
 
 function CardDetailPage() {
   const { card } = Route.useLoaderData();
+  const [illusts, setIllusts] = useState<Illustration[]>([]);
+  const [activeUrl, setActiveUrl] = useState<string | null>(card.image_url ?? null);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { data } = await supabase
+        .from("card_illustrations")
+        .select("*")
+        .eq("card_code", card.code)
+        .eq("status", "approved")
+        .order("is_primary", { ascending: false })
+        .order("created_at", { ascending: true });
+      if (alive) setIllusts((data ?? []) as Illustration[]);
+    })();
+    return () => { alive = false; };
+  }, [card.code]);
+
+  const gallery: { url: string; label: string | null }[] = [];
+  if (card.image_url) gallery.push({ url: card.image_url, label: "기본" });
+  for (const il of illusts) {
+    if (gallery.some((x) => x.url === il.image_url)) continue;
+    gallery.push({ url: il.image_url, label: il.variant_label || "얼터" });
+  }
+  const displayUrl = activeUrl ?? card.image_url ?? null;
+
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">
       <Link
@@ -100,19 +128,44 @@ function CardDetailPage() {
         <ArrowLeft className="h-3.5 w-3.5" /> 카드 DB
       </Link>
       <div className="mt-4 grid gap-6 sm:grid-cols-[260px_1fr]">
-        <div className="aspect-[5/7] w-full overflow-hidden rounded-lg border border-border bg-muted">
-          {card.image_url ? (
-            <img
-              src={card.image_url}
-              alt={card.name}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-muted-foreground">
-              <ImageOff className="h-10 w-10" />
+        <div>
+          <div className="aspect-[5/7] w-full overflow-hidden rounded-lg border border-border bg-muted">
+            {displayUrl ? (
+              <img
+                src={displayUrl}
+                alt={card.name}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-muted-foreground">
+                <ImageOff className="h-10 w-10" />
+              </div>
+            )}
+          </div>
+          {gallery.length > 1 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {gallery.map((g) => (
+                <button
+                  key={g.url}
+                  type="button"
+                  onClick={() => setActiveUrl(g.url)}
+                  title={g.label ?? ""}
+                  className={`relative h-16 w-12 overflow-hidden rounded border ${
+                    displayUrl === g.url ? "border-primary ring-1 ring-primary" : "border-border"
+                  }`}
+                >
+                  <img src={g.url} alt={g.label ?? ""} className="h-full w-full object-cover" />
+                  {g.label && (
+                    <span className="absolute inset-x-0 bottom-0 truncate bg-background/80 px-1 text-[9px] leading-3">
+                      {g.label}
+                    </span>
+                  )}
+                </button>
+              ))}
             </div>
           )}
         </div>
+
         <div>
           <div className="flex items-center gap-2">
             <p className="text-xs text-muted-foreground">{card.code}</p>
