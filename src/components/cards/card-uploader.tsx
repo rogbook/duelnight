@@ -1158,9 +1158,40 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
     }
   };
 
+  const onPickExtraImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    setImgUploading(true);
+    const uploaded: string[] = [];
+    try {
+      for (const f of files) {
+        const path = `${r.set_code || "misc"}/${(r.code || "card") + "-alt-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6)}.${f.name.split(".").pop()}`;
+        const { error } = await supabase.storage.from("card-images").upload(path, f);
+        if (error) { toast.error(`${f.name}: ${error.message}`); continue; }
+        const { data: pub } = supabase.storage.from("card-images").getPublicUrl(path);
+        uploaded.push(pub.publicUrl);
+      }
+      if (uploaded.length) {
+        setR(prev => ({ ...prev, extra_images: [...(prev.extra_images ?? []), ...uploaded] }));
+        toast.success(`추가 일러스트 ${uploaded.length}장 업로드 완료`);
+      }
+    } finally {
+      setImgUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const removeExtra = (idx: number) => {
+    setR(prev => ({ ...prev, extra_images: (prev.extra_images ?? []).filter((_, i) => i !== idx) }));
+  };
+
   const submit = () => {
     if (!r.code || !r.set_code || !r.name) { toast.error("코드, 세트, 이름은 필수입니다"); return; }
-    onAdd({ ...r, image_url: normalizeImageUrl(r.image_url) });
+    onAdd({
+      ...r,
+      image_url: normalizeImageUrl(r.image_url),
+      extra_images: (r.extra_images ?? []).map(u => normalizeImageUrl(u)).filter((u): u is string => !!u),
+    });
     setR(emptyRow());
     toast.success("표에 추가됨");
   };
