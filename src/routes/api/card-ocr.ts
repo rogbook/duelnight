@@ -53,10 +53,10 @@ export const Route = createFileRoute("/api/card-ocr")({
           global: { headers: { Authorization: `Bearer ${token}` } }
         });
 
-        // 1. 할당량 체크
-        const { data: hasQuota, error: quotaErr } = await supabase.rpc("check_free_quota");
-        if (quotaErr || !hasQuota) {
-          return new Response(JSON.stringify({ error: "AI 크레딧이 부족합니다. 워크스페이스 설정에서 충전해 주세요." }), { status: 402, headers: corsHeaders });
+        const { checkAiQuota, commitAiUsage } = await import("@/lib/ai-quota.server");
+        const quota = await checkAiQuota(supabase, "ocr");
+        if (!quota.ok) {
+          return new Response(JSON.stringify({ error: quota.error }), { status: quota.status, headers: corsHeaders });
         }
 
         const imageUrl = payload.image_b64 ?? payload.image_url!;
@@ -99,8 +99,7 @@ export const Route = createFileRoute("/api/card-ocr")({
             if (m) parsed = JSON.parse(m[0]);
           }
 
-          // 2. 크레딧 소진
-          await supabase.rpc("consume_credits");
+          await commitAiUsage(supabase, quota.userId, "ocr", quota.source);
 
           return new Response(JSON.stringify({ data: parsed }), { status: 200, headers: corsHeaders });
         } catch (e) {
