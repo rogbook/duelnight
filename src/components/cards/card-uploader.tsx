@@ -587,18 +587,28 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
         } else {
           cardRows.push(r);
         }
+        // 같은 행에 추가 일러스트가 첨부되어 있으면 같이 등록
+        for (const ex of r.extra_images ?? []) {
+          const exUrl = normalizeImageUrl(ex);
+          if (exUrl) altIllustrations.push({ card_code: codeUpper, image_url: exUrl });
+        }
       }
 
       const CHUNK = 200;
       let inserted = 0, skipped = skippedNoImage;
       for (let i = 0; i < cardRows.length; i += CHUNK) {
-        const slice = cardRows.slice(i, i + CHUNK).map(r => ({
-          ...autoFixRow(r as CardRow),
-          image_url: normalizeImageUrl(r.image_url),
-          ...(isAdmin
-            ? { status: "approved" as const }
-            : { status: "pending" as const, submitted_by: uid }),
-        }));
+        const slice = cardRows.slice(i, i + CHUNK).map(r => {
+          const fixed = autoFixRow(r as CardRow);
+          // extra_images는 cards 테이블에 존재하지 않으므로 제거
+          const { extra_images: _ex, ...rest } = fixed as CardRow;
+          return {
+            ...rest,
+            image_url: normalizeImageUrl(r.image_url),
+            ...(isAdmin
+              ? { status: "approved" as const }
+              : { status: "pending" as const, submitted_by: uid }),
+          };
+        });
         if (isAdmin) {
           const { error } = await supabase.from("cards").upsert(slice, { onConflict: "code" });
           if (error) throw error;
