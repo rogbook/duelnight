@@ -42,9 +42,10 @@ export const getDriveConnectionFn = createServerFn({ method: "GET" })
   });
 
 export const listDriveFolderFn = createServerFn({ method: "POST" })
+  .inputValidator((d: { folderUrl: string }) => d)
   .handler(async ({ data }) => {
     const userId = await getAuthenticatedUserId();
-    const { folderUrl } = data as { folderUrl: string };
+    const { folderUrl } = data;
     const { getValidAccessToken } = await import("./google-drive.server");
     const token = await getValidAccessToken(userId);
     if (!token) throw new Error("Google Drive not connected");
@@ -98,9 +99,10 @@ export const disconnectDriveFn = createServerFn({ method: "POST" })
   });
 
 export const importDriveFilesFn = createServerFn({ method: "POST" })
+  .inputValidator((d: { fileIds: string[] }) => d)
   .handler(async ({ data }) => {
     const userId = await getAuthenticatedUserId();
-    const { fileIds } = data as { fileIds: string[] };
+    const { fileIds } = data;
     const { getValidAccessToken } = await import("./google-drive.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     

@@ -49,8 +49,9 @@ export const claimFirstAdmin = createServerFn({ method: "POST" })
 
 /** 이메일로 admin 권한 부여. */
 export const grantAdmin = createServerFn({ method: "POST" })
+  .inputValidator((d: { email: string }) => emailInput.parse(d))
   .handler(async ({ data }) => {
-    const { email } = data as { email: string };
+    const { email } = data;
     const { supabase, userId } = await getAuthContext();
     
     // 서버에서 호출자 admin 여부 확인
@@ -72,8 +73,9 @@ export const grantAdmin = createServerFn({ method: "POST" })
 
 /** 이메일로 admin 권한 해제. */
 export const revokeAdmin = createServerFn({ method: "POST" })
+  .inputValidator((d: { email: string }) => emailInput.parse(d))
   .handler(async ({ data }) => {
-    const { email } = data as { email: string };
+    const { email } = data;
     const { supabase, userId } = await getAuthContext();
 
     const { data: me } = await supabase
