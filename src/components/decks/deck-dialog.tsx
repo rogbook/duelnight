@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { Plus, Pencil, Check, X } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect, useMemo } from "react";
+import { Plus, Pencil, Check, X, ChevronsUpDown } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
