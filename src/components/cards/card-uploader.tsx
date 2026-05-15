@@ -45,6 +45,7 @@ export type CardRow = {
   rarity: string | null;
   effect: string | null;
   image_url: string | null;
+  extra_images?: string[];
 };
 
 const VALID_GAMES: Game[] = ["optcg", "ptcg", "dtcg"];
@@ -586,18 +587,28 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
         } else {
           cardRows.push(r);
         }
+        // 같은 행에 추가 일러스트가 첨부되어 있으면 같이 등록
+        for (const ex of r.extra_images ?? []) {
+          const exUrl = normalizeImageUrl(ex);
+          if (exUrl) altIllustrations.push({ card_code: codeUpper, image_url: exUrl });
+        }
       }
 
       const CHUNK = 200;
       let inserted = 0, skipped = skippedNoImage;
       for (let i = 0; i < cardRows.length; i += CHUNK) {
-        const slice = cardRows.slice(i, i + CHUNK).map(r => ({
-          ...autoFixRow(r as CardRow),
-          image_url: normalizeImageUrl(r.image_url),
-          ...(isAdmin
-            ? { status: "approved" as const }
-            : { status: "pending" as const, submitted_by: uid }),
-        }));
+        const slice = cardRows.slice(i, i + CHUNK).map(r => {
+          const fixed = autoFixRow(r as CardRow);
+          // extra_images는 cards 테이블에 존재하지 않으므로 제거
+          const { extra_images: _ex, ...rest } = fixed as CardRow;
+          return {
+            ...rest,
+            image_url: normalizeImageUrl(r.image_url),
+            ...(isAdmin
+              ? { status: "approved" as const }
+              : { status: "pending" as const, submitted_by: uid }),
+          };
+        });
         if (isAdmin) {
           const { error } = await supabase.from("cards").upsert(slice, { onConflict: "code" });
           if (error) throw error;
@@ -622,7 +633,9 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
           card_code: x.card_code,
           image_url: x.image_url,
           variant_label: "얼터",
-          status: "pending" as const,
+          ...(isAdmin
+            ? { status: "approved" as const, reviewed_by: uid, reviewed_at: new Date().toISOString() }
+            : { status: "pending" as const }),
           submitted_by: uid,
         }));
         const { data, error } = await supabase
@@ -639,7 +652,7 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
 
       const parts: string[] = [];
       parts.push(isAdmin ? `${inserted}장 등록` : `${inserted}장 검수 대기로 제출됨`);
-      if (illustAdded) parts.push(`${illustAdded}장 추가 일러스트 검수 대기`);
+      if (illustAdded) parts.push(isAdmin ? `${illustAdded}장 추가 일러스트 등록` : `${illustAdded}장 추가 일러스트 검수 대기`);
       if (skipped) parts.push(`${skipped}장 중복 건너뜀`);
       toast.success(parts.join(" · "));
       onComplete?.({ inserted, skipped });
@@ -1145,9 +1158,40 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
     }
   };
 
+  const onPickExtraImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    setImgUploading(true);
+    const uploaded: string[] = [];
+    try {
+      for (const f of files) {
+        const path = `${r.set_code || "misc"}/${(r.code || "card") + "-alt-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6)}.${f.name.split(".").pop()}`;
+        const { error } = await supabase.storage.from("card-images").upload(path, f);
+        if (error) { toast.error(`${f.name}: ${error.message}`); continue; }
+        const { data: pub } = supabase.storage.from("card-images").getPublicUrl(path);
+        uploaded.push(pub.publicUrl);
+      }
+      if (uploaded.length) {
+        setR(prev => ({ ...prev, extra_images: [...(prev.extra_images ?? []), ...uploaded] }));
+        toast.success(`추가 일러스트 ${uploaded.length}장 업로드 완료`);
+      }
+    } finally {
+      setImgUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const removeExtra = (idx: number) => {
+    setR(prev => ({ ...prev, extra_images: (prev.extra_images ?? []).filter((_, i) => i !== idx) }));
+  };
+
   const submit = () => {
     if (!r.code || !r.set_code || !r.name) { toast.error("코드, 세트, 이름은 필수입니다"); return; }
-    onAdd({ ...r, image_url: normalizeImageUrl(r.image_url) });
+    onAdd({
+      ...r,
+      image_url: normalizeImageUrl(r.image_url),
+      extra_images: (r.extra_images ?? []).map(u => normalizeImageUrl(u)).filter((u): u is string => !!u),
+    });
     setR(emptyRow());
     toast.success("표에 추가됨");
   };
@@ -1223,6 +1267,44 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
         />
         <p className="text-[11px] text-muted-foreground">
           구글 드라이브 링크는 자동으로 표시 가능한 주소로 변환됩니다. 파일은 <b>"링크가 있는 모든 사용자"</b> 공개로 설정해 주세요.
+        </p>
+      </div>
+      <div className="md:col-span-2 space-y-1.5 rounded-md border border-dashed p-3">
+        <Label>추가 일러스트 (얼터/패러랠 등 · 같은 카드의 다른 그림)</Label>
+        <Input type="file" accept="image/*" multiple onChange={onPickExtraImages} disabled={imgUploading} />
+        <Input
+          placeholder="또는 이미지 URL 붙여넣기 후 Enter"
+          className="text-xs font-mono"
+          onKeyDown={(e) => {
+            if (e.key !== "Enter") return;
+            e.preventDefault();
+            const v = (e.target as HTMLInputElement).value.trim();
+            if (!v) return;
+            const url = normalizeImageUrl(v);
+            if (!url) return;
+            setR(prev => ({ ...prev, extra_images: [...(prev.extra_images ?? []), url] }));
+            (e.target as HTMLInputElement).value = "";
+          }}
+        />
+        {(r.extra_images?.length ?? 0) > 0 && (
+          <div className="flex flex-wrap gap-2 pt-1">
+            {r.extra_images!.map((u, i) => (
+              <div key={i} className="relative">
+                <img src={u} alt="" className="h-16 w-12 rounded object-cover border" />
+                <button
+                  type="button"
+                  onClick={() => removeExtra(i)}
+                  className="absolute -right-1 -top-1 rounded-full bg-destructive text-destructive-foreground p-0.5"
+                  aria-label="삭제"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        <p className="text-[11px] text-muted-foreground">
+          기본 이미지 외에 추가로 등록할 일러스트입니다. 검수 승인 후 카드 상세에서 갤러리로 노출됩니다.
         </p>
       </div>
       <div className="md:col-span-2 flex justify-end">
