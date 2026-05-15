@@ -1,83 +1,75 @@
-# TCG Hub 프로젝트 현황 문서화
+# 다른 TCG 게임 확장에 필요한 항목
 
-협업자(특히 Antigravity)가 빠르게 프로젝트를 파악할 수 있도록 **Markdown(저장소 관리용) + DOCX(공유/인쇄용)** 두 형식의 현황 문서를 생성합니다.
+현재 DB enum `tcg_game`은 `optcg | ptcg | dtcg` 3종만 정의되어 있고, 코드 곳곳에 `optcg` 기본값과 "원피스" 라벨이 하드코딩되어 있다. 신규 게임(예: 유희왕 `ygo`, 매직 `mtg`, 워크라이 `wcg` 등)을 추가하려면 아래 6개 영역을 정리해야 한다.
 
-## 산출물
+---
 
-1. **`docs/PROJECT_STATUS.md`** — 기존 파일 전면 갱신 (Git 추적, Lovable↔Antigravity 동기화)
-2. **`/mnt/documents/TCG_Hub_프로젝트_현황.docx`** — 동일 내용의 워드 문서 (다운로드 제공)
+## 1. DB / 백엔드 (마이그레이션 필요)
 
-두 문서 내용은 동일하며, Markdown이 원본(single source of truth) 역할을 하고 DOCX는 이를 변환한 결과물입니다.
+- **`tcg_game` enum 값 추가**
+  `ALTER TYPE public.tcg_game ADD VALUE 'ygo';` (게임별 1회)
+  → 영향 테이블: `cards`, `decks`, `matches`, `tier_lists`, `user_ratings`, `events`, `stores.games[]`, `profiles.primary_game`, `lfg_posts` 등 거의 전 도메인.
+- **`get_leaderboard(p_game tcg_game, ...)`** 등 enum을 시그니처로 받는 함수 재배포 확인.
+- **카드 코드 정규식**: 현재 `/^[A-Z0-9]{2,8}-[A-Z0-9]{2,5}$/` (`card-utils.ts`). 게임별 코드 체계가 다르면 게임별 정규식 분기 필요.
+- **자료 적재**: 신규 게임 카드 데이터(코드/이름/타입/색·속성/레어도/이미지) 시드. 관리자 업로드 또는 마이그레이션.
 
-## 문서 구조 (4개 섹션)
+## 2. 게임별 규칙 테이블 (코드 상수)
 
-### 1. 프로젝트 개요
-- 서비스 한 줄 소개, 타깃 게임(원피스 TCG 외), 핵심 가치 제안
-- 도메인: tcg-hub.lovable.app
-- 협업 모델 요약 (Lovable=UI/DB/배포, Antigravity=로직/리팩토링)
+신규 게임마다 다음 5개 매핑에 항목을 추가해야 한다.
 
-### 2. 기능 목록 (라우트별)
-현재 `src/routes/` 기준으로 카테고리별 정리:
+| 파일 | 상수 | 추가할 내용 |
+|------|------|-------------|
+| `src/lib/deck-colors.ts` | `COLORS_BY_GAME`, `HAS_LEADER`, `REQUIRES_MULTI_COLOR` | 색/속성 목록, 리더 개념 유무 |
+| `src/lib/deck-rules.ts` | `CARD_TYPES_BY_GAME`, `DECK_MAX_TOTAL`, `DECK_MAX_COPIES`, `BAN_LIST`, `checkCanAdd` | 카드 타입, 덱 총 장수, 동일 카드 최대 매수, 금제, 게임별 예외(에너지/디지타마/ACE 같은) |
+| `src/lib/normalize-deck.ts` | 게임별 색/타입 정규화 매핑 | 신규 게임의 표기 변형 |
+| `src/lib/csv.ts` | `VALID_GAME` Set | enum 값 추가 |
+| `src/components/cards/card-utils.ts` | `VALID_COLORS`, `VALID_RARITIES`, 코드 정규식 | 신규 색·레어도·코드 패턴 |
 
-- **공개 페이지**: `/` (홈), `/announcements`, `/cards`, `/decks`, `/leaderboard`, `/tier`, `/calendar`, `/stores`, `/lfg`, `/packs`, `/login`
-- **상세 페이지**: `/cards/:code`, `/decks/:id`, `/announcements/:id`, `/events/:id`, `/stores/:id`, `/tier/:id`, `/lfg/:id`
-- **인증 필요**: `/profile`, `/collection`, `/matches`, `/messages`, `/notifications`, `/friends`, `/cards/upload`, `/reset-password`
-- **관리자**: `/admin`, `/admin/cards`, `/admin/cards/review`, `/admin/reports`
-- **API/시스템**: `/sitemap.xml`, `/api/coach`, `/api/card-ocr`, `/api/drive/auth`, `/auth/google-drive/callback`
+> 향후엔 이 5개를 하나의 `src/lib/games/{game}.ts` 모듈로 모으는 리팩토링이 바람직(현재 기술 부채). Antigravity 영역.
 
-각 항목 옆에 **상태 표시**: ✅ 정상 / 🟡 진행 중 / 🔴 이슈 (최근 LFG 댓글 신고/관리자 검토 추가 등 반영)
+## 3. UI 라벨 / 게임 셀렉터 (하드코딩 제거)
 
-### 3. DB 스키마 요약
-27개 테이블을 도메인별로 묶어 표로 정리:
+지금은 `<SelectItem value="optcg">원피스</SelectItem>` 형태가 9곳 이상 흩어져 있다.
 
-- **사용자/인증**: `profiles`, `user_roles`, `user_credits`, `user_drive_tokens`, `friendships`
-- **카드 도메인**: `cards`, `card_favorites`, `card_reviews`, `card_audit_logs`, `user_collection`
-- **덱**: `decks`, `deck_cards`, `tier_lists`
-- **매칭/전적**: `matches`, `user_ratings`
-- **LFG (오프라인 매칭)**: `lfg_posts`, `lfg_comments`, `lfg_comment_reports`, `lfg_messages`, `lfg_participants`
-- **이벤트/매장**: `events`, `event_favorites`, `stores`, `store_favorites`
-- **공지/알림/결제**: `announcements`, `notifications`, `payments`
+- 영향 파일: `routes/decks.index.tsx`, `tier.tsx`, `collection.tsx`, `profile.tsx`, `cards.index.tsx`, `calendar.tsx`, `matches.tsx`, `stores.tsx`, `lfg.index.tsx`, `components/game-filter.tsx`, `components/ai-coach-card.tsx`
+- 정비 방향:
+  1. `src/lib/games/registry.ts` 신설 — `{ id, label, defaultColor, hasLeader, ... }[]` 단일 소스
+  2. 모든 Select/Filter는 이 배열을 map으로 렌더링
+  3. `default game` 값도 `optcg` 리터럴 대신 registry의 첫 항목 또는 `profile.primary_game`을 사용
 
-각 테이블에 대해 **주요 컬럼 + 접근 권한(RLS 요약, 평문)** 만 기재. 표준 컬럼(id, created_at 등)은 생략.
+## 4. 카드 도메인 / OCR / AI
 
-### 4. 기술 스택 & 아키텍처
-- **프레임워크**: TanStack Start v1 (React 19, Vite 7, SSR)
-- **백엔드**: Lovable Cloud (Supabase 기반) — DB, 인증, 스토리지, RLS
-- **서버 로직**: TanStack `createServerFn` (Edge Functions 미사용 원칙)
-- **AI**: Lovable AI Gateway (Gemini/GPT 모델, API 키 불필요) — `/api/coach`, OCR 등
-- **결제**: 포트원(import) 연동 (`payments` 테이블)
-- **외부 연동**: Google Drive OAuth (사용자별 토큰 저장)
-- **배포**: Cloudflare Workers (워커 런타임 제약 주의)
-- **금지 파일**: `supabase/types.ts`, `supabase/client.ts`, `.env`, lock 파일
+- **`/api/card-ocr`**: `game_hint` Zod enum(`["optcg","ptcg","dtcg"]`) 확장, 프롬프트 내 게임별 카드 레이아웃 설명 추가.
+- **`/api/coach`**: 게임별 룰/메타 컨텍스트 프롬프트 분기.
+- **`tier.tsx`**: `if (game === "optcg") q.eq("type","leader")` 같은 게임별 후보 카드 쿼리 분기를 registry 기반으로 일반화.
 
-### 5. 남은 작업 / 향후 로드맵
-- **단기 (현재 검증 중)**: LFG 댓글/신고/관리자 검토 플로우 end-to-end 안정화
-- **중기 후보**:
-  - 매칭/전적 기록 UX 다듬기
-  - 카드 검수 플로우 자동화
-  - 알림 트리거 보강 (현재 `notifications` INSERT 권한 없음 → 서버 함수 경유 필요)
-  - 결제 영수증 처리 검증
-- **장기**: SEO 최적화, 다국어, PWA 강화 (manifest는 이미 존재)
-- **기술 부채**: TODO 문서들(`docs/TODO_*`, `docs/COLLABORATION_GUIDE.md`) 통합
+## 5. 콘텐츠 / SEO / 메타데이터
 
-## 기술 세부사항 (구현 방법)
+- `routes/index.tsx`, `cards.index.tsx`의 메타 description "원피스·포켓몬·디지몬..." 문구 갱신.
+- 카드 샘플 CSV(`public/templates/cards-sample.csv`) 게임별 추가 또는 다중 게임 예시.
+- 사이트맵(`sitemap.xml`)에 게임별 카드 인덱스 노출 정책 결정.
 
-```text
-1. docs/PROJECT_STATUS.md 작성 (기존 파일 덮어쓰기)
-   - 위 5개 섹션을 한국어 마크다운으로
+## 6. 운영 / 매장 / 이벤트
 
-2. DOCX 생성 스크립트 (/tmp/gen_status_docx.js)
-   - npm: docx 패키지 사용
-   - US Letter, Arial, 한국어 본문
-   - Heading1/2 스타일 정의, 표는 DXA 단위, ShadingType.CLEAR
-   - 출력: /mnt/documents/TCG_Hub_프로젝트_현황.docx
+- `stores.games[]`에 신규 enum이 들어가도 기존 RLS·필터가 정상 동작하는지 검증.
+- `events.kind` (대회/모임/발매 등) 중 게임 특화 종류가 있다면 추가.
+- LFG/캘린더에서 신규 게임 기본 노출 여부, 정렬 우선순위 결정.
 
-3. QA: docx → pdf → png 변환 후 페이지별 시각 검증
+---
 
-4. <presentation-artifact> 태그로 DOCX 다운로드 제공
-```
+## 작업 권장 순서 (게임 1개 추가 기준)
 
-## 확인 사항
+1. **결정 사항 확정** — 게임 ID, 라벨, 색/타입 체계, 덱 룰, 카드 코드 패턴
+2. **DB 마이그레이션** — `tcg_game` enum 값 추가 (Lovable)
+3. **게임 규칙 모듈 추가** — `deck-colors`, `deck-rules`, `normalize-deck`, `csv`, `card-utils` 일괄 갱신 (Antigravity 권장: 동시 수정량 큼)
+4. **게임 registry 도입** — UI 하드코딩 제거 리팩토링 (Antigravity)
+5. **OCR/AI 프롬프트 확장** (Antigravity)
+6. **콘텐츠/SEO 문구 갱신, 샘플 데이터, 카드 시드** (Lovable)
+7. **검증** — 카드 업로드 → 덱 빌드 → 매칭/전적 → 티어/리더보드 → 매장/이벤트 end-to-end
 
-- 기존 `docs/PROJECT_STATUS.md`와 `docs/COLLABORATION_GUIDE.md` 내용을 먼저 읽어 **중복/충돌**을 피하고, 새 문서가 상위 인덱스 역할을 하도록 구성합니다.
-- 라우트별 "정상/이슈" 상태는 코드 존재 여부로만 표기하며, **동작 검증이 필요한 항목은 별도 표시**(주관적 판단 금지).
+## 협업 분담 요약
+
+- **Lovable**: DB 마이그레이션, 카드 시드, 콘텐츠/SEO 문구, 라벨 텍스트 수정
+- **Antigravity**: 게임 registry 리팩토링, 게임별 규칙 모듈 정비, OCR/AI 프롬프트 분기, 게임 추상화 유지보수
+
+> 가장 비용이 큰 작업은 **3·4번(게임 추상화 리팩토링)**. 신규 게임 추가 전에 먼저 registry 패턴으로 정리해두면 이후 N번째 게임 추가는 거의 데이터 입력 수준으로 줄어든다.
