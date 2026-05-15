@@ -22,7 +22,7 @@ export function installServerFnAuthFetch() {
           ? input.toString()
           : input.url;
 
-    if (!url.includes("/_serverFn/")) {
+    if (!url.includes("/_serverFn/") && !url.includes("/api/")) {
       return original(input, init);
     }
 

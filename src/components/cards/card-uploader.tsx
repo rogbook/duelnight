@@ -409,19 +409,29 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
     }
   };
 
+  const ocrCache = useRef(new Map<string, any>());
+
   /** 단일 행 OCR: image_url을 Gemini Vision으로 분석해 빈 필드만 채움 */
   const ocrRow = async (idx: number): Promise<boolean> => {
     const r = rows[idx];
     if (!r?.image_url) return false;
+
     try {
-      const res = await fetch("/api/card-ocr", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image_url: r.image_url, game_hint: r.game }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || `OCR 실패 (${res.status})`);
-      const d = json.data ?? {};
+      let d: any;
+      if (ocrCache.current.has(r.image_url)) {
+        d = ocrCache.current.get(r.image_url);
+      } else {
+        const res = await fetch("/api/card-ocr", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image_url: r.image_url, game_hint: r.game }),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || `OCR 실패 (${res.status})`);
+        d = json.data ?? {};
+        ocrCache.current.set(r.image_url, d);
+      }
+
       const patch: Partial<CardRow> = {};
       if (!r.name && d.name) patch.name = String(d.name);
       if (!r.code && d.code) patch.code = String(d.code).toUpperCase();

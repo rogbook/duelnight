@@ -43,6 +43,22 @@ export const Route = createFileRoute("/api/card-ocr")({
           return new Response(JSON.stringify({ error: "잘못된 요청 형식" }), { status: 400, headers: corsHeaders });
         }
 
+        const authHeader = request.headers.get("authorization");
+        if (!authHeader?.startsWith("Bearer ")) {
+          return new Response(JSON.stringify({ error: "로그인이 필요합니다." }), { status: 401, headers: corsHeaders });
+        }
+        const token = authHeader.replace("Bearer ", "");
+        const { createClient } = await import("@supabase/supabase-js");
+        const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
+          global: { headers: { Authorization: `Bearer ${token}` } }
+        });
+
+        // 1. 할당량 체크
+        const { data: hasQuota, error: quotaErr } = await supabase.rpc("check_free_quota");
+        if (quotaErr || !hasQuota) {
+          return new Response(JSON.stringify({ error: "AI 크레딧이 부족합니다. 워크스페이스 설정에서 충전해 주세요." }), { status: 402, headers: corsHeaders });
+        }
+
         const imageUrl = payload.image_b64 ?? payload.image_url!;
 
         try {
@@ -82,6 +98,10 @@ export const Route = createFileRoute("/api/card-ocr")({
             const m = content.match(/\{[\s\S]*\}/);
             if (m) parsed = JSON.parse(m[0]);
           }
+
+          // 2. 크레딧 소진
+          await supabase.rpc("consume_credits");
+
           return new Response(JSON.stringify({ data: parsed }), { status: 200, headers: corsHeaders });
         } catch (e) {
           console.error("ocr route error", e);

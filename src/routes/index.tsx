@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import {
   Calendar,
   Library,
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { GameFilter } from "@/components/game-filter";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -61,6 +63,19 @@ const shortcuts = [
 ] as const;
 
 function Dashboard() {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate({ to: "/intro", replace: true });
+    }
+  }, [user, loading, navigate]);
+
+  if (loading || !user) {
+    return null;
+  }
+
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
       <PageHeader
