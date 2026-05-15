@@ -652,7 +652,7 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
 
       const parts: string[] = [];
       parts.push(isAdmin ? `${inserted}장 등록` : `${inserted}장 검수 대기로 제출됨`);
-      if (illustAdded) parts.push(`${illustAdded}장 추가 일러스트 검수 대기`);
+      if (illustAdded) parts.push(isAdmin ? `${illustAdded}장 추가 일러스트 등록` : `${illustAdded}장 추가 일러스트 검수 대기`);
       if (skipped) parts.push(`${skipped}장 중복 건너뜀`);
       toast.success(parts.join(" · "));
       onComplete?.({ inserted, skipped });
