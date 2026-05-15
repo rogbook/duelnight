@@ -196,6 +196,35 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
           {game === "dtcg" && <span>디지타마 {digitamaCount} / 5</span>}
           {game === "ptcg" && hasAceInDeck && <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-bold border border-blue-200">ACE SPEC</span>}
         </div>
+
+        {/* 비주얼 레시피: 수량만큼 카드 이미지를 펼쳐서 표시 */}
+        {deckCards.length > 0 && (
+          <div className="mt-3 grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-1.5">
+            {deckCards.flatMap(dc => {
+              const card = cardMap.get(dc.card_code);
+              return Array.from({ length: dc.quantity }).map((_, i) => (
+                <button
+                  key={`${dc.id}-${i}`}
+                  type="button"
+                  onClick={() => card?.image_url && setZoomUrl(card.image_url)}
+                  className="relative aspect-[2/3] overflow-hidden rounded border border-border bg-muted shadow-sm hover:ring-2 hover:ring-primary/40 transition-all touch-manipulation"
+                  title={`${card?.name ?? dc.card_code} (${i + 1}/${dc.quantity})`}
+                  aria-label={card?.name ?? dc.card_code}
+                >
+                  {card?.image_url ? (
+                    <img src={card.image_url} alt={card.name ?? dc.card_code} loading="lazy" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center p-1 text-[8px] text-muted-foreground text-center break-all">
+                      {card?.name ?? dc.card_code}
+                    </div>
+                  )}
+                </button>
+              ));
+            })}
+          </div>
+        )}
+
+        {/* 편집용 리스트 (수량 +/- / 삭제) */}
         <ul className="mt-3 space-y-1.5 max-h-48 overflow-y-auto pr-1">
           {deckCards.map(dc => {
             const card = cardMap.get(dc.card_code);
@@ -220,6 +249,7 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
           })}
         </ul>
       </div>
+
 
       {/* ── Search & Filter ── */}
       <div className="space-y-2.5">
