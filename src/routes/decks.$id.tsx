@@ -1,10 +1,11 @@
-import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState, useMemo, useEffect } from "react";
 import { ArrowLeft, Layers, Pencil, Check, Copy, User, Calendar, Info, List } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { RecipeEditor } from "@/components/decks/recipe-editor";
 import { DeckDialog } from "@/components/decks/deck-dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import { GAME_LABEL } from "@/lib/match-stats";
 import { colorHex, colorLabel, type Game } from "@/lib/deck-colors";
 import { toast } from "sonner";
@@ -15,42 +16,86 @@ type Profile = Tables<"profiles">;
 type CardRow = Tables<"cards">;
 type DeckCard = Tables<"deck_cards">;
 
-const SITE = "https://tcg-hub.lovable.app";
-
 export const Route = createFileRoute("/decks/$id")({
-  loader: async ({ params }) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    const currentUserId = user?.id ?? null;
-
-    const { data: deck, error } = await supabase
-      .from("decks")
-      .select("*")
-      .eq("id", params.id)
-      .maybeSingle();
-    if (error) throw error;
-    if (!deck) throw notFound();
-
-    const isOwner = currentUserId === deck.user_id;
-    const canView = deck.is_public || isOwner;
-
-    return {
-      deck: deck as Deck,
-      currentUserId,
-      isOwner,
-      canView,
-    };
-  },
   component: DeckDetailPage,
+  errorComponent: ({ error }) => (
+    <div className="mx-auto max-w-3xl px-6 py-16 text-center">
+      <h1 className="text-xl font-bold">덱을 불러오지 못했어요</h1>
+      <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+      <Link to="/decks" className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline">
+        <ArrowLeft className="h-4 w-4" /> 덱 빌더로 돌아가기
+      </Link>
+    </div>
+  ),
+  notFoundComponent: () => (
+    <div className="mx-auto max-w-3xl px-6 py-16 text-center">
+      <h1 className="text-xl font-bold">덱을 찾을 수 없습니다</h1>
+      <Link to="/decks" className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline">
+        <ArrowLeft className="h-4 w-4" /> 덱 빌더로 돌아가기
+      </Link>
+    </div>
+  ),
 });
 
 function DeckDetailPage() {
-  const { deck: initialDeck, currentUserId, isOwner, canView } = Route.useLoaderData();
+  const { id } = Route.useParams();
+  const { user, loading: authLoading } = useAuth();
+  const currentUserId = user?.id ?? null;
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [tab, setTab] = useState<"info" | "recipe">("info");
 
-  // Local state for immediate update after edit
-  const [deck, setDeck] = useState<Deck>(initialDeck);
+  // Fetch deck client-side so the user's session (and thus RLS owner access) applies.
+  const { data: initialDeck, isLoading: deckLoading, error: deckError } = useQuery({
+    queryKey: ["deck", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("decks")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as Deck | null) ?? null;
+    },
+  });
+
+  // Local state mirrors the fetched deck so edits update the UI immediately.
+  const [deck, setDeck] = useState<Deck | null>(null);
+  useEffect(() => {
+    if (initialDeck) setDeck(initialDeck);
+  }, [initialDeck]);
+
+  if (deckLoading || authLoading) {
+    return <div className="mx-auto max-w-3xl px-6 py-16 text-center text-sm text-muted-foreground">불러오는 중...</div>;
+  }
+
+  if (deckError) {
+    return (
+      <div className="mx-auto max-w-3xl px-6 py-16 text-center">
+        <h1 className="text-xl font-bold">덱을 불러오지 못했어요</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{(deckError as Error).message}</p>
+        <Link to="/decks" className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline">
+          <ArrowLeft className="h-4 w-4" /> 덱 빌더로 돌아가기
+        </Link>
+      </div>
+    );
+  }
+
+  if (!deck) {
+    return (
+      <div className="mx-auto max-w-3xl px-6 py-16 text-center">
+        <Layers className="mx-auto h-12 w-12 text-muted-foreground opacity-20" />
+        <h1 className="mt-4 text-xl font-bold">덱을 찾을 수 없습니다</h1>
+        <p className="mt-2 text-sm text-muted-foreground">삭제되었거나 접근 권한이 없는 덱입니다.</p>
+        <Link to="/decks" className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline">
+          <ArrowLeft className="h-4 w-4" /> 덱 빌더로 돌아가기
+        </Link>
+      </div>
+    );
+  }
+
+  const isOwner = !!currentUserId && currentUserId === deck.user_id;
+  const canView = deck.is_public || isOwner;
 
   // Fetch author profile
   const { data: author } = useQuery({
