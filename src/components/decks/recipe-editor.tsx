@@ -49,17 +49,21 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
 
   /* ── Card metadata map ── */
   const codes = deckCards.map((c) => c.card_code);
-  const { data: cardMap = new Map<string, CardRow>() } = useQuery<Map<string, CardRow>>({
+  const { data: cardMapData = {} as Record<string, CardRow> } = useQuery<Record<string, CardRow>>({
     queryKey: ["deck-cards-meta", deck.id, [...codes].sort().join(",")],
     enabled: codes.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase.from("cards").select("*").in("code", codes);
       if (error) throw error;
-      const m = new Map<string, CardRow>();
-      for (const c of data ?? []) m.set(c.code, c as CardRow);
+      const m: Record<string, CardRow> = {};
+      for (const c of data ?? []) m[c.code] = c as CardRow;
       return m;
     },
   });
+  const cardMap = useMemo(
+    () => ({ get: (code: string) => cardMapData[code] }),
+    [cardMapData],
+  );
 
   /* ── Search results ── */
   const { data: searchResults = [], isFetching } = useQuery({
