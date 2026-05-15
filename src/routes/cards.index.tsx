@@ -443,6 +443,10 @@ function CardDetailDialog({
   const [activeUrl, setActiveUrl] = useState<string | null>(null);
   const displayUrl = activeUrl ?? card?.image_url ?? null;
 
+  useEffect(() => {
+    setActiveUrl(null);
+  }, [card?.code]);
+
   const myReview = reviews.find((r) => r.user_id === user?.id) ?? null;
   const avg = useMemo(() => {
     if (reviews.length === 0) return null;
