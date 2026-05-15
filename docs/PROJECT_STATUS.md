@@ -152,3 +152,9 @@
 - **증상 1**: 덱 상세 페이지 클릭 시 무반응. **원인**: `decks.$id.tsx` 컴포넌트에서 조건부 `return` 이후 `useQuery`/`useMemo` 훅을 호출 → 덱 로드 직후 React Hooks 순서 위반으로 컴포넌트 크래시. **수정**: 모든 훅을 조건부 return 이전으로 이동, `enabled: !!deck` 가드 추가.
 - **증상 2**: 덱 레시피 탭이 안 보임. **원인**: 위 크래시로 인해 상세 페이지 자체가 렌더되지 않아 탭도 노출되지 않음. **수정**: 증상 1 수정과 동일.
 - **증상 3**: 덱 추가 다이얼로그의 리더 입력이 일반 텍스트박스라 검색/선택 UX 부재. **수정**: `src/components/decks/deck-dialog.tsx`에 `LeaderPicker` 컴포넌트 추가 — `cards` 테이블의 `status='approved'` & `type='leader'` 카드들을 가져와 검색 가능한 Popover 드롭다운(이미지·코드 포함)으로 선택.
+
+### 추가 수정 (2026-05-15, 덱빌더 RecipeEditor)
+- **증상**: 덱 상세 → 레시피 탭 빈 화면, 카드 이미지 미표시, "+/−" 버튼이 한 번에 안 눌리고 두세 번 눌러야 반응. 콘솔: `cardMap.get is not a function`.
+- **원인**: `RecipeEditor`의 `cardMap`을 `Map` 객체로 보관 → SSR 직렬화/구조적 공유 과정에서 `Map` 프로토타입 손실 → `.get()` 호출 시 throw. 결과적으로 `card?.image_url`이 항상 undefined가 되어 이미지/추가 동작이 모두 무력화됨.
+- **수정**: `cardMap`을 `Record<string, CardRow>`로 변경하고 `useMemo`로 `.get()` 호환 래퍼 제공.
+- **태블릿 UX**: +/−/삭제 버튼을 `h-8 w-8` (32px) + `touch-manipulation`으로 확장하여 터치 정확도 개선.
