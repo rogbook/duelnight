@@ -68,7 +68,7 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
     queryFn: async () => {
       let qb = supabase.from("cards").select("*").eq("game", game).order("name", { ascending: true }).limit(150);
       if (q.trim())           qb = qb.or(`name.ilike.%${q.trim()}%,code.ilike.%${q.trim()}%`);
-      if (filterType  !== "all") qb = qb.eq("type", filterType);
+      if (filterType  !== "all") qb = qb.eq("type", filterType as CardRow["type"]);
       if (filterColor !== "all") qb = qb.contains("colors", [filterColor]);
       if (filterSet   !== "all") qb = qb.eq("set_code", filterSet);
       if (filterRarity!== "all") qb = qb.eq("rarity", filterRarity);
