@@ -27,8 +27,8 @@ type Announcement = Database["public"]["Tables"]["announcements"]["Row"];
 export const Route = createFileRoute("/announcements")({
   head: () => ({
     meta: [
-      { title: "공지사항 — TCG Hub" },
-      { name: "description", content: "TCG Hub 공식 공지사항과 메타 정보." },
+      { title: "공지사항 — 덱로그" },
+      { name: "description", content: "덱로그 공식 공지사항과 메타 정보." },
     ],
   }),
   component: AnnouncementsPage,
@@ -70,7 +70,7 @@ function AnnouncementsPage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl px-6 py-8">
-      <PageHeader title="공지사항" description="TCG Hub 공식 소식과 메타 정보">
+      <PageHeader title="공지사항" description="덱로그 공식 소식과 메타 정보">
         {isAdmin && (
           <Button size="sm" onClick={() => setEditing("new")}>
             <Plus className="mr-1 h-4 w-4" /> 새 공지

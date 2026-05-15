@@ -9,7 +9,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
-    meta: [{ title: "로그인 — TCG Hub" }],
+    meta: [{ title: "로그인 — 덱로그" }],
   }),
   component: LoginPage,
 });

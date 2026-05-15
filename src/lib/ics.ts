@@ -35,7 +35,7 @@ export function buildIcs(ev: IcsEvent): string {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//TCG Hub//KO",
+    "PRODID:-//덱로그//KO",
     "CALSCALE:GREGORIAN",
     "BEGIN:VEVENT",
     `UID:${ev.uid}@tcg-hub.lovable.app`,
