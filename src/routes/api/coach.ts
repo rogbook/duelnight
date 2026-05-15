@@ -76,6 +76,22 @@ export const Route = createFileRoute("/api/coach")({
           );
         }
 
+        const authHeader = request.headers.get("authorization");
+        if (!authHeader?.startsWith("Bearer ")) {
+          return new Response(JSON.stringify({ error: "로그인이 필요합니다." }), { status: 401, headers: corsHeaders });
+        }
+        const token = authHeader.replace("Bearer ", "");
+        const { createClient } = await import("@supabase/supabase-js");
+        const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
+          global: { headers: { Authorization: `Bearer ${token}` } }
+        });
+
+        // 1. 할당량 체크
+        const { data: hasQuota, error: quotaErr } = await supabase.rpc("check_free_quota");
+        if (quotaErr || !hasQuota) {
+          return new Response(JSON.stringify({ error: "AI 크레딧이 부족합니다. 워크스페이스 설정에서 충전해 주세요." }), { status: 402, headers: corsHeaders });
+        }
+
         const system =
           "당신은 TCG 전적 데이터를 분석해 한국어로 간결한 코칭 인사이트를 제공하는 코치입니다. " +
           "반드시 한국어로, 마크다운 없이, 3~5개의 짧은 불릿(각 줄 앞에 '• ')으로 답하세요. " +
@@ -140,6 +156,9 @@ export const Route = createFileRoute("/api/coach")({
               { status: 502, headers: corsHeaders },
             );
           }
+
+          // 2. 크레딧 소진
+          await supabase.rpc("consume_credits");
 
           return new Response(JSON.stringify({ content }), {
             status: 200,
