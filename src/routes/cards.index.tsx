@@ -487,7 +487,7 @@ function CardDetailDialog({
                   ))}
                   {card.rarity && <Badge>{card.rarity}</Badge>}
                 </div>
-                <Stat label="코스트" value={card.cost} />
+                <Stat label={card.type === "leader" ? "라이프" : "코스트"} value={card.cost} />
                 <Stat label="파워" value={card.power?.toLocaleString()} />
                 <Stat label="카운터" value={card.counter?.toLocaleString()} />
                 <Stat label="속성" value={card.attribute} />
