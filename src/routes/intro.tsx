@@ -111,12 +111,14 @@ const ROADMAP = [
     label: "정식 오픈",
     desc: "Pro 멤버십·크레딧 결제 활성화. 모바일 PWA 최적화.",
     icon: Sparkle,
+    active: false,
   },
   {
     phase: "Phase 3",
     label: "확장",
     desc: "유희왕·매직더개더링 추가. 대회 운영 도구·매장 연동.",
     icon: Zap,
+    active: false,
   },
 ] as const;
 
