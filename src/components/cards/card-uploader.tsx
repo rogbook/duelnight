@@ -633,7 +633,9 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
           card_code: x.card_code,
           image_url: x.image_url,
           variant_label: "얼터",
-          status: "pending" as const,
+          ...(isAdmin
+            ? { status: "approved" as const, reviewed_by: uid, reviewed_at: new Date().toISOString() }
+            : { status: "pending" as const }),
           submitted_by: uid,
         }));
         const { data, error } = await supabase
