@@ -105,19 +105,19 @@ function DeckDetailPage() {
     },
   });
 
-  // 5. 리더 카드(원피스)
+  // 5. 리더 카드(원피스) — leader 문자열 형식: "이름 (CODE)" 또는 "이름"
   const { data: leaderCard } = useQuery({
     queryKey: ["leader-card", deck?.game, deck?.leader],
     enabled: !!deck?.leader && deck?.game === "optcg",
     queryFn: async () => {
-      const { data } = await supabase
-        .from("cards")
-        .select("*")
-        .eq("game", "optcg")
-        .eq("name", deck!.leader!)
-        .eq("type", "leader")
-        .limit(1)
-        .maybeSingle();
+      const raw = deck!.leader!.trim();
+      const codeMatch = raw.match(/\(([A-Z0-9-]+)\)\s*$/i);
+      const code = codeMatch?.[1];
+      const nameOnly = raw.replace(/\s*\([A-Z0-9-]+\)\s*$/i, "").trim();
+
+      let query = supabase.from("cards").select("*").eq("game", "optcg").eq("type", "leader");
+      query = code ? query.eq("code", code) : query.eq("name", nameOnly);
+      const { data } = await query.limit(1).maybeSingle();
       return data as CardRow | null;
     },
   });
