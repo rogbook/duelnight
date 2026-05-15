@@ -496,16 +496,40 @@ function CardDetailDialog({
               </DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 sm:grid-cols-[200px_1fr]">
-              <div className="aspect-[5/7] w-full overflow-hidden rounded-md bg-muted">
-                {card.image_url ? (
-                  <img
-                    src={card.image_url}
-                    alt={card.name}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-muted-foreground">
-                    <ImageOff className="h-8 w-8" />
+              <div>
+                <div className="aspect-[5/7] w-full overflow-hidden rounded-md bg-muted">
+                  {displayUrl ? (
+                    <img
+                      src={displayUrl}
+                      alt={card.name}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-muted-foreground">
+                      <ImageOff className="h-8 w-8" />
+                    </div>
+                  )}
+                </div>
+                {gallery.length > 1 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {gallery.map((g) => (
+                      <button
+                        key={g.url}
+                        type="button"
+                        onClick={() => setActiveUrl(g.url)}
+                        title={g.label}
+                        className={`relative h-14 w-10 overflow-hidden rounded border ${
+                          displayUrl === g.url
+                            ? "border-primary ring-1 ring-primary"
+                            : "border-border"
+                        }`}
+                      >
+                        <img src={g.url} alt={g.label} className="h-full w-full object-cover" />
+                        <span className="absolute inset-x-0 bottom-0 truncate bg-background/80 px-0.5 text-[8px] leading-3">
+                          {g.label}
+                        </span>
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
