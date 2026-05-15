@@ -43,7 +43,7 @@ const KIND_LABEL: Record<EventKind | "all", string> = {
 export const Route = createFileRoute("/calendar")({
   head: () => ({
     meta: [
-      { title: "대회·발매 캘린더 — TCG Hub" },
+      { title: "대회·발매 캘린더 — 덱로그" },
       { name: "description", content: "지역·게임별 TCG 대회, 상품 발매, 매칭 일정." },
     ],
   }),

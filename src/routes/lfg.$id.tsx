@@ -68,8 +68,8 @@ export const Route = createFileRoute("/lfg/$id")({
   },
   head: ({ loaderData }) => {
     const p = loaderData?.post;
-    if (!p) return { meta: [{ title: "글을 찾을 수 없음 — TCG Hub" }] };
-    const title = `${p.title} — LFG · TCG Hub`;
+    if (!p) return { meta: [{ title: "글을 찾을 수 없음 — 덱로그" }] };
+    const title = `${p.title} — LFG · 덱로그`;
     const desc = (p.body ?? `${GAME_LABEL[p.game]} · ${p.location ?? "지역 미지정"}`)
       .replace(/\s+/g, " ")
       .slice(0, 150);

@@ -25,8 +25,8 @@ export const Route = createFileRoute("/stores/$id")({
   },
   head: ({ loaderData }) => {
     const s = loaderData?.store;
-    if (!s) return { meta: [{ title: "매장을 찾을 수 없음 — TCG Hub" }] };
-    const title = `${s.name} — 매장 · TCG Hub`;
+    if (!s) return { meta: [{ title: "매장을 찾을 수 없음 — 덱로그" }] };
+    const title = `${s.name} — 매장 · 덱로그`;
     const desc =
       [s.region, s.address, s.notes]
         .filter(Boolean)

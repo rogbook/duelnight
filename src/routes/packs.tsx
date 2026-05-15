@@ -21,7 +21,7 @@ type Card = Database["public"]["Tables"]["cards"]["Row"];
 export const Route = createFileRoute("/packs")({
   head: () => ({
     meta: [
-      { title: "팩 시뮬레이터 — TCG Hub" },
+      { title: "팩 시뮬레이터 — 덱로그" },
       { name: "description", content: "OPTCG 부스터 팩 개봉 시뮬레이션." },
     ],
   }),

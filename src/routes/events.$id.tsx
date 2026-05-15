@@ -47,8 +47,8 @@ export const Route = createFileRoute("/events/$id")({
   },
   head: ({ loaderData }) => {
     const e = loaderData?.event;
-    if (!e) return { meta: [{ title: "일정을 찾을 수 없음 — TCG Hub" }] };
-    const title = `${e.title} — ${KIND_LABEL[e.kind]} · TCG Hub`;
+    if (!e) return { meta: [{ title: "일정을 찾을 수 없음 — 덱로그" }] };
+    const title = `${e.title} — ${KIND_LABEL[e.kind]} · 덱로그`;
     const desc =
       (e.notes ?? `${GAME_LABEL[e.game]} · ${e.location ?? ""}`)
         .replace(/\s+/g, " ")
