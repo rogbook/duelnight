@@ -1,9 +1,11 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { ArrowLeft, ImageOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"];
+type Illustration = Database["public"]["Tables"]["card_illustrations"]["Row"];
 
 const SITE = "https://tcg-hub.lovable.app";
 const TYPE_LABEL: Record<string, string> = {
