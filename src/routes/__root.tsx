@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -154,6 +155,21 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isBareLayout = pathname === "/intro" || pathname === "/login";
+
+  if (isBareLayout) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <main className="min-h-screen w-full bg-background">
+            <Outlet />
+          </main>
+          <Toaster />
+        </AuthProvider>
+      </QueryClientProvider>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
