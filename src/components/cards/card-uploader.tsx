@@ -522,7 +522,9 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
       setExistingCodes(found);
       setDupChecked(true);
       toast.success(found.size
-        ? `이미 등록된 코드 ${found.size}건 발견${isAdmin ? " (등록 시 덮어쓰기)" : " (등록 시 건너뜀)"}`
+        ? (isAdmin
+            ? `이미 등록된 코드 ${found.size}건 (등록 시 덮어쓰기)`
+            : `이미 등록된 코드 ${found.size}건 — 이미지가 있으면 "추가 일러스트"로, 없으면 건너뜁니다`)
         : "DB 중복 없음");
     } catch (e) {
       toast.error("중복 검사 실패: " + (e as Error).message);
