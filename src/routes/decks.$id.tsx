@@ -213,8 +213,8 @@ function DeckDetailPage() {
 
       toast.success("덱이 복사되었습니다! 목록에서 확인하세요.");
       navigate({ to: "/decks" });
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "덱 복사에 실패했습니다.");
     }
   };
 
