@@ -1269,6 +1269,44 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
           구글 드라이브 링크는 자동으로 표시 가능한 주소로 변환됩니다. 파일은 <b>"링크가 있는 모든 사용자"</b> 공개로 설정해 주세요.
         </p>
       </div>
+      <div className="md:col-span-2 space-y-1.5 rounded-md border border-dashed p-3">
+        <Label>추가 일러스트 (얼터/패러랠 등 · 같은 카드의 다른 그림)</Label>
+        <Input type="file" accept="image/*" multiple onChange={onPickExtraImages} disabled={imgUploading} />
+        <Input
+          placeholder="또는 이미지 URL 붙여넣기 후 Enter"
+          className="text-xs font-mono"
+          onKeyDown={(e) => {
+            if (e.key !== "Enter") return;
+            e.preventDefault();
+            const v = (e.target as HTMLInputElement).value.trim();
+            if (!v) return;
+            const url = normalizeImageUrl(v);
+            if (!url) return;
+            setR(prev => ({ ...prev, extra_images: [...(prev.extra_images ?? []), url] }));
+            (e.target as HTMLInputElement).value = "";
+          }}
+        />
+        {(r.extra_images?.length ?? 0) > 0 && (
+          <div className="flex flex-wrap gap-2 pt-1">
+            {r.extra_images!.map((u, i) => (
+              <div key={i} className="relative">
+                <img src={u} alt="" className="h-16 w-12 rounded object-cover border" />
+                <button
+                  type="button"
+                  onClick={() => removeExtra(i)}
+                  className="absolute -right-1 -top-1 rounded-full bg-destructive text-destructive-foreground p-0.5"
+                  aria-label="삭제"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        <p className="text-[11px] text-muted-foreground">
+          기본 이미지 외에 추가로 등록할 일러스트입니다. 검수 승인 후 카드 상세에서 갤러리로 노출됩니다.
+        </p>
+      </div>
       <div className="md:col-span-2 flex justify-end">
         <Button onClick={submit}><Plus className="mr-1 h-4 w-4" />표에 추가</Button>
       </div>
