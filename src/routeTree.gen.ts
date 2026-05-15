@@ -15,17 +15,20 @@ import { Route as StoreRouteImport } from './routes/store'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PacksRouteImport } from './routes/packs'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as MatchesRouteImport } from './routes/matches'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
+import { Route as IntroRouteImport } from './routes/intro'
 import { Route as FriendsRouteImport } from './routes/friends'
 import { Route as DecksRouteImport } from './routes/decks'
 import { Route as CollectionRouteImport } from './routes/collection'
 import { Route as CardsRouteImport } from './routes/cards'
 import { Route as CalendarRouteImport } from './routes/calendar'
+import { Route as BillingRouteImport } from './routes/billing'
 import { Route as AnnouncementsRouteImport } from './routes/announcements'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LfgIndexRouteImport } from './routes/lfg.index'
@@ -78,6 +81,11 @@ const ProfileRoute = ProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PacksRoute = PacksRouteImport.update({
   id: '/packs',
   path: '/packs',
@@ -108,6 +116,11 @@ const LeaderboardRoute = LeaderboardRouteImport.update({
   path: '/leaderboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const IntroRoute = IntroRouteImport.update({
+  id: '/intro',
+  path: '/intro',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FriendsRoute = FriendsRouteImport.update({
   id: '/friends',
   path: '/friends',
@@ -131,6 +144,11 @@ const CardsRoute = CardsRouteImport.update({
 const CalendarRoute = CalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BillingRoute = BillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AnnouncementsRoute = AnnouncementsRouteImport.update({
@@ -242,17 +260,20 @@ const AdminCardsReviewRoute = AdminCardsReviewRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/announcements': typeof AnnouncementsRouteWithChildren
+  '/billing': typeof BillingRoute
   '/calendar': typeof CalendarRoute
   '/cards': typeof CardsRouteWithChildren
   '/collection': typeof CollectionRoute
   '/decks': typeof DecksRouteWithChildren
   '/friends': typeof FriendsRoute
+  '/intro': typeof IntroRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
   '/messages': typeof MessagesRoute
   '/notifications': typeof NotificationsRoute
   '/packs': typeof PacksRoute
+  '/pricing': typeof PricingRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -282,15 +303,18 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/announcements': typeof AnnouncementsRouteWithChildren
+  '/billing': typeof BillingRoute
   '/calendar': typeof CalendarRoute
   '/collection': typeof CollectionRoute
   '/friends': typeof FriendsRoute
+  '/intro': typeof IntroRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
   '/messages': typeof MessagesRoute
   '/notifications': typeof NotificationsRoute
   '/packs': typeof PacksRoute
+  '/pricing': typeof PricingRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -321,17 +345,20 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/announcements': typeof AnnouncementsRouteWithChildren
+  '/billing': typeof BillingRoute
   '/calendar': typeof CalendarRoute
   '/cards': typeof CardsRouteWithChildren
   '/collection': typeof CollectionRoute
   '/decks': typeof DecksRouteWithChildren
   '/friends': typeof FriendsRoute
+  '/intro': typeof IntroRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
   '/messages': typeof MessagesRoute
   '/notifications': typeof NotificationsRoute
   '/packs': typeof PacksRoute
+  '/pricing': typeof PricingRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -363,17 +390,20 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/announcements'
+    | '/billing'
     | '/calendar'
     | '/cards'
     | '/collection'
     | '/decks'
     | '/friends'
+    | '/intro'
     | '/leaderboard'
     | '/login'
     | '/matches'
     | '/messages'
     | '/notifications'
     | '/packs'
+    | '/pricing'
     | '/profile'
     | '/reset-password'
     | '/sitemap.xml'
@@ -403,15 +433,18 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/announcements'
+    | '/billing'
     | '/calendar'
     | '/collection'
     | '/friends'
+    | '/intro'
     | '/leaderboard'
     | '/login'
     | '/matches'
     | '/messages'
     | '/notifications'
     | '/packs'
+    | '/pricing'
     | '/profile'
     | '/reset-password'
     | '/sitemap.xml'
@@ -441,17 +474,20 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/announcements'
+    | '/billing'
     | '/calendar'
     | '/cards'
     | '/collection'
     | '/decks'
     | '/friends'
+    | '/intro'
     | '/leaderboard'
     | '/login'
     | '/matches'
     | '/messages'
     | '/notifications'
     | '/packs'
+    | '/pricing'
     | '/profile'
     | '/reset-password'
     | '/sitemap.xml'
@@ -482,17 +518,20 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnnouncementsRoute: typeof AnnouncementsRouteWithChildren
+  BillingRoute: typeof BillingRoute
   CalendarRoute: typeof CalendarRoute
   CardsRoute: typeof CardsRouteWithChildren
   CollectionRoute: typeof CollectionRoute
   DecksRoute: typeof DecksRouteWithChildren
   FriendsRoute: typeof FriendsRoute
+  IntroRoute: typeof IntroRoute
   LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
   MatchesRoute: typeof MatchesRoute
   MessagesRoute: typeof MessagesRoute
   NotificationsRoute: typeof NotificationsRoute
   PacksRoute: typeof PacksRoute
+  PricingRoute: typeof PricingRoute
   ProfileRoute: typeof ProfileRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -556,6 +595,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/packs': {
       id: '/packs'
       path: '/packs'
@@ -598,6 +644,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LeaderboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/intro': {
+      id: '/intro'
+      path: '/intro'
+      fullPath: '/intro'
+      preLoaderRoute: typeof IntroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/friends': {
       id: '/friends'
       path: '/friends'
@@ -631,6 +684,13 @@ declare module '@tanstack/react-router' {
       path: '/calendar'
       fullPath: '/calendar'
       preLoaderRoute: typeof CalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/billing': {
+      id: '/billing'
+      path: '/billing'
+      fullPath: '/billing'
+      preLoaderRoute: typeof BillingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/announcements': {
@@ -855,17 +915,20 @@ const AdminCardsRouteWithChildren = AdminCardsRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnnouncementsRoute: AnnouncementsRouteWithChildren,
+  BillingRoute: BillingRoute,
   CalendarRoute: CalendarRoute,
   CardsRoute: CardsRouteWithChildren,
   CollectionRoute: CollectionRoute,
   DecksRoute: DecksRouteWithChildren,
   FriendsRoute: FriendsRoute,
+  IntroRoute: IntroRoute,
   LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,
   MatchesRoute: MatchesRoute,
   MessagesRoute: MessagesRoute,
   NotificationsRoute: NotificationsRoute,
   PacksRoute: PacksRoute,
+  PricingRoute: PricingRoute,
   ProfileRoute: ProfileRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,

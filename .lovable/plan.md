@@ -1,75 +1,175 @@
-# 다른 TCG 게임 확장에 필요한 항목
 
-현재 DB enum `tcg_game`은 `optcg | ptcg | dtcg` 3종만 정의되어 있고, 코드 곳곳에 `optcg` 기본값과 "원피스" 라벨이 하드코딩되어 있다. 신규 게임(예: 유희왕 `ygo`, 매직 `mtg`, 워크라이 `wcg` 등)을 추가하려면 아래 6개 영역을 정리해야 한다.
+# 비즈니스 모델 + 브랜드 인트로 페이지 구축 계획
 
----
+## 1. 브랜드 네이밍 제안 (샘플)
 
-## 1. DB / 백엔드 (마이그레이션 필요)
+도메인 미정 상태이므로 인트로 페이지에는 **샘플 브랜드명**을 적용해 둡니다. 정식 오픈 시 한 번에 교체 가능하도록 `src/lib/brand.ts` 한 곳에 상수화합니다.
 
-- **`tcg_game` enum 값 추가**
-  `ALTER TYPE public.tcg_game ADD VALUE 'ygo';` (게임별 1회)
-  → 영향 테이블: `cards`, `decks`, `matches`, `tier_lists`, `user_ratings`, `events`, `stores.games[]`, `profiles.primary_game`, `lfg_posts` 등 거의 전 도메인.
-- **`get_leaderboard(p_game tcg_game, ...)`** 등 enum을 시그니처로 받는 함수 재배포 확인.
-- **카드 코드 정규식**: 현재 `/^[A-Z0-9]{2,8}-[A-Z0-9]{2,5}$/` (`card-utils.ts`). 게임별 코드 체계가 다르면 게임별 정규식 분기 필요.
-- **자료 적재**: 신규 게임 카드 데이터(코드/이름/타입/색·속성/레어도/이미지) 시드. 관리자 업로드 또는 마이그레이션.
+추천 후보 3가지:
 
-## 2. 게임별 규칙 테이블 (코드 상수)
+| 후보 | 컨셉 | 도메인 가능성 |
+|---|---|---|
+| **DeckLog** (덱로그) | 덱 + 매치 로그. 한·영 모두 자연스러움 | decklog.kr / decklog.gg |
+| **MetaForge** (메타포지) | 메타 분석을 단련(forge)한다 | metaforge.gg |
+| **Tactica** (택티카) | 전략(tactics)에서 파생, 짧고 임팩트 | tactica.gg |
 
-신규 게임마다 다음 5개 매핑에 항목을 추가해야 한다.
-
-| 파일 | 상수 | 추가할 내용 |
-|------|------|-------------|
-| `src/lib/deck-colors.ts` | `COLORS_BY_GAME`, `HAS_LEADER`, `REQUIRES_MULTI_COLOR` | 색/속성 목록, 리더 개념 유무 |
-| `src/lib/deck-rules.ts` | `CARD_TYPES_BY_GAME`, `DECK_MAX_TOTAL`, `DECK_MAX_COPIES`, `BAN_LIST`, `checkCanAdd` | 카드 타입, 덱 총 장수, 동일 카드 최대 매수, 금제, 게임별 예외(에너지/디지타마/ACE 같은) |
-| `src/lib/normalize-deck.ts` | 게임별 색/타입 정규화 매핑 | 신규 게임의 표기 변형 |
-| `src/lib/csv.ts` | `VALID_GAME` Set | enum 값 추가 |
-| `src/components/cards/card-utils.ts` | `VALID_COLORS`, `VALID_RARITIES`, 코드 정규식 | 신규 색·레어도·코드 패턴 |
-
-> 향후엔 이 5개를 하나의 `src/lib/games/{game}.ts` 모듈로 모으는 리팩토링이 바람직(현재 기술 부채). Antigravity 영역.
-
-## 3. UI 라벨 / 게임 셀렉터 (하드코딩 제거)
-
-지금은 `<SelectItem value="optcg">원피스</SelectItem>` 형태가 9곳 이상 흩어져 있다.
-
-- 영향 파일: `routes/decks.index.tsx`, `tier.tsx`, `collection.tsx`, `profile.tsx`, `cards.index.tsx`, `calendar.tsx`, `matches.tsx`, `stores.tsx`, `lfg.index.tsx`, `components/game-filter.tsx`, `components/ai-coach-card.tsx`
-- 정비 방향:
-  1. `src/lib/games/registry.ts` 신설 — `{ id, label, defaultColor, hasLeader, ... }[]` 단일 소스
-  2. 모든 Select/Filter는 이 배열을 map으로 렌더링
-  3. `default game` 값도 `optcg` 리터럴 대신 registry의 첫 항목 또는 `profile.primary_game`을 사용
-
-## 4. 카드 도메인 / OCR / AI
-
-- **`/api/card-ocr`**: `game_hint` Zod enum(`["optcg","ptcg","dtcg"]`) 확장, 프롬프트 내 게임별 카드 레이아웃 설명 추가.
-- **`/api/coach`**: 게임별 룰/메타 컨텍스트 프롬프트 분기.
-- **`tier.tsx`**: `if (game === "optcg") q.eq("type","leader")` 같은 게임별 후보 카드 쿼리 분기를 registry 기반으로 일반화.
-
-## 5. 콘텐츠 / SEO / 메타데이터
-
-- `routes/index.tsx`, `cards.index.tsx`의 메타 description "원피스·포켓몬·디지몬..." 문구 갱신.
-- 카드 샘플 CSV(`public/templates/cards-sample.csv`) 게임별 추가 또는 다중 게임 예시.
-- 사이트맵(`sitemap.xml`)에 게임별 카드 인덱스 노출 정책 결정.
-
-## 6. 운영 / 매장 / 이벤트
-
-- `stores.games[]`에 신규 enum이 들어가도 기존 RLS·필터가 정상 동작하는지 검증.
-- `events.kind` (대회/모임/발매 등) 중 게임 특화 종류가 있다면 추가.
-- LFG/캘린더에서 신규 게임 기본 노출 여부, 정렬 우선순위 결정.
+**기본 채택: `DeckLog`** — TCG 본질(덱 빌딩 + 매치 기록)과 가장 잘 맞고 한국어 발음도 친숙. 코드/문서 모두 이 이름으로 들어가되 `BRAND_NAME` 상수만 바꾸면 통째로 교체됩니다.
 
 ---
 
-## 작업 권장 순서 (게임 1개 추가 기준)
+## 2. 청구 모델: Freemium + 크레딧 하이브리드
 
-1. **결정 사항 확정** — 게임 ID, 라벨, 색/타입 체계, 덱 룰, 카드 코드 패턴
-2. **DB 마이그레이션** — `tcg_game` enum 값 추가 (Lovable)
-3. **게임 규칙 모듈 추가** — `deck-colors`, `deck-rules`, `normalize-deck`, `csv`, `card-utils` 일괄 갱신 (Antigravity 권장: 동시 수정량 큼)
-4. **게임 registry 도입** — UI 하드코딩 제거 리팩토링 (Antigravity)
-5. **OCR/AI 프롬프트 확장** (Antigravity)
-6. **콘텐츠/SEO 문구 갱신, 샘플 데이터, 카드 시드** (Lovable)
-7. **검증** — 카드 업로드 → 덱 빌드 → 매칭/전적 → 티어/리더보드 → 매장/이벤트 end-to-end
+### 2.1 플랜 구조
 
-## 협업 분담 요약
+| 구분 | Free | Pro 멤버십 (월 ₩4,900) | 크레딧 충전 (선택) |
+|---|---|---|---|
+| 카드 DB·덱 빌더·LFG·매치 기록 | 무제한 | 무제한 | — |
+| AI OCR 카드 등록 | **일 5회** | 무제한 | 5크레딧/회 |
+| AI 코치 분석 | **월 3회** | 무제한 | 10크레딧/회 |
+| 덱 저장 | 5개 | 무제한 | — |
+| 매치 기록 보존 | 최근 50개 | 무제한 | — |
+| 광고 (향후) | 노출 | 제거 | — |
 
-- **Lovable**: DB 마이그레이션, 카드 시드, 콘텐츠/SEO 문구, 라벨 텍스트 수정
-- **Antigravity**: 게임 registry 리팩토링, 게임별 규칙 모듈 정비, OCR/AI 프롬프트 분기, 게임 추상화 유지보수
+크레딧 패키지: 100C ₩1,000 / 550C ₩5,000(+10%) / 1,200C ₩10,000(+20%)
 
-> 가장 비용이 큰 작업은 **3·4번(게임 추상화 리팩토링)**. 신규 게임 추가 전에 먼저 registry 패턴으로 정리해두면 이후 N번째 게임 추가는 거의 데이터 입력 수준으로 줄어든다.
+### 2.2 비용 구조 근거
+- OCR 1회 실비 ≈ ₩30~50 → 5C(₩50) 차감으로 손익 균형
+- 코치 1회 실비 ≈ ₩10~20 → 10C(₩100)로 마진 확보
+- Pro 멤버십 손익분기: 월 ~100회 사용 시점
+
+---
+
+## 3. 테스트/라이브 결제 분리
+
+`src/lib/payment.ts`는 이미 `sandbox` 옵션을 지원하므로:
+
+- `VITE_PAYMENT_MODE` 환경변수 도입 (`test` | `live`)
+- `test` 모드: PortOne 테스트 PG(`kakaopay.TC0ONETIME`), 실제 차감 X. 인트로/결제 화면에 **"테스트 모드" 배지** 표시
+- `live` 모드: 운영 PG(이니시스), 배지 숨김
+- 정식 오픈 시 환경변수만 변경
+
+추가로 `payments` 테이블에 `mode TEXT NOT NULL DEFAULT 'test'` 컬럼 추가해 거래 추적.
+
+---
+
+## 4. DB 스키마 변경 (Lovable 담당)
+
+### 4.1 사용량 추적
+```sql
+-- AI 사용 카운터 (일/월 단위 집계)
+CREATE TABLE ai_usage (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  feature text NOT NULL,           -- 'ocr' | 'coach'
+  used_at timestamptz NOT NULL DEFAULT now(),
+  cost_credits int NOT NULL DEFAULT 0,
+  source text NOT NULL             -- 'free_quota' | 'credits' | 'pro'
+);
+-- RLS: 본인만 SELECT, INSERT는 서버 함수에서만
+```
+
+### 4.2 멤버십
+```sql
+CREATE TYPE subscription_status AS ENUM ('active','canceled','expired','trialing');
+
+CREATE TABLE subscriptions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL UNIQUE,
+  plan text NOT NULL,              -- 'pro_monthly'
+  status subscription_status NOT NULL,
+  started_at timestamptz NOT NULL DEFAULT now(),
+  current_period_end timestamptz NOT NULL,
+  billing_key text,                -- PortOne 정기결제 키
+  cancel_at_period_end boolean NOT NULL DEFAULT false
+);
+-- RLS: 본인 SELECT만
+```
+
+### 4.3 기존 테이블 확장
+- `payments`: `mode` 컬럼, `purpose text` ('credits_topup' | 'pro_subscribe')
+- `user_credits`: `lifetime_purchased int`, `lifetime_used int` 추가
+
+### 4.4 서버 함수 (RLS 우회용 SECURITY DEFINER)
+- `consume_credits(user_id, amount, feature)` — 잔액 확인 + 차감 + ai_usage 로그
+- `check_free_quota(user_id, feature)` — 일/월 한도 체크
+- `grant_credits(user_id, amount, payment_id)` — 결제 후 충전
+- `activate_subscription(user_id, billing_key, period_end)` — Pro 활성화
+
+---
+
+## 5. 코드 변경 범위 (Antigravity 후속 리팩토링 영역 표시)
+
+### Lovable 담당 (이 작업)
+- **DB 마이그레이션** (위 스키마)
+- **인트로 페이지 신규** (`/intro` 라우트)
+- **요금제/결제 UI 신규** (`/pricing`, `/billing`)
+- **브랜드 상수 파일** (`src/lib/brand.ts`)
+- **테스트 모드 배지 컴포넌트**
+
+### Antigravity 담당 (후속)
+- `card-ocr.ts`/`coach.ts` 내부 로직: AI 호출 전 `check_free_quota` → 부족 시 `consume_credits` → 둘 다 실패 시 402 반환
+- 클라이언트 OCR 이미지 압축 (1024px 리사이즈)
+- 카드 코드 기반 OCR 결과 캐싱
+
+---
+
+## 6. 인트로 페이지 (`/intro`) 구성
+
+신규 라우트 `src/routes/intro.tsx`. **로그인하지 않은 사용자가 처음 진입했을 때 보는 마케팅 랜딩**.
+
+섹션 구성:
+1. **Hero** — 브랜드명(DeckLog) + 한 줄 카피("당신의 모든 TCG 매치를 기록하는 곳") + CTA(무료 시작 / 둘러보기)
+2. **지원 게임** — 원피스·포켓몬·디지몬 로고 그리드
+3. **핵심 기능 6선** — 카드 DB, 덱 빌더, AI OCR, AI 코치, LFG, 리더보드 (아이콘 카드)
+4. **요금제 미리보기** — Free / Pro / 크레딧 3-컬럼, "현재 베타 무료" 강조 배지
+5. **로드맵 타임라인** — 베타(현재) → 정식 오픈(결제 활성) → 신규 게임 추가
+6. **FAQ** — 4~6개 (결제 시점, 환불, 무료 사용 한계 등)
+7. **Final CTA** — "지금 베타 참여하기" → /login
+
+라우팅 정책:
+- `/intro`는 누구나 접근 가능
+- `/`(대시보드)는 로그인 사용자용 유지
+- 비로그인 사용자가 `/` 접근 시 `/intro`로 자동 리다이렉트 (선택사항, 후속 결정)
+
+SEO:
+- `head()` 에 title="DeckLog — TCG 통합 관리 플랫폼", description, og:title/description, JSON-LD `WebSite` 타입
+- 브랜드 변경 시 `BRAND_NAME` 한 곳만 수정하면 모든 메타 자동 갱신
+
+---
+
+## 7. 요금제/결제 페이지
+
+### `/pricing`
+- 3-컬럼 카드(Free/Pro/Credits)
+- 현재 **베타 모드 배너**: "정식 오픈 전까지 모든 기능 무료, 결제는 테스트 모드로 동작합니다"
+- Pro 카드 → "구독하기" 버튼 → 테스트 모드면 시뮬레이션 결제, 라이브면 실제 결제
+- Credits 카드 → 패키지 선택 → 충전 결제
+
+### `/billing` (마이페이지 하위)
+- 현재 플랜 / 잔여 크레딧 / 다음 결제일
+- 결제 내역(`payments` 테이블 조회)
+- 구독 취소(다음 결제일까지 유지)
+
+---
+
+## 8. 작업 순서
+
+1. **DB 마이그레이션** (subscriptions, ai_usage, payments/credits 확장, SECURITY DEFINER 함수 4종) — Lovable 승인 필요
+2. **`src/lib/brand.ts`** — 브랜드 상수, 테스트모드 플래그
+3. **인트로 페이지 `/intro`** — 7개 섹션
+4. **요금제 페이지 `/pricing`** — 3-컬럼 + 베타 배너
+5. **결제 통합** — `payment.ts` 확장, 결제 성공 → `grant_credits`/`activate_subscription` 호출
+6. **테스트 모드 배지** — 전역 표시 (사이드바 하단 또는 헤더)
+7. **마이페이지 `/billing`** — 잔액·내역·구독 관리
+8. **문서 업데이트** — `docs/PROJECT_STATUS.md`에 비즈니스 모델 섹션 추가
+
+AI 한도 체크 로직 자체는 Antigravity 후속 작업으로 넘기되, 함수와 테이블은 이번에 모두 준비합니다.
+
+---
+
+## 9. 기술 메모
+
+- 모든 가격/한도 값은 `src/lib/pricing.ts` 단일 파일에 상수화 → 정식 오픈 시 일괄 변경
+- PortOne 빌링키(정기결제) 발급은 첫 Pro 결제 시 함께 진행
+- 테스트 모드에서도 실제 DB에 결제 row가 쌓이되 `mode='test'` 플래그로 구분 → 운영 통계와 섞이지 않음
+

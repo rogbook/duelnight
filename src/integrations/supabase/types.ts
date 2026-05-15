@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_usage: {
+        Row: {
+          cost_credits: number
+          feature: string
+          id: string
+          source: string
+          used_at: string
+          user_id: string
+        }
+        Insert: {
+          cost_credits?: number
+          feature: string
+          id?: string
+          source: string
+          used_at?: string
+          user_id: string
+        }
+        Update: {
+          cost_credits?: number
+          feature?: string
+          id?: string
+          source?: string
+          used_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       announcements: {
         Row: {
           author_id: string
@@ -725,8 +752,10 @@ export type Database = {
           currency: string
           id: string
           imp_uid: string | null
+          mode: string
           order_id: string
           provider: string
+          purpose: string
           receipt_url: string | null
           status: string
           updated_at: string
@@ -738,8 +767,10 @@ export type Database = {
           currency?: string
           id?: string
           imp_uid?: string | null
+          mode?: string
           order_id: string
           provider: string
+          purpose?: string
           receipt_url?: string | null
           status?: string
           updated_at?: string
@@ -751,8 +782,10 @@ export type Database = {
           currency?: string
           id?: string
           imp_uid?: string | null
+          mode?: string
           order_id?: string
           provider?: string
+          purpose?: string
           receipt_url?: string | null
           status?: string
           updated_at?: string
@@ -853,6 +886,45 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          billing_key: string | null
+          cancel_at_period_end: boolean
+          created_at: string
+          current_period_end: string
+          id: string
+          plan: string
+          started_at: string
+          status: Database["public"]["Enums"]["subscription_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          billing_key?: string | null
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end: string
+          id?: string
+          plan?: string
+          started_at?: string
+          status?: Database["public"]["Enums"]["subscription_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          billing_key?: string | null
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end?: string
+          id?: string
+          plan?: string
+          started_at?: string
+          status?: Database["public"]["Enums"]["subscription_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tier_lists: {
         Row: {
           created_at: string
@@ -913,16 +985,22 @@ export type Database = {
       user_credits: {
         Row: {
           balance: number
+          lifetime_purchased: number
+          lifetime_used: number
           updated_at: string
           user_id: string
         }
         Insert: {
           balance?: number
+          lifetime_purchased?: number
+          lifetime_used?: number
           updated_at?: string
           user_id: string
         }
         Update: {
           balance?: number
+          lifetime_purchased?: number
+          lifetime_used?: number
           updated_at?: string
           user_id?: string
         }
@@ -1011,8 +1089,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      activate_subscription: {
+        Args: { _billing_key: string; _period_end: string; _user_id: string }
+        Returns: undefined
+      }
       any_admin_exists: { Args: never; Returns: boolean }
+      check_free_quota: {
+        Args: { _feature: string; _user_id: string }
+        Returns: Json
+      }
       claim_admin_if_none: { Args: never; Returns: boolean }
+      consume_credits: {
+        Args: { _amount: number; _feature: string; _user_id: string }
+        Returns: Json
+      }
       get_leaderboard: {
         Args: {
           p_game: Database["public"]["Enums"]["tcg_game"]
@@ -1052,6 +1142,10 @@ export type Database = {
         }[]
       }
       grant_admin_by_email: { Args: { _email: string }; Returns: string }
+      grant_credits: {
+        Args: { _amount: number; _payment_id: string; _user_id: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1072,16 +1166,32 @@ export type Database = {
           user_id: string
         }[]
       }
-      process_successful_payment: {
-        Args: {
-          p_amount: number
-          p_imp_uid?: string
-          p_order_id: string
-          p_provider: string
-          p_user_id: string
-        }
-        Returns: undefined
-      }
+      process_successful_payment:
+        | {
+            Args: {
+              p_amount: number
+              p_imp_uid?: string
+              p_order_id: string
+              p_provider: string
+              p_user_id: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_amount: number
+              p_billing_key?: string
+              p_credits?: number
+              p_imp_uid?: string
+              p_mode?: string
+              p_order_id: string
+              p_period_days?: number
+              p_provider: string
+              p_purpose?: string
+              p_user_id: string
+            }
+            Returns: string
+          }
       review_card: {
         Args: { _approve: boolean; _code: string; _note?: string }
         Returns: undefined
@@ -1118,6 +1228,7 @@ export type Database = {
       lfg_participant_status: "pending" | "accepted" | "rejected" | "cancelled"
       match_event: "friendly" | "shop" | "official"
       match_result: "win" | "loss" | "draw"
+      subscription_status: "active" | "canceled" | "expired" | "trialing"
       tcg_game: "optcg" | "ptcg" | "dtcg"
     }
     CompositeTypes: {
@@ -1255,6 +1366,7 @@ export const Constants = {
       lfg_participant_status: ["pending", "accepted", "rejected", "cancelled"],
       match_event: ["friendly", "shop", "official"],
       match_result: ["win", "loss", "draw"],
+      subscription_status: ["active", "canceled", "expired", "trialing"],
       tcg_game: ["optcg", "ptcg", "dtcg"],
     },
   },
