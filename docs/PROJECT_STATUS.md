@@ -151,6 +151,70 @@
 
 ## 4. 기술 스택 & 아키텍처
 
+### 4.0 아키텍처 한눈에 보기
+
+```mermaid
+graph TB
+    subgraph Client["브라우저 (React 19 + TanStack Start)"]
+        UI[페이지/컴포넌트<br/>shadcn + Tailwind v4]
+        RQ[TanStack Query<br/>캐시/리페치]
+        SBClient[supabase-js<br/>publishable key]
+    end
+
+    subgraph Edge["Cloudflare Workers (workerd)"]
+        SSR[SSR 렌더러]
+        ServerFn["createServerFn<br/>+ requireSupabaseAuth 미들웨어"]
+        PublicAPI["/api/public/*<br/>웹훅·콜백 (서명 검증)"]
+        AdminClient["supabaseAdmin<br/>service_role (RLS 우회)"]
+    end
+
+    subgraph Cloud["Lovable Cloud (Supabase)"]
+        Auth[Supabase Auth<br/>이메일 + Google OAuth]
+        DB[(PostgreSQL<br/>27 tables · RLS 전면)]
+        RoleFn["has_role(uid, role)<br/>SECURITY DEFINER<br/>→ 재귀 RLS 방지"]
+        Triggers["트리거<br/>알림·ELO·감사로그"]
+        Storage[Storage<br/>card-images]
+    end
+
+    subgraph External["외부 연동"]
+        AIGW[Lovable AI Gateway<br/>Gemini · GPT-5]
+        Drive[Google Drive OAuth<br/>user_drive_tokens]
+        Pay[포트원 결제<br/>Webhook]
+        Kakao[카카오 오픈채팅<br/>kakao_link]
+    end
+
+    UI --> RQ --> ServerFn
+    UI --> SBClient
+    SSR --> ServerFn
+    SBClient -->|JWT 세션| Auth
+    SBClient -->|RLS 적용 쿼리| DB
+
+    ServerFn -->|사용자 토큰 전달| DB
+    ServerFn --> AIGW
+    ServerFn --> Drive
+    ServerFn -.fallback.-> AdminClient
+    AdminClient -->|RLS 우회| DB
+
+    PublicAPI -->|서명 검증 후| AdminClient
+    Pay -->|결제 웹훅| PublicAPI
+    Drive -->|OAuth 콜백| PublicAPI
+
+    DB --> RoleFn
+    DB --> Triggers
+    Triggers -->|notifications INSERT| DB
+    DB --> Storage
+
+    UI -.딥링크.-> Kakao
+```
+
+**읽는 법**
+- **브라우저(파랑)**: SPA 코드. 일반 데이터 조회는 `supabase-js`로 RLS가 적용된 직접 쿼리, 서버 권한이 필요한 동작은 `createServerFn` 호출.
+- **Edge Worker(노랑)**: Cloudflare Workers에서 SSR과 서버 함수가 동작. `requireSupabaseAuth` 미들웨어가 사용자 JWT를 검증해 `supabase` 클라이언트에 토큰을 주입 → DB 쿼리도 그 사용자 RLS로 평가됨. 관리자성/시스템 작업만 `supabaseAdmin`(service_role)로 RLS 우회.
+- **Lovable Cloud(녹색)**: Postgres + RLS가 1차 보안 계층. 권한 체크는 모두 `has_role(uid, role)` SECURITY DEFINER 함수로 위임해 RLS 재귀를 방지. `notifications`, `user_ratings`, `payments`는 INSERT/UPDATE 권한이 사용자에게 없고, **트리거 또는 서버 함수로만 기록**.
+- **외부 연동(분홍)**: AI는 Lovable AI Gateway를 통해 키 없이 호출. 결제 웹훅·Drive 콜백처럼 외부에서 들어오는 트래픽은 모두 `/api/public/*` 라우트로 받고, 서명/state 검증 후에만 `supabaseAdmin`으로 DB에 기록.
+
+> 다이어그램 원본: [`/mnt/documents/TCG_Hub_아키텍처.mmd`](../mnt/documents/TCG_Hub_아키텍처.mmd) (별도 .mmd 파일 다운로드 가능)
+
 ### 4.1 프런트엔드
 - **프레임워크**: TanStack Start v1 (React 19, Vite 7, SSR 지원)
 - **라우팅**: 파일 기반 (`src/routes/`), `routeTree.gen.ts` 자동 생성
