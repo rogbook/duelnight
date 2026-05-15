@@ -67,7 +67,7 @@ const HEADER_ALIASES: Record<string, keyof CardRow> = {
   name: "name", 이름: "name", 카드명: "name", 카드이름: "name",
   type: "type", 종류: "type", 타입: "type",
   colors: "colors", 색상: "colors", 컬러: "colors", 색: "colors",
-  cost: "cost", 비용: "cost", 코스트: "cost",
+  cost: "cost", 비용: "cost", 코스트: "cost", 라이프: "cost", life: "cost",
   power: "power", 파워: "power", 공격력: "power",
   counter: "counter", 카운터: "counter",
   attribute: "attribute", 속성: "attribute",
