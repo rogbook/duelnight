@@ -414,6 +414,35 @@ function CardDetailDialog({
     },
   });
 
+  const { data: illusts = [] } = useQuery({
+    queryKey: ["card-illusts", card?.code],
+    enabled: !!card,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("card_illustrations")
+        .select("*")
+        .eq("card_code", card!.code)
+        .eq("status", "approved")
+        .order("is_primary", { ascending: false })
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as Illustration[];
+    },
+  });
+
+  const gallery = useMemo(() => {
+    const list: { url: string; label: string }[] = [];
+    if (card?.image_url) list.push({ url: card.image_url, label: "기본" });
+    for (const il of illusts) {
+      if (list.some((x) => x.url === il.image_url)) continue;
+      list.push({ url: il.image_url, label: il.variant_label || "얼터" });
+    }
+    return list;
+  }, [card?.image_url, illusts]);
+
+  const [activeUrl, setActiveUrl] = useState<string | null>(null);
+  const displayUrl = activeUrl ?? card?.image_url ?? null;
+
   const myReview = reviews.find((r) => r.user_id === user?.id) ?? null;
   const avg = useMemo(() => {
     if (reviews.length === 0) return null;
