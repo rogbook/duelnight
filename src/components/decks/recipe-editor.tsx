@@ -9,9 +9,6 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog, DialogContent,
-} from "@/components/ui/dialog";
-import {
   CARD_TYPES_BY_GAME, DECK_MAX_TOTAL, DIGIMON_LEVELS,
   BAN_LIST, checkCanAdd, type Game,
 } from "@/lib/deck-rules";
@@ -33,7 +30,7 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
   const [filterSet,    setFilterSet]    = useState("all");
   const [filterRarity, setFilterRarity] = useState("all");
   const [filterLevel,  setFilterLevel]  = useState("all");
-  const [zoomUrl,      setZoomUrl]      = useState<string | null>(null);
+  const [zoomCard,     setZoomCard]     = useState<{ url: string; name: string } | null>(null);
 
   /* ── Deck cards ── */
   const { data: deckCards = [], refetch } = useQuery<DeckCard[]>({
@@ -122,6 +119,10 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
   }, [deckCards, cardMap, game]);
 
   const getQty = (code: string) => deckCards.find((c) => c.card_code === code)?.quantity ?? 0;
+  const openZoom = (url: string | null | undefined, name: string | null | undefined) => {
+    if (!url) return;
+    setZoomCard({ url, name: name ?? "카드 이미지" });
+  };
 
   /* ── Available filter options ── */
   const { data: sets = [] } = useQuery<string[]>({
@@ -179,11 +180,30 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
 
   return (
     <div className="space-y-4">
-      <Dialog open={!!zoomUrl} onOpenChange={(o) => { if (!o) setZoomUrl(null); }}>
-        <DialogContent className="max-w-md p-2">
-          {zoomUrl && <img src={zoomUrl} alt="확대" className="w-full rounded-lg" />}
-        </DialogContent>
-      </Dialog>
+      {zoomCard && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/90 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${zoomCard.name} 확대 이미지`}
+          onClick={() => setZoomCard(null)}
+        >
+          <button
+            type="button"
+            className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition-opacity hover:opacity-80"
+            onClick={() => setZoomCard(null)}
+            aria-label="확대 이미지 닫기"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <img
+            src={zoomCard.url}
+            alt={`${zoomCard.name} 확대`}
+            className="max-h-[88vh] max-w-[92vw] rounded-lg border border-border bg-card object-contain shadow-lg"
+            onClick={(event) => event.stopPropagation()}
+          />
+        </div>
+      )}
 
       {/* ── Deck Status ── */}
       <div className="rounded-md border border-border bg-muted/20 p-3">
@@ -206,7 +226,7 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
                 <button
                   key={`${dc.id}-${i}`}
                   type="button"
-                  onClick={() => card?.image_url && setZoomUrl(card.image_url)}
+                  onClick={() => openZoom(card?.image_url, card?.name ?? dc.card_code)}
                   className="relative aspect-[2/3] overflow-hidden rounded border border-border bg-muted shadow-sm hover:ring-2 hover:ring-primary/40 transition-all touch-manipulation"
                   title={`${card?.name ?? dc.card_code} (${i + 1}/${dc.quantity})`}
                   aria-label={card?.name ?? dc.card_code}
@@ -231,7 +251,9 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
             return (
               <li key={dc.id} className="flex items-center gap-2 text-xs bg-card p-1.5 rounded border border-border">
                 {card?.image_url ? (
-                   <img src={card.image_url} className="h-8 w-6 rounded object-cover cursor-pointer" onClick={() => setZoomUrl(card.image_url)} />
+                   <button type="button" className="h-8 w-6 shrink-0 overflow-hidden rounded" onClick={() => openZoom(card.image_url, card.name ?? dc.card_code)} aria-label={`${card.name ?? dc.card_code} 확대 보기`}>
+                     <img src={card.image_url} alt={card.name ?? dc.card_code} className="h-full w-full object-cover" />
+                   </button>
                 ) : (
                    <div className="h-8 w-6 bg-muted rounded" />
                 )}
@@ -327,7 +349,7 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
           return (
             <div key={main.name} className={`rounded-xl border p-3.5 space-y-3.5 transition-colors ${isLeaderColor ? "border-primary/40 bg-primary/5 shadow-sm" : "border-border bg-card"}`}>
               <div className="flex gap-4">
-                <button onClick={() => setZoomUrl(main.image_url)} className="relative shrink-0 group self-start">
+                <button onClick={() => openZoom(main.image_url, main.name)} className="relative shrink-0 group self-start">
                   <img src={main.image_url ?? ""} className="h-24 w-16 rounded-md object-cover shadow-md" />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-md"><ZoomIn className="h-5 w-5 text-white" /></div>
                 </button>
