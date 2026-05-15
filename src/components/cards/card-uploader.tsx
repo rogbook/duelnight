@@ -1037,7 +1037,7 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
                         />
                         {(isInternalDup || isDbDup) && (
                           <Badge variant={isInternalDup ? "destructive" : "secondary"} className="mt-1 text-[9px] px-1 py-0">
-                            {isInternalDup ? "내부 중복" : "DB 중복"}
+                            {isInternalDup ? "내부 중복" : (r.image_url ? "추가 일러스트" : "DB 중복")}
                           </Badge>
                         )}
                       </td>
