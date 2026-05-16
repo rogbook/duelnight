@@ -41,7 +41,6 @@ const mainItems = [
 
 const cardItems = [
   { title: "카드 DB", url: "/cards", icon: Library },
-  { title: "카드 등록", url: "/cards/upload", icon: Upload },
   { title: "덱 빌더", url: "/decks", icon: Layers },
   { title: "내 컬렉션", url: "/collection", icon: PackageOpen },
   { title: "팩 시뮬레이터", url: "/packs", icon: Sparkles },
@@ -67,7 +66,8 @@ const accountItems = [
 
 const adminItems = [
   { title: "관리자 콘솔", url: "/admin", icon: Shield },
-  { title: "카드 DB 업로드", url: "/admin/cards", icon: Upload },
+  { title: "카드 등록", url: "/admin/cards", icon: Upload },
+  { title: "카드 관리", url: "/admin/cards/manage", icon: Library },
 ];
 
 export function AppSidebar() {

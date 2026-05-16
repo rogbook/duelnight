@@ -45,6 +45,7 @@ import { Route as AdminCardsRouteImport } from './routes/admin.cards'
 import { Route as AuthGoogleDriveCallbackRouteImport } from './routes/auth.google-drive.callback'
 import { Route as ApiDriveAuthRouteImport } from './routes/api.drive.auth'
 import { Route as AdminCardsReviewRouteImport } from './routes/admin.cards.review'
+import { Route as AdminCardsManageRouteImport } from './routes/admin.cards.manage'
 
 const TierRoute = TierRouteImport.update({
   id: '/tier',
@@ -226,6 +227,11 @@ const AdminCardsReviewRoute = AdminCardsReviewRouteImport.update({
   path: '/review',
   getParentRoute: () => AdminCardsRoute,
 } as any)
+const AdminCardsManageRoute = AdminCardsManageRouteImport.update({
+  id: '/manage',
+  path: '/manage',
+  getParentRoute: () => AdminCardsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -261,6 +267,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/cards/': typeof CardsIndexRoute
   '/decks/': typeof DecksIndexRoute
+  '/admin/cards/manage': typeof AdminCardsManageRoute
   '/admin/cards/review': typeof AdminCardsReviewRoute
   '/api/drive/auth': typeof ApiDriveAuthRoute
   '/auth/google-drive/callback': typeof AuthGoogleDriveCallbackRoute
@@ -298,6 +305,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/cards': typeof CardsIndexRoute
   '/decks': typeof DecksIndexRoute
+  '/admin/cards/manage': typeof AdminCardsManageRoute
   '/admin/cards/review': typeof AdminCardsReviewRoute
   '/api/drive/auth': typeof ApiDriveAuthRoute
   '/auth/google-drive/callback': typeof AuthGoogleDriveCallbackRoute
@@ -337,6 +345,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/cards/': typeof CardsIndexRoute
   '/decks/': typeof DecksIndexRoute
+  '/admin/cards/manage': typeof AdminCardsManageRoute
   '/admin/cards/review': typeof AdminCardsReviewRoute
   '/api/drive/auth': typeof ApiDriveAuthRoute
   '/auth/google-drive/callback': typeof AuthGoogleDriveCallbackRoute
@@ -377,6 +386,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/cards/'
     | '/decks/'
+    | '/admin/cards/manage'
     | '/admin/cards/review'
     | '/api/drive/auth'
     | '/auth/google-drive/callback'
@@ -414,6 +424,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/cards'
     | '/decks'
+    | '/admin/cards/manage'
     | '/admin/cards/review'
     | '/api/drive/auth'
     | '/auth/google-drive/callback'
@@ -452,6 +463,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/cards/'
     | '/decks/'
+    | '/admin/cards/manage'
     | '/admin/cards/review'
     | '/api/drive/auth'
     | '/auth/google-drive/callback'
@@ -743,6 +755,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCardsReviewRouteImport
       parentRoute: typeof AdminCardsRoute
     }
+    '/admin/cards/manage': {
+      id: '/admin/cards/manage'
+      path: '/manage'
+      fullPath: '/admin/cards/manage'
+      preLoaderRoute: typeof AdminCardsManageRouteImport
+      parentRoute: typeof AdminCardsRoute
+    }
   }
 }
 
@@ -802,10 +821,12 @@ const TierRouteChildren: TierRouteChildren = {
 const TierRouteWithChildren = TierRoute._addFileChildren(TierRouteChildren)
 
 interface AdminCardsRouteChildren {
+  AdminCardsManageRoute: typeof AdminCardsManageRoute
   AdminCardsReviewRoute: typeof AdminCardsReviewRoute
 }
 
 const AdminCardsRouteChildren: AdminCardsRouteChildren = {
+  AdminCardsManageRoute: AdminCardsManageRoute,
   AdminCardsReviewRoute: AdminCardsReviewRoute,
 }
 
@@ -847,13 +868,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
