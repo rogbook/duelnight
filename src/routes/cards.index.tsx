@@ -404,7 +404,28 @@ function CardDetailDialog({
   isFav: boolean;
 }) {
   const { user } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const qc = useQueryClient();
+  const [editing, setEditing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!card) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from("cards").delete().eq("code", card.code);
+      if (error) throw error;
+      toast.success("카드 삭제 완료");
+      setConfirmDelete(false);
+      onOpenChange(false);
+      qc.invalidateQueries({ queryKey: ["cards"] });
+    } catch (err) {
+      toast.error("삭제 실패: " + (err as Error).message);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const { data: reviews = [] } = useQuery({
     queryKey: ["card-reviews", card?.code],
