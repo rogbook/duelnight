@@ -66,7 +66,8 @@ const accountItems = [
 
 const adminItems = [
   { title: "관리자 콘솔", url: "/admin", icon: Shield },
-  { title: "카드 DB 업로드", url: "/admin/cards", icon: Upload },
+  { title: "카드 등록", url: "/admin/cards", icon: Upload },
+  { title: "카드 관리", url: "/admin/cards/manage", icon: Library },
 ];
 
 export function AppSidebar() {
