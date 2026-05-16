@@ -1,7 +1,15 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, notFound } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ImageOff } from "lucide-react";
+import { ArrowLeft, ImageOff, Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsAdmin } from "@/hooks/use-is-admin";
+import { Button } from "@/components/ui/button";
+import { EditCardDialog } from "@/components/cards/edit-card-dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { Database } from "@/integrations/supabase/types";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"];
@@ -92,9 +100,37 @@ export const Route = createFileRoute("/cards_/$code")({
 });
 
 function CardDetailPage() {
-  const { card } = Route.useLoaderData();
+  const { card: loaderCard } = Route.useLoaderData();
+  const [card, setCard] = useState<Card>(loaderCard);
   const [illusts, setIllusts] = useState<Illustration[]>([]);
-  const [activeUrl, setActiveUrl] = useState<string | null>(card.image_url ?? null);
+  const [activeUrl, setActiveUrl] = useState<string | null>(loaderCard.image_url ?? null);
+  const [editing, setEditing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const { isAdmin } = useIsAdmin();
+  const navigate = useNavigate();
+
+  const refetch = async () => {
+    const { data } = await supabase.from("cards").select("*").eq("code", card.code).maybeSingle();
+    if (data) {
+      setCard(data as Card);
+      setActiveUrl(data.image_url ?? null);
+    }
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from("cards").delete().eq("code", card.code);
+      if (error) throw error;
+      toast.success("카드 삭제 완료");
+      navigate({ to: "/cards" });
+    } catch (err) {
+      toast.error("삭제 실패: " + (err as Error).message);
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  };
 
   useEffect(() => {
     let alive = true;
