@@ -58,12 +58,15 @@ function AdminCardsPage() {
       />
       <div className="mt-4 flex flex-wrap gap-2">
         <Button asChild variant="outline" size="sm">
-          <Link to="/admin/cards/manage">카드 관리 (편집·삭제) →</Link>
+          <Link to="/cards">카드 DB에서 편집·삭제 →</Link>
         </Button>
         <Button asChild variant="outline" size="sm">
           <Link to="/admin/cards/review">검수 큐 · 감사 로그 →</Link>
         </Button>
       </div>
+      <p className="mt-2 text-xs text-muted-foreground">
+        등록된 카드의 편집·삭제는 카드 DB 상세 페이지에서 관리자 전용으로 진행됩니다.
+      </p>
       <div className="mt-6">
         <CardUploader isAdmin />
       </div>
