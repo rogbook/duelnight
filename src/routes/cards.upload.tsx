@@ -1,17 +1,16 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { Lock } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CardUploader } from "@/components/cards/card-uploader";
 
 export const Route = createFileRoute("/cards/upload")({
   head: () => ({
     meta: [
       { title: "카드 등록 — 덱로그" },
-      { name: "description", content: "엑셀·이미지·폼으로 카드 데이터를 간편하게 등록합니다." },
+      { name: "description", content: "관리자만 카드 데이터를 등록할 수 있습니다." },
     ],
   }),
   component: CardsUploadPage,
@@ -19,50 +18,41 @@ export const Route = createFileRoute("/cards/upload")({
 
 function CardsUploadPage() {
   const { user, loading } = useAuth();
-  const { isAdmin } = useIsAdmin();
+  const { isAdmin, isLoading } = useIsAdmin();
 
-  if (loading) {
+  if (loading || isLoading) {
     return (
       <div className="mx-auto w-full max-w-5xl px-6 py-8">
-        <PageHeader title="카드 등록" description="확인 중…" />
-      </div>
-    );
-  }
-  if (!user) {
-    return (
-      <div className="mx-auto w-full max-w-5xl px-6 py-8">
-        <PageHeader title="카드 등록" description="로그인이 필요합니다" />
-        <Card className="mt-6">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Lock className="h-5 w-5 text-muted-foreground" />
-              <CardTitle>로그인 후 이용해 주세요</CardTitle>
-            </div>
-            <CardDescription>로그인한 사용자만 카드를 등록할 수 있어요.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild variant="outline">
-              <Link to="/login">로그인</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <PageHeader title="카드 등록" description="권한 확인 중…" />
       </div>
     );
   }
 
+  // 관리자는 관리자 페이지로 이동
+  if (user && isAdmin) {
+    return <Navigate to="/admin/cards" replace />;
+  }
+
+  // 일반 사용자/비로그인 모두 접근 차단
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-8">
-      <PageHeader
-        title="카드 등록"
-        description={
-          isAdmin
-            ? "관리자: 같은 코드는 자동 갱신됩니다. 한 장씩 · 엑셀/CSV · 이미지 대량 중 편한 방식을 선택하세요."
-            : "한 장씩 · 엑셀/CSV · 이미지 대량 중 편한 방식을 선택하세요. 이미 등록된 카드(코드 중복)는 건너뜁니다."
-        }
-      />
-      <div className="mt-6">
-        <CardUploader isAdmin={isAdmin} />
-      </div>
+      <PageHeader title="카드 등록" description="관리자 전용 기능입니다" />
+      <Card className="mt-6">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Lock className="h-5 w-5 text-muted-foreground" />
+            <CardTitle>접근 권한이 없습니다</CardTitle>
+          </div>
+          <CardDescription>
+            카드 등록·수정은 관리자만 수행할 수 있어요. 누락되었거나 잘못된 카드를 발견하면 운영자에게 문의해 주세요.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button asChild variant="outline">
+            <Link to="/cards">카드 DB 둘러보기</Link>
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }
