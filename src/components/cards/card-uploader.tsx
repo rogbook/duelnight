@@ -1157,8 +1157,13 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
         uploaded.push(pub.publicUrl);
       }
       if (uploaded.length) {
-        setR(prev => ({ ...prev, extra_images: [...(prev.extra_images ?? []), ...uploaded] }));
-        toast.success(`추가 일러스트 ${uploaded.length}장 업로드 완료`);
+        setR(prev => {
+          if (!prev.image_url) {
+            return { ...prev, image_url: uploaded[0], extra_images: [...(prev.extra_images ?? []), ...uploaded.slice(1)] };
+          }
+          return { ...prev, extra_images: [...(prev.extra_images ?? []), ...uploaded] };
+        });
+        toast.success(`이미지 ${uploaded.length}장 업로드 완료`);
       }
     } finally {
       setImgUploading(false);
@@ -1166,9 +1171,6 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
     }
   };
 
-  const removeExtra = (idx: number) => {
-    setR(prev => ({ ...prev, extra_images: (prev.extra_images ?? []).filter((_, i) => i !== idx) }));
-  };
 
   const submit = () => {
     if (!r.code || !r.set_code || !r.name) { toast.error("코드, 세트, 이름은 필수입니다"); return; }
