@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useMemo, useEffect } from "react";
-import { Library, Search, Star, X, ImageOff } from "lucide-react";
+import { Library, Search, Star, X, ImageOff, Pencil, Trash2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsAdmin } from "@/hooks/use-is-admin";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { EditCardDialog } from "@/components/cards/edit-card-dialog";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -398,7 +404,28 @@ function CardDetailDialog({
   isFav: boolean;
 }) {
   const { user } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const qc = useQueryClient();
+  const [editing, setEditing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!card) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from("cards").delete().eq("code", card.code);
+      if (error) throw error;
+      toast.success("카드 삭제 완료");
+      setConfirmDelete(false);
+      onOpenChange(false);
+      qc.invalidateQueries({ queryKey: ["cards"] });
+    } catch (err) {
+      toast.error("삭제 실패: " + (err as Error).message);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const { data: reviews = [] } = useQuery({
     queryKey: ["card-reviews", card?.code],
@@ -476,6 +503,7 @@ function CardDetailDialog({
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         {card && (
@@ -499,6 +527,21 @@ function CardDetailDialog({
                 </button>
               </DialogTitle>
             </DialogHeader>
+            {isAdmin && (
+              <div className="flex justify-end gap-1.5">
+                <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
+                  <Pencil className="h-3.5 w-3.5 mr-1" />편집
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => setConfirmDelete(true)}
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-1" />삭제
+                </Button>
+              </div>
+            )}
             <div className="grid gap-4 sm:grid-cols-[200px_1fr]">
               <div>
                 <div className="aspect-[5/7] w-full overflow-hidden rounded-md bg-muted">
@@ -624,6 +667,39 @@ function CardDetailDialog({
         )}
       </DialogContent>
     </Dialog>
+
+      {editing && card && (
+        <EditCardDialog
+          card={card}
+          onClose={() => setEditing(false)}
+          onSaved={() => {
+            setEditing(false);
+            qc.invalidateQueries({ queryKey: ["cards"] });
+          }}
+        />
+      )}
+
+      <AlertDialog open={confirmDelete} onOpenChange={(o) => { if (!o && !deleting) setConfirmDelete(false); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>카드를 삭제할까요?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {card?.code} · {card?.name} 카드를 영구 삭제합니다. 이 작업은 되돌릴 수 없습니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>취소</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleDelete}
+              disabled={deleting}
+            >
+              {deleting ? "삭제 중…" : "삭제"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
