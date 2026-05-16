@@ -526,6 +526,21 @@ function CardDetailDialog({
                 </button>
               </DialogTitle>
             </DialogHeader>
+            {isAdmin && (
+              <div className="flex justify-end gap-1.5">
+                <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
+                  <Pencil className="h-3.5 w-3.5 mr-1" />편집
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => setConfirmDelete(true)}
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-1" />삭제
+                </Button>
+              </div>
+            )}
             <div className="grid gap-4 sm:grid-cols-[200px_1fr]">
               <div>
                 <div className="aspect-[5/7] w-full overflow-hidden rounded-md bg-muted">
