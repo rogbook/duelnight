@@ -1140,23 +1140,8 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
   const [r, setR] = useState<CardRow>(emptyRow());
   const [imgUploading, setImgUploading] = useState(false);
 
-  const onPickImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    setImgUploading(true);
-    try {
-      const path = `${r.set_code || "misc"}/${(r.code || "card") + "-" + Date.now()}.${f.name.split(".").pop()}`;
-      const { error } = await supabase.storage.from("card-images").upload(path, f);
-      if (error) throw error;
-      const { data: pub } = supabase.storage.from("card-images").getPublicUrl(path);
-      setR(prev => ({ ...prev, image_url: pub.publicUrl }));
-      toast.success("이미지 업로드 완료");
-    } catch (err) {
-      toast.error("업로드 실패: " + (err as Error).message);
-    } finally {
-      setImgUploading(false);
-    }
-  };
+  // 단일 이미지 픽은 더 이상 사용하지 않음 (통합 이미지 목록 사용)
+
 
   const onPickExtraImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
