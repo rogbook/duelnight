@@ -157,12 +157,29 @@ function CardDetailPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">
-      <Link
-        to="/cards"
-        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" /> 카드 DB
-      </Link>
+      <div className="flex items-center justify-between gap-2">
+        <Link
+          to="/cards"
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> 카드 DB
+        </Link>
+        {isAdmin && (
+          <div className="flex gap-1.5">
+            <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
+              <Pencil className="h-3.5 w-3.5 mr-1" />편집
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-destructive hover:text-destructive"
+              onClick={() => setConfirmDelete(true)}
+            >
+              <Trash2 className="h-3.5 w-3.5 mr-1" />삭제
+            </Button>
+          </div>
+        )}
+      </div>
       <div className="mt-4 grid gap-6 sm:grid-cols-[260px_1fr]">
         <div>
           <div className="aspect-[5/7] w-full overflow-hidden rounded-lg border border-border bg-muted">
