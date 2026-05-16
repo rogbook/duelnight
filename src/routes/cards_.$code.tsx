@@ -1,7 +1,15 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, notFound } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ImageOff } from "lucide-react";
+import { ArrowLeft, ImageOff, Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsAdmin } from "@/hooks/use-is-admin";
+import { Button } from "@/components/ui/button";
+import { EditCardDialog } from "@/components/cards/edit-card-dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { Database } from "@/integrations/supabase/types";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"];
@@ -92,9 +100,37 @@ export const Route = createFileRoute("/cards_/$code")({
 });
 
 function CardDetailPage() {
-  const { card } = Route.useLoaderData();
+  const { card: loaderCard } = Route.useLoaderData();
+  const [card, setCard] = useState<Card>(loaderCard);
   const [illusts, setIllusts] = useState<Illustration[]>([]);
-  const [activeUrl, setActiveUrl] = useState<string | null>(card.image_url ?? null);
+  const [activeUrl, setActiveUrl] = useState<string | null>(loaderCard.image_url ?? null);
+  const [editing, setEditing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const { isAdmin } = useIsAdmin();
+  const navigate = useNavigate();
+
+  const refetch = async () => {
+    const { data } = await supabase.from("cards").select("*").eq("code", card.code).maybeSingle();
+    if (data) {
+      setCard(data as Card);
+      setActiveUrl(data.image_url ?? null);
+    }
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from("cards").delete().eq("code", card.code);
+      if (error) throw error;
+      toast.success("카드 삭제 완료");
+      navigate({ to: "/cards" });
+    } catch (err) {
+      toast.error("삭제 실패: " + (err as Error).message);
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  };
 
   useEffect(() => {
     let alive = true;
@@ -121,12 +157,29 @@ function CardDetailPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">
-      <Link
-        to="/cards"
-        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" /> 카드 DB
-      </Link>
+      <div className="flex items-center justify-between gap-2">
+        <Link
+          to="/cards"
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> 카드 DB
+        </Link>
+        {isAdmin && (
+          <div className="flex gap-1.5">
+            <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
+              <Pencil className="h-3.5 w-3.5 mr-1" />편집
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-destructive hover:text-destructive"
+              onClick={() => setConfirmDelete(true)}
+            >
+              <Trash2 className="h-3.5 w-3.5 mr-1" />삭제
+            </Button>
+          </div>
+        )}
+      </div>
       <div className="mt-4 grid gap-6 sm:grid-cols-[260px_1fr]">
         <div>
           <div className="aspect-[5/7] w-full overflow-hidden rounded-lg border border-border bg-muted">
@@ -210,6 +263,35 @@ function CardDetailPage() {
           )}
         </div>
       </div>
+
+      {editing && (
+        <EditCardDialog
+          card={card}
+          onClose={() => setEditing(false)}
+          onSaved={() => { setEditing(false); refetch(); }}
+        />
+      )}
+
+      <AlertDialog open={confirmDelete} onOpenChange={(o) => { if (!o && !deleting) setConfirmDelete(false); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>카드를 삭제할까요?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {card.code} · {card.name} 카드를 영구 삭제합니다. 이 작업은 되돌릴 수 없습니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>취소</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleDelete}
+              disabled={deleting}
+            >
+              {deleting ? "삭제 중…" : "삭제"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
