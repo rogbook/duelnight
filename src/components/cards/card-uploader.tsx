@@ -1252,61 +1252,89 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
         <Label>효과</Label>
         <Textarea value={r.effect ?? ""} onChange={e => setR({ ...r, effect: e.target.value || null })} rows={3} />
       </div>
-      <div className="md:col-span-2 space-y-1.5">
-        <Label>카드 이미지</Label>
-        <div className="flex items-center gap-2">
-          <Input type="file" accept="image/*" onChange={onPickImage} disabled={imgUploading} />
-          {r.image_url && <img src={r.image_url} alt="" className="h-12 w-9 rounded object-cover" />}
+      <div className="md:col-span-2 space-y-2 rounded-md border border-dashed p-3">
+        <div className="flex items-center justify-between">
+          <Label>카드 이미지 (여러 장 가능)</Label>
+          <span className="text-[11px] text-muted-foreground">첫 번째 이미지가 <b>메인 카드</b>로 카드 DB 상세에 표시됩니다.</span>
         </div>
-        <Input
-          value={r.image_url ?? ""}
-          onChange={e => setR({ ...r, image_url: e.target.value || null })}
-          onBlur={e => setR({ ...r, image_url: normalizeImageUrl(e.target.value) })}
-          placeholder="이미지 URL 또는 구글 드라이브 공유 링크 (예: https://drive.google.com/file/d/...)"
-          className="text-xs font-mono"
-        />
+
+        {(() => {
+          const all = [r.image_url, ...(r.extra_images ?? [])].filter((u): u is string => !!u);
+          if (all.length === 0) return null;
+          const promote = (idx: number) => {
+            if (idx === 0) return;
+            const next = [...all];
+            [next[0], next[idx]] = [next[idx], next[0]];
+            setR(prev => ({ ...prev, image_url: next[0], extra_images: next.slice(1) }));
+          };
+          const remove = (idx: number) => {
+            const next = all.filter((_, i) => i !== idx);
+            setR(prev => ({ ...prev, image_url: next[0] ?? null, extra_images: next.slice(1) }));
+          };
+          return (
+            <div className="flex flex-wrap gap-3 pt-2">
+              {all.map((u, i) => (
+                <div key={i} className="relative">
+                  <img src={u} alt="" className={`h-24 w-16 rounded object-cover border-2 ${i === 0 ? "border-primary" : "border-border"}`} />
+                  {i === 0 ? (
+                    <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] px-1.5 py-0 h-4 gap-0.5">
+                      <Star className="h-2.5 w-2.5" />메인
+                    </Badge>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => promote(i)}
+                      className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-secondary text-secondary-foreground p-0.5 border shadow-sm"
+                      title="메인 카드로 설정"
+                      aria-label="메인 카드로 설정"
+                    >
+                      <ArrowUp className="h-3 w-3" />
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => remove(i)}
+                    className="absolute -right-1 -bottom-1 rounded-full bg-destructive text-destructive-foreground p-0.5"
+                    aria-label="삭제"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <label className="inline-flex">
+            <input type="file" accept="image/*" multiple className="hidden" onChange={onPickExtraImages} disabled={imgUploading} />
+            <span className="inline-flex items-center gap-1 rounded-md border bg-background px-3 py-1.5 text-sm hover:bg-accent cursor-pointer">
+              <Plus className="h-4 w-4" /> 이미지 추가
+            </span>
+          </label>
+          <Input
+            placeholder="또는 이미지 URL / 구글 드라이브 링크 붙여넣고 Enter"
+            className="text-xs font-mono flex-1 min-w-[240px]"
+            onKeyDown={(e) => {
+              if (e.key !== "Enter") return;
+              e.preventDefault();
+              const v = (e.target as HTMLInputElement).value.trim();
+              if (!v) return;
+              const url = normalizeImageUrl(v);
+              if (!url) return;
+              setR(prev => {
+                if (!prev.image_url) return { ...prev, image_url: url };
+                return { ...prev, extra_images: [...(prev.extra_images ?? []), url] };
+              });
+              (e.target as HTMLInputElement).value = "";
+            }}
+          />
+        </div>
         <p className="text-[11px] text-muted-foreground">
-          구글 드라이브 링크는 자동으로 표시 가능한 주소로 변환됩니다. 파일은 <b>"링크가 있는 모든 사용자"</b> 공개로 설정해 주세요.
+          위쪽 화살표(↑)로 다른 이미지를 <b>메인 카드</b>로 승격할 수 있어요. 메인 이미지는 카드 DB 상세에서 기본으로 보이고, 나머지는 얼터/패러랠 갤러리로 노출됩니다. 구글 드라이브 링크는 자동 변환됩니다 (<b>"링크가 있는 모든 사용자"</b> 공개 필요).
         </p>
       </div>
-      <div className="md:col-span-2 space-y-1.5 rounded-md border border-dashed p-3">
-        <Label>추가 일러스트 (얼터/패러랠 등 · 같은 카드의 다른 그림)</Label>
-        <Input type="file" accept="image/*" multiple onChange={onPickExtraImages} disabled={imgUploading} />
-        <Input
-          placeholder="또는 이미지 URL 붙여넣기 후 Enter"
-          className="text-xs font-mono"
-          onKeyDown={(e) => {
-            if (e.key !== "Enter") return;
-            e.preventDefault();
-            const v = (e.target as HTMLInputElement).value.trim();
-            if (!v) return;
-            const url = normalizeImageUrl(v);
-            if (!url) return;
-            setR(prev => ({ ...prev, extra_images: [...(prev.extra_images ?? []), url] }));
-            (e.target as HTMLInputElement).value = "";
-          }}
-        />
-        {(r.extra_images?.length ?? 0) > 0 && (
-          <div className="flex flex-wrap gap-2 pt-1">
-            {r.extra_images!.map((u, i) => (
-              <div key={i} className="relative">
-                <img src={u} alt="" className="h-16 w-12 rounded object-cover border" />
-                <button
-                  type="button"
-                  onClick={() => removeExtra(i)}
-                  className="absolute -right-1 -top-1 rounded-full bg-destructive text-destructive-foreground p-0.5"
-                  aria-label="삭제"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-        <p className="text-[11px] text-muted-foreground">
-          기본 이미지 외에 추가로 등록할 일러스트입니다. 검수 승인 후 카드 상세에서 갤러리로 노출됩니다.
-        </p>
-      </div>
+
       <div className="md:col-span-2 flex justify-end">
         <Button onClick={submit}><Plus className="mr-1 h-4 w-4" />표에 추가</Button>
       </div>
