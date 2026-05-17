@@ -149,12 +149,14 @@ function CardDetailPage() {
   }, [card.code]);
 
   const gallery: { url: string; label: string | null }[] = [];
-  if (card.image_url) gallery.push({ url: card.image_url, label: "기본" });
+  const mainUrl = normalizeImageUrl(card.image_url);
+  if (mainUrl) gallery.push({ url: mainUrl, label: "기본" });
   for (const il of illusts) {
-    if (gallery.some((x) => x.url === il.image_url)) continue;
-    gallery.push({ url: il.image_url, label: il.variant_label || "얼터" });
+    const u = normalizeImageUrl(il.image_url);
+    if (!u || gallery.some((x) => x.url === u)) continue;
+    gallery.push({ url: u, label: il.variant_label || "얼터" });
   }
-  const displayUrl = activeUrl ?? card.image_url ?? null;
+  const displayUrl = activeUrl ?? mainUrl ?? null;
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">
