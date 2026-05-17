@@ -460,16 +460,18 @@ function CardDetailDialog({
 
   const gallery = useMemo(() => {
     const list: { url: string; label: string }[] = [];
-    if (card?.image_url) list.push({ url: card.image_url, label: "기본" });
+    const main = normalizeImageUrl(card?.image_url);
+    if (main) list.push({ url: main, label: "기본" });
     for (const il of illusts) {
-      if (list.some((x) => x.url === il.image_url)) continue;
-      list.push({ url: il.image_url, label: il.variant_label || "얼터" });
+      const u = normalizeImageUrl(il.image_url);
+      if (!u || list.some((x) => x.url === u)) continue;
+      list.push({ url: u, label: il.variant_label || "얼터" });
     }
     return list;
   }, [card?.image_url, illusts]);
 
   const [activeUrl, setActiveUrl] = useState<string | null>(null);
-  const displayUrl = activeUrl ?? card?.image_url ?? null;
+  const displayUrl = activeUrl ?? normalizeImageUrl(card?.image_url) ?? null;
 
   useEffect(() => {
     setActiveUrl(null);
