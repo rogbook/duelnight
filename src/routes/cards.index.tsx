@@ -336,13 +336,19 @@ function CardTile({
         className="block w-full overflow-hidden rounded-lg border border-border bg-card text-left transition hover:border-primary"
       >
         <div className="relative aspect-[5/7] w-full bg-muted">
-          {card.image_url ? (
+          {(() => { const u = normalizeImageUrl(card.image_url); return u ? (
             <img
-              src={card.image_url}
+              src={u}
               alt={card.name}
               loading="lazy"
               className="h-full w-full object-cover"
             />
+          ) : (
+            <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground">
+              <ImageOff className="h-6 w-6" />
+              <span className="text-[10px]">이미지 없음</span>
+            </div>
+          ); })()}
           ) : (
             <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground">
               <ImageOff className="h-6 w-6" />
