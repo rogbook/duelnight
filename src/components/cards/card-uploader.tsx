@@ -1319,12 +1319,25 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
         })()}
 
         <div className="flex flex-wrap items-center gap-2 pt-1">
-          <label className="inline-flex">
-            <input type="file" accept="image/*" multiple className="hidden" onChange={onPickExtraImages} disabled={imgUploading} />
-            <span className="inline-flex items-center gap-1 rounded-md border bg-background px-3 py-1.5 text-sm hover:bg-accent cursor-pointer">
-              <Plus className="h-4 w-4" /> 이미지 추가
-            </span>
-          </label>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={onPickExtraImages}
+            disabled={imgUploading}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={imgUploading}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            {imgUploading ? "업로드 중..." : "이미지 추가"}
+          </Button>
           <Input
             placeholder="또는 이미지 URL / 구글 드라이브 링크 붙여넣고 Enter"
             className="text-xs font-mono flex-1 min-w-[240px]"
