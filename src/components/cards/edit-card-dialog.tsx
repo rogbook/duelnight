@@ -71,7 +71,7 @@ export function EditCardDialog({
           attribute: form.attribute.trim() || null,
           rarity: form.rarity.trim() || null,
           effect: form.effect.trim() || null,
-          image_url: form.image_url.trim() || null,
+          image_url: normalizeImageUrl(form.image_url.trim()) || null,
         })
         .eq("code", card.code);
       if (error) throw error;
