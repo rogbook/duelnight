@@ -125,9 +125,9 @@ function PendingQueue() {
         {items.length === 0 && <p className="text-sm text-muted-foreground py-6 text-center">대기 중인 카드가 없습니다.</p>}
         {items.map(it => (
           <div key={it.code} className="flex gap-3 rounded-md border p-3">
-            {it.image_url
-              ? <img src={it.image_url} alt="" className="h-28 w-20 rounded object-cover bg-muted" />
-              : <div className="h-28 w-20 rounded bg-muted" />}
+            {(() => { const u = normalizeImageUrl(it.image_url); return u
+              ? <img src={u} alt="" className="h-28 w-20 rounded object-cover bg-muted" />
+              : <div className="h-28 w-20 rounded bg-muted" />; })()}
             <div className="flex-1 min-w-0 space-y-1.5">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-mono text-xs">{it.code}</span>
