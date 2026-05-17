@@ -115,7 +115,7 @@ function CardDetailPage() {
     const { data } = await supabase.from("cards").select("*").eq("code", card.code).maybeSingle();
     if (data) {
       setCard(data as Card);
-      setActiveUrl(data.image_url ?? null);
+      setActiveUrl(normalizeImageUrl(data.image_url));
     }
   };
 
