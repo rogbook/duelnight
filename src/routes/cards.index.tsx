@@ -349,12 +349,6 @@ function CardTile({
               <span className="text-[10px]">이미지 없음</span>
             </div>
           ); })()}
-          ) : (
-            <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground">
-              <ImageOff className="h-6 w-6" />
-              <span className="text-[10px]">이미지 없음</span>
-            </div>
-          )}
           {card.type === "leader" && (
             <span className="absolute left-1 top-1 rounded bg-primary px-1.5 py-0.5 text-[10px] font-bold text-primary-foreground">
               리더
