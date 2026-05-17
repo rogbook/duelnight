@@ -1031,7 +1031,7 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
                       <td className="px-2 py-1">
                         <div className="flex flex-col gap-1">
                           {r.image_url ? (
-                            <img src={r.image_url} alt="" className="h-10 w-7 rounded object-cover" />
+                            <img src={normalizeImageUrl(r.image_url) ?? r.image_url} alt="" className="h-10 w-7 rounded object-cover" />
                           ) : <div className="h-10 w-7 rounded bg-muted" />}
                           <Input
                             value={r.image_url ?? ""}

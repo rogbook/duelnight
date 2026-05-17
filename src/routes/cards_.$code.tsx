@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { Button } from "@/components/ui/button";
 import { EditCardDialog } from "@/components/cards/edit-card-dialog";
+import { normalizeImageUrl } from "@/components/cards/card-uploader";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -48,7 +49,7 @@ export const Route = createFileRoute("/cards_/$code")({
         `${TYPE_LABEL[c.type] ?? c.type} · ${c.set_code}`) +
       ` · ${c.set_code}`;
     const url = `${SITE}/cards/${encodeURIComponent(c.code)}`;
-    const ogImage = c.image_url ?? undefined;
+    const ogImage = normalizeImageUrl(c.image_url) ?? undefined;
     return {
       meta: [
         { title },
@@ -103,7 +104,7 @@ function CardDetailPage() {
   const { card: loaderCard } = Route.useLoaderData();
   const [card, setCard] = useState<Card>(loaderCard);
   const [illusts, setIllusts] = useState<Illustration[]>([]);
-  const [activeUrl, setActiveUrl] = useState<string | null>(loaderCard.image_url ?? null);
+  const [activeUrl, setActiveUrl] = useState<string | null>(normalizeImageUrl(loaderCard.image_url));
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -114,7 +115,7 @@ function CardDetailPage() {
     const { data } = await supabase.from("cards").select("*").eq("code", card.code).maybeSingle();
     if (data) {
       setCard(data as Card);
-      setActiveUrl(data.image_url ?? null);
+      setActiveUrl(normalizeImageUrl(data.image_url));
     }
   };
 
@@ -148,12 +149,14 @@ function CardDetailPage() {
   }, [card.code]);
 
   const gallery: { url: string; label: string | null }[] = [];
-  if (card.image_url) gallery.push({ url: card.image_url, label: "기본" });
+  const mainUrl = normalizeImageUrl(card.image_url);
+  if (mainUrl) gallery.push({ url: mainUrl, label: "기본" });
   for (const il of illusts) {
-    if (gallery.some((x) => x.url === il.image_url)) continue;
-    gallery.push({ url: il.image_url, label: il.variant_label || "얼터" });
+    const u = normalizeImageUrl(il.image_url);
+    if (!u || gallery.some((x) => x.url === u)) continue;
+    gallery.push({ url: u, label: il.variant_label || "얼터" });
   }
-  const displayUrl = activeUrl ?? card.image_url ?? null;
+  const displayUrl = activeUrl ?? mainUrl ?? null;
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">

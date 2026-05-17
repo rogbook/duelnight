@@ -29,6 +29,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { EditCardDialog } from "@/components/cards/edit-card-dialog";
+import { normalizeImageUrl } from "@/components/cards/card-uploader";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -335,9 +336,9 @@ function CardTile({
         className="block w-full overflow-hidden rounded-lg border border-border bg-card text-left transition hover:border-primary"
       >
         <div className="relative aspect-[5/7] w-full bg-muted">
-          {card.image_url ? (
+          {(() => { const u = normalizeImageUrl(card.image_url); return u ? (
             <img
-              src={card.image_url}
+              src={u}
               alt={card.name}
               loading="lazy"
               className="h-full w-full object-cover"
@@ -347,7 +348,7 @@ function CardTile({
               <ImageOff className="h-6 w-6" />
               <span className="text-[10px]">이미지 없음</span>
             </div>
-          )}
+          ); })()}
           {card.type === "leader" && (
             <span className="absolute left-1 top-1 rounded bg-primary px-1.5 py-0.5 text-[10px] font-bold text-primary-foreground">
               리더
@@ -459,16 +460,18 @@ function CardDetailDialog({
 
   const gallery = useMemo(() => {
     const list: { url: string; label: string }[] = [];
-    if (card?.image_url) list.push({ url: card.image_url, label: "기본" });
+    const main = normalizeImageUrl(card?.image_url);
+    if (main) list.push({ url: main, label: "기본" });
     for (const il of illusts) {
-      if (list.some((x) => x.url === il.image_url)) continue;
-      list.push({ url: il.image_url, label: il.variant_label || "얼터" });
+      const u = normalizeImageUrl(il.image_url);
+      if (!u || list.some((x) => x.url === u)) continue;
+      list.push({ url: u, label: il.variant_label || "얼터" });
     }
     return list;
   }, [card?.image_url, illusts]);
 
   const [activeUrl, setActiveUrl] = useState<string | null>(null);
-  const displayUrl = activeUrl ?? card?.image_url ?? null;
+  const displayUrl = activeUrl ?? normalizeImageUrl(card?.image_url) ?? null;
 
   useEffect(() => {
     setActiveUrl(null);

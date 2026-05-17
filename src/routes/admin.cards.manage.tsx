@@ -216,11 +216,11 @@ function ManageInner() {
         {rows.map((c) => (
           <div key={c.code} className="flex gap-3 rounded-lg border border-border bg-card p-3">
             <div className="flex h-20 w-14 shrink-0 items-center justify-center overflow-hidden rounded bg-muted">
-              {c.image_url ? (
-                <img src={c.image_url} alt={c.name} className="h-full w-full object-cover" />
+              {(() => { const u = normalizeImageUrl(c.image_url); return u ? (
+                <img src={u} alt={c.name} className="h-full w-full object-cover" />
               ) : (
                 <ImageOff className="h-5 w-5 text-muted-foreground" />
-              )}
+              ); })()}
             </div>
             <div className="flex min-w-0 flex-1 flex-col">
               <div className="flex items-center gap-1.5">
