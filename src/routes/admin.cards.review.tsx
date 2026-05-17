@@ -221,7 +221,7 @@ function PendingIllusts() {
         {items.length === 0 && <p className="text-sm text-muted-foreground py-6 text-center">대기 중인 일러스트가 없습니다.</p>}
         {items.map(it => (
           <div key={it.id} className="flex gap-3 rounded-md border p-3">
-            <img src={it.image_url} alt="" className="h-28 w-20 rounded object-cover bg-muted" />
+            <img src={normalizeImageUrl(it.image_url) ?? it.image_url} alt="" className="h-28 w-20 rounded object-cover bg-muted" />
             <div className="flex-1 min-w-0 space-y-1.5">
               <div className="flex flex-wrap items-center gap-2">
                 <Link to="/cards/$code" params={{ code: it.card_code }} className="font-mono text-xs hover:underline">
