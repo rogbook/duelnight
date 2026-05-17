@@ -407,10 +407,15 @@ function EditCardDialog({
             <Input value={form.rarity} onChange={(e) => setForm({ ...form, rarity: e.target.value })} />
           </div>
           <div className="sm:col-span-2">
-            <Label className="text-xs">이미지 URL</Label>
-            <Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} />
+            <Label className="text-xs">이미지 URL (구글 드라이브 공유 링크 자동 변환)</Label>
+            <Input
+              value={form.image_url}
+              onChange={(e) => setForm({ ...form, image_url: e.target.value })}
+              onBlur={(e) => setForm({ ...form, image_url: normalizeImageUrl(e.target.value) ?? "" })}
+              placeholder="https://... 또는 https://drive.google.com/file/d/.../view"
+            />
             {form.image_url && (
-              <img src={form.image_url} alt="" className="mt-2 h-32 rounded border border-border object-contain" />
+              <img src={normalizeImageUrl(form.image_url) ?? form.image_url} alt="" className="mt-2 h-32 rounded border border-border object-contain" />
             )}
           </div>
           <div className="sm:col-span-2">
