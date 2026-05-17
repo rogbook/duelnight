@@ -49,7 +49,7 @@ export const Route = createFileRoute("/cards_/$code")({
         `${TYPE_LABEL[c.type] ?? c.type} · ${c.set_code}`) +
       ` · ${c.set_code}`;
     const url = `${SITE}/cards/${encodeURIComponent(c.code)}`;
-    const ogImage = c.image_url ?? undefined;
+    const ogImage = normalizeImageUrl(c.image_url) ?? undefined;
     return {
       meta: [
         { title },
