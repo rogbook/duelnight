@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeImageUrl } from "@/components/cards/card-uploader";
 
 export const Route = createFileRoute("/admin/cards/review")({
   head: () => ({
