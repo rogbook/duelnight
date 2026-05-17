@@ -1139,22 +1139,49 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
 function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
   const [r, setR] = useState<CardRow>(emptyRow());
   const [imgUploading, setImgUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 단일 이미지 픽은 더 이상 사용하지 않음 (통합 이미지 목록 사용)
-
+  const safeSegment = (s: string, fallback: string) =>
+    (s || "").trim().replace(/[^A-Za-z0-9_-]/g, "").toUpperCase() || fallback;
 
   const onPickExtraImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
+    e.target.value = "";
     if (!files.length) return;
+    // 로그인 확인 - 비로그인이면 upload RLS에 막힘
+    const { data: sess } = await supabase.auth.getSession();
+    if (!sess.session) {
+      toast.error("로그인이 필요합니다. 다시 로그인 후 시도해 주세요.");
+      return;
+    }
     setImgUploading(true);
     const uploaded: string[] = [];
     try {
-      for (const f of files) {
-        const path = `${r.set_code || "misc"}/${(r.code || "card") + "-alt-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6)}.${f.name.split(".").pop()}`;
-        const { error } = await supabase.storage.from("card-images").upload(path, f);
-        if (error) { toast.error(`${f.name}: ${error.message}`); continue; }
-        const { data: pub } = supabase.storage.from("card-images").getPublicUrl(path);
-        uploaded.push(pub.publicUrl);
+      for (const original of files) {
+        if (!original.type.startsWith("image/")) {
+          toast.error(`${original.name}: 이미지 파일이 아닙니다`);
+          continue;
+        }
+        try {
+          const f = await compressToWebp(original, { maxWidth: 1024, quality: 0.85 });
+          const setSeg = safeSegment(r.set_code, "misc");
+          const codeSeg = safeSegment(r.code, "card");
+          const rand = Math.random().toString(36).slice(2, 8);
+          const path = `${setSeg}/${codeSeg}-${Date.now()}-${rand}.webp`;
+          const { error } = await supabase.storage
+            .from("card-images")
+            .upload(path, f, { cacheControl: "3600", upsert: false, contentType: "image/webp" });
+          if (error) {
+            console.error("[card-images upload]", error);
+            toast.error(`${original.name}: ${error.message}`);
+            continue;
+          }
+          const { data: pub } = supabase.storage.from("card-images").getPublicUrl(path);
+          if (pub?.publicUrl) uploaded.push(pub.publicUrl);
+        } catch (err) {
+          console.error("[image upload error]", err);
+          toast.error(`${original.name}: ${(err as Error).message}`);
+        }
       }
       if (uploaded.length) {
         setR(prev => {
@@ -1167,7 +1194,6 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
       }
     } finally {
       setImgUploading(false);
-      e.target.value = "";
     }
   };
 
@@ -1293,12 +1319,25 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
         })()}
 
         <div className="flex flex-wrap items-center gap-2 pt-1">
-          <label className="inline-flex">
-            <input type="file" accept="image/*" multiple className="hidden" onChange={onPickExtraImages} disabled={imgUploading} />
-            <span className="inline-flex items-center gap-1 rounded-md border bg-background px-3 py-1.5 text-sm hover:bg-accent cursor-pointer">
-              <Plus className="h-4 w-4" /> 이미지 추가
-            </span>
-          </label>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={onPickExtraImages}
+            disabled={imgUploading}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={imgUploading}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            {imgUploading ? "업로드 중..." : "이미지 추가"}
+          </Button>
           <Input
             placeholder="또는 이미지 URL / 구글 드라이브 링크 붙여넣고 Enter"
             className="text-xs font-mono flex-1 min-w-[240px]"
