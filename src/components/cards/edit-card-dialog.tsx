@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { normalizeImageUrl } from "@/components/cards/card-uploader";
 
 type CardRow = Database["public"]["Tables"]["cards"]["Row"];
 type Game = Database["public"]["Enums"]["tcg_game"];
