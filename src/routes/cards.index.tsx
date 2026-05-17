@@ -29,6 +29,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { EditCardDialog } from "@/components/cards/edit-card-dialog";
+import { normalizeImageUrl } from "@/components/cards/card-uploader";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 
