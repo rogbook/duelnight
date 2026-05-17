@@ -104,7 +104,7 @@ function CardDetailPage() {
   const { card: loaderCard } = Route.useLoaderData();
   const [card, setCard] = useState<Card>(loaderCard);
   const [illusts, setIllusts] = useState<Illustration[]>([]);
-  const [activeUrl, setActiveUrl] = useState<string | null>(loaderCard.image_url ?? null);
+  const [activeUrl, setActiveUrl] = useState<string | null>(normalizeImageUrl(loaderCard.image_url));
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
