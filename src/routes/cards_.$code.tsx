@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { Button } from "@/components/ui/button";
 import { EditCardDialog } from "@/components/cards/edit-card-dialog";
+import { normalizeImageUrl } from "@/components/cards/card-uploader";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
