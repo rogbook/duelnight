@@ -1271,52 +1271,10 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
           <span className="text-[11px] text-muted-foreground">첫 번째 이미지가 <b>메인 카드</b>로 카드 DB 상세에 표시됩니다.</span>
         </div>
 
-        {(() => {
-          const all = [r.image_url, ...(r.extra_images ?? [])].filter((u): u is string => !!u);
-          if (all.length === 0) return null;
-          const promote = (idx: number) => {
-            if (idx === 0) return;
-            const next = [...all];
-            [next[0], next[idx]] = [next[idx], next[0]];
-            setR(prev => ({ ...prev, image_url: next[0], extra_images: next.slice(1) }));
-          };
-          const remove = (idx: number) => {
-            const next = all.filter((_, i) => i !== idx);
-            setR(prev => ({ ...prev, image_url: next[0] ?? null, extra_images: next.slice(1) }));
-          };
-          return (
-            <div className="flex flex-wrap gap-3 pt-2">
-              {all.map((u, i) => (
-                <div key={i} className="relative">
-                  <img src={u} alt="" className={`h-24 w-16 rounded object-cover border-2 ${i === 0 ? "border-primary" : "border-border"}`} />
-                  {i === 0 ? (
-                    <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] px-1.5 py-0 h-4 gap-0.5">
-                      <Star className="h-2.5 w-2.5" />메인
-                    </Badge>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => promote(i)}
-                      className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-secondary text-secondary-foreground p-0.5 border shadow-sm"
-                      title="메인 카드로 설정"
-                      aria-label="메인 카드로 설정"
-                    >
-                      <ArrowUp className="h-3 w-3" />
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => remove(i)}
-                    className="absolute -right-1 -bottom-1 rounded-full bg-destructive text-destructive-foreground p-0.5"
-                    aria-label="삭제"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          );
-        })()}
+        <SortableImageGallery
+          images={[r.image_url, ...(r.extra_images ?? [])].filter((u): u is string => !!u)}
+          onChange={(next) => setR(prev => ({ ...prev, image_url: next[0] ?? null, extra_images: next.slice(1) }))}
+        />
 
         <div className="flex flex-wrap items-center gap-2 pt-1">
           <input
