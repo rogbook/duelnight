@@ -1319,10 +1319,16 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
   );
 }
 
-function SortableImageGallery({ images, onChange }: { images: string[]; onChange: (next: string[]) => void }) {
+function SortableImageGallery({
+  images, onChange, onAdd, adding,
+}: {
+  images: string[];
+  onChange: (next: string[]) => void;
+  onAdd?: () => void;
+  adding?: boolean;
+}) {
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
-  if (images.length === 0) return null;
 
   const move = (from: number, to: number) => {
     if (from === to || to < 0 || to >= images.length) return;
