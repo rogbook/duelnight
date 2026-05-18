@@ -1271,31 +1271,24 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
           <span className="text-[11px] text-muted-foreground">첫 번째 이미지가 <b>메인 카드</b>로 카드 DB 상세에 표시됩니다.</span>
         </div>
 
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={onPickExtraImages}
+          disabled={imgUploading}
+        />
+
         <SortableImageGallery
           images={[r.image_url, ...(r.extra_images ?? [])].filter((u): u is string => !!u)}
           onChange={(next) => setR(prev => ({ ...prev, image_url: next[0] ?? null, extra_images: next.slice(1) }))}
+          onAdd={() => fileInputRef.current?.click()}
+          adding={imgUploading}
         />
 
         <div className="flex flex-wrap items-center gap-2 pt-1">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            onChange={onPickExtraImages}
-            disabled={imgUploading}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={imgUploading}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            {imgUploading ? "업로드 중..." : "이미지 추가"}
-          </Button>
           <Input
             placeholder="또는 이미지 URL / 구글 드라이브 링크 붙여넣고 Enter"
             className="text-xs font-mono flex-1 min-w-[240px]"
@@ -1326,10 +1319,16 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
   );
 }
 
-function SortableImageGallery({ images, onChange }: { images: string[]; onChange: (next: string[]) => void }) {
+function SortableImageGallery({
+  images, onChange, onAdd, adding,
+}: {
+  images: string[];
+  onChange: (next: string[]) => void;
+  onAdd?: () => void;
+  adding?: boolean;
+}) {
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
-  if (images.length === 0) return null;
 
   const move = (from: number, to: number) => {
     if (from === to || to < 0 || to >= images.length) return;
@@ -1393,6 +1392,19 @@ function SortableImageGallery({ images, onChange }: { images: string[]; onChange
           </span>
         </div>
       ))}
+      {onAdd && (
+        <button
+          type="button"
+          onClick={onAdd}
+          disabled={adding}
+          className="h-24 w-16 rounded border-2 border-dashed border-border flex flex-col items-center justify-center gap-1 text-muted-foreground hover:border-primary hover:text-primary transition-colors disabled:opacity-50"
+          title="이미지 추가"
+          aria-label="이미지 추가"
+        >
+          <Plus className="h-5 w-5" />
+          <span className="text-[10px]">{adding ? "업로드중" : "추가"}</span>
+        </button>
+      )}
     </div>
   );
 }
