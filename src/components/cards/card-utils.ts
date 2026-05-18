@@ -56,6 +56,7 @@ export function autoFixRow(r: CardRow): CardRow {
     name: (r.name || "").trim(),
     attribute: r.attribute?.trim() || null,
     effect: r.effect?.trim() || null,
+    traits: Array.from(new Set((r.traits || []).map((t) => t.trim()).filter(Boolean))),
   };
 }
 
