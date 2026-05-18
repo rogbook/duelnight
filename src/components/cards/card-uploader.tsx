@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Upload, Download, Trash2, Plus, Image as ImageIcon, FileSpreadsheet, Pencil, X, Wand2, ShieldCheck, AlertTriangle, Save, Sparkles, ScanLine, Crop, ArrowUp, Star } from "lucide-react";
 import { ImageEditDialog } from "./image-edit-dialog";
+import { ImageUploadDialog } from "./image-upload-dialog";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
@@ -1139,6 +1140,7 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
 function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
   const [r, setR] = useState<CardRow>(emptyRow());
   const [imgUploading, setImgUploading] = useState(false);
+  const [imgDialogOpen, setImgDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const safeSegment = (s: string, fallback: string) =>
@@ -1268,48 +1270,64 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
       <div className="md:col-span-2 space-y-2 rounded-md border border-dashed p-3">
         <div className="flex items-center justify-between">
           <Label>카드 이미지 (여러 장 가능)</Label>
-          <span className="text-[11px] text-muted-foreground">첫 번째 이미지가 <b>메인 카드</b>로 카드 DB 상세에 표시됩니다.</span>
+          <Button type="button" size="sm" variant="outline" onClick={() => setImgDialogOpen(true)}>
+            <ImageIcon className="mr-1 h-4 w-4" />이미지 등록
+          </Button>
         </div>
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          multiple
-          className="hidden"
-          onChange={onPickExtraImages}
-          disabled={imgUploading}
-        />
+        {(() => {
+          const imgs = [r.image_url, ...(r.extra_images ?? [])].filter((u): u is string => !!u);
+          if (imgs.length === 0) {
+            return (
+              <button
+                type="button"
+                onClick={() => setImgDialogOpen(true)}
+                className="w-full py-6 rounded border-2 border-dashed border-border flex flex-col items-center justify-center gap-1 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+              >
+                <Plus className="h-5 w-5" />
+                <span className="text-xs">이미지 등록 버튼을 눌러 파일·URL·Drive에서 추가</span>
+              </button>
+            );
+          }
+          return (
+            <div className="flex flex-wrap gap-2 pt-1">
+              {imgs.map((u, i) => (
+                <div key={`${u}-${i}`} className="relative">
+                  <img
+                    src={u}
+                    alt=""
+                    className={`h-20 w-14 rounded object-cover border-2 ${i === 0 ? "border-primary" : "border-border"}`}
+                  />
+                  {i === 0 && (
+                    <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] px-1.5 py-0 h-4 gap-0.5">
+                      <Star className="h-2.5 w-2.5" />메인
+                    </Badge>
+                  )}
+                </div>
+              ))}
+            </div>
+          );
+        })()}
 
-        <SortableImageGallery
-          images={[r.image_url, ...(r.extra_images ?? [])].filter((u): u is string => !!u)}
-          onChange={(next) => setR(prev => ({ ...prev, image_url: next[0] ?? null, extra_images: next.slice(1) }))}
-          onAdd={() => fileInputRef.current?.click()}
-          adding={imgUploading}
-        />
-
-        <div className="flex flex-wrap items-center gap-2 pt-1">
-          <Input
-            placeholder="또는 이미지 URL / 구글 드라이브 링크 붙여넣고 Enter"
-            className="text-xs font-mono flex-1 min-w-[240px]"
-            onKeyDown={(e) => {
-              if (e.key !== "Enter") return;
-              e.preventDefault();
-              const v = (e.target as HTMLInputElement).value.trim();
-              if (!v) return;
-              const url = normalizeImageUrl(v);
-              if (!url) return;
-              setR(prev => {
-                if (!prev.image_url) return { ...prev, image_url: url };
-                return { ...prev, extra_images: [...(prev.extra_images ?? []), url] };
-              });
-              (e.target as HTMLInputElement).value = "";
-            }}
-          />
-        </div>
         <p className="text-[11px] text-muted-foreground">
-          썸네일을 <b>드래그</b>하여 순서를 변경할 수 있어요. 맨 앞 이미지가 <b>메인 카드</b>로 카드 DB 상세에 표시되고, 나머지는 얼터/패러랠 갤러리로 노출됩니다. 구글 드라이브 링크는 자동 변환됩니다 (<b>"링크가 있는 모든 사용자"</b> 공개 필요).
+          첫 번째 이미지가 <b>메인 카드</b>로 카드 DB 상세에 표시됩니다. 순서 변경·삭제는 <b>이미지 등록</b> 팝업에서 가능합니다.
         </p>
+
+        <ImageUploadDialog
+          open={imgDialogOpen}
+          onOpenChange={setImgDialogOpen}
+          initialImages={[r.image_url, ...(r.extra_images ?? [])].filter((u): u is string => !!u)}
+          setCode={r.set_code}
+          cardCode={r.code}
+          onCommit={(images: string[]) => {
+            setR(prev => ({
+              ...prev,
+              image_url: images[0] ?? null,
+              extra_images: images.slice(1),
+            }));
+            toast.success(`${images.length}장 적용됨`);
+          }}
+        />
       </div>
 
       <div className="md:col-span-2 flex justify-end">
