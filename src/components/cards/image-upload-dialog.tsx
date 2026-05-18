@@ -11,7 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { compressToWebp } from "@/lib/image-utils";
-import { normalizeImageUrl } from "./card-uploader-utils";
+import { normalizeImageUrl } from "./card-uploader";
 import {
   getDriveAuthUrlFn,
   getDriveConnectionFn,
