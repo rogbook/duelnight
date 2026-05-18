@@ -46,6 +46,7 @@ export type CardRow = {
   rarity: string | null;
   effect: string | null;
   image_url: string | null;
+  traits: string[];
   extra_images?: string[];
 };
 
