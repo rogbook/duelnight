@@ -232,6 +232,7 @@ export type Database = {
           set_code: string
           status: Database["public"]["Enums"]["card_status"]
           submitted_by: string | null
+          traits: string[]
           type: Database["public"]["Enums"]["card_type"]
           updated_at: string
         }
@@ -255,6 +256,7 @@ export type Database = {
           set_code: string
           status?: Database["public"]["Enums"]["card_status"]
           submitted_by?: string | null
+          traits?: string[]
           type: Database["public"]["Enums"]["card_type"]
           updated_at?: string
         }
@@ -278,6 +280,7 @@ export type Database = {
           set_code?: string
           status?: Database["public"]["Enums"]["card_status"]
           submitted_by?: string | null
+          traits?: string[]
           type?: Database["public"]["Enums"]["card_type"]
           updated_at?: string
         }
