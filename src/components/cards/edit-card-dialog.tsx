@@ -30,6 +30,7 @@ export function EditCardDialog({
   card, onClose, onSaved,
 }: { card: CardRow; onClose: () => void; onSaved: () => void }) {
   const [form, setForm] = useState({
+    code: card.code,
     name: card.name,
     game: card.game as Game,
     type: card.type as CardType,
