@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2, Save } from "lucide-react";
+import { ImagePlus, Loader2, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { normalizeImageUrl } from "@/components/cards/card-uploader";
+import { ImageUploadDialog } from "@/components/cards/image-upload-dialog";
 
 type CardRow = Database["public"]["Tables"]["cards"]["Row"];
 type Game = Database["public"]["Enums"]["tcg_game"];
