@@ -234,6 +234,13 @@ function ManageInner() {
                 <span>{TYPE_LABEL[c.type as CardType] ?? c.type}</span>
                 {c.rarity && <Badge variant="outline" className="ml-1 h-4 px-1 text-[10px]">{c.rarity}</Badge>}
               </div>
+              {c.traits && c.traits.length > 0 && (
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {c.traits.map((t) => (
+                    <Badge key={t} variant="secondary" className="h-4 px-1 text-[10px]">{t}</Badge>
+                  ))}
+                </div>
+              )}
               <div className="mt-auto flex justify-end gap-1 pt-2">
                 <Button size="sm" variant="outline" onClick={() => setEditing(c)}>
                   <Pencil className="h-3.5 w-3.5 mr-1" />편집
