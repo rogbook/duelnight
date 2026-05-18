@@ -1319,7 +1319,7 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
           initialImages={[r.image_url, ...(r.extra_images ?? [])].filter((u): u is string => !!u)}
           setCode={r.set_code}
           cardCode={r.code}
-          onCommit={(images) => {
+          onCommit={(images: string[]) => {
             setR(prev => ({
               ...prev,
               image_url: images[0] ?? null,
