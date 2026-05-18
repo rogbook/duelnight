@@ -97,7 +97,7 @@ function emptyRow(): CardRow {
   return {
     code: "", set_code: "", game: "optcg", name: "", type: "character",
     colors: [], cost: null, power: null, counter: null,
-    attribute: null, rarity: null, effect: null, image_url: null,
+    attribute: null, rarity: null, effect: null, image_url: null, traits: [],
   };
 }
 
