@@ -1139,6 +1139,7 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
 function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
   const [r, setR] = useState<CardRow>(emptyRow());
   const [imgUploading, setImgUploading] = useState(false);
+  const [imgDialogOpen, setImgDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const safeSegment = (s: string, fallback: string) =>
