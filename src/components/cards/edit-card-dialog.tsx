@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2, Save } from "lucide-react";
+import { ImagePlus, Loader2, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { normalizeImageUrl } from "@/components/cards/card-uploader";
+import { ImageUploadDialog } from "@/components/cards/image-upload-dialog";
 
 type CardRow = Database["public"]["Tables"]["cards"]["Row"];
 type Game = Database["public"]["Enums"]["tcg_game"];
@@ -46,6 +47,7 @@ export function EditCardDialog({
     traits: (card.traits ?? []).join(", "),
   });
   const [saving, setSaving] = useState(false);
+  const [imageDialogOpen, setImageDialogOpen] = useState(false);
 
   const onSave = async () => {
     if (!form.name.trim() || !form.set_code.trim() || !form.code.trim()) {
@@ -188,16 +190,61 @@ export function EditCardDialog({
             <Input value={form.rarity} onChange={(e) => setForm({ ...form, rarity: e.target.value })} />
           </div>
           <div className="sm:col-span-2">
-            <Label className="text-xs">이미지 URL (구글 드라이브 공유 링크 자동 변환)</Label>
+            <Label className="text-xs">이미지</Label>
+            <div className="mt-1 flex items-start gap-3">
+              {form.image_url ? (
+                <div className="relative">
+                  <img
+                    src={normalizeImageUrl(form.image_url) ?? form.image_url}
+                    alt=""
+                    className="h-32 w-24 rounded border border-border object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, image_url: "" })}
+                    className="absolute -right-2 -top-2 rounded-full bg-destructive p-0.5 text-destructive-foreground shadow"
+                    title="이미지 제거"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex h-32 w-24 items-center justify-center rounded border border-dashed border-border bg-muted/20 text-[10px] text-muted-foreground">
+                  없음
+                </div>
+              )}
+              <div className="flex flex-col gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setImageDialogOpen(true)}
+                >
+                  <ImagePlus className="mr-1 h-4 w-4" />
+                  이미지 등록
+                </Button>
+                <p className="text-[11px] text-muted-foreground">
+                  파일 업로드 · URL · Google Drive에서 추가할 수 있습니다.
+                </p>
+              </div>
+            </div>
+          </div>
+          <ImageUploadDialog
+            open={imageDialogOpen}
+            onOpenChange={setImageDialogOpen}
+            initialImages={form.image_url ? [form.image_url] : []}
+            setCode={form.set_code}
+            cardCode={form.code}
+            onCommit={(images) => setForm({ ...form, image_url: images[0] ?? "" })}
+          />
+          <div className="sm:col-span-2">
+            <Label className="text-xs">이미지 URL (직접 입력 · 선택)</Label>
             <Input
               value={form.image_url}
               onChange={(e) => setForm({ ...form, image_url: e.target.value })}
               onBlur={(e) => setForm({ ...form, image_url: normalizeImageUrl(e.target.value) ?? "" })}
               placeholder="https://... 또는 https://drive.google.com/file/d/.../view"
             />
-            {form.image_url && (
-              <img src={normalizeImageUrl(form.image_url) ?? form.image_url} alt="" className="mt-2 h-32 rounded border border-border object-contain" />
-            )}
           </div>
           <div className="sm:col-span-2">
             <Label className="text-xs">특징 (쉼표 또는 | 로 구분)</Label>
