@@ -600,6 +600,16 @@ function CardDetailDialog({
                 <Stat label="카운터" value={card.counter?.toLocaleString()} />
                 <Stat label="속성" value={card.attribute} />
                 <Stat label="세트" value={card.set_code} />
+                {card.traits && card.traits.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground">특징</p>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {card.traits.map((t) => (
+                        <Badge key={t}>{t}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {card.effect && (
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground">
