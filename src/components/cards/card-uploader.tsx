@@ -1396,11 +1396,3 @@ function SortableImageGallery({ images, onChange }: { images: string[]; onChange
     </div>
   );
 }
-      </div>
-
-      <div className="md:col-span-2 flex justify-end">
-        <Button onClick={submit}><Plus className="mr-1 h-4 w-4" />표에 추가</Button>
-      </div>
-    </div>
-  );
-}
