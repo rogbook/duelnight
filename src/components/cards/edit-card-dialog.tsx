@@ -200,6 +200,14 @@ export function EditCardDialog({
             )}
           </div>
           <div className="sm:col-span-2">
+            <Label className="text-xs">특징 (쉼표 또는 | 로 구분)</Label>
+            <Input
+              value={form.traits}
+              onChange={(e) => setForm({ ...form, traits: e.target.value })}
+              placeholder="밀짚모자 해적단, 초신성"
+            />
+          </div>
+          <div className="sm:col-span-2">
             <Label className="text-xs">효과</Label>
             <Textarea
               value={form.effect}
