@@ -77,6 +77,7 @@ const HEADER_ALIASES: Record<string, keyof CardRow> = {
   rarity: "rarity", 레어도: "rarity", 등급: "rarity", 희귀도: "rarity",
   effect: "effect", 효과: "effect", 텍스트: "effect", 능력: "effect",
   image_url: "image_url", 이미지: "image_url", 이미지url: "image_url", 이미지주소: "image_url",
+  traits: "traits", 특징: "traits", 특성: "traits", 트레잇: "traits", 종족: "traits", 키워드: "traits",
 };
 
 const GAME_ALIASES: Record<string, Game> = {
