@@ -153,6 +153,8 @@ function toRow(obj: Record<string, unknown>): { row?: CardRow; error?: string } 
     const sv = v == null ? "" : Array.isArray(v) ? v.join("|") : String(v);
     if (target === "colors") {
       out.colors = sv.split(/[|,;/]/).map(s => s.trim()).filter(Boolean);
+    } else if (target === "traits") {
+      out.traits = sv.split(/[|,;/]/).map(s => s.trim()).filter(Boolean);
     } else if (target === "cost" || target === "power" || target === "counter") {
       out[target] = num(sv);
     } else if (target === "game") {
