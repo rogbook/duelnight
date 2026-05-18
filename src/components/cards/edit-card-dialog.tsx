@@ -43,6 +43,7 @@ export function EditCardDialog({
     rarity: card.rarity ?? "",
     effect: card.effect ?? "",
     image_url: card.image_url ?? "",
+    traits: (card.traits ?? []).join(", "),
   });
   const [saving, setSaving] = useState(false);
 
@@ -107,6 +108,7 @@ export function EditCardDialog({
           rarity: form.rarity.trim() || null,
           effect: form.effect.trim() || null,
           image_url: normalizeImageUrl(form.image_url.trim()) || null,
+          traits: Array.from(new Set(form.traits.split(/[|,;/]/).map((s) => s.trim()).filter(Boolean))),
         })
         .eq("id", card.id);
       if (error) throw error;
@@ -196,6 +198,14 @@ export function EditCardDialog({
             {form.image_url && (
               <img src={normalizeImageUrl(form.image_url) ?? form.image_url} alt="" className="mt-2 h-32 rounded border border-border object-contain" />
             )}
+          </div>
+          <div className="sm:col-span-2">
+            <Label className="text-xs">특징 (쉼표 또는 | 로 구분)</Label>
+            <Input
+              value={form.traits}
+              onChange={(e) => setForm({ ...form, traits: e.target.value })}
+              placeholder="밀짚모자 해적단, 초신성"
+            />
           </div>
           <div className="sm:col-span-2">
             <Label className="text-xs">효과</Label>

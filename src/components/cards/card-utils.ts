@@ -17,6 +17,7 @@ export type CardRow = {
   rarity: string | null;
   effect: string | null;
   image_url: string | null;
+  traits: string[];
 };
 
 /** 한글 색상 → 영문 코드 (덱빌더와 동일 키마) */
@@ -55,6 +56,7 @@ export function autoFixRow(r: CardRow): CardRow {
     name: (r.name || "").trim(),
     attribute: r.attribute?.trim() || null,
     effect: r.effect?.trim() || null,
+    traits: Array.from(new Set((r.traits || []).map((t) => t.trim()).filter(Boolean))),
   };
 }
 

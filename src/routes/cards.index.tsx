@@ -133,7 +133,11 @@ function CardsPage() {
       if (color !== "all") query = query.contains("colors", [color]);
       if (q.trim()) {
         const term = q.trim();
-        query = query.or(`name.ilike.%${term}%,code.ilike.%${term}%`);
+        // 이름/코드는 부분일치, 특징(traits)은 정확 일치(배열 contains)
+        const safe = term.replace(/[",{}\\]/g, "");
+        query = query.or(
+          `name.ilike.%${term}%,code.ilike.%${term}%,traits.cs.{"${safe}"}`
+        );
       }
       if (favOnly) {
         const codes = Array.from(favSet);
@@ -188,7 +192,7 @@ function CardsPage() {
               setQ(e.target.value);
               resetPage();
             }}
-            placeholder="카드명 또는 카드번호 (예: OP12-004, 루피)"
+            placeholder="카드명 · 카드번호 · 특징 (예: 루피, OP12-004, 밀짚모자 해적단)"
             className="pl-9"
           />
         </div>
@@ -596,6 +600,16 @@ function CardDetailDialog({
                 <Stat label="카운터" value={card.counter?.toLocaleString()} />
                 <Stat label="속성" value={card.attribute} />
                 <Stat label="세트" value={card.set_code} />
+                {card.traits && card.traits.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground">특징</p>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {card.traits.map((t) => (
+                        <Badge key={t}>{t}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {card.effect && (
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground">

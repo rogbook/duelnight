@@ -46,6 +46,7 @@ export type CardRow = {
   rarity: string | null;
   effect: string | null;
   image_url: string | null;
+  traits: string[];
   extra_images?: string[];
 };
 
@@ -76,6 +77,7 @@ const HEADER_ALIASES: Record<string, keyof CardRow> = {
   rarity: "rarity", 레어도: "rarity", 등급: "rarity", 희귀도: "rarity",
   effect: "effect", 효과: "effect", 텍스트: "effect", 능력: "effect",
   image_url: "image_url", 이미지: "image_url", 이미지url: "image_url", 이미지주소: "image_url",
+  traits: "traits", 특징: "traits", 특성: "traits", 트레잇: "traits", 종족: "traits", 키워드: "traits",
 };
 
 const GAME_ALIASES: Record<string, Game> = {
@@ -95,7 +97,7 @@ function emptyRow(): CardRow {
   return {
     code: "", set_code: "", game: "optcg", name: "", type: "character",
     colors: [], cost: null, power: null, counter: null,
-    attribute: null, rarity: null, effect: null, image_url: null,
+    attribute: null, rarity: null, effect: null, image_url: null, traits: [],
   };
 }
 
@@ -151,6 +153,8 @@ function toRow(obj: Record<string, unknown>): { row?: CardRow; error?: string } 
     const sv = v == null ? "" : Array.isArray(v) ? v.join("|") : String(v);
     if (target === "colors") {
       out.colors = sv.split(/[|,;/]/).map(s => s.trim()).filter(Boolean);
+    } else if (target === "traits") {
+      out.traits = sv.split(/[|,;/]/).map(s => s.trim()).filter(Boolean);
     } else if (target === "cost" || target === "power" || target === "counter") {
       out[target] = num(sv);
     } else if (target === "game") {
@@ -1262,6 +1266,14 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
       <div className="space-y-1.5">
         <Label>속성</Label>
         <Input value={r.attribute ?? ""} onChange={e => setR({ ...r, attribute: e.target.value || null })} placeholder="타격/슬래시 등" />
+      </div>
+      <div className="md:col-span-2 space-y-1.5">
+        <Label>특징 <span className="text-xs text-muted-foreground">(쉼표 또는 | 로 구분, 예: 밀짚모자 해적단, 초신성)</span></Label>
+        <Input
+          value={r.traits?.join(", ") ?? ""}
+          onChange={e => setR({ ...r, traits: e.target.value.split(/[|,;/]/).map(s => s.trim()).filter(Boolean) })}
+          placeholder="밀짚모자 해적단, 초신성"
+        />
       </div>
       <div className="md:col-span-2 space-y-1.5">
         <Label>효과</Label>
