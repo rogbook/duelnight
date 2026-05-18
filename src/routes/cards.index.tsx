@@ -192,7 +192,7 @@ function CardsPage() {
               setQ(e.target.value);
               resetPage();
             }}
-            placeholder="카드명 또는 카드번호 (예: OP12-004, 루피)"
+            placeholder="카드명 · 카드번호 · 특징 (예: 루피, OP12-004, 밀짚모자 해적단)"
             className="pl-9"
           />
         </div>
