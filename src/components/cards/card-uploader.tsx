@@ -1268,6 +1268,14 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
         <Input value={r.attribute ?? ""} onChange={e => setR({ ...r, attribute: e.target.value || null })} placeholder="타격/슬래시 등" />
       </div>
       <div className="md:col-span-2 space-y-1.5">
+        <Label>특징 <span className="text-xs text-muted-foreground">(쉼표 또는 | 로 구분, 예: 밀짚모자 해적단, 초신성)</span></Label>
+        <Input
+          value={r.traits?.join(", ") ?? ""}
+          onChange={e => setR({ ...r, traits: e.target.value.split(/[|,;/]/).map(s => s.trim()).filter(Boolean) })}
+          placeholder="밀짚모자 해적단, 초신성"
+        />
+      </div>
+      <div className="md:col-span-2 space-y-1.5">
         <Label>효과</Label>
         <Textarea value={r.effect ?? ""} onChange={e => setR({ ...r, effect: e.target.value || null })} rows={3} />
       </div>
