@@ -17,6 +17,7 @@ export type CardRow = {
   rarity: string | null;
   effect: string | null;
   image_url: string | null;
+  traits: string[];
 };
 
 /** 한글 색상 → 영문 코드 (덱빌더와 동일 키마) */
