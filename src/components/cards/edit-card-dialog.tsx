@@ -47,8 +47,8 @@ export function EditCardDialog({
   const [saving, setSaving] = useState(false);
 
   const onSave = async () => {
-    if (!form.name.trim() || !form.set_code.trim()) {
-      toast.error("이름과 세트는 필수입니다");
+    if (!form.name.trim() || !form.set_code.trim() || !form.code.trim()) {
+      toast.error("코드 · 이름 · 세트는 필수입니다");
       return;
     }
     setSaving(true);
@@ -58,9 +58,26 @@ export function EditCardDialog({
         return v.trim() === "" || !Number.isFinite(n) ? null : n;
       };
       const colors = form.colors.split(/[,|;/]/).map((s) => s.trim()).filter(Boolean);
+      const newCode = form.code.trim();
+      const codeChanged = newCode !== card.code;
+
+      if (codeChanged) {
+        const { data: dup } = await supabase
+          .from("cards")
+          .select("code")
+          .eq("code", newCode)
+          .maybeSingle();
+        if (dup) {
+          toast.error(`이미 존재하는 코드입니다: ${newCode}`);
+          setSaving(false);
+          return;
+        }
+      }
+
       const { error } = await supabase
         .from("cards")
         .update({
+          code: newCode,
           name: form.name.trim(),
           game: form.game,
           type: form.type,
@@ -74,9 +91,9 @@ export function EditCardDialog({
           effect: form.effect.trim() || null,
           image_url: normalizeImageUrl(form.image_url.trim()) || null,
         })
-        .eq("code", card.code);
+        .eq("id", card.id);
       if (error) throw error;
-      toast.success("카드 수정 완료");
+      toast.success("카드 수정 완료" + (codeChanged ? ` (코드 변경: ${card.code} → ${newCode})` : ""));
       onSaved();
     } catch (err) {
       toast.error("저장 실패: " + (err as Error).message);
