@@ -1392,6 +1392,19 @@ function SortableImageGallery({
           </span>
         </div>
       ))}
+      {onAdd && (
+        <button
+          type="button"
+          onClick={onAdd}
+          disabled={adding}
+          className="h-24 w-16 rounded border-2 border-dashed border-border flex flex-col items-center justify-center gap-1 text-muted-foreground hover:border-primary hover:text-primary transition-colors disabled:opacity-50"
+          title="이미지 추가"
+          aria-label="이미지 추가"
+        >
+          <Plus className="h-5 w-5" />
+          <span className="text-[10px]">{adding ? "업로드중" : "추가"}</span>
+        </button>
+      )}
     </div>
   );
 }
