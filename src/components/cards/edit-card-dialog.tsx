@@ -43,6 +43,7 @@ export function EditCardDialog({
     rarity: card.rarity ?? "",
     effect: card.effect ?? "",
     image_url: card.image_url ?? "",
+    traits: (card.traits ?? []).join(", "),
   });
   const [saving, setSaving] = useState(false);
 
