@@ -30,6 +30,7 @@ export function EditCardDialog({
   card, onClose, onSaved,
 }: { card: CardRow; onClose: () => void; onSaved: () => void }) {
   const [form, setForm] = useState({
+    code: card.code,
     name: card.name,
     game: card.game as Game,
     type: card.type as CardType,
@@ -46,8 +47,8 @@ export function EditCardDialog({
   const [saving, setSaving] = useState(false);
 
   const onSave = async () => {
-    if (!form.name.trim() || !form.set_code.trim()) {
-      toast.error("이름과 세트는 필수입니다");
+    if (!form.name.trim() || !form.set_code.trim() || !form.code.trim()) {
+      toast.error("코드 · 이름 · 세트는 필수입니다");
       return;
     }
     setSaving(true);
@@ -57,9 +58,26 @@ export function EditCardDialog({
         return v.trim() === "" || !Number.isFinite(n) ? null : n;
       };
       const colors = form.colors.split(/[,|;/]/).map((s) => s.trim()).filter(Boolean);
+      const newCode = form.code.trim();
+      const codeChanged = newCode !== card.code;
+
+      if (codeChanged) {
+        const { data: dup } = await supabase
+          .from("cards")
+          .select("code")
+          .eq("code", newCode)
+          .maybeSingle();
+        if (dup) {
+          toast.error(`이미 존재하는 코드입니다: ${newCode}`);
+          setSaving(false);
+          return;
+        }
+      }
+
       const { error } = await supabase
         .from("cards")
         .update({
+          code: newCode,
           name: form.name.trim(),
           game: form.game,
           type: form.type,
@@ -73,9 +91,9 @@ export function EditCardDialog({
           effect: form.effect.trim() || null,
           image_url: normalizeImageUrl(form.image_url.trim()) || null,
         })
-        .eq("code", card.code);
+        .eq("id", card.id);
       if (error) throw error;
-      toast.success("카드 수정 완료");
+      toast.success("카드 수정 완료" + (codeChanged ? ` (코드 변경: ${card.code} → ${newCode})` : ""));
       onSaved();
     } catch (err) {
       toast.error("저장 실패: " + (err as Error).message);
@@ -112,6 +130,15 @@ export function EditCardDialog({
                 {TYPES.map((t) => <SelectItem key={t} value={t}>{TYPE_LABEL[t]}</SelectItem>)}
               </SelectContent>
             </Select>
+          </div>
+          <div>
+            <Label className="text-xs">카드 코드 *</Label>
+            <Input
+              value={form.code}
+              onChange={(e) => setForm({ ...form, code: e.target.value })}
+              placeholder="예: OP01-001"
+            />
+            <p className="mt-1 text-[10px] text-muted-foreground">변경 시 중복 확인 후 저장됩니다</p>
           </div>
           <div>
             <Label className="text-xs">세트 *</Label>
