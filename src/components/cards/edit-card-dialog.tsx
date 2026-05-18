@@ -47,6 +47,7 @@ export function EditCardDialog({
     traits: (card.traits ?? []).join(", "),
   });
   const [saving, setSaving] = useState(false);
+  const [imageDialogOpen, setImageDialogOpen] = useState(false);
 
   const onSave = async () => {
     if (!form.name.trim() || !form.set_code.trim() || !form.code.trim()) {
