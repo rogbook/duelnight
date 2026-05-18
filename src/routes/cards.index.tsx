@@ -133,7 +133,11 @@ function CardsPage() {
       if (color !== "all") query = query.contains("colors", [color]);
       if (q.trim()) {
         const term = q.trim();
-        query = query.or(`name.ilike.%${term}%,code.ilike.%${term}%`);
+        // 이름/코드는 부분일치, 특징(traits)은 정확 일치(배열 contains)
+        const safe = term.replace(/[",{}\\]/g, "");
+        query = query.or(
+          `name.ilike.%${term}%,code.ilike.%${term}%,traits.cs.{"${safe}"}`
+        );
       }
       if (favOnly) {
         const codes = Array.from(favSet);
