@@ -108,6 +108,7 @@ export function EditCardDialog({
           rarity: form.rarity.trim() || null,
           effect: form.effect.trim() || null,
           image_url: normalizeImageUrl(form.image_url.trim()) || null,
+          traits: Array.from(new Set(form.traits.split(/[|,;/]/).map((s) => s.trim()).filter(Boolean))),
         })
         .eq("id", card.id);
       if (error) throw error;
