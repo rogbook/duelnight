@@ -1271,52 +1271,10 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
           <span className="text-[11px] text-muted-foreground">첫 번째 이미지가 <b>메인 카드</b>로 카드 DB 상세에 표시됩니다.</span>
         </div>
 
-        {(() => {
-          const all = [r.image_url, ...(r.extra_images ?? [])].filter((u): u is string => !!u);
-          if (all.length === 0) return null;
-          const promote = (idx: number) => {
-            if (idx === 0) return;
-            const next = [...all];
-            [next[0], next[idx]] = [next[idx], next[0]];
-            setR(prev => ({ ...prev, image_url: next[0], extra_images: next.slice(1) }));
-          };
-          const remove = (idx: number) => {
-            const next = all.filter((_, i) => i !== idx);
-            setR(prev => ({ ...prev, image_url: next[0] ?? null, extra_images: next.slice(1) }));
-          };
-          return (
-            <div className="flex flex-wrap gap-3 pt-2">
-              {all.map((u, i) => (
-                <div key={i} className="relative">
-                  <img src={u} alt="" className={`h-24 w-16 rounded object-cover border-2 ${i === 0 ? "border-primary" : "border-border"}`} />
-                  {i === 0 ? (
-                    <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] px-1.5 py-0 h-4 gap-0.5">
-                      <Star className="h-2.5 w-2.5" />메인
-                    </Badge>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => promote(i)}
-                      className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-secondary text-secondary-foreground p-0.5 border shadow-sm"
-                      title="메인 카드로 설정"
-                      aria-label="메인 카드로 설정"
-                    >
-                      <ArrowUp className="h-3 w-3" />
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => remove(i)}
-                    className="absolute -right-1 -bottom-1 rounded-full bg-destructive text-destructive-foreground p-0.5"
-                    aria-label="삭제"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          );
-        })()}
+        <SortableImageGallery
+          images={[r.image_url, ...(r.extra_images ?? [])].filter((u): u is string => !!u)}
+          onChange={(next) => setR(prev => ({ ...prev, image_url: next[0] ?? null, extra_images: next.slice(1) }))}
+        />
 
         <div className="flex flex-wrap items-center gap-2 pt-1">
           <input
@@ -1357,13 +1315,84 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
           />
         </div>
         <p className="text-[11px] text-muted-foreground">
-          위쪽 화살표(↑)로 다른 이미지를 <b>메인 카드</b>로 승격할 수 있어요. 메인 이미지는 카드 DB 상세에서 기본으로 보이고, 나머지는 얼터/패러랠 갤러리로 노출됩니다. 구글 드라이브 링크는 자동 변환됩니다 (<b>"링크가 있는 모든 사용자"</b> 공개 필요).
+          썸네일을 <b>드래그</b>하여 순서를 변경할 수 있어요. 맨 앞 이미지가 <b>메인 카드</b>로 카드 DB 상세에 표시되고, 나머지는 얼터/패러랠 갤러리로 노출됩니다. 구글 드라이브 링크는 자동 변환됩니다 (<b>"링크가 있는 모든 사용자"</b> 공개 필요).
         </p>
       </div>
 
       <div className="md:col-span-2 flex justify-end">
         <Button onClick={submit}><Plus className="mr-1 h-4 w-4" />표에 추가</Button>
       </div>
+    </div>
+  );
+}
+
+function SortableImageGallery({ images, onChange }: { images: string[]; onChange: (next: string[]) => void }) {
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [overIdx, setOverIdx] = useState<number | null>(null);
+  if (images.length === 0) return null;
+
+  const move = (from: number, to: number) => {
+    if (from === to || to < 0 || to >= images.length) return;
+    const next = [...images];
+    const [item] = next.splice(from, 1);
+    next.splice(to, 0, item);
+    onChange(next);
+  };
+  const remove = (idx: number) => onChange(images.filter((_, i) => i !== idx));
+  const promote = (idx: number) => move(idx, 0);
+
+  return (
+    <div className="flex flex-wrap gap-3 pt-2">
+      {images.map((u, i) => (
+        <div
+          key={`${u}-${i}`}
+          draggable
+          onDragStart={(e) => { setDragIdx(i); e.dataTransfer.effectAllowed = "move"; }}
+          onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; if (overIdx !== i) setOverIdx(i); }}
+          onDragLeave={() => { if (overIdx === i) setOverIdx(null); }}
+          onDrop={(e) => {
+            e.preventDefault();
+            if (dragIdx !== null && dragIdx !== i) move(dragIdx, i);
+            setDragIdx(null); setOverIdx(null);
+          }}
+          onDragEnd={() => { setDragIdx(null); setOverIdx(null); }}
+          className={`relative cursor-move transition-opacity ${dragIdx === i ? "opacity-40" : ""} ${overIdx === i && dragIdx !== i ? "ring-2 ring-primary rounded" : ""}`}
+          title="드래그하여 순서 변경"
+        >
+          <img
+            src={u}
+            alt=""
+            draggable={false}
+            className={`h-24 w-16 rounded object-cover border-2 ${i === 0 ? "border-primary" : "border-border"} select-none pointer-events-none`}
+          />
+          {i === 0 ? (
+            <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] px-1.5 py-0 h-4 gap-0.5">
+              <Star className="h-2.5 w-2.5" />메인
+            </Badge>
+          ) : (
+            <button
+              type="button"
+              onClick={() => promote(i)}
+              className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-secondary text-secondary-foreground p-0.5 border shadow-sm"
+              title="메인 카드로 설정"
+              aria-label="메인 카드로 설정"
+            >
+              <ArrowUp className="h-3 w-3" />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => remove(i)}
+            className="absolute -right-1 -bottom-1 rounded-full bg-destructive text-destructive-foreground p-0.5"
+            aria-label="삭제"
+          >
+            <X className="h-3 w-3" />
+          </button>
+          <span className="absolute bottom-0 left-0 rounded-tr bg-background/80 px-1 text-[9px] font-mono text-muted-foreground">
+            {i + 1}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
