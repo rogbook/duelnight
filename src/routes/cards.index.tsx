@@ -382,6 +382,21 @@ function CardTile({
               </span>
             )}
           </div>
+          {card.traits && card.traits.length > 0 && (
+            <div className="mt-1 flex flex-wrap gap-1">
+              {card.traits.slice(0, 3).map((t) => (
+                <span
+                  key={t}
+                  className="rounded border border-border bg-background px-1 py-px text-[10px] text-muted-foreground"
+                >
+                  {t}
+                </span>
+              ))}
+              {card.traits.length > 3 && (
+                <span className="text-[10px] text-muted-foreground">+{card.traits.length - 3}</span>
+              )}
+            </div>
+          )}
         </div>
       </button>
       <Link
