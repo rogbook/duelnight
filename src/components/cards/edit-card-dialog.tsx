@@ -132,6 +132,15 @@ export function EditCardDialog({
             </Select>
           </div>
           <div>
+            <Label className="text-xs">카드 코드 *</Label>
+            <Input
+              value={form.code}
+              onChange={(e) => setForm({ ...form, code: e.target.value })}
+              placeholder="예: OP01-001"
+            />
+            <p className="mt-1 text-[10px] text-muted-foreground">변경 시 중복 확인 후 저장됩니다</p>
+          </div>
+          <div>
             <Label className="text-xs">세트 *</Label>
             <Input value={form.set_code} onChange={(e) => setForm({ ...form, set_code: e.target.value })} />
           </div>
