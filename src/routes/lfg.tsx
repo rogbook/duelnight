@@ -218,32 +218,9 @@ function LfgPage() {
 
       {/* Filters */}
       <div className="mt-4 flex flex-wrap gap-2">
-        <Select value={game} onValueChange={(v) => setGame(v as Game | "all")}>
-          <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">전체 게임</SelectItem>
-            <SelectItem value="optcg">원피스</SelectItem>
-            <SelectItem value="ptcg">포켓몬</SelectItem>
-            <SelectItem value="dtcg">디지몬</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={category} onValueChange={(v) => setCategory(v as Category | "all")}>
-          <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">전체 카테고리</SelectItem>
-            <SelectItem value="friendly">친선</SelectItem>
-            <SelectItem value="tier">티어</SelectItem>
-            <SelectItem value="tournament_practice">대회연습</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={status} onValueChange={(v) => setStatus(v as "open" | "closed" | "all")}>
-          <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="open">모집 중</SelectItem>
-            <SelectItem value="closed">모집 완료</SelectItem>
-            <SelectItem value="all">전체 상태</SelectItem>
-          </SelectContent>
-        </Select>
+        <MenuSelect value={game} options={FILTER_GAME_OPTIONS} onChange={setGame} className="w-[120px]" />
+        <MenuSelect value={category} options={FILTER_CATEGORY_OPTIONS} onChange={setCategory} className="w-[140px]" />
+        <MenuSelect value={status} options={STATUS_OPTIONS} onChange={setStatus} className="w-[120px]" />
       </div>
 
       {user && showForm && (
@@ -505,25 +482,11 @@ function InlineLfgForm({ onCreated, onCancel }: { onCreated: () => void; onCance
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="flex flex-col gap-1.5">
           <Label>게임</Label>
-          <Select value={form.game} onValueChange={(v) => setForm({ ...form, game: v as Game, store_id: "" })}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="optcg">원피스</SelectItem>
-              <SelectItem value="ptcg">포켓몬</SelectItem>
-              <SelectItem value="dtcg">디지몬</SelectItem>
-            </SelectContent>
-          </Select>
+          <MenuSelect value={form.game} options={GAME_OPTIONS} onChange={(v) => setForm({ ...form, game: v, store_id: "" })} />
         </div>
         <div className="flex flex-col gap-1.5">
           <Label>카테고리</Label>
-          <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v as Category })}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="friendly">친선</SelectItem>
-              <SelectItem value="tier">티어</SelectItem>
-              <SelectItem value="tournament_practice">대회연습</SelectItem>
-            </SelectContent>
-          </Select>
+          <MenuSelect value={form.category} options={CATEGORY_OPTIONS} onChange={(v) => setForm({ ...form, category: v })} />
         </div>
         <div className="flex flex-col gap-1.5">
           <Label>일시</Label>
