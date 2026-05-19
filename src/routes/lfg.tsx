@@ -517,17 +517,18 @@ function InlineLfgForm({ onCreated, onCancel }: { onCreated: () => void; onCance
           value={storeQuery}
           onChange={(e) => setStoreQuery(e.target.value)}
         />
-        <Select value={form.store_id || "none"} onValueChange={(v) => setForm({ ...form, store_id: v === "none" ? "" : v })}>
-          <SelectTrigger><SelectValue placeholder="매장 선택 (선택사항)" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">선택 안 함 (직접 입력)</SelectItem>
-            {stores.map((s) => (
-              <SelectItem key={s.id} value={s.id}>
-                {s.name} {s.address ? `· ${s.address}` : ""}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <MenuSelect
+          value={form.store_id || "none"}
+          options={[
+            { value: "none", label: "선택 안 함 (직접 입력)" },
+            ...stores.map((s) => ({
+              value: s.id,
+              label: `${s.name}${s.address ? ` · ${s.address}` : ""}`,
+            })),
+          ]}
+          onChange={(v) => setForm({ ...form, store_id: v === "none" ? "" : v })}
+          placeholder="매장 선택 (선택사항)"
+        />
         {!form.store_id && (
           <Input
             value={form.location}
