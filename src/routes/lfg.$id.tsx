@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { GAME_LABEL } from "@/lib/match-stats";
-import { CATEGORY_LABEL } from "./lfg";
+import { CATEGORY_LABEL } from "./lfg.index";
 import type { Database } from "@/integrations/supabase/types";
 
 type Post = Database["public"]["Tables"]["lfg_posts"]["Row"];

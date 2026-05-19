@@ -24,7 +24,7 @@ import type { Database } from "@/integrations/supabase/types";
 
 type Announcement = Database["public"]["Tables"]["announcements"]["Row"];
 
-export const Route = createFileRoute("/announcements")({
+export const Route = createFileRoute("/announcements/")({
   head: () => ({
     meta: [
       { title: "공지사항 — 덱로그" },

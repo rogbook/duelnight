@@ -59,7 +59,7 @@ function mapUrl(s: { name: string; address: string | null; region: string | null
   return `https://www.google.com/maps/search/?api=1&query=${q}`;
 }
 
-export const Route = createFileRoute("/stores")({
+export const Route = createFileRoute("/stores/")({
   head: () => ({
     meta: [
       { title: "TCG 매장 찾기 — 덱로그" },
