@@ -531,10 +531,16 @@ function DeckDetailPage() {
                           loading="lazy"
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground p-2 text-center">
-                          {card?.name || dc.card_code}
+                        <div className="flex h-full w-full flex-col items-center justify-center gap-2 p-3 text-center">
+                          <span className="rounded bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                            DB 미등록
+                          </span>
+                          <span className="text-[10px] text-muted-foreground break-all">
+                            {dc.card_code}
+                          </span>
                         </div>
                       )}
+
                       <div className="absolute inset-x-0 bottom-0 bg-black/70 p-2 text-[10px] text-white">
                         <div className="flex items-center justify-between gap-1">
                           <span className="truncate font-bold">{card?.name || dc.card_code}</span>
