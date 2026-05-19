@@ -332,11 +332,19 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
                     />
                   </button>
                 ) : (
-                  <div className="h-8 w-6 bg-muted rounded" />
+                  <div className="h-8 w-6 bg-muted rounded border border-dashed border-amber-500/60" />
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="truncate font-medium">{card?.name ?? dc.card_code}</p>
+                  <p className="truncate font-medium">
+                    {card?.name ?? dc.card_code}
+                    {!card && (
+                      <span className="ml-1.5 rounded bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-bold text-amber-600 dark:text-amber-400 align-middle">
+                        DB 미등록
+                      </span>
+                    )}
+                  </p>
                 </div>
+
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => updateQty(dc.id, dc.quantity - 1)}
