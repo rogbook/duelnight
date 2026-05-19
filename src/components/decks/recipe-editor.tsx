@@ -269,13 +269,20 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
           <div className="mt-3 grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-1.5">
             {deckCards.flatMap((dc) => {
               const card = cardMap.get(dc.card_code);
+              const missing = !card;
               return Array.from({ length: dc.quantity }).map((_, i) => (
                 <button
                   key={`${dc.id}-${i}`}
                   type="button"
                   onClick={() => openZoom(card?.image_url, card?.name ?? dc.card_code)}
-                  className="relative aspect-[2/3] overflow-hidden rounded border border-border bg-muted shadow-sm hover:ring-2 hover:ring-primary/40 transition-all touch-manipulation"
-                  title={`${card?.name ?? dc.card_code} (${i + 1}/${dc.quantity})`}
+                  className={`relative aspect-[2/3] overflow-hidden rounded border bg-muted shadow-sm hover:ring-2 hover:ring-primary/40 transition-all touch-manipulation ${
+                    missing ? "border-dashed border-amber-500/60" : "border-border"
+                  }`}
+                  title={
+                    missing
+                      ? `${dc.card_code} — 카드 DB 미등록`
+                      : `${card?.name ?? dc.card_code} (${i + 1}/${dc.quantity})`
+                  }
                   aria-label={card?.name ?? dc.card_code}
                 >
                   {card?.image_url ? (
@@ -286,13 +293,19 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center p-1 text-[8px] text-muted-foreground text-center break-all">
-                      {card?.name ?? dc.card_code}
+                    <div className="flex h-full w-full flex-col items-center justify-center gap-1 p-1 text-center">
+                      <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[8px] font-bold text-amber-600 dark:text-amber-400">
+                        DB 미등록
+                      </span>
+                      <span className="text-[8px] text-muted-foreground break-all">
+                        {dc.card_code}
+                      </span>
                     </div>
                   )}
                 </button>
               ));
             })}
+
           </div>
         )}
 
