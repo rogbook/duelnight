@@ -50,6 +50,22 @@ type ChatMsg = {
 
 const SITE = "https://tcg-hub.lovable.app";
 
+function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
+function formatTime(value: string) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
 export const Route = createFileRoute("/lfg/$id")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
@@ -244,7 +260,7 @@ function LfgDetailPage() {
           {post.meet_at && (
             <span className="inline-flex items-center gap-1">
               <Clock className="h-3.5 w-3.5" />
-              {new Date(post.meet_at).toLocaleString("ko-KR")}
+              {formatDateTime(post.meet_at)}
             </span>
           )}
           {post.games_count != null && (
@@ -542,7 +558,7 @@ function ChatDialog({
                   >
                     <p className="whitespace-pre-wrap break-words">{m.body}</p>
                     <p className={`mt-1 text-[10px] ${mine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                      {new Date(m.created_at).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
+                      {formatTime(m.created_at)}
                     </p>
                   </div>
                 </div>

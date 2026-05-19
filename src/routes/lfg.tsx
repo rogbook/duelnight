@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
-import { Users, Plus, Trash2, MapPin, Clock, X, Zap, Tag, Hash } from "lucide-react";
+import { Users, Plus, Trash2, MapPin, Clock, X, Zap, Tag, Hash, ChevronDown } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -12,12 +12,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -58,6 +57,82 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   tier: "티어",
   tournament_practice: "대회연습",
 };
+
+const GAME_OPTIONS: { value: Game; label: string }[] = [
+  { value: "optcg", label: "원피스" },
+  { value: "ptcg", label: "포켓몬" },
+  { value: "dtcg", label: "디지몬" },
+];
+
+const CATEGORY_OPTIONS: { value: Category; label: string }[] = [
+  { value: "friendly", label: "친선" },
+  { value: "tier", label: "티어" },
+  { value: "tournament_practice", label: "대회연습" },
+];
+
+type MenuOption<T extends string> = { value: T; label: string };
+
+function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
+const FILTER_GAME_OPTIONS: MenuOption<Game | "all">[] = [
+  { value: "all", label: "전체 게임" },
+  ...GAME_OPTIONS,
+];
+
+const FILTER_CATEGORY_OPTIONS: MenuOption<Category | "all">[] = [
+  { value: "all", label: "전체 카테고리" },
+  ...CATEGORY_OPTIONS,
+];
+
+const STATUS_OPTIONS: MenuOption<"open" | "closed" | "all">[] = [
+  { value: "open", label: "모집 중" },
+  { value: "closed", label: "모집 완료" },
+  { value: "all", label: "전체 상태" },
+];
+
+function MenuSelect<T extends string>({
+  value,
+  options,
+  onChange,
+  placeholder,
+  className,
+}: {
+  value: T;
+  options: MenuOption<T>[];
+  onChange: (value: T) => void;
+  placeholder?: string;
+  className?: string;
+}) {
+  const selected = options.find((option) => option.value === value);
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button type="button" variant="outline" className={`justify-between font-normal ${className ?? ""}`}>
+          <span className="truncate">{selected?.label ?? placeholder ?? "선택"}</span>
+          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="min-w-[var(--radix-dropdown-menu-trigger-width)]">
+        {options.map((option) => (
+          <DropdownMenuItem
+            key={option.value}
+            onSelect={() => onChange(option.value)}
+            className={option.value === value ? "font-medium" : undefined}
+          >
+            {option.label}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 export const Route = createFileRoute("/lfg")({
   head: () => ({
@@ -151,32 +226,9 @@ function LfgPage() {
 
       {/* Filters */}
       <div className="mt-4 flex flex-wrap gap-2">
-        <Select value={game} onValueChange={(v) => setGame(v as Game | "all")}>
-          <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">전체 게임</SelectItem>
-            <SelectItem value="optcg">원피스</SelectItem>
-            <SelectItem value="ptcg">포켓몬</SelectItem>
-            <SelectItem value="dtcg">디지몬</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={category} onValueChange={(v) => setCategory(v as Category | "all")}>
-          <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">전체 카테고리</SelectItem>
-            <SelectItem value="friendly">친선</SelectItem>
-            <SelectItem value="tier">티어</SelectItem>
-            <SelectItem value="tournament_practice">대회연습</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={status} onValueChange={(v) => setStatus(v as "open" | "closed" | "all")}>
-          <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="open">모집 중</SelectItem>
-            <SelectItem value="closed">모집 완료</SelectItem>
-            <SelectItem value="all">전체 상태</SelectItem>
-          </SelectContent>
-        </Select>
+        <MenuSelect value={game} options={FILTER_GAME_OPTIONS} onChange={setGame} className="w-[120px]" />
+        <MenuSelect value={category} options={FILTER_CATEGORY_OPTIONS} onChange={setCategory} className="w-[140px]" />
+        <MenuSelect value={status} options={STATUS_OPTIONS} onChange={setStatus} className="w-[120px]" />
       </div>
 
       {user && showForm && (
@@ -244,12 +296,13 @@ function PostCard({
   const closed = p.status === "closed";
   return (
     <li
-      className={`rounded-lg border bg-card p-4 transition hover:border-primary/40 ${
+      className={`relative rounded-lg border bg-card p-4 transition hover:border-primary/40 ${
         highlight ? "border-amber-500/50 bg-amber-500/5" : "border-border"
       } ${closed ? "opacity-70" : ""}`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <Link to="/lfg/$id" params={{ id: p.id }} className="min-w-0 flex-1">
+      <Link to="/lfg/$id" params={{ id: p.id }} className="absolute inset-0 rounded-lg" aria-label={`${p.title} 상세 보기`} />
+      <div className="pointer-events-none relative z-10 flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
               {GAME_LABEL[p.game]}
@@ -288,7 +341,7 @@ function PostCard({
             {p.meet_at && (
               <span className="inline-flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                {new Date(p.meet_at).toLocaleString("ko-KR")}
+                {formatDateTime(p.meet_at)}
               </span>
             )}
             {p.games_count != null && (
@@ -310,7 +363,7 @@ function PostCard({
               {p.body}
             </p>
           )}
-        </Link>
+        </div>
         {userId === p.user_id && (
           <button
             onClick={async (e) => {
@@ -324,7 +377,7 @@ function PostCard({
                 onDelete();
               }
             }}
-            className="text-muted-foreground hover:text-destructive"
+            className="pointer-events-auto text-muted-foreground hover:text-destructive"
             aria-label="삭제"
           >
             <Trash2 className="h-4 w-4" />
@@ -438,25 +491,11 @@ function InlineLfgForm({ onCreated, onCancel }: { onCreated: () => void; onCance
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="flex flex-col gap-1.5">
           <Label>게임</Label>
-          <Select value={form.game} onValueChange={(v) => setForm({ ...form, game: v as Game, store_id: "" })}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="optcg">원피스</SelectItem>
-              <SelectItem value="ptcg">포켓몬</SelectItem>
-              <SelectItem value="dtcg">디지몬</SelectItem>
-            </SelectContent>
-          </Select>
+          <MenuSelect value={form.game} options={GAME_OPTIONS} onChange={(v) => setForm({ ...form, game: v, store_id: "" })} />
         </div>
         <div className="flex flex-col gap-1.5">
           <Label>카테고리</Label>
-          <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v as Category })}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="friendly">친선</SelectItem>
-              <SelectItem value="tier">티어</SelectItem>
-              <SelectItem value="tournament_practice">대회연습</SelectItem>
-            </SelectContent>
-          </Select>
+          <MenuSelect value={form.category} options={CATEGORY_OPTIONS} onChange={(v) => setForm({ ...form, category: v })} />
         </div>
         <div className="flex flex-col gap-1.5">
           <Label>일시</Label>
@@ -487,17 +526,18 @@ function InlineLfgForm({ onCreated, onCancel }: { onCreated: () => void; onCance
           value={storeQuery}
           onChange={(e) => setStoreQuery(e.target.value)}
         />
-        <Select value={form.store_id || "none"} onValueChange={(v) => setForm({ ...form, store_id: v === "none" ? "" : v })}>
-          <SelectTrigger><SelectValue placeholder="매장 선택 (선택사항)" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">선택 안 함 (직접 입력)</SelectItem>
-            {stores.map((s) => (
-              <SelectItem key={s.id} value={s.id}>
-                {s.name} {s.address ? `· ${s.address}` : ""}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <MenuSelect
+          value={form.store_id || "none"}
+          options={[
+            { value: "none", label: "선택 안 함 (직접 입력)" },
+            ...stores.map((s) => ({
+              value: s.id,
+              label: `${s.name}${s.address ? ` · ${s.address}` : ""}`,
+            })),
+          ]}
+          onChange={(v) => setForm({ ...form, store_id: v === "none" ? "" : v })}
+          placeholder="매장 선택 (선택사항)"
+        />
         {!form.store_id && (
           <Input
             value={form.location}
