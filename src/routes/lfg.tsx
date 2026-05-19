@@ -72,6 +72,60 @@ const CATEGORY_OPTIONS: { value: Category; label: string }[] = [
 
 type MenuOption<T extends string> = { value: T; label: string };
 
+const FILTER_GAME_OPTIONS: MenuOption<Game | "all">[] = [
+  { value: "all", label: "전체 게임" },
+  ...GAME_OPTIONS,
+];
+
+const FILTER_CATEGORY_OPTIONS: MenuOption<Category | "all">[] = [
+  { value: "all", label: "전체 카테고리" },
+  ...CATEGORY_OPTIONS,
+];
+
+const STATUS_OPTIONS: MenuOption<"open" | "closed" | "all">[] = [
+  { value: "open", label: "모집 중" },
+  { value: "closed", label: "모집 완료" },
+  { value: "all", label: "전체 상태" },
+];
+
+function MenuSelect<T extends string>({
+  value,
+  options,
+  onChange,
+  placeholder,
+  className,
+}: {
+  value: T;
+  options: MenuOption<T>[];
+  onChange: (value: T) => void;
+  placeholder?: string;
+  className?: string;
+}) {
+  const selected = options.find((option) => option.value === value);
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button type="button" variant="outline" className={`justify-between font-normal ${className ?? ""}`}>
+          <span className="truncate">{selected?.label ?? placeholder ?? "선택"}</span>
+          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="min-w-[var(--radix-dropdown-menu-trigger-width)]">
+        {options.map((option) => (
+          <DropdownMenuItem
+            key={option.value}
+            onSelect={() => onChange(option.value)}
+            className={option.value === value ? "font-medium" : undefined}
+          >
+            {option.label}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export const Route = createFileRoute("/lfg")({
   head: () => ({
     meta: [
