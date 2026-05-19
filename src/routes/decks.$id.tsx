@@ -462,13 +462,20 @@ function DeckDetailPage() {
                 <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
                   {deckCards.flatMap((dc) => {
                     const card = cardMeta[dc.card_code];
+                    const missing = !card;
                     return Array.from({ length: dc.quantity }).map((_, i) => (
                       <button
                         key={`${dc.id}-${i}`}
                         type="button"
                         onClick={() => openZoom(card?.image_url, card?.name ?? dc.card_code)}
-                        className="relative aspect-[2/3] overflow-hidden rounded border border-border bg-muted shadow-sm transition-all hover:ring-2 hover:ring-primary/40"
-                        title={`${card?.name ?? dc.card_code} (${i + 1}/${dc.quantity})`}
+                        className={`relative aspect-[2/3] overflow-hidden rounded border bg-muted shadow-sm transition-all hover:ring-2 hover:ring-primary/40 ${
+                          missing ? "border-dashed border-amber-500/60" : "border-border"
+                        }`}
+                        title={
+                          missing
+                            ? `${dc.card_code} — 카드 DB 미등록`
+                            : `${card?.name ?? dc.card_code} (${i + 1}/${dc.quantity})`
+                        }
                         aria-label={`${card?.name ?? dc.card_code} 확대 보기`}
                       >
                         {card?.image_url ? (
@@ -479,13 +486,19 @@ function DeckDetailPage() {
                             className="h-full w-full object-cover"
                           />
                         ) : (
-                          <div className="flex h-full w-full items-center justify-center p-1 text-[8px] text-muted-foreground text-center break-all">
-                            {card?.name ?? dc.card_code}
+                          <div className="flex h-full w-full flex-col items-center justify-center gap-1 p-1 text-center">
+                            <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[8px] font-bold text-amber-600 dark:text-amber-400">
+                              DB 미등록
+                            </span>
+                            <span className="text-[8px] text-muted-foreground break-all">
+                              {dc.card_code}
+                            </span>
                           </div>
                         )}
                       </button>
                     ));
                   })}
+
                 </div>
               </div>
             )}
@@ -518,10 +531,16 @@ function DeckDetailPage() {
                           loading="lazy"
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground p-2 text-center">
-                          {card?.name || dc.card_code}
+                        <div className="flex h-full w-full flex-col items-center justify-center gap-2 p-3 text-center">
+                          <span className="rounded bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                            DB 미등록
+                          </span>
+                          <span className="text-[10px] text-muted-foreground break-all">
+                            {dc.card_code}
+                          </span>
                         </div>
                       )}
+
                       <div className="absolute inset-x-0 bottom-0 bg-black/70 p-2 text-[10px] text-white">
                         <div className="flex items-center justify-between gap-1">
                           <span className="truncate font-bold">{card?.name || dc.card_code}</span>
