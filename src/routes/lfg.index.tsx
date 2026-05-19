@@ -134,7 +134,7 @@ function MenuSelect<T extends string>({
   );
 }
 
-export const Route = createFileRoute("/lfg")({
+export const Route = createFileRoute("/lfg/")({
   head: () => ({
     meta: [
       { title: "같이 칠 사람 — 덱로그" },

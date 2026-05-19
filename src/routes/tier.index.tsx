@@ -47,7 +47,7 @@ const emptyPlacements = (): Placements => ({
   S: [], A: [], B: [], C: [], D: [],
 });
 
-export const Route = createFileRoute("/tier")({
+export const Route = createFileRoute("/tier/")({
   head: () => ({
     meta: [
       { title: "티어 메이킹 — 덱로그" },
