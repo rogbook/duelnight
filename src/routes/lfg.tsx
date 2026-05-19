@@ -72,6 +72,14 @@ const CATEGORY_OPTIONS: { value: Category; label: string }[] = [
 
 type MenuOption<T extends string> = { value: T; label: string };
 
+function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
 const FILTER_GAME_OPTIONS: MenuOption<Game | "all">[] = [
   { value: "all", label: "전체 게임" },
   ...GAME_OPTIONS,
@@ -288,12 +296,13 @@ function PostCard({
   const closed = p.status === "closed";
   return (
     <li
-      className={`rounded-lg border bg-card p-4 transition hover:border-primary/40 ${
+      className={`relative rounded-lg border bg-card p-4 transition hover:border-primary/40 ${
         highlight ? "border-amber-500/50 bg-amber-500/5" : "border-border"
       } ${closed ? "opacity-70" : ""}`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <Link to="/lfg/$id" params={{ id: p.id }} className="min-w-0 flex-1">
+      <Link to="/lfg/$id" params={{ id: p.id }} className="absolute inset-0 rounded-lg" aria-label={`${p.title} 상세 보기`} />
+      <div className="pointer-events-none relative z-10 flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
               {GAME_LABEL[p.game]}
@@ -332,7 +341,7 @@ function PostCard({
             {p.meet_at && (
               <span className="inline-flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                {new Date(p.meet_at).toLocaleString("ko-KR")}
+                {formatDateTime(p.meet_at)}
               </span>
             )}
             {p.games_count != null && (
@@ -354,7 +363,7 @@ function PostCard({
               {p.body}
             </p>
           )}
-        </Link>
+        </div>
         {userId === p.user_id && (
           <button
             onClick={async (e) => {
@@ -368,7 +377,7 @@ function PostCard({
                 onDelete();
               }
             }}
-            className="text-muted-foreground hover:text-destructive"
+            className="pointer-events-auto text-muted-foreground hover:text-destructive"
             aria-label="삭제"
           >
             <Trash2 className="h-4 w-4" />
