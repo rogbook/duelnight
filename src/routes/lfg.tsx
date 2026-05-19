@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
-import { Users, Plus, Trash2, MapPin, Clock, X, Zap, Tag, Hash } from "lucide-react";
+import { Users, Plus, Trash2, MapPin, Clock, X, Zap, Tag, Hash, ChevronDown } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -12,12 +12,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -58,6 +57,20 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   tier: "티어",
   tournament_practice: "대회연습",
 };
+
+const GAME_OPTIONS: { value: Game; label: string }[] = [
+  { value: "optcg", label: "원피스" },
+  { value: "ptcg", label: "포켓몬" },
+  { value: "dtcg", label: "디지몬" },
+];
+
+const CATEGORY_OPTIONS: { value: Category; label: string }[] = [
+  { value: "friendly", label: "친선" },
+  { value: "tier", label: "티어" },
+  { value: "tournament_practice", label: "대회연습" },
+];
+
+type MenuOption<T extends string> = { value: T; label: string };
 
 export const Route = createFileRoute("/lfg")({
   head: () => ({
