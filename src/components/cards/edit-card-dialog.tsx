@@ -137,6 +137,61 @@ export function EditCardDialog({
         })
         .eq("id", card.id);
       if (error) throw error;
+
+      // 추가 일러스트 reconcile (메인 외의 이미지)
+      const currentExtras = Array.from(
+        new Set(
+          extraImages
+            .map((u) => normalizeImageUrl(u) ?? u)
+            .filter((u): u is string => !!u),
+        ),
+      );
+      const initialSet = new Set(initialAltImages);
+      const currentSet = new Set(currentExtras);
+      const toDelete = initialAltImages.filter((u) => !currentSet.has(u));
+      const toAdd = currentExtras.filter((u) => !initialSet.has(u));
+
+      if (toDelete.length > 0) {
+        const { error: delErr } = await supabase
+          .from("card_illustrations")
+          .delete()
+          .eq("card_code", card.code)
+          .in("image_url", toDelete);
+        if (delErr) console.error("[card_illustrations delete]", delErr);
+      }
+
+      // 코드가 변경된 경우 기존 row의 card_code도 새 코드로 이동
+      if (codeChanged && initialAltImages.length > 0) {
+        const remaining = initialAltImages.filter((u) => currentSet.has(u));
+        if (remaining.length > 0) {
+          const { error: updErr } = await supabase
+            .from("card_illustrations")
+            .update({ card_code: newCode })
+            .eq("card_code", card.code)
+            .in("image_url", remaining);
+          if (updErr) console.error("[card_illustrations rename]", updErr);
+        }
+      }
+
+      if (toAdd.length > 0) {
+        const { data: auth } = await supabase.auth.getUser();
+        const uid = auth.user?.id ?? null;
+        const payload = toAdd.map((image_url) => ({
+          card_code: newCode,
+          image_url,
+          variant_label: "얼터",
+          status: "approved" as const,
+          submitted_by: uid,
+          reviewed_by: uid,
+          reviewed_at: new Date().toISOString(),
+        }));
+        const { error: insErr } = await supabase
+          .from("card_illustrations")
+          .upsert(payload, { onConflict: "card_code,image_url", ignoreDuplicates: true });
+        if (insErr) console.error("[card_illustrations insert]", insErr);
+      }
+
+      setInitialAltImages(currentExtras);
       toast.success("카드 수정 완료" + (codeChanged ? ` (코드 변경: ${card.code} → ${newCode})` : ""));
       onSaved();
     } catch (err) {
