@@ -9,8 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TierRouteImport } from './routes/tier'
-import { Route as StoresRouteImport } from './routes/stores'
 import { Route as StoreRouteImport } from './routes/store'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -19,17 +17,19 @@ import { Route as PacksRouteImport } from './routes/packs'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as MatchesRouteImport } from './routes/matches'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as LfgRouteImport } from './routes/lfg'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as IntroRouteImport } from './routes/intro'
 import { Route as FriendsRouteImport } from './routes/friends'
 import { Route as CollectionRouteImport } from './routes/collection'
 import { Route as CardsRouteImport } from './routes/cards'
 import { Route as CalendarRouteImport } from './routes/calendar'
-import { Route as AnnouncementsRouteImport } from './routes/announcements'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TierIndexRouteImport } from './routes/tier.index'
+import { Route as StoresIndexRouteImport } from './routes/stores.index'
+import { Route as LfgIndexRouteImport } from './routes/lfg.index'
 import { Route as DecksIndexRouteImport } from './routes/decks.index'
 import { Route as CardsIndexRouteImport } from './routes/cards.index'
+import { Route as AnnouncementsIndexRouteImport } from './routes/announcements.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as TierIdRouteImport } from './routes/tier.$id'
 import { Route as StoresIdRouteImport } from './routes/stores.$id'
@@ -47,16 +47,6 @@ import { Route as ApiDriveAuthRouteImport } from './routes/api.drive.auth'
 import { Route as AdminCardsReviewRouteImport } from './routes/admin.cards.review'
 import { Route as AdminCardsManageRouteImport } from './routes/admin.cards.manage'
 
-const TierRoute = TierRouteImport.update({
-  id: '/tier',
-  path: '/tier',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const StoresRoute = StoresRouteImport.update({
-  id: '/stores',
-  path: '/stores',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const StoreRoute = StoreRouteImport.update({
   id: '/store',
   path: '/store',
@@ -97,11 +87,6 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LfgRoute = LfgRouteImport.update({
-  id: '/lfg',
-  path: '/lfg',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LeaderboardRoute = LeaderboardRouteImport.update({
   id: '/leaderboard',
   path: '/leaderboard',
@@ -132,14 +117,24 @@ const CalendarRoute = CalendarRouteImport.update({
   path: '/calendar',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AnnouncementsRoute = AnnouncementsRouteImport.update({
-  id: '/announcements',
-  path: '/announcements',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TierIndexRoute = TierIndexRouteImport.update({
+  id: '/tier/',
+  path: '/tier/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoresIndexRoute = StoresIndexRouteImport.update({
+  id: '/stores/',
+  path: '/stores/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LfgIndexRoute = LfgIndexRouteImport.update({
+  id: '/lfg/',
+  path: '/lfg/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DecksIndexRoute = DecksIndexRouteImport.update({
@@ -152,25 +147,30 @@ const CardsIndexRoute = CardsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => CardsRoute,
 } as any)
+const AnnouncementsIndexRoute = AnnouncementsIndexRouteImport.update({
+  id: '/announcements/',
+  path: '/announcements/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TierIdRoute = TierIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => TierRoute,
+  id: '/tier/$id',
+  path: '/tier/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const StoresIdRoute = StoresIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => StoresRoute,
+  id: '/stores/$id',
+  path: '/stores/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const LfgIdRoute = LfgIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => LfgRoute,
+  id: '/lfg/$id',
+  path: '/lfg/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const EventsIdRoute = EventsIdRouteImport.update({
   id: '/events/$id',
@@ -203,9 +203,9 @@ const ApiCardOcrRoute = ApiCardOcrRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AnnouncementsIdRoute = AnnouncementsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AnnouncementsRoute,
+  id: '/announcements/$id',
+  path: '/announcements/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminCardsRoute = AdminCardsRouteImport.update({
   id: '/admin/cards',
@@ -235,14 +235,12 @@ const AdminCardsManageRoute = AdminCardsManageRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/announcements': typeof AnnouncementsRouteWithChildren
   '/calendar': typeof CalendarRoute
   '/cards': typeof CardsRouteWithChildren
   '/collection': typeof CollectionRoute
   '/friends': typeof FriendsRoute
   '/intro': typeof IntroRoute
   '/leaderboard': typeof LeaderboardRoute
-  '/lfg': typeof LfgRouteWithChildren
   '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
   '/notifications': typeof NotificationsRoute
@@ -251,8 +249,6 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/store': typeof StoreRoute
-  '/stores': typeof StoresRouteWithChildren
-  '/tier': typeof TierRouteWithChildren
   '/admin/cards': typeof AdminCardsRouteWithChildren
   '/announcements/$id': typeof AnnouncementsIdRoute
   '/api/card-ocr': typeof ApiCardOcrRoute
@@ -265,8 +261,12 @@ export interface FileRoutesByFullPath {
   '/stores/$id': typeof StoresIdRoute
   '/tier/$id': typeof TierIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/announcements/': typeof AnnouncementsIndexRoute
   '/cards/': typeof CardsIndexRoute
   '/decks/': typeof DecksIndexRoute
+  '/lfg/': typeof LfgIndexRoute
+  '/stores/': typeof StoresIndexRoute
+  '/tier/': typeof TierIndexRoute
   '/admin/cards/manage': typeof AdminCardsManageRoute
   '/admin/cards/review': typeof AdminCardsReviewRoute
   '/api/drive/auth': typeof ApiDriveAuthRoute
@@ -274,13 +274,11 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/announcements': typeof AnnouncementsRouteWithChildren
   '/calendar': typeof CalendarRoute
   '/collection': typeof CollectionRoute
   '/friends': typeof FriendsRoute
   '/intro': typeof IntroRoute
   '/leaderboard': typeof LeaderboardRoute
-  '/lfg': typeof LfgRouteWithChildren
   '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
   '/notifications': typeof NotificationsRoute
@@ -289,8 +287,6 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/store': typeof StoreRoute
-  '/stores': typeof StoresRouteWithChildren
-  '/tier': typeof TierRouteWithChildren
   '/admin/cards': typeof AdminCardsRouteWithChildren
   '/announcements/$id': typeof AnnouncementsIdRoute
   '/api/card-ocr': typeof ApiCardOcrRoute
@@ -303,8 +299,12 @@ export interface FileRoutesByTo {
   '/stores/$id': typeof StoresIdRoute
   '/tier/$id': typeof TierIdRoute
   '/admin': typeof AdminIndexRoute
+  '/announcements': typeof AnnouncementsIndexRoute
   '/cards': typeof CardsIndexRoute
   '/decks': typeof DecksIndexRoute
+  '/lfg': typeof LfgIndexRoute
+  '/stores': typeof StoresIndexRoute
+  '/tier': typeof TierIndexRoute
   '/admin/cards/manage': typeof AdminCardsManageRoute
   '/admin/cards/review': typeof AdminCardsReviewRoute
   '/api/drive/auth': typeof ApiDriveAuthRoute
@@ -313,14 +313,12 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/announcements': typeof AnnouncementsRouteWithChildren
   '/calendar': typeof CalendarRoute
   '/cards': typeof CardsRouteWithChildren
   '/collection': typeof CollectionRoute
   '/friends': typeof FriendsRoute
   '/intro': typeof IntroRoute
   '/leaderboard': typeof LeaderboardRoute
-  '/lfg': typeof LfgRouteWithChildren
   '/login': typeof LoginRoute
   '/matches': typeof MatchesRoute
   '/notifications': typeof NotificationsRoute
@@ -329,8 +327,6 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/store': typeof StoreRoute
-  '/stores': typeof StoresRouteWithChildren
-  '/tier': typeof TierRouteWithChildren
   '/admin/cards': typeof AdminCardsRouteWithChildren
   '/announcements/$id': typeof AnnouncementsIdRoute
   '/api/card-ocr': typeof ApiCardOcrRoute
@@ -343,8 +339,12 @@ export interface FileRoutesById {
   '/stores/$id': typeof StoresIdRoute
   '/tier/$id': typeof TierIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/announcements/': typeof AnnouncementsIndexRoute
   '/cards/': typeof CardsIndexRoute
   '/decks/': typeof DecksIndexRoute
+  '/lfg/': typeof LfgIndexRoute
+  '/stores/': typeof StoresIndexRoute
+  '/tier/': typeof TierIndexRoute
   '/admin/cards/manage': typeof AdminCardsManageRoute
   '/admin/cards/review': typeof AdminCardsReviewRoute
   '/api/drive/auth': typeof ApiDriveAuthRoute
@@ -354,14 +354,12 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/announcements'
     | '/calendar'
     | '/cards'
     | '/collection'
     | '/friends'
     | '/intro'
     | '/leaderboard'
-    | '/lfg'
     | '/login'
     | '/matches'
     | '/notifications'
@@ -370,8 +368,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sitemap.xml'
     | '/store'
-    | '/stores'
-    | '/tier'
     | '/admin/cards'
     | '/announcements/$id'
     | '/api/card-ocr'
@@ -384,8 +380,12 @@ export interface FileRouteTypes {
     | '/stores/$id'
     | '/tier/$id'
     | '/admin/'
+    | '/announcements/'
     | '/cards/'
     | '/decks/'
+    | '/lfg/'
+    | '/stores/'
+    | '/tier/'
     | '/admin/cards/manage'
     | '/admin/cards/review'
     | '/api/drive/auth'
@@ -393,13 +393,11 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/announcements'
     | '/calendar'
     | '/collection'
     | '/friends'
     | '/intro'
     | '/leaderboard'
-    | '/lfg'
     | '/login'
     | '/matches'
     | '/notifications'
@@ -408,8 +406,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sitemap.xml'
     | '/store'
-    | '/stores'
-    | '/tier'
     | '/admin/cards'
     | '/announcements/$id'
     | '/api/card-ocr'
@@ -422,8 +418,12 @@ export interface FileRouteTypes {
     | '/stores/$id'
     | '/tier/$id'
     | '/admin'
+    | '/announcements'
     | '/cards'
     | '/decks'
+    | '/lfg'
+    | '/stores'
+    | '/tier'
     | '/admin/cards/manage'
     | '/admin/cards/review'
     | '/api/drive/auth'
@@ -431,14 +431,12 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/announcements'
     | '/calendar'
     | '/cards'
     | '/collection'
     | '/friends'
     | '/intro'
     | '/leaderboard'
-    | '/lfg'
     | '/login'
     | '/matches'
     | '/notifications'
@@ -447,8 +445,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sitemap.xml'
     | '/store'
-    | '/stores'
-    | '/tier'
     | '/admin/cards'
     | '/announcements/$id'
     | '/api/card-ocr'
@@ -461,8 +457,12 @@ export interface FileRouteTypes {
     | '/stores/$id'
     | '/tier/$id'
     | '/admin/'
+    | '/announcements/'
     | '/cards/'
     | '/decks/'
+    | '/lfg/'
+    | '/stores/'
+    | '/tier/'
     | '/admin/cards/manage'
     | '/admin/cards/review'
     | '/api/drive/auth'
@@ -471,14 +471,12 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AnnouncementsRoute: typeof AnnouncementsRouteWithChildren
   CalendarRoute: typeof CalendarRoute
   CardsRoute: typeof CardsRouteWithChildren
   CollectionRoute: typeof CollectionRoute
   FriendsRoute: typeof FriendsRoute
   IntroRoute: typeof IntroRoute
   LeaderboardRoute: typeof LeaderboardRoute
-  LfgRoute: typeof LfgRouteWithChildren
   LoginRoute: typeof LoginRoute
   MatchesRoute: typeof MatchesRoute
   NotificationsRoute: typeof NotificationsRoute
@@ -487,36 +485,28 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StoreRoute: typeof StoreRoute
-  StoresRoute: typeof StoresRouteWithChildren
-  TierRoute: typeof TierRouteWithChildren
   AdminCardsRoute: typeof AdminCardsRouteWithChildren
+  AnnouncementsIdRoute: typeof AnnouncementsIdRoute
   ApiCardOcrRoute: typeof ApiCardOcrRoute
   ApiCoachRoute: typeof ApiCoachRoute
   CardsCodeRoute: typeof CardsCodeRoute
   DecksIdRoute: typeof DecksIdRoute
   EventsIdRoute: typeof EventsIdRoute
+  LfgIdRoute: typeof LfgIdRoute
+  StoresIdRoute: typeof StoresIdRoute
+  TierIdRoute: typeof TierIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AnnouncementsIndexRoute: typeof AnnouncementsIndexRoute
   DecksIndexRoute: typeof DecksIndexRoute
+  LfgIndexRoute: typeof LfgIndexRoute
+  StoresIndexRoute: typeof StoresIndexRoute
+  TierIndexRoute: typeof TierIndexRoute
   ApiDriveAuthRoute: typeof ApiDriveAuthRoute
   AuthGoogleDriveCallbackRoute: typeof AuthGoogleDriveCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/tier': {
-      id: '/tier'
-      path: '/tier'
-      fullPath: '/tier'
-      preLoaderRoute: typeof TierRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/stores': {
-      id: '/stores'
-      path: '/stores'
-      fullPath: '/stores'
-      preLoaderRoute: typeof StoresRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/store': {
       id: '/store'
       path: '/store'
@@ -573,13 +563,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lfg': {
-      id: '/lfg'
-      path: '/lfg'
-      fullPath: '/lfg'
-      preLoaderRoute: typeof LfgRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/leaderboard': {
       id: '/leaderboard'
       path: '/leaderboard'
@@ -622,18 +605,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CalendarRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/announcements': {
-      id: '/announcements'
-      path: '/announcements'
-      fullPath: '/announcements'
-      preLoaderRoute: typeof AnnouncementsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tier/': {
+      id: '/tier/'
+      path: '/tier'
+      fullPath: '/tier/'
+      preLoaderRoute: typeof TierIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stores/': {
+      id: '/stores/'
+      path: '/stores'
+      fullPath: '/stores/'
+      preLoaderRoute: typeof StoresIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lfg/': {
+      id: '/lfg/'
+      path: '/lfg'
+      fullPath: '/lfg/'
+      preLoaderRoute: typeof LfgIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/decks/': {
@@ -650,6 +647,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CardsIndexRouteImport
       parentRoute: typeof CardsRoute
     }
+    '/announcements/': {
+      id: '/announcements/'
+      path: '/announcements'
+      fullPath: '/announcements/'
+      preLoaderRoute: typeof AnnouncementsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/': {
       id: '/admin/'
       path: '/admin'
@@ -659,24 +663,24 @@ declare module '@tanstack/react-router' {
     }
     '/tier/$id': {
       id: '/tier/$id'
-      path: '/$id'
+      path: '/tier/$id'
       fullPath: '/tier/$id'
       preLoaderRoute: typeof TierIdRouteImport
-      parentRoute: typeof TierRoute
+      parentRoute: typeof rootRouteImport
     }
     '/stores/$id': {
       id: '/stores/$id'
-      path: '/$id'
+      path: '/stores/$id'
       fullPath: '/stores/$id'
       preLoaderRoute: typeof StoresIdRouteImport
-      parentRoute: typeof StoresRoute
+      parentRoute: typeof rootRouteImport
     }
     '/lfg/$id': {
       id: '/lfg/$id'
-      path: '/$id'
+      path: '/lfg/$id'
       fullPath: '/lfg/$id'
       preLoaderRoute: typeof LfgIdRouteImport
-      parentRoute: typeof LfgRoute
+      parentRoute: typeof rootRouteImport
     }
     '/events/$id': {
       id: '/events/$id'
@@ -722,10 +726,10 @@ declare module '@tanstack/react-router' {
     }
     '/announcements/$id': {
       id: '/announcements/$id'
-      path: '/$id'
+      path: '/announcements/$id'
       fullPath: '/announcements/$id'
       preLoaderRoute: typeof AnnouncementsIdRouteImport
-      parentRoute: typeof AnnouncementsRoute
+      parentRoute: typeof rootRouteImport
     }
     '/admin/cards': {
       id: '/admin/cards'
@@ -765,18 +769,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AnnouncementsRouteChildren {
-  AnnouncementsIdRoute: typeof AnnouncementsIdRoute
-}
-
-const AnnouncementsRouteChildren: AnnouncementsRouteChildren = {
-  AnnouncementsIdRoute: AnnouncementsIdRoute,
-}
-
-const AnnouncementsRouteWithChildren = AnnouncementsRoute._addFileChildren(
-  AnnouncementsRouteChildren,
-)
-
 interface CardsRouteChildren {
   CardsUploadRoute: typeof CardsUploadRoute
   CardsIndexRoute: typeof CardsIndexRoute
@@ -788,37 +780,6 @@ const CardsRouteChildren: CardsRouteChildren = {
 }
 
 const CardsRouteWithChildren = CardsRoute._addFileChildren(CardsRouteChildren)
-
-interface LfgRouteChildren {
-  LfgIdRoute: typeof LfgIdRoute
-}
-
-const LfgRouteChildren: LfgRouteChildren = {
-  LfgIdRoute: LfgIdRoute,
-}
-
-const LfgRouteWithChildren = LfgRoute._addFileChildren(LfgRouteChildren)
-
-interface StoresRouteChildren {
-  StoresIdRoute: typeof StoresIdRoute
-}
-
-const StoresRouteChildren: StoresRouteChildren = {
-  StoresIdRoute: StoresIdRoute,
-}
-
-const StoresRouteWithChildren =
-  StoresRoute._addFileChildren(StoresRouteChildren)
-
-interface TierRouteChildren {
-  TierIdRoute: typeof TierIdRoute
-}
-
-const TierRouteChildren: TierRouteChildren = {
-  TierIdRoute: TierIdRoute,
-}
-
-const TierRouteWithChildren = TierRoute._addFileChildren(TierRouteChildren)
 
 interface AdminCardsRouteChildren {
   AdminCardsManageRoute: typeof AdminCardsManageRoute
@@ -836,14 +797,12 @@ const AdminCardsRouteWithChildren = AdminCardsRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AnnouncementsRoute: AnnouncementsRouteWithChildren,
   CalendarRoute: CalendarRoute,
   CardsRoute: CardsRouteWithChildren,
   CollectionRoute: CollectionRoute,
   FriendsRoute: FriendsRoute,
   IntroRoute: IntroRoute,
   LeaderboardRoute: LeaderboardRoute,
-  LfgRoute: LfgRouteWithChildren,
   LoginRoute: LoginRoute,
   MatchesRoute: MatchesRoute,
   NotificationsRoute: NotificationsRoute,
@@ -852,19 +811,35 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StoreRoute: StoreRoute,
-  StoresRoute: StoresRouteWithChildren,
-  TierRoute: TierRouteWithChildren,
   AdminCardsRoute: AdminCardsRouteWithChildren,
+  AnnouncementsIdRoute: AnnouncementsIdRoute,
   ApiCardOcrRoute: ApiCardOcrRoute,
   ApiCoachRoute: ApiCoachRoute,
   CardsCodeRoute: CardsCodeRoute,
   DecksIdRoute: DecksIdRoute,
   EventsIdRoute: EventsIdRoute,
+  LfgIdRoute: LfgIdRoute,
+  StoresIdRoute: StoresIdRoute,
+  TierIdRoute: TierIdRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AnnouncementsIndexRoute: AnnouncementsIndexRoute,
   DecksIndexRoute: DecksIndexRoute,
+  LfgIndexRoute: LfgIndexRoute,
+  StoresIndexRoute: StoresIndexRoute,
+  TierIndexRoute: TierIndexRoute,
   ApiDriveAuthRoute: ApiDriveAuthRoute,
   AuthGoogleDriveCallbackRoute: AuthGoogleDriveCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
