@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { ImagePlus, Loader2, Save, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ImagePlus, Loader2, Save, Star, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -46,8 +47,30 @@ export function EditCardDialog({
     image_url: card.image_url ?? "",
     traits: (card.traits ?? []).join(", "),
   });
+  const [extraImages, setExtraImages] = useState<string[]>([]);
+  const [initialAltImages, setInitialAltImages] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
+
+  // 기존 추가 일러스트 로드
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { data } = await supabase
+        .from("card_illustrations")
+        .select("image_url")
+        .eq("card_code", card.code)
+        .eq("status", "approved")
+        .order("created_at", { ascending: true });
+      if (!alive) return;
+      const urls = (data ?? [])
+        .map((r) => normalizeImageUrl(r.image_url) ?? r.image_url)
+        .filter((u): u is string => !!u);
+      setExtraImages(urls);
+      setInitialAltImages(urls);
+    })();
+    return () => { alive = false; };
+  }, [card.code]);
 
   const onSave = async () => {
     if (!form.name.trim() || !form.set_code.trim() || !form.code.trim()) {
