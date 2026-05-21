@@ -1,78 +1,118 @@
+# tcg-hub 2단계 배포 운영 셋업 (Preview = 테스트, Published = 실운영)
 
-## 배경 (어제 테스트 피드백)
-1. **`/intro` 페이지 404** — `src/routes/intro.tsx` 파일이 사라져 있음(Antigravity 푸시 과정에서 누락된 것으로 추정). 라우트 파일 자체가 없어 라우터가 매칭하지 못함.
-2. **동일 카드인데 일러스트가 다른 카드가 업로드되지 않음** — `cards.code`가 UNIQUE라 "DB 중복"으로 모두 건너뜀. 얼터아트/패러랠 등 같은 카드의 다른 일러스트는 허용되어야 함.
-3. **리더 카드의 표기** — 현재 "코스트"로 표기되는 값이 실제로는 "라이프". 리더에 한해 "라이프"로만 표기.
+## 핵심 구조
+
+```text
+[개발자 / Lovable 편집]
+        │ 코드 푸시 (자동)
+        ▼
+┌──────────────────────────┐
+│  Preview URL (테스트 서버) │  ← 관리자들이 검증
+│  id-preview--…lovable.app│  ← 항상 최신 빌드 즉시 반영
+└──────────┬───────────────┘
+           │ 검증 OK → Publish 버튼
+           ▼
+┌──────────────────────────┐
+│  Published URL (실운영)   │  ← 실사용자
+│  tcg-hub.lovable.app     │  ← Publish 눌러야 갱신
+└──────────────────────────┘
+
+⚠ 백엔드(Cloud DB/Auth/Storage)는 두 환경이 공유
+   → 데이터 보호 장치를 코드/운영 규칙으로 보완
+```
+
+## 1. Preview를 "테스트 서버"로 운영하는 규칙
+
+### 1-1. 접근 제어
+- **Publish 가시성은 `public` 유지** (실사용자용 도메인은 누구나 접근).
+- **Preview URL은 Lovable 워크스페이스 멤버에게만 공개** (현재 기본 동작). 관리자만 워크스페이스에 초대하면 자동으로 테스트 권한이 됨.
+- 외부 관리자(워크스페이스 멤버 아님)에게는 **Share → Share preview**로 7일짜리 공개 링크 발급.
+
+### 1-2. "여기는 테스트입니다" 시각적 표시
+- `import.meta.env.MODE` 또는 `window.location.hostname` 기반으로 Preview일 때 상단에 **노란 배너**(`⚠ 테스트 환경 — 실데이터에 영향 갈 수 있음`)를 띄움.
+- `src/components/app-sidebar.tsx` 헤더 옆 Admin 배지 옆에 환경 배지(STAGING/PROD) 추가.
+
+## 2. 백엔드 공유로 인한 위험 완화
+
+Preview와 Published가 같은 Cloud DB를 보기 때문에, **테스트 행위가 실데이터를 오염시키지 않도록** 다음을 추가:
+
+### 2-1. 테스트 데이터 격리 컬럼
+주요 사용자 작성 테이블(`matches`, `decks`, `lfg_posts` 등)에 `is_test BOOLEAN DEFAULT false` 컬럼 추가.
+- Preview 환경에서 생성되는 모든 레코드는 `is_test = true`로 저장.
+- 실사용자 화면(Published) 쿼리는 `WHERE is_test = false`로 필터.
+- 관리자 페이지에는 "테스트 데이터 보기" 토글.
+
+### 2-2. 파괴적 작업 가드
+- 카드 DB 일괄 삭제/대량 수정 같은 위험 작업은 **Published 환경에서만 차단되는 confirm 단계**가 아니라, 항상 "운영 데이터에 영향" 경고 + 관리자 비밀번호 재입력.
+- 마이그레이션(스키마 변경)은 영향 큰 경우 미리 공지 + 점검 시간 활용.
+
+### 2-3. 결제/외부 연동 키 분리
+- Stripe/PG 등은 `STRIPE_SECRET_KEY_TEST`, `STRIPE_SECRET_KEY_LIVE`를 둘 다 Secrets에 저장.
+- 서버 함수에서 `process.env.NODE_ENV` 또는 요청 origin으로 분기.
+
+## 3. 운영 DB 스냅샷 → 로컬 검증용 복제 워크플로
+
+> 같은 Cloud를 쓰므로 "스냅샷 복제"는 **별도 staging DB**가 아니라 **로컬/임시 환경에서 데이터를 검증**하는 용도로 사용합니다. (방식 B 한계)
+
+### 3-1. 정기 백업
+- Cloud → Database → Tables에서 매주 CSV export (또는 `pg_dump` via Antigravity 로컬).
+- `/mnt/documents/backups/tcg-hub-YYYY-MM-DD.sql` 형식 보관.
+
+### 3-2. 마이그레이션 사전 검증 절차
+1. Antigravity에서 로컬 Supabase 인스턴스 띄우기.
+2. 최신 prod 스냅샷 import.
+3. 새 마이그레이션 SQL을 로컬에서 먼저 실행 → 에러/데이터 손상 확인.
+4. 문제 없으면 Lovable에서 `supabase--migration` 도구로 실 적용.
+
+### 3-3. PII 마스킹
+- 스냅샷을 외부 관리자에게 공유할 때는 `profiles.email`, `auth.users` 정보 마스킹 스크립트 (`scripts/anonymize-snapshot.ts`) 작성.
+
+## 4. 배포 절차 (운영 룰)
+
+```text
+[1] 개발 작업 (Lovable 또는 Antigravity)
+      ↓
+[2] GitHub main에 머지 → Preview 자동 빌드
+      ↓
+[3] 관리자 테스트 (Preview URL)
+    - 체크리스트: 카드 등록, 덱빌더, 매칭, 결제 sandbox
+    - is_test=true로 데이터 생성/삭제
+      ↓
+[4] 통과 → Lovable에서 "Publish" 클릭
+      ↓
+[5] 실사용자에게 반영 (tcg-hub.lovable.app)
+      ↓
+[6] 릴리스 노트 작성 (docs/RELEASES.md)
+```
+
+### 체크리스트 문서
+- `docs/QA_CHECKLIST.md` 신규 작성: Publish 전 관리자가 Preview에서 확인할 항목 표준화.
+- `docs/RELEASES.md`: 배포 일자 / 변경 요약 / 롤백 방법.
+
+## 5. 롤백 전략
+
+- **프론트엔드 롤백**: Lovable 버전 히스토리에서 이전 빌드 선택 → Publish.
+- **DB 롤백**: 마이그레이션은 항상 reversible하게 작성 (UP/DOWN). 직전 스냅샷으로 복구 가능하게 보관.
 
 ---
 
-## 변경안
+## 구현 작업 목록 (다음 빌드 모드에서 수행)
 
-### 1. `/intro` 라우트 복원
-- `src/routes/intro.tsx` 재생성. 이전 회차에서 만든 인트로 페이지(브랜드/네이밍 샘플 + 가격/요금 정책 안내 + CTA → /login, /pricing) 동일 구성으로 복원.
-- `__root.tsx`의 bare layout 분기는 이미 `pathname === "/intro"`을 처리하므로 그대로 사용 (사이드바·헤더 숨김 유지).
-- `head()`에 별도 `title`/`description`/`og:` 메타 포함.
-- `src/routes/index.tsx`에서 비로그인 사용자를 `/intro`로 리다이렉트하는 기존 로직이 유지되는지 확인.
-- `routeTree.gen.ts`는 자동 재생성되므로 손대지 않음.
+1. **환경 배너 컴포넌트** 추가 (`src/components/env-badge.tsx`) — Preview면 상단 띄움.
+2. **`is_test` 컬럼 마이그레이션** — 핵심 테이블에 추가 + 기본 쿼리 필터 적용.
+3. **관리자용 "테스트 데이터 보기" 토글** — 관리자 콘솔에 추가.
+4. **`docs/DEPLOY_PROCESS.md`** 신규 — 위 4번 절차 + 체크리스트.
+5. **`docs/QA_CHECKLIST.md`** — 카드/덱/매칭/결제/공지 핵심 플로우 항목.
+6. **`docs/RELEASES.md`** 템플릿 + 첫 항목.
+7. **`scripts/anonymize-snapshot.ts`** — PII 마스킹 스크립트 스켈레톤.
+8. **`mem://workflow/deployment`** 메모리 저장 — 향후 AI 작업 시 자동 준수.
 
-### 2. 동일 카드 · 다중 일러스트 허용
+## 기술 메모
 
-DB는 카드 메타(이름/효과/스탯)는 코드 단위로 유지하고, 일러스트만 분리.
+- Preview/Published 구분은 `import.meta.env.DEV`가 아니라 `window.location.hostname.includes('id-preview')`로 판단 (Published 빌드도 production mode).
+- `is_test` 필터는 RLS 정책에 직접 넣는 것보다 **쿼리 레이어**(클라이언트 훅)에서 처리 권장 — 관리자가 테스트 데이터도 보려면 토글 가능해야 하므로.
+- Lovable Cloud는 단일 인스턴스이므로 부하 분리는 불가. Preview에서 부하 테스트 금지.
 
-**마이그레이션 (신규)**
-- 테이블 `public.card_illustrations`
-  - `card_code text` (FK → cards.code, ON DELETE CASCADE)
-  - `image_url text NOT NULL`
-  - `variant_label text` (자유 텍스트, 기본값 NULL — 예: "기본"/"얼터"/"패러랠"/"프로모")
-  - `is_primary boolean default false` (카드별 partial unique index로 1장만 true)
-  - `status card_status default 'pending'`, `submitted_by uuid`, `reviewed_by`, `reviewed_at`, `review_note`
-  - 표준 timestamp + `updated_at` 트리거
-  - UNIQUE `(card_code, image_url)` — 완전히 동일한 URL만 차단
-- 백필: 기존 `cards.image_url`이 있는 행을 `card_illustrations`에 `is_primary=true, status='approved'`로 INSERT.
-- RLS: 기존 cards 정책과 동일 패턴
-  - 승인된 일러스트는 모두 조회 가능
-  - 본인 제출분 조회/생성, 관리자 전체 권한
-- `cards.image_url`은 호환 위해 남겨두되, 신규 흐름은 illustrations에 기록.
+## 한계 및 향후 승격 경로
 
-**업로더 (`src/components/cards/card-uploader.tsx`)**
-- 중복 검사 결과 분기:
-  - 코드가 DB에 있고 신규 행에 image_url 있음 → "추가 일러스트로 등록" 후보 (배지 색/문구 변경, 행에 `variant_label` 입력칸 노출, 기본값 "얼터")
-  - 코드가 DB에 있고 image_url 없음 → 기존처럼 건너뜀 (관리자는 메타 덮어쓰기 옵션)
-  - 신규 코드 → cards INSERT + 첫 일러스트 = primary
-- `submit()` 분기:
-  - 일반 카드 → cards upsert (현재 로직)
-  - 추가 일러스트 행 → `card_illustrations`에 INSERT (사용자=pending, 관리자=approved)
-- 결과 토스트: "X장 등록 · Y장 추가 일러스트 · Z장 건너뜀"
-
-**카드 상세 (`src/routes/cards_.$code.tsx`)**
-- 승인된 `card_illustrations` 목록을 썸네일 갤러리로 노출. 클릭 시 메인 이미지 교체.
-  (이게 없으면 추가 일러스트가 보이지 않아 기능 의미가 없음.)
-
-**관리자 검수 (`src/routes/admin.cards.review.tsx`)**
-- 검수 대기 일러스트 탭 추가 — pending 일러스트를 카드 메타 옆에 미리보기로 노출하고 승인/반려.
-
-### 3. 리더 카드 = "라이프" 표기 통일
-
-DB 컬럼은 그대로(`cost` 재사용). 표시·입력 라벨만 `type === 'leader'`일 때 분기.
-- `src/routes/cards.index.tsx` L490 — `Stat label` 동적 분기.
-- `src/routes/cards_.$code.tsx` L145 — 동일 분기.
-- `src/components/cards/card-uploader.tsx`
-  - 단일 입력 폼: type=leader면 입력 라벨을 "라이프"로.
-  - 엑셀 헤더 별칭(L62~)에 `라이프: "cost"` 추가.
-  - 샘플/가이드 표(L208~)에 "리더는 코스트(=라이프) 칸에 라이프 값 입력" 안내 한 줄.
-- `src/routes/api/card-ocr.ts` 시스템 프롬프트에 "리더 카드의 라이프 값은 cost 필드에 채운다"라고 명시.
-
----
-
-## 영향 파일
-- `src/routes/intro.tsx` (재생성)
-- 신규 마이그레이션 1개 (card_illustrations + 백필 + RLS + 트리거)
-- `src/components/cards/card-uploader.tsx` (중복 분기 + 변형 라벨 + 라이프 라벨)
-- `src/routes/cards.index.tsx`, `src/routes/cards_.$code.tsx` (라이프 라벨 + 갤러리)
-- `src/routes/admin.cards.review.tsx` (일러스트 검수 추가)
-- `src/routes/api/card-ocr.ts` (프롬프트 보강)
-
-## 결정 필요
-1. 일반 사용자가 추가 일러스트를 올릴 때 **검수 대기** 가 기본인지(스팸 방지), **자동 승인** 인지? (권장: pending)
-2. `variant_label`을 자유 텍스트로 둘지 enum(기본/얼터/패러랠/프로모/SP)로 강제할지? (권장: 자유 텍스트 + suggestion datalist)
-3. 카드 상세 갤러리에서 "이 일러스트로 기본 변경" 버튼은 관리자만 노출하면 되는지? (권장: 예)
+방식 B는 **데이터/스키마는 완전 격리가 안 됩니다**. 사용자/매출이 일정 규모를 넘으면 방식 A(프로젝트 2개) 승격을 권장합니다. 그때까지의 가드레일이 이 계획의 핵심입니다.
