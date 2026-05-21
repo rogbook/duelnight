@@ -15,6 +15,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/sonner";
 import { NotificationBell } from "@/components/notification-bell";
+import { EnvBanner } from "@/components/env-banner";
 import { supabase } from "@/integrations/supabase/client";
 
 function AuthHeaderButton() {
@@ -163,6 +164,7 @@ function RootComponent() {
       <AuthProvider>
         {isBare ? (
           <>
+            <EnvBanner />
             <main className="min-h-screen bg-background">
               <Outlet />
             </main>
@@ -173,6 +175,7 @@ function RootComponent() {
             <div className="flex min-h-screen w-full bg-background">
               <AppSidebar />
               <div className="flex flex-1 flex-col">
+                <EnvBanner />
                 <header
                   className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-background/80 px-2 backdrop-blur sm:h-14 sm:gap-3 sm:px-4"
                   style={{ paddingTop: "env(safe-area-inset-top)" }}
