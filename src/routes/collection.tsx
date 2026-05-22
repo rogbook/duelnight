@@ -31,7 +31,7 @@ const GAMES: { id: Game; label: string }[] = [
 export const Route = createFileRoute("/collection")({
   head: () => ({
     meta: [
-      { title: "내 컬렉션 — 덱로그" },
+      { title: "내 컬렉션 — DuelNight" },
       { name: "description", content: "보유 카드 등록과 세트별 진행률." },
     ],
   }),

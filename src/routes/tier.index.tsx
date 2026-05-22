@@ -50,7 +50,7 @@ const emptyPlacements = (): Placements => ({
 export const Route = createFileRoute("/tier/")({
   head: () => ({
     meta: [
-      { title: "티어 메이킹 — 덱로그" },
+      { title: "티어 메이킹 — DuelNight" },
       { name: "description", content: "리더 카드를 S/A/B/C/D 티어로 배치하고 공유하세요." },
     ],
   }),

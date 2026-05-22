@@ -27,7 +27,7 @@ type Profile = Tables<"profiles">;
 export const Route = createFileRoute("/profile")({
   head: () => ({
     meta: [
-      { title: "프로필 — 덱로그" },
+      { title: "프로필 — DuelNight" },
       { name: "description", content: "내 프로필, 닉네임, 아바타." },
     ],
   }),

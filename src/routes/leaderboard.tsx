@@ -40,7 +40,7 @@ interface Row {
 export const Route = createFileRoute("/leaderboard")({
   head: () => ({
     meta: [
-      { title: "리더보드 — 덱로그" },
+      { title: "리더보드 — DuelNight" },
       {
         name: "description",
         content: "게임별 ELO 랭킹.",
