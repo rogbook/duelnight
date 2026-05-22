@@ -61,9 +61,11 @@ export function NotificationBell() {
   const unread = data.filter((n) => !n.read_at).length;
 
   const markAllRead = async () => {
+    if (!user) return;
     await supabase
       .from("notifications")
       .update({ read_at: new Date().toISOString() })
+      .eq("user_id", user.id)
       .is("read_at", null);
     qc.invalidateQueries({ queryKey: ["notifications"] });
   };

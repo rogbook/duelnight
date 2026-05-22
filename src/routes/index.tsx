@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Calendar,
   Library,
@@ -14,6 +15,7 @@ import {
 import { PageHeader } from "@/components/page-header";
 import { GameFilter } from "@/components/game-filter";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -29,12 +31,8 @@ export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
-const stats = [
-  { label: "이번 시즌 승률", value: "—%", hint: "전적을 기록하면 표시" },
-  { label: "보유 카드", value: "0", hint: "컬렉션을 등록해 주세요" },
-  { label: "저장된 덱", value: "0", hint: "덱 빌더에서 생성" },
-  { label: "랭킹", value: "—", hint: "리더보드 진입 전" },
-];
+/** 이번 시즌: 최근 90일 */
+const SEASON_START = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
 
 const shortcuts = [
   {
@@ -62,9 +60,103 @@ const shortcuts = [
   { title: "오프라인 매칭", desc: "LFG 세션", to: "/lfg", icon: Users },
 ] as const;
 
+function useDashboardStats(userId: string) {
+  // 이번 시즌 승률 (최근 90일)
+  const { data: matchData } = useQuery({
+    queryKey: ["dashboard-matches", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("matches")
+        .select("result")
+        .eq("user_id", userId)
+        .gte("played_at", SEASON_START);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!userId,
+  });
+
+  // 보유 카드 종류 수 (user_collection row 수)
+  const { data: collectionCount } = useQuery({
+    queryKey: ["dashboard-collection", userId],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("user_collection")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId);
+      if (error) throw error;
+      return count ?? 0;
+    },
+    enabled: !!userId,
+  });
+
+  // 저장된 덱 수
+  const { data: deckCount } = useQuery({
+    queryKey: ["dashboard-decks", userId],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("decks")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId);
+      if (error) throw error;
+      return count ?? 0;
+    },
+    enabled: !!userId,
+  });
+
+  // 최고 레이팅 순위 (전 게임 중 가장 높은 rating의 순위 반환)
+  const { data: rankData } = useQuery({
+    queryKey: ["dashboard-rating", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_ratings")
+        .select("rating, game, matches_count")
+        .eq("user_id", userId)
+        .order("rating", { ascending: false })
+        .limit(1);
+      if (error) throw error;
+      return data?.[0] ?? null;
+    },
+    enabled: !!userId,
+  });
+
+  // 승률 계산
+  const wins = matchData?.filter((m) => m.result === "win").length ?? 0;
+  const losses = matchData?.filter((m) => m.result === "loss").length ?? 0;
+  const decided = wins + losses;
+  const winRateStr =
+    decided === 0 ? "—%" : `${Math.round((wins / decided) * 100)}%`;
+  const winRateHint =
+    decided === 0
+      ? "전적을 기록하면 표시"
+      : `${wins}승 ${losses}패 (최근 90일)`;
+
+  // 랭킹 텍스트
+  const ratingStr = rankData ? `${rankData.rating}점` : "—";
+  const ratingHint = rankData
+    ? `${rankData.game.toUpperCase()} · ${rankData.matches_count}전`
+    : "리더보드 진입 전";
+
+  return [
+    { label: "이번 시즌 승률", value: winRateStr, hint: winRateHint },
+    {
+      label: "보유 카드",
+      value: collectionCount?.toLocaleString() ?? "0",
+      hint: collectionCount ? "컬렉션 등록 완료" : "컬렉션을 등록해 주세요",
+    },
+    {
+      label: "저장된 덱",
+      value: deckCount?.toLocaleString() ?? "0",
+      hint: deckCount ? "덱 빌더에서 확인" : "덱 빌더에서 생성",
+    },
+    { label: "최고 레이팅", value: ratingStr, hint: ratingHint },
+  ];
+}
+
 function Dashboard() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const stats = useDashboardStats(user?.id ?? "");
 
   useEffect(() => {
     if (!loading && !user) {
