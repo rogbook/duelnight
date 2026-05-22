@@ -1,4 +1,4 @@
-# tcg-hub 배포 운영 절차
+# duelnight 배포 운영 절차
 
 > 본 문서는 **개발 → 테스트(Preview) → 실운영(Published)** 2단계 배포 워크플로를 정의합니다.
 > `docs/COLLABORATION_GUIDE.md`(Lovable↔Antigravity 협업)와 함께 읽어 주세요.
@@ -10,7 +10,7 @@
 | 환경 | URL | 갱신 방식 | 접근 권한 |
 |------|-----|----------|----------|
 | **Preview (테스트)** | `id-preview--91f6cdde-…lovable.app` | 코드 변경 시 자동 빌드 | 워크스페이스 멤버 (관리자 전용) |
-| **Published (실운영)** | `tcg-hub.lovable.app` | Lovable **Publish** 버튼 클릭 시에만 | 누구나 |
+| **Published (실운영)** | `duelnight.app` | Lovable **Publish** 버튼 클릭 시에만 | 누구나 |
 
 ⚠ **백엔드(Cloud DB / Auth / Storage)는 두 환경이 공유합니다.**
 → Preview에서 한 마이그레이션·삭제 작업은 실 데이터에 즉시 반영됩니다.
@@ -29,7 +29,7 @@
         ↓
 [4] 통과 → Lovable에서 "Publish" 클릭
         ↓
-[5] 실사용자에게 반영 (tcg-hub.lovable.app)
+[5] 실사용자에게 반영 (duelnight.app)
         ↓
 [6] docs/RELEASES.md 에 변경 내역 기록
 ```
@@ -52,7 +52,7 @@
 
 ### 마이그레이션 사전 검증
 1. Antigravity에서 로컬 Supabase 인스턴스 기동
-2. 최신 운영 스냅샷(`/mnt/documents/backups/tcg-hub-YYYY-MM-DD.sql`) import
+2. 최신 운영 스냅샷(`/mnt/documents/backups/duelnight-YYYY-MM-DD.sql`) import
 3. 새 마이그레이션 SQL 실행 → 오류·데이터 손상 점검
 4. 문제 없으면 Lovable `supabase--migration` 도구로 실 적용
 5. 적용 직후 Preview에서 기능 동작 재확인
@@ -60,7 +60,7 @@
 ### 정기 백업
 - **주기**: 매주 1회 (월요일 오전 권장)
 - **방법**: Cloud → Database → Tables → Export, 또는 Antigravity에서 `pg_dump`
-- **보관 위치**: `/mnt/documents/backups/tcg-hub-YYYY-MM-DD.sql`
+- **보관 위치**: `/mnt/documents/backups/duelnight-YYYY-MM-DD.sql`
 - **보존**: 최소 4주
 
 ### PII 마스킹
@@ -92,6 +92,6 @@
 - 부하 테스트 시 실사용자 영향 가능
 - 결제 연동을 두 환경이 동일 키로 사용할 위험
 
-사용자/매출이 일정 규모를 넘으면 **별도 Lovable 프로젝트(tcg-hub-staging)** 를
+사용자/매출이 일정 규모를 넘으면 **별도 Lovable 프로젝트(duelnight-staging)** 를
 생성해 백엔드까지 완전 분리하는 방식으로 승격하세요. 그때까지는 본 문서의
 가드레일을 엄격히 준수하는 것이 곧 운영 안정성입니다.

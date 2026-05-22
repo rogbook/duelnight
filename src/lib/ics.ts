@@ -35,10 +35,10 @@ export function buildIcs(ev: IcsEvent): string {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//덱로그//KO",
+    "PRODID:-//DuelNight//KO",
     "CALSCALE:GREGORIAN",
     "BEGIN:VEVENT",
-    `UID:${ev.uid}@tcg-hub.lovable.app`,
+    `UID:${ev.uid}@duelnight.app`,
     `DTSTAMP:${toIcsDate(new Date().toISOString())}`,
     `DTSTART:${dtStart}`,
     `DTEND:${dtEnd}`,

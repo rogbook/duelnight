@@ -137,7 +137,7 @@ function MenuSelect<T extends string>({
 export const Route = createFileRoute("/lfg/")({
   head: () => ({
     meta: [
-      { title: "같이 칠 사람 — 덱로그" },
+      { title: "같이 칠 사람 — DuelNight" },
       {
         name: "description",
         content: "지역·시간·게임을 적고 같이 플레이할 상대를 찾아보세요.",

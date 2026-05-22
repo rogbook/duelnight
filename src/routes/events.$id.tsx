@@ -11,7 +11,7 @@ import type { Database } from "@/integrations/supabase/types";
 
 type Event = Database["public"]["Tables"]["events"]["Row"];
 
-const SITE = "https://tcg-hub.lovable.app";
+const SITE = "https://duelnight.app";
 
 const KIND_LABEL: Record<Database["public"]["Enums"]["event_kind"], string> = {
   tournament: "대회",
@@ -47,8 +47,8 @@ export const Route = createFileRoute("/events/$id")({
   },
   head: ({ loaderData }) => {
     const e = loaderData?.event;
-    if (!e) return { meta: [{ title: "일정을 찾을 수 없음 — 덱로그" }] };
-    const title = `${e.title} — ${KIND_LABEL[e.kind]} · 덱로그`;
+    if (!e) return { meta: [{ title: "일정을 찾을 수 없음 — DuelNight" }] };
+    const title = `${e.title} — ${KIND_LABEL[e.kind]} · DuelNight`;
     const desc =
       (e.notes ?? `${GAME_LABEL[e.game]} · ${e.location ?? ""}`)
         .replace(/\s+/g, " ")

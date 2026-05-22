@@ -28,7 +28,7 @@ Lovable이 대신 못 하므로 **운영자가 Google Cloud Console에서 직접
 4. **Credentials → Create Credentials → OAuth client ID**
    - Application type: **Web application**
    - **Authorized redirect URIs**:
-     - `https://tcg-hub.lovable.app/auth/google-drive/callback`
+     - `https://duelnight.app/auth/google-drive/callback`
      - `https://id-preview--91f6cdde-f492-45b3-be3f-4b2dc70d4752.lovable.app/auth/google-drive/callback`
      - (커스텀 도메인 추가 시 함께 등록)
 5. 발급된 **Client ID**, **Client Secret** 확보

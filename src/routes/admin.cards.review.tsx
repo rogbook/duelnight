@@ -16,7 +16,7 @@ import { normalizeImageUrl } from "@/components/cards/card-uploader";
 export const Route = createFileRoute("/admin/cards/review")({
   head: () => ({
     meta: [
-      { title: "카드 검수 큐 — 관리자 — 덱로그" },
+      { title: "카드 검수 큐 — 관리자 — DuelNight" },
       { name: "description", content: "사용자가 제출한 카드를 검토·승인하고, 변경 이력을 확인합니다." },
     ],
   }),

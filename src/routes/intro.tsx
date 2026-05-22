@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Sparkles, Trophy, Users, ScanLine, BarChart3, Calendar, Crown, Coins } from "lucide-react";
 
 const BRAND = {
-  name: "덱로그",
+  name: "DuelNight",
   tagline: "원피스·포켓몬·디지몬 TCG 플레이어를 위한 올인원 허브",
   description:
     "전적 기록, AI 카드 OCR, 덱 빌더, 대회·발매 일정, 매장 LFG까지. 한 곳에서 끝내는 TCG 워크플로우.",

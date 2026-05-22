@@ -10,7 +10,7 @@ import type { Database } from "@/integrations/supabase/types";
 
 type Store = Database["public"]["Tables"]["stores"]["Row"];
 
-const SITE = "https://tcg-hub.lovable.app";
+const SITE = "https://duelnight.app";
 
 export const Route = createFileRoute("/stores/$id")({
   loader: async ({ params }) => {
@@ -25,8 +25,8 @@ export const Route = createFileRoute("/stores/$id")({
   },
   head: ({ loaderData }) => {
     const s = loaderData?.store;
-    if (!s) return { meta: [{ title: "매장을 찾을 수 없음 — 덱로그" }] };
-    const title = `${s.name} — 매장 · 덱로그`;
+    if (!s) return { meta: [{ title: "매장을 찾을 수 없음 — DuelNight" }] };
+    const title = `${s.name} — 매장 · DuelNight`;
     const desc =
       [s.region, s.address, s.notes]
         .filter(Boolean)

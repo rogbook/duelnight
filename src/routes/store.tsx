@@ -10,7 +10,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/store")({
   head: () => ({
-    meta: [{ title: "상점 — 덱로그" }],
+    meta: [{ title: "상점 — DuelNight" }],
   }),
   component: StorePage,
 });
@@ -107,7 +107,7 @@ function StorePage() {
           <div>
             <h3 className="text-lg font-bold">안전한 결제 보장</h3>
             <p className="max-w-md text-sm text-muted-foreground">
-              덱로그는 국내외 검증된 결제 대행사(PortOne, PayPal)를 통해 안전한 결제 환경을 제공합니다. 
+              DuelNight는 국내외 검증된 결제 대행사(PortOne, PayPal)를 통해 안전한 결제 환경을 제공합니다. 
               결제 정보는 시스템에 직접 저장되지 않습니다.
             </p>
           </div>

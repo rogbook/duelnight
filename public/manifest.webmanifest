@@ -1,7 +1,7 @@
 {
-  "name": "덱로그",
-  "short_name": "덱로그",
-  "description": "덱로그 — TCG 전적 기록과 통계를 한곳에서.",
+  "name": "DuelNight",
+  "short_name": "DuelNight",
+  "description": "DuelNight — TCG 전적 기록과 통계를 한곳에서.",
   "start_url": "/matches",
   "scope": "/",
   "display": "standalone",
