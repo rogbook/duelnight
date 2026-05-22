@@ -56,6 +56,7 @@ import {
   downloadFile,
 } from "@/lib/csv";
 import type { Database } from "@/integrations/supabase/types";
+import { useI18n } from "@/i18n/language-context";
 
 type Game = Database["public"]["Enums"]["tcg_game"];
 type EventT = Database["public"]["Enums"]["match_event"];
@@ -70,19 +71,28 @@ const PERIOD_DAYS: Record<Period, number | null> = {
 };
 
 export const Route = createFileRoute("/matches")({
-  head: () => ({
-    meta: [
-      { title: "전적 기록 — DuelNight" },
-      {
-        name: "description",
-        content: "대전 결과를 기록하고 덱·선후공·매치업 통계를 자동 계산.",
-      },
-    ],
-  }),
-  component: MatchesPage,
+  head: () => {
+    // Note: head function is computed statically/at route resolution, but inside a component is usually better.
+    // However, TanStack Route head can use window-level locale or we can keep a simple static or dynamic.
+    // For simplicity, we can do a standard locale lookup if needed, but keeping Route head or updating document.title in useEffect is more reliable.
+    // Let's use a standard translation or simple translation. Since head is out of React context, we can just keep the title as "전적 기록 — DuelNight" or read language-context's local storage locale.
+    const saved = typeof window !== "undefined" ? localStorage.getItem("duelnight.i18n.locale") : "ko";
+    const title = saved === "ja" ? "戦績記録 — DuelNight" : saved === "en" ? "Match Records — DuelNight" : "전적 기록 — DuelNight";
+    const desc = saved === "ja" ? "対戦結果を記録すると、デッキ・先攻後攻・マッチアップ統計が自動的に更新されます" : saved === "en" ? "Record match results to automatically calculate deck, turn, and stats" : "대전 결과를 기록하고 덱·선후공·매치업 통계를 자동 계산.";
+    return {
+      meta: [
+        { title },
+        {
+          name: "description",
+          content: desc,
+        },
+      ],
+    };
+  },
 });
 
 function MatchesPage() {
+  const { t } = useI18n();
   const { user, loading } = useAuth();
   const [game, setGame] = useState<Game | "all">("all");
   const [period, setPeriod] = useState<Period>("30");
@@ -119,7 +129,7 @@ function MatchesPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-6xl px-6 py-8 text-sm text-muted-foreground">
-        불러오는 중...
+        {t("common.loading")}
       </div>
     );
   }
@@ -128,16 +138,16 @@ function MatchesPage() {
     return (
       <div className="mx-auto max-w-6xl px-6 py-8">
         <PageHeader
-          title="전적 기록"
-          description="로그인하면 전적이 자동으로 저장되고 통계가 계산됩니다."
+          title={t("matches.title")}
+          description={t("matches.loginRequiredDesc")}
         />
         <div className="mt-6 rounded-lg border border-dashed border-border bg-muted/30 px-6 py-16 text-center">
-          <p className="text-sm text-muted-foreground">로그인이 필요합니다</p>
+          <p className="text-sm text-muted-foreground">{t("matches.loginRequired")}</p>
           <Link
             to="/login"
             className="mt-4 inline-flex items-center justify-center rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90"
           >
-            로그인하러 가기
+            {t("matches.goToLogin")}
           </Link>
         </div>
       </div>
@@ -147,18 +157,18 @@ function MatchesPage() {
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
       <PageHeader
-        title="전적 기록"
-        description="대전 결과를 기록하면 덱·선후공·매치업 통계가 자동 갱신됩니다"
+        title={t("matches.title")}
+        description={t("matches.desc")}
       />
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex flex-col gap-1">
-            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">게임</span>
+            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{t("matches.game")}</span>
             <GameTabs value={game} onChange={setGame} />
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">기간</span>
+            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{t("matches.period")}</span>
             <PeriodTabs value={period} onChange={setPeriod} />
           </div>
         </div>
@@ -180,9 +190,9 @@ function MatchesPage() {
       <section className="mt-6 rounded-lg border border-border bg-card">
         <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
           <div>
-            <h3 className="text-sm font-medium">승률 추이</h3>
+            <h3 className="text-sm font-medium">{t("matches.winRateTrend")}</h3>
             <p className="text-xs text-muted-foreground">
-              누적 승률(%) — 전체 · 사용 상위 덱 3개 · 최근 7판 이동평균
+              {t("matches.winRateTrendDesc")}
             </p>
           </div>
           <ChartUnitTabs value={chartUnit} onChange={setChartUnit} />
@@ -216,10 +226,11 @@ function ChartUnitTabs({
   value: ChartUnit;
   onChange: (v: ChartUnit) => void;
 }) {
+  const { t } = useI18n();
   const items: { id: ChartUnit; label: string }[] = [
-    { id: "day", label: "일" },
-    { id: "week", label: "주" },
-    { id: "month", label: "월" },
+    { id: "day", label: t("matches.day") },
+    { id: "week", label: t("matches.week") },
+    { id: "month", label: t("matches.month") },
   ];
   return (
     <div className="inline-flex items-center gap-1 rounded-md border border-border bg-card p-0.5">
@@ -249,11 +260,12 @@ function PeriodTabs({
   value: Period;
   onChange: (v: Period) => void;
 }) {
+  const { t } = useI18n();
   const items: { id: Period; label: string }[] = [
-    { id: "7", label: "7일" },
-    { id: "30", label: "30일" },
-    { id: "90", label: "90일" },
-    { id: "all", label: "전체" },
+    { id: "7", label: t("matches.day7") },
+    { id: "30", label: t("matches.day30") },
+    { id: "90", label: t("matches.day90") },
+    { id: "all", label: t("matches.all") },
   ];
   return (
     <div className="inline-flex items-center gap-1 rounded-lg border border-border bg-card p-1">
@@ -282,11 +294,12 @@ function GameTabs({
   value: Game | "all";
   onChange: (v: Game | "all") => void;
 }) {
+  const { t } = useI18n();
   const items: { id: Game | "all"; label: string }[] = [
-    { id: "all", label: "전체" },
-    { id: "optcg", label: "원피스" },
-    { id: "ptcg", label: "포켓몬" },
-    { id: "dtcg", label: "디지몬" },
+    { id: "all", label: t("matches.all") },
+    { id: "optcg", label: t("matches.optcg") },
+    { id: "ptcg", label: t("matches.ptcg") },
+    { id: "dtcg", label: t("matches.dtcg") },
   ];
   return (
     <div className="inline-flex items-center gap-1 rounded-lg border border-border bg-card p-1">
@@ -309,6 +322,7 @@ function GameTabs({
 }
 
 function StatCard({ label, pack }: { label: string; pack: RatePack }) {
+  const { t } = useI18n();
   return (
     <div className="rounded-lg border border-border bg-card p-4">
       <p className="text-xs text-muted-foreground">{label}</p>
@@ -316,8 +330,8 @@ function StatCard({ label, pack }: { label: string; pack: RatePack }) {
         {fmtPct(pack)}
       </p>
       <p className="mt-1 text-[11px] text-muted-foreground">
-        {pack.wins}승 {pack.losses}패{pack.draws ? ` ${pack.draws}무` : ""} ·{" "}
-        {pack.total}판
+        {pack.wins}{t("matches.win")} {pack.losses}{t("matches.lose")}{pack.draws ? ` ${pack.draws}${t("matches.draw")}` : ""} ·{" "}
+        {pack.total}{t("matches.playCount")}
       </p>
     </div>
   );
@@ -330,9 +344,10 @@ function StatGrid({
   stats: ReturnType<typeof computeStats>;
   streak: ReturnType<typeof computeStreak>;
 }) {
+  const { t } = useI18n();
   const cur = streak.current;
   const curLabel =
-    cur === 0 ? "—" : cur > 0 ? `${cur}연승 🔥` : `${-cur}연패`;
+    cur === 0 ? "—" : cur > 0 ? `${cur}${t("matches.winsStreak")} 🔥` : `${-cur}${t("matches.lossesStreak")}`;
   const curClass =
     cur > 0
       ? "text-emerald-600 dark:text-emerald-400"
@@ -341,25 +356,25 @@ function StatGrid({
         : "text-foreground";
   return (
     <section className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-5">
-      <StatCard label="전체 승률" pack={stats.overall} />
-      <StatCard label="선공 승률" pack={stats.first} />
-      <StatCard label="후공 승률" pack={stats.second} />
+      <StatCard label={t("matches.overallWinRate")} pack={stats.overall} />
+      <StatCard label={t("matches.firstWinRate")} pack={stats.first} />
+      <StatCard label={t("matches.secondWinRate")} pack={stats.second} />
       <div className="rounded-lg border border-border bg-card p-4">
-        <p className="text-xs text-muted-foreground">현재 연속</p>
+        <p className="text-xs text-muted-foreground">{t("matches.currentStreak")}</p>
         <p className={`mt-2 text-2xl font-semibold tracking-tight ${curClass}`}>
           {curLabel}
         </p>
         <p className="mt-1 text-[11px] text-muted-foreground">
-          최고 {streak.best}연승 · 최장 {streak.worst}연패
+          {t("matches.bestStreak")} {streak.best}{t("matches.winsStreak")} · {t("matches.worstStreak")} {streak.worst}{t("matches.lossesStreak")}
         </p>
       </div>
       <div className="rounded-lg border border-border bg-card p-4">
-        <p className="text-xs text-muted-foreground">사용 덱</p>
+        <p className="text-xs text-muted-foreground">{t("matches.decksUsed")}</p>
         <p className="mt-2 text-2xl font-semibold tracking-tight">
           {stats.byDeck.length}
         </p>
         <p className="mt-1 text-[11px] text-muted-foreground">
-          매치업 {stats.matchups.length}종
+          {t("matches.matchupCount").replace("{count}", String(stats.matchups.length))}
         </p>
       </div>
     </section>
@@ -367,15 +382,16 @@ function StatGrid({
 }
 
 function DeckTable({ rows }: { rows: DeckStat[] }) {
+  const { t } = useI18n();
   return (
     <div className="rounded-lg border border-border bg-card">
       <div className="border-b border-border px-4 py-3">
-        <h3 className="text-sm font-medium">덱별 승률</h3>
-        <p className="text-[11px] text-muted-foreground">선/후공 분리 · 신뢰하한(95%)</p>
+        <h3 className="text-sm font-medium">{t("matches.byDeck")}</h3>
+        <p className="text-[11px] text-muted-foreground">{t("matches.byDeckDesc")}</p>
       </div>
       {rows.length === 0 ? (
         <p className="px-4 py-8 text-center text-xs text-muted-foreground">
-          데이터 없음
+          {t("matches.noData")}
         </p>
       ) : (
         <ul className="divide-y divide-border">
@@ -392,9 +408,9 @@ function DeckTable({ rows }: { rows: DeckStat[] }) {
                 </span>
               </div>
               <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
-                <span>선공 {fmtPct(r.first)} ({r.first.total})</span>
-                <span>후공 {fmtPct(r.second)} ({r.second.total})</span>
-                <span>신뢰하한 {fmtPctVal(r.stats.wilsonLow)}</span>
+                <span>{t("matches.first")} {fmtPct(r.first)} ({r.first.total})</span>
+                <span>{t("matches.second")} {fmtPct(r.second)} ({r.second.total})</span>
+                <span>{t("matches.wilsonLow")} {fmtPctVal(r.stats.wilsonLow)}</span>
               </div>
             </li>
           ))}
@@ -405,15 +421,16 @@ function DeckTable({ rows }: { rows: DeckStat[] }) {
 }
 
 function MatchupTable({ rows }: { rows: MatchupStat[] }) {
+  const { t } = useI18n();
   return (
     <div className="rounded-lg border border-border bg-card">
       <div className="border-b border-border px-4 py-3">
-        <h3 className="text-sm font-medium">매치업 (내 덱 × 상대)</h3>
-        <p className="text-[11px] text-muted-foreground">선/후공 · 신뢰하한 표시</p>
+        <h3 className="text-sm font-medium">{t("matches.matchups")}</h3>
+        <p className="text-[11px] text-muted-foreground">{t("matches.matchupsDesc")}</p>
       </div>
       {rows.length === 0 ? (
         <p className="px-4 py-8 text-center text-xs text-muted-foreground">
-          상대 덱/리더를 입력한 전적이 필요합니다
+          {t("matches.matchupRequired")}
         </p>
       ) : (
         <ul className="divide-y divide-border">
@@ -434,9 +451,9 @@ function MatchupTable({ rows }: { rows: MatchupStat[] }) {
                 </span>
               </div>
               <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
-                <span>선공 {fmtPct(r.first)} ({r.first.total})</span>
-                <span>후공 {fmtPct(r.second)} ({r.second.total})</span>
-                <span>신뢰하한 {fmtPctVal(r.stats.wilsonLow)}</span>
+                <span>{t("matches.first")} {fmtPct(r.first)} ({r.first.total})</span>
+                <span>{t("matches.second")} {fmtPct(r.second)} ({r.second.total})</span>
+                <span>{t("matches.wilsonLow")} {fmtPctVal(r.stats.wilsonLow)}</span>
               </div>
             </li>
           ))}
@@ -447,13 +464,14 @@ function MatchupTable({ rows }: { rows: MatchupStat[] }) {
 }
 
 function EventTable({ rows }: { rows: EventStat[] }) {
+  const { t } = useI18n();
   return (
     <div className="rounded-lg border border-border bg-card">
       <div className="border-b border-border px-4 py-3">
-        <h3 className="text-sm font-medium">이벤트별 승률</h3>
+        <h3 className="text-sm font-medium">{t("matches.byEvent")}</h3>
       </div>
       {rows.length === 0 ? (
-        <p className="px-4 py-8 text-center text-xs text-muted-foreground">데이터 없음</p>
+        <p className="px-4 py-8 text-center text-xs text-muted-foreground">{t("matches.noData")}</p>
       ) : (
         <ul className="divide-y divide-border">
           {rows.map((r) => (
@@ -481,6 +499,7 @@ function OpponentTable({
   allRows: Match[];
   game: Game | "all";
 }) {
+  const { t } = useI18n();
   const [selected, setSelected] = useState<{ name: string; userId?: string | null } | null>(null);
 
   const matchesFor = (oppName: string) =>
@@ -504,11 +523,11 @@ function OpponentTable({
   return (
     <div className="rounded-lg border border-border bg-card">
       <div className="border-b border-border px-4 py-3">
-        <h3 className="text-sm font-medium">상대 메타 Top</h3>
-        <p className="text-[11px] text-muted-foreground">자주 만난 상대 · 그 상대 대상 내 승률 · 클릭하여 상세 보기</p>
+        <h3 className="text-sm font-medium">{t("matches.oppMeta")}</h3>
+        <p className="text-[11px] text-muted-foreground">{t("matches.oppMetaDesc")}</p>
       </div>
       {rows.length === 0 ? (
-        <p className="px-4 py-8 text-center text-xs text-muted-foreground">데이터 없음</p>
+        <p className="px-4 py-8 text-center text-xs text-muted-foreground">{t("matches.noData")}</p>
       ) : (
         <ul className="divide-y divide-border">
           {rows.map((r) => (
@@ -524,7 +543,7 @@ function OpponentTable({
                   <span className="truncate text-sm">{r.opponent}</span>
                   <span className="text-xs text-muted-foreground">
                     <span className="mr-2 font-medium text-foreground">{fmtPct(r.stats)}</span>
-                    {r.count}회 · {fmtPctVal(r.share)}
+                    {r.count}{t("matches.times")} · {fmtPctVal(r.share)}
                   </span>
                 </div>
                 <div className="mt-1 h-1.5 w-full overflow-hidden rounded bg-muted">
@@ -571,6 +590,7 @@ function RecentList({
   rows: Match[];
   onDeleted: () => void;
 }) {
+  const { t, language } = useI18n();
   const [editing, setEditing] = useState<Match | null>(null);
   const [viewing, setViewing] = useState<Match | null>(null);
   const [page, setPage] = useState(1);
@@ -587,36 +607,39 @@ function RecentList({
       <div className="mt-8">
         <EmptyState
           icon={Swords}
-          title="기록된 전적이 없어요"
-          description="우측 상단 '전적 추가'로 첫 결과를 기록해 보세요."
+          title={t("matches.emptyTitle")}
+          description={t("matches.emptyDesc")}
         />
       </div>
     );
   }
   const onDelete = async (id: string) => {
-    if (!confirm("이 전적을 삭제할까요?")) return;
+    if (!confirm(t("matches.confirmDelete"))) return;
     const { error } = await supabase.from("matches").delete().eq("id", id);
     if (error) toast.error(error.message);
     else {
-      toast.success("삭제됨");
+      toast.success(t("matches.deleted"));
       onDeleted();
     }
   };
+  
+  const localeStr = language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US";
+
   return (
     <section className="mt-8">
-      <h2 className="text-sm font-medium">최근 전적</h2>
+      <h2 className="text-sm font-medium">{t("matches.recentMatches")}</h2>
       <div className="mt-3 overflow-hidden rounded-lg border border-border bg-card">
         <table className="w-full text-sm">
           <thead className="border-b border-border bg-muted/30 text-xs text-muted-foreground">
             <tr>
-              <th className="px-3 py-2 text-left font-medium">일자</th>
-              <th className="px-3 py-2 text-left font-medium">게임</th>
-              <th className="px-3 py-2 text-left font-medium">이벤트</th>
-              <th className="px-3 py-2 text-left font-medium">내 덱</th>
-              <th className="px-3 py-2 text-left font-medium">상대</th>
-              <th className="px-3 py-2 text-left font-medium">선/후</th>
-              <th className="px-3 py-2 text-left font-medium">결과</th>
-              <th className="px-3 py-2 text-left font-medium">점수</th>
+              <th className="px-3 py-2 text-left font-medium">{t("matches.date")}</th>
+              <th className="px-3 py-2 text-left font-medium">{t("matches.game")}</th>
+              <th className="px-3 py-2 text-left font-medium">{t("matches.event")}</th>
+              <th className="px-3 py-2 text-left font-medium">{t("matches.myDeck")}</th>
+              <th className="px-3 py-2 text-left font-medium">{t("matches.opponent")}</th>
+              <th className="px-3 py-2 text-left font-medium">{t("matches.turn")}</th>
+              <th className="px-3 py-2 text-left font-medium">{t("matches.result")}</th>
+              <th className="px-3 py-2 text-left font-medium">{t("matches.score")}</th>
               <th className="px-3 py-2"></th>
             </tr>
           </thead>
@@ -628,7 +651,7 @@ function RecentList({
                 className="cursor-pointer border-b border-border transition hover:bg-muted/30 last:border-0"
               >
                 <td className="px-3 py-2 text-muted-foreground">
-                  {new Date(m.played_at).toLocaleDateString("ko-KR")}
+                  {new Date(m.played_at).toLocaleDateString(localeStr)}
                 </td>
                 <td className="px-3 py-2">{GAME_LABEL[m.game]}</td>
                 <td className="px-3 py-2 text-muted-foreground">
@@ -638,7 +661,7 @@ function RecentList({
                 <td className="px-3 py-2 text-muted-foreground">
                   {m.opp_leader || m.opp_deck || "—"}
                 </td>
-                <td className="px-3 py-2">{m.went_first ? "선공" : "후공"}</td>
+                <td className="px-3 py-2">{m.went_first ? t("matches.first") : t("matches.second")}</td>
                 <td className="px-3 py-2">
                   <ResultBadge r={m.result} />
                 </td>
