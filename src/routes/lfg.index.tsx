@@ -28,6 +28,7 @@ import {
 import { toast } from "sonner";
 import { GAME_LABEL } from "@/lib/match-stats";
 import type { Database } from "@/integrations/supabase/types";
+import { useI18n } from "@/i18n/language-context";
 
 type Game = Database["public"]["Enums"]["tcg_game"];
 type Category = "friendly" | "tier" | "tournament_practice";
@@ -52,49 +53,7 @@ type Post = {
   store?: { id: string; name: string; address: string | null } | null;
 };
 
-export const CATEGORY_LABEL: Record<Category, string> = {
-  friendly: "친선",
-  tier: "티어",
-  tournament_practice: "대회연습",
-};
-
-const GAME_OPTIONS: { value: Game; label: string }[] = [
-  { value: "optcg", label: "원피스" },
-  { value: "ptcg", label: "포켓몬" },
-  { value: "dtcg", label: "디지몬" },
-];
-
-const CATEGORY_OPTIONS: { value: Category; label: string }[] = [
-  { value: "friendly", label: "친선" },
-  { value: "tier", label: "티어" },
-  { value: "tournament_practice", label: "대회연습" },
-];
-
 type MenuOption<T extends string> = { value: T; label: string };
-
-function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat("ko-KR", {
-    timeZone: "Asia/Seoul",
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
-
-const FILTER_GAME_OPTIONS: MenuOption<Game | "all">[] = [
-  { value: "all", label: "전체 게임" },
-  ...GAME_OPTIONS,
-];
-
-const FILTER_CATEGORY_OPTIONS: MenuOption<Category | "all">[] = [
-  { value: "all", label: "전체 카테고리" },
-  ...CATEGORY_OPTIONS,
-];
-
-const STATUS_OPTIONS: MenuOption<"open" | "closed" | "all">[] = [
-  { value: "open", label: "모집 중" },
-  { value: "closed", label: "모집 완료" },
-  { value: "all", label: "전체 상태" },
-];
 
 function MenuSelect<T extends string>({
   value,
@@ -110,12 +69,11 @@ function MenuSelect<T extends string>({
   className?: string;
 }) {
   const selected = options.find((option) => option.value === value);
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button type="button" variant="outline" className={`justify-between font-normal ${className ?? ""}`}>
-          <span className="truncate">{selected?.label ?? placeholder ?? "선택"}</span>
+          <span className="truncate">{selected?.label ?? placeholder ?? "…"}</span>
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
@@ -135,20 +93,59 @@ function MenuSelect<T extends string>({
 }
 
 export const Route = createFileRoute("/lfg/")({
-  head: () => ({
-    meta: [
-      { title: "같이 칠 사람 — DuelNight" },
-      {
-        name: "description",
-        content: "지역·시간·게임을 적고 같이 플레이할 상대를 찾아보세요.",
-      },
-    ],
-  }),
+  head: () => {
+    let locale = "ko";
+    if (typeof window !== "undefined") {
+      locale = localStorage.getItem("duelnight.i18n.locale") || "ko";
+    }
+    const titles: Record<string, string> = {
+      ko: "같이 칠 사람 — DuelNight",
+      en: "Looking for Group — DuelNight",
+      ja: "対戦相手募集 — DuelNight",
+    };
+    const descs: Record<string, string> = {
+      ko: "지역·시간·게임을 적고 같이 플레이할 상대를 찾아보세요.",
+      en: "Post your region, time, and game to find someone to play with.",
+      ja: "地域・時間・ゲームを記入して一緒にプレイする相手を探しましょう。",
+    };
+    return {
+      meta: [
+        { title: titles[locale] || titles.ko },
+        { name: "description", content: descs[locale] || descs.ko },
+      ],
+    };
+  },
   component: LfgPage,
 });
 
 function LfgPage() {
   const { user } = useAuth();
+  const { t } = useI18n();
+
+  const GAME_OPTIONS: MenuOption<Game>[] = [
+    { value: "optcg", label: t("matches.optcg") },
+    { value: "ptcg", label: t("matches.ptcg") },
+    { value: "dtcg", label: t("matches.dtcg") },
+  ];
+  const CATEGORY_OPTIONS: MenuOption<Category>[] = [
+    { value: "friendly", label: t("lfg.categoryFriendly") },
+    { value: "tier", label: t("lfg.categoryTier") },
+    { value: "tournament_practice", label: t("lfg.categoryTournamentPractice") },
+  ];
+  const FILTER_GAME_OPTIONS: MenuOption<Game | "all">[] = [
+    { value: "all", label: t("lfg.allGames") },
+    ...GAME_OPTIONS,
+  ];
+  const FILTER_CATEGORY_OPTIONS: MenuOption<Category | "all">[] = [
+    { value: "all", label: t("lfg.allCategories") },
+    ...CATEGORY_OPTIONS,
+  ];
+  const STATUS_OPTIONS: MenuOption<"open" | "closed" | "all">[] = [
+    { value: "open", label: t("lfg.statusOpen") },
+    { value: "closed", label: t("lfg.statusClosed") },
+    { value: "all", label: t("lfg.allStatuses") },
+  ];
+
   const [game, setGame] = useState<Game | "all">("all");
   const [category, setCategory] = useState<Category | "all">("all");
   const [status, setStatus] = useState<"open" | "closed" | "all">("open");
@@ -202,29 +199,24 @@ function LfgPage() {
   return (
     <div className="mx-auto w-full max-w-4xl px-6 py-8">
       <PageHeader
-        title="같이 칠 사람 (LFG)"
-        description="오프라인 매칭 모집·참여·1:1 채팅"
+        title={t("lfg.title")}
+        description={t("lfg.desc")}
       >
         {user ? (
           <Button size="sm" onClick={() => setShowForm((v) => !v)}>
             {showForm ? (
-              <>
-                <X className="mr-1 h-4 w-4" /> 닫기
-              </>
+              <><X className="mr-1 h-4 w-4" /> {t("lfg.closeBtn")}</>
             ) : (
-              <>
-                <Plus className="mr-1 h-4 w-4" /> 모집 글 작성
-              </>
+              <><Plus className="mr-1 h-4 w-4" /> {t("lfg.writeBtn")}</>
             )}
           </Button>
         ) : (
           <Button asChild size="sm">
-            <Link to="/login">로그인하고 작성</Link>
+            <Link to="/login">{t("lfg.loginWrite")}</Link>
           </Button>
         )}
       </PageHeader>
 
-      {/* Filters */}
       <div className="mt-4 flex flex-wrap gap-2">
         <MenuSelect value={game} options={FILTER_GAME_OPTIONS} onChange={setGame} className="w-[120px]" />
         <MenuSelect value={category} options={FILTER_CATEGORY_OPTIONS} onChange={setCategory} className="w-[140px]" />
@@ -238,22 +230,28 @@ function LfgPage() {
             setShowForm(false);
           }}
           onCancel={() => setShowForm(false)}
+          gameOptions={GAME_OPTIONS}
+          categoryOptions={CATEGORY_OPTIONS}
         />
       )}
       {!user && (
         <div className="mt-6 rounded-lg border border-dashed border-border bg-card/50 p-4 text-center text-sm text-muted-foreground">
-          글을 작성하려면{" "}
-          <Link to="/login" className="font-medium text-primary underline">
-            로그인
-          </Link>
-          이 필요해요.
+          {t("lfg.loginRequiredNote").split("로그인").length > 1 ? (
+            <>
+              {t("lfg.loginRequiredNote").split("로그인")[0]}
+              <Link to="/login" className="font-medium text-primary underline">{t("common.login")}</Link>
+              {t("lfg.loginRequiredNote").split("로그인")[1]}
+            </>
+          ) : (
+            <>{t("lfg.loginRequiredNote")} <Link to="/login" className="font-medium text-primary underline">{t("common.login")}</Link></>
+          )}
         </div>
       )}
 
       {quickMatches.length > 0 && (
         <section className="mt-6">
           <h2 className="mb-2 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-amber-500">
-            <Zap className="h-3.5 w-3.5" /> 퀵 매칭
+            <Zap className="h-3.5 w-3.5" /> {t("lfg.quickMatchSection")}
           </h2>
           <ul className="space-y-2">
             {quickMatches.map((p) => (
@@ -267,8 +265,8 @@ function LfgPage() {
         <div className="mt-6">
           <EmptyState
             icon={Users}
-            title="모집 중인 글이 없어요"
-            description="첫 LFG 글을 등록해 보세요."
+            title={t("lfg.emptyTitle")}
+            description={t("lfg.emptyDesc")}
           />
         </div>
       ) : (
@@ -293,14 +291,20 @@ function PostCard({
   userId?: string;
   highlight?: boolean;
 }) {
+  const { t } = useI18n();
   const closed = p.status === "closed";
+  const categoryLabels: Record<Category, string> = {
+    friendly: t("lfg.categoryFriendly"),
+    tier: t("lfg.categoryTier"),
+    tournament_practice: t("lfg.categoryTournamentPractice"),
+  };
   return (
     <li
       className={`relative rounded-lg border bg-card p-4 transition hover:border-primary/40 ${
         highlight ? "border-amber-500/50 bg-amber-500/5" : "border-border"
       } ${closed ? "opacity-70" : ""}`}
     >
-      <Link to="/lfg/$id" params={{ id: p.id }} className="absolute inset-0 rounded-lg" aria-label={`${p.title} 상세 보기`} />
+      <Link to="/lfg/$id" params={{ id: p.id }} className="absolute inset-0 rounded-lg" aria-label={`${p.title}`} />
       <div className="pointer-events-none relative z-10 flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
@@ -308,11 +312,11 @@ function PostCard({
               {GAME_LABEL[p.game]}
             </span>
             <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
-              {CATEGORY_LABEL[p.category]}
+              {categoryLabels[p.category]}
             </span>
             {p.quick_match && (
               <span className="inline-flex items-center gap-0.5 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-600">
-                <Zap className="h-2.5 w-2.5" /> 퀵
+                <Zap className="h-2.5 w-2.5" /> {t("lfg.quickLabel")}
               </span>
             )}
             <span
@@ -322,7 +326,7 @@ function PostCard({
                   : "bg-emerald-500/15 text-emerald-600"
               }`}
             >
-              {closed ? "모집 완료" : "모집 중"}
+              {closed ? t("lfg.statusClosed") : t("lfg.statusOpen")}
             </span>
             <h3 className="truncate text-sm font-semibold hover:underline">{p.title}</h3>
           </div>
@@ -341,22 +345,26 @@ function PostCard({
             {p.meet_at && (
               <span className="inline-flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                {formatDateTime(p.meet_at)}
+                {new Intl.DateTimeFormat("ko-KR", {
+                  timeZone: "Asia/Seoul",
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                }).format(new Date(p.meet_at))}
               </span>
             )}
             {p.games_count != null && (
               <span className="inline-flex items-center gap-1">
                 <Hash className="h-3 w-3" />
-                {p.games_count}판
+                {t("lfg.gamesCount", { count: p.games_count })}
               </span>
             )}
             {p.duration_minutes != null && (
               <span className="inline-flex items-center gap-1">
                 <Tag className="h-3 w-3" />
-                {p.duration_minutes}분
+                {t("lfg.durationMinutes", { minutes: p.duration_minutes })}
               </span>
             )}
-            <span>by {p.profiles?.display_name || p.profiles?.username || "익명"}</span>
+            <span>by {p.profiles?.display_name || p.profiles?.username || t("lfg.anonymous")}</span>
           </div>
           {p.body && (
             <p className="mt-2 line-clamp-2 whitespace-pre-wrap text-sm text-foreground/90">
@@ -369,16 +377,16 @@ function PostCard({
             onClick={async (e) => {
               e.preventDefault();
               e.stopPropagation();
-              if (!confirm("이 글을 삭제할까요?")) return;
+              if (!confirm(t("lfg.deleteConfirm"))) return;
               const { error } = await supabase.from("lfg_posts").delete().eq("id", p.id);
               if (error) toast.error(error.message);
               else {
-                toast.success("삭제됨");
+                toast.success(t("lfg.deleteSuccess"));
                 onDelete();
               }
             }}
             className="pointer-events-auto text-muted-foreground hover:text-destructive"
-            aria-label="삭제"
+            aria-label={t("lfg.deleteAriaLabel")}
           >
             <Trash2 className="h-4 w-4" />
           </button>
@@ -388,8 +396,19 @@ function PostCard({
   );
 }
 
-function InlineLfgForm({ onCreated, onCancel }: { onCreated: () => void; onCancel: () => void }) {
+function InlineLfgForm({
+  onCreated,
+  onCancel,
+  gameOptions,
+  categoryOptions,
+}: {
+  onCreated: () => void;
+  onCancel: () => void;
+  gameOptions: MenuOption<Game>[];
+  categoryOptions: MenuOption<Category>[];
+}) {
   const { user } = useAuth();
+  const { t } = useI18n();
   const qc = useQueryClient();
   const [submitting, setSubmitting] = useState(false);
   const empty = {
@@ -448,7 +467,7 @@ function InlineLfgForm({ onCreated, onCancel }: { onCreated: () => void; onCance
     e.preventDefault();
     if (!user) return;
     if (!form.title.trim()) {
-      toast.error("제목을 입력해 주세요");
+      toast.error(t("lfg.titleRequired"));
       return;
     }
     setSubmitting(true);
@@ -472,7 +491,7 @@ function InlineLfgForm({ onCreated, onCancel }: { onCreated: () => void; onCance
       toast.error(error.message);
       return;
     }
-    toast.success("등록됨");
+    toast.success(t("lfg.addSuccess"));
     setForm(empty);
     qc.invalidateQueries({ queryKey: ["lfg-posts"] });
     onCreated();
@@ -485,20 +504,20 @@ function InlineLfgForm({ onCreated, onCancel }: { onCreated: () => void; onCance
     >
       <div className="flex items-center gap-2">
         <Plus className="h-4 w-4 text-primary" />
-        <h2 className="text-sm font-semibold">새 모집 글 작성</h2>
+        <h2 className="text-sm font-semibold">{t("lfg.newPost")}</h2>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="flex flex-col gap-1.5">
-          <Label>게임</Label>
-          <MenuSelect value={form.game} options={GAME_OPTIONS} onChange={(v) => setForm({ ...form, game: v, store_id: "" })} />
+          <Label>{t("lfg.fieldGame")}</Label>
+          <MenuSelect value={form.game} options={gameOptions} onChange={(v) => setForm({ ...form, game: v, store_id: "" })} />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label>카테고리</Label>
-          <MenuSelect value={form.category} options={CATEGORY_OPTIONS} onChange={(v) => setForm({ ...form, category: v })} />
+          <Label>{t("lfg.fieldCategory")}</Label>
+          <MenuSelect value={form.category} options={categoryOptions} onChange={(v) => setForm({ ...form, category: v })} />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label>일시</Label>
+          <Label>{t("lfg.fieldDateTime")}</Label>
           <Input
             type="datetime-local"
             value={form.meet_at}
@@ -508,41 +527,40 @@ function InlineLfgForm({ onCreated, onCancel }: { onCreated: () => void; onCance
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label>제목</Label>
+        <Label>{t("lfg.fieldTitle")}</Label>
         <Input
           value={form.title}
           onChange={(e) => setForm({ ...form, title: e.target.value })}
-          placeholder="예: 강남 친선 같이 치실 분"
+          placeholder={t("lfg.placeholderTitle")}
           maxLength={120}
           required
         />
       </div>
 
-      {/* Store picker */}
       <div className="flex flex-col gap-1.5">
-        <Label>매장 (등록된 매장 선택)</Label>
+        <Label>{t("lfg.fieldStore")}</Label>
         <Input
-          placeholder="매장명 또는 주소 검색"
+          placeholder={t("lfg.searchStorePlaceholder")}
           value={storeQuery}
           onChange={(e) => setStoreQuery(e.target.value)}
         />
         <MenuSelect
           value={form.store_id || "none"}
           options={[
-            { value: "none", label: "선택 안 함 (직접 입력)" },
+            { value: "none", label: t("lfg.noStoreOption") },
             ...stores.map((s) => ({
               value: s.id,
               label: `${s.name}${s.address ? ` · ${s.address}` : ""}`,
             })),
           ]}
           onChange={(v) => setForm({ ...form, store_id: v === "none" ? "" : v })}
-          placeholder="매장 선택 (선택사항)"
+          placeholder={t("lfg.storeSelectPlaceholder")}
         />
         {!form.store_id && (
           <Input
             value={form.location}
             onChange={(e) => setForm({ ...form, location: e.target.value })}
-            placeholder="지역 또는 매장명 직접 입력"
+            placeholder={t("lfg.locationPlaceholder")}
             maxLength={120}
           />
         )}
@@ -550,41 +568,41 @@ function InlineLfgForm({ onCreated, onCancel }: { onCreated: () => void; onCance
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
-          <Label>예상 경기 수</Label>
+          <Label>{t("lfg.fieldGamesCount")}</Label>
           <Input
             type="number"
             min={1}
             max={50}
             value={form.games_count}
             onChange={(e) => setForm({ ...form, games_count: e.target.value })}
-            placeholder="예: 5"
+            placeholder="e.g. 5"
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label>가능 시간 (분)</Label>
+          <Label>{t("lfg.fieldDuration")}</Label>
           <Input
             type="number"
             min={10}
             max={600}
             value={form.duration_minutes}
             onChange={(e) => setForm({ ...form, duration_minutes: e.target.value })}
-            placeholder="예: 120"
+            placeholder="e.g. 120"
           />
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
-          <Label>연락처 메모 (선택)</Label>
+          <Label>{t("lfg.fieldContact")}</Label>
           <Input
             value={form.contact}
             onChange={(e) => setForm({ ...form, contact: e.target.value })}
-            placeholder="기타 연락 방법"
+            placeholder={t("lfg.placeholderContact")}
             maxLength={120}
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label>카카오톡 오픈채팅 링크 (선택)</Label>
+          <Label>{t("lfg.fieldKakaoLink")}</Label>
           <Input
             value={form.kakao_link}
             onChange={(e) => setForm({ ...form, kakao_link: e.target.value })}
@@ -595,11 +613,11 @@ function InlineLfgForm({ onCreated, onCancel }: { onCreated: () => void; onCance
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label>설명</Label>
+        <Label>{t("lfg.fieldDesc")}</Label>
         <Textarea
           value={form.body}
           onChange={(e) => setForm({ ...form, body: e.target.value })}
-          placeholder="포맷, 인원, 환영 사항 등"
+          placeholder={t("lfg.placeholderDesc")}
           rows={3}
           maxLength={1000}
         />
@@ -611,41 +629,39 @@ function InlineLfgForm({ onCreated, onCancel }: { onCreated: () => void; onCance
           onCheckedChange={(v) => setForm({ ...form, quick_match: !!v })}
         />
         <div>
-          <div className="font-medium">퀵 매칭으로 등록</div>
-          <div className="text-xs text-muted-foreground">
-            상단에 노출되며 별도 채팅 없이 바로 참여 신청만 가능해요.
-          </div>
+          <div className="font-medium">{t("lfg.quickMatchLabel")}</div>
+          <div className="text-xs text-muted-foreground">{t("lfg.quickMatchNote")}</div>
         </div>
       </label>
 
       <div className="flex justify-end gap-2 pt-1">
         <Button type="button" variant="ghost" onClick={handleCancel} disabled={submitting}>
-          취소
+          {t("common.cancel")}
         </Button>
         <Button type="submit" disabled={submitting}>
-          {submitting ? "등록 중…" : "등록"}
+          {submitting ? t("lfg.submitting") : t("common.save")}
         </Button>
       </div>
 
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>정말 취소할까요?</DialogTitle>
-            <DialogDescription>작성 중인 내용이 모두 사라집니다.</DialogDescription>
+            <DialogTitle>{t("lfg.confirmCancelTitle")}</DialogTitle>
+            <DialogDescription>{t("lfg.confirmCancelDesc")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setConfirmOpen(false)}>
-              계속 작성
+              {t("lfg.keepWriting")}
             </Button>
             <Button
               variant="destructive"
               onClick={() => {
                 setConfirmOpen(false);
                 onCancel();
-                toast("입력 내용을 취소했어요");
+                toast(t("lfg.cancelledToast"));
               }}
             >
-              취소하기
+              {t("lfg.confirmCancelBtn")}
             </Button>
           </DialogFooter>
         </DialogContent>

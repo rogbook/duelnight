@@ -18,29 +18,47 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
+import { useI18n, type TranslationKey } from "@/i18n/language-context";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"];
 type Game = Database["public"]["Enums"]["tcg_game"];
 
-const GAMES: { id: Game; label: string }[] = [
-  { id: "optcg", label: "원피스" },
-  { id: "ptcg", label: "포켓몬" },
-  { id: "dtcg", label: "디지몬" },
+const GAMES: { id: Game; labelKey: TranslationKey }[] = [
+  { id: "optcg", labelKey: "matches.optcg" },
+  { id: "ptcg", labelKey: "matches.ptcg" },
+  { id: "dtcg", labelKey: "matches.dtcg" },
 ];
 
 export const Route = createFileRoute("/collection")({
-  head: () => ({
-    meta: [
-      { title: "내 컬렉션 — DuelNight" },
-      { name: "description", content: "보유 카드 등록과 세트별 진행률." },
-    ],
-  }),
+  head: () => {
+    let locale = "ko";
+    if (typeof window !== "undefined") {
+      locale = localStorage.getItem("duelnight.i18n.locale") || "ko";
+    }
+    const titles: Record<string, string> = {
+      ko: "내 컬렉션 — DuelNight",
+      en: "My Collection — DuelNight",
+      ja: "マイコレクション — DuelNight",
+    };
+    const descs: Record<string, string> = {
+      ko: "보유 카드 등록과 세트별 진행률.",
+      en: "Register cards owned and check collection progress by set.",
+      ja: "所持カード登録とセット別の進行率。",
+    };
+    return {
+      meta: [
+        { title: titles[locale] || titles.ko },
+        { name: "description", content: descs[locale] || descs.ko },
+      ],
+    };
+  },
   component: CollectionPage,
 });
 
 function CollectionPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const { t } = useI18n();
   const [q, setQ] = useState("");
   const [game, setGame] = useState<Game>("optcg");
   const [setCode, setSetCode] = useState<string>("all");
@@ -118,7 +136,7 @@ function CollectionPage() {
 
   const setQty = async (code: string, next: number) => {
     if (!user) {
-      toast.error("로그인이 필요합니다");
+      toast.error(t("collection.loginRequiredToast"));
       return;
     }
     const n = Math.max(0, next);
@@ -144,12 +162,12 @@ function CollectionPage() {
   if (!user) {
     return (
       <div className="mx-auto w-full max-w-6xl px-6 py-8">
-        <PageHeader title="내 컬렉션" description="보유 카드와 진행률을 관리하세요" />
+        <PageHeader title={t("collection.title")} description={t("collection.desc")} />
         <div className="mt-6">
           <EmptyState
             icon={PackageOpen}
-            title="로그인이 필요합니다"
-            description="로그인하면 보유 카드를 등록하고 세트별 수집 진행률을 확인할 수 있어요."
+            title={t("collection.loginRequired")}
+            description={t("collection.loginRequiredDesc")}
           />
         </div>
       </div>
@@ -159,11 +177,11 @@ function CollectionPage() {
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
       <PageHeader
-        title="내 컬렉션"
-        description="게임을 선택하고 발매된 세트별 진행률을 관리하세요"
+        title={t("collection.title")}
+        description={t("collection.descAuth")}
       >
         <Button asChild variant="outline" size="sm">
-          <Link to="/packs">팩 시뮬레이터</Link>
+          <Link to="/packs">{t("collection.packSimulator")}</Link>
         </Button>
       </PageHeader>
 
@@ -184,17 +202,17 @@ function CollectionPage() {
                   : "text-muted-foreground hover:text-foreground")
               }
             >
-              {g.label}
+              {t(g.labelKey)}
             </button>
           ))}
         </div>
 
         <Select value={setCode} onValueChange={setSetCode}>
           <SelectTrigger className="w-48">
-            <SelectValue placeholder="세트 선택" />
+            <SelectValue placeholder={t("collection.selectSet")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">전체 세트</SelectItem>
+            <SelectItem value="all">{t("collection.allSets")}</SelectItem>
             {sets.map((s) => (
               <SelectItem key={s} value={s}>
                 {s}
@@ -205,18 +223,18 @@ function CollectionPage() {
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-3">
-        <Stat label="보유 종류" value={`${haveUnique} / ${totalCards}`} />
-        <Stat label="총 보유 매수" value={`${haveTotal}`} />
+        <Stat label={t("collection.statOwnedTypes")} value={`${haveUnique} / ${totalCards}`} />
+        <Stat label={t("collection.statTotalQty")} value={`${haveTotal}`} />
         <Stat
-          label="진행률"
+          label={t("collection.statProgress")}
           value={`${totalCards === 0 ? 0 : Math.round((haveUnique / totalCards) * 100)}%`}
         />
       </div>
 
       <section className="mt-6">
-        <h2 className="text-sm font-semibold">세트별 진행률</h2>
+        <h2 className="text-sm font-semibold">{t("collection.progressBySet")}</h2>
         {setProgress.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">해당 게임의 카드 데이터가 없습니다.</p>
+          <p className="mt-2 text-sm text-muted-foreground">{t("collection.noCardData")}</p>
         ) : (
           <ul className="mt-3 space-y-2">
             {setProgress.map(([set, p]) => (
@@ -248,21 +266,22 @@ function CollectionPage() {
       <section className="mt-8">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-sm font-semibold">
-            카드별 수량 {setCode !== "all" && <span className="text-muted-foreground">· {setCode}</span>}
+            {t("collection.qtyByCard")}{" "}
+            {setCode !== "all" && <span className="text-muted-foreground">· {setCode}</span>}
           </h2>
           <div className="relative w-64 max-w-full">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="카드명/번호 검색"
+              placeholder={t("collection.searchPlaceholder")}
               className="pl-9"
             />
           </div>
         </div>
 
         {filtered.length === 0 ? (
-          <p className="mt-3 text-sm text-muted-foreground">결과가 없습니다.</p>
+          <p className="mt-3 text-sm text-muted-foreground">{t("collection.noResults")}</p>
         ) : (
           <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {filtered.map((c) => {
@@ -304,7 +323,7 @@ function CollectionPage() {
                       className="h-7 w-7"
                       disabled={qty === 0}
                       onClick={() => setQty(c.code, qty - 1)}
-                      aria-label="수량 감소"
+                      aria-label={t("collection.decreaseQty")}
                     >
                       <Minus className="h-3 w-3" />
                     </Button>
@@ -316,7 +335,7 @@ function CollectionPage() {
                       variant="outline"
                       className="h-7 w-7"
                       onClick={() => setQty(c.code, qty + 1)}
-                      aria-label="수량 증가"
+                      aria-label={t("collection.increaseQty")}
                     >
                       <Plus className="h-3 w-3" />
                     </Button>

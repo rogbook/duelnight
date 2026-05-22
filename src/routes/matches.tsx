@@ -476,7 +476,9 @@ function EventTable({ rows }: { rows: EventStat[] }) {
         <ul className="divide-y divide-border">
           {rows.map((r) => (
             <li key={r.event} className="flex items-center justify-between px-4 py-3">
-              <span className="text-sm">{EVENT_LABEL[r.event]}</span>
+              <span className="text-sm">
+                {t(`matches.event${r.event.charAt(0).toUpperCase() + r.event.slice(1)}` as any)}
+              </span>
               <span className="text-xs text-muted-foreground">
                 <span className="mr-2 font-medium text-foreground">{fmtPct(r.stats)}</span>
                 {r.stats.wins}-{r.stats.losses}
@@ -653,9 +655,9 @@ function RecentList({
                 <td className="px-3 py-2 text-muted-foreground">
                   {new Date(m.played_at).toLocaleDateString(localeStr)}
                 </td>
-                <td className="px-3 py-2">{GAME_LABEL[m.game]}</td>
+                <td className="px-3 py-2">{t(`matches.${m.game}` as any)}</td>
                 <td className="px-3 py-2 text-muted-foreground">
-                  {EVENT_LABEL[m.event]}
+                  {t(`matches.event${m.event.charAt(0).toUpperCase() + m.event.slice(1)}` as any)}
                 </td>
                 <td className="px-3 py-2">{m.my_deck}</td>
                 <td className="px-3 py-2 text-muted-foreground">
@@ -689,21 +691,21 @@ function RecentList({
                     <button
                       onClick={() => setViewing(m)}
                       className="text-muted-foreground hover:text-foreground"
-                      aria-label="보기"
+                      aria-label={t("matches.viewDetail")}
                     >
                       <Eye className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => setEditing(m)}
                       className="text-muted-foreground hover:text-foreground"
-                      aria-label="수정"
+                      aria-label={t("common.edit")}
                     >
                       <Pencil className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => onDelete(m.id)}
                       className="text-muted-foreground hover:text-destructive"
-                      aria-label="삭제"
+                      aria-label={t("common.delete")}
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -717,7 +719,10 @@ function RecentList({
       {totalPages > 1 && (
         <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
           <span>
-            총 {rows.length}건 · {safePage}/{totalPages} 페이지
+            {t("matches.paginationTotal")
+              .replace("{total}", String(rows.length))
+              .replace("{page}", String(safePage))
+              .replace("{totalPages}", String(totalPages))}
           </span>
           <div className="flex items-center gap-2">
             <Button
@@ -726,7 +731,7 @@ function RecentList({
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={safePage <= 1}
             >
-              이전
+              {t("matches.prev")}
             </Button>
             <Button
               size="sm"
@@ -734,7 +739,7 @@ function RecentList({
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={safePage >= totalPages}
             >
-              다음
+              {t("matches.next")}
             </Button>
           </div>
         </div>
@@ -774,6 +779,9 @@ function ViewMatchDialog({
   onEdit: (m: Match) => void;
   onDelete: (id: string) => void;
 }) {
+  const { t, language } = useI18n();
+  const localeStr = language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US";
+
   return (
     <Dialog open={!!match} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
@@ -781,17 +789,17 @@ function ViewMatchDialog({
           <>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                전적 상세
+                {t("matches.viewDetail")}
                 <ResultBadge r={match.result} />
               </DialogTitle>
             </DialogHeader>
             <dl className="grid grid-cols-3 gap-x-3 gap-y-3 text-sm">
-              <Row label="일시" value={new Date(match.played_at).toLocaleString("ko-KR")} />
-              <Row label="게임" value={GAME_LABEL[match.game]} />
-              <Row label="이벤트" value={EVENT_LABEL[match.event]} />
-              <Row label="내 덱" value={match.my_deck} />
+              <Row label={t("matches.datetime")} value={new Date(match.played_at).toLocaleString(localeStr)} />
+              <Row label={t("matches.game")} value={t(`matches.${match.game}` as any)} />
+              <Row label={t("matches.event")} value={t(`matches.event${match.event.charAt(0).toUpperCase() + match.event.slice(1)}` as any)} />
+              <Row label={t("matches.myDeck")} value={match.my_deck} />
               <Row
-                label="상대"
+                label={t("matches.opponent")}
                 value={
                   match.opp_leader || match.opp_deck
                     ? `${match.opp_leader ?? ""}${
@@ -800,10 +808,10 @@ function ViewMatchDialog({
                     : "—"
                 }
               />
-              <Row label="선/후공" value={match.went_first ? "선공" : "후공"} />
+              <Row label={t("matches.turn")} value={match.went_first ? t("matches.first") : t("matches.second")} />
               {match.notes && (
                 <div className="col-span-3">
-                  <dt className="text-xs text-muted-foreground">메모</dt>
+                  <dt className="text-xs text-muted-foreground">{t("matches.matchNote")}</dt>
                   <dd className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-3 text-sm leading-relaxed">
                     {match.notes}
                   </dd>
@@ -817,10 +825,10 @@ function ViewMatchDialog({
                 onClick={() => onDelete(match.id)}
                 className="text-destructive hover:text-destructive"
               >
-                <Trash2 className="mr-1 h-4 w-4" /> 삭제
+                <Trash2 className="mr-1 h-4 w-4" /> {t("common.delete")}
               </Button>
               <Button size="sm" onClick={() => onEdit(match)}>
-                <Pencil className="mr-1 h-4 w-4" /> 수정
+                <Pencil className="mr-1 h-4 w-4" /> {t("common.edit")}
               </Button>
             </div>
           </>
@@ -848,6 +856,7 @@ function EditMatchDialog({
   onOpenChange: (open: boolean) => void;
   onSaved: () => void;
 }) {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const [form, setForm] = useState<{
     event: EventT;
@@ -887,7 +896,7 @@ function EditMatchDialog({
     e.preventDefault();
     const myDeck = normalizeDeckName(form.my_deck, match.game) || form.my_deck.trim();
     if (!myDeck) {
-      toast.error("내 덱 이름을 입력해 주세요");
+      toast.error(t("matches.myDeckRequired"));
       return;
     }
     const oppLeader = form.opp_leader
@@ -912,7 +921,7 @@ function EditMatchDialog({
       toast.error(error.message);
       return;
     }
-    toast.success("수정됨");
+    toast.success(t("matches.editedToast"));
     qc.invalidateQueries({ queryKey: ["matches"] });
     onSaved();
   };
@@ -921,11 +930,11 @@ function EditMatchDialog({
     <Dialog open={!!match} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>전적 수정</DialogTitle>
+          <DialogTitle>{t("matches.editTitle")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={submit} className="grid grid-cols-2 gap-3">
           <div className="col-span-2 flex flex-col gap-1.5">
-            <Label>이벤트</Label>
+            <Label>{t("matches.event")}</Label>
             <Select
               value={form.event}
               onValueChange={(v) => setForm({ ...form, event: v as EventT })}
@@ -934,14 +943,14 @@ function EditMatchDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="friendly">친선</SelectItem>
-                <SelectItem value="shop">매장 대회</SelectItem>
-                <SelectItem value="official">공식 대회</SelectItem>
+                <SelectItem value="friendly">{t("matches.eventFriendly")}</SelectItem>
+                <SelectItem value="shop">{t("matches.eventShop")}</SelectItem>
+                <SelectItem value="official">{t("matches.eventOfficial")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="col-span-2 flex flex-col gap-1.5">
-            <Label>내 덱</Label>
+            <Label>{t("matches.myDeck")}</Label>
             <Input
               value={form.my_deck}
               onChange={(e) => setForm({ ...form, my_deck: e.target.value })}
@@ -949,21 +958,21 @@ function EditMatchDialog({
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>상대 리더</Label>
+            <Label>{t("matches.oppLeader")}</Label>
             <Input
               value={form.opp_leader}
               onChange={(e) => setForm({ ...form, opp_leader: e.target.value })}
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>상대 덱</Label>
+            <Label>{t("matches.oppDeck")}</Label>
             <Input
               value={form.opp_deck}
               onChange={(e) => setForm({ ...form, opp_deck: e.target.value })}
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>선/후</Label>
+            <Label>{t("matches.turn")}</Label>
             <Select
               value={form.went_first}
               onValueChange={(v) => setForm({ ...form, went_first: v })}
@@ -972,13 +981,13 @@ function EditMatchDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="true">선공</SelectItem>
-                <SelectItem value="false">후공</SelectItem>
+                <SelectItem value="true">{t("matches.first")}</SelectItem>
+                <SelectItem value="false">{t("matches.second")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>결과</Label>
+            <Label>{t("matches.result")}</Label>
             <Select
               value={form.result}
               onValueChange={(v) => setForm({ ...form, result: v as Result })}
@@ -987,17 +996,17 @@ function EditMatchDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="win">승</SelectItem>
-                <SelectItem value="loss">패</SelectItem>
-                <SelectItem value="draw">무</SelectItem>
+                <SelectItem value="win">{t("matches.win")}</SelectItem>
+                <SelectItem value="loss">{t("matches.lose")}</SelectItem>
+                <SelectItem value="draw">{t("matches.draw")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="col-span-2 mt-2 flex justify-end gap-2">
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-              취소
+              {t("common.cancel")}
             </Button>
-            <Button type="submit">저장</Button>
+            <Button type="submit">{t("common.save")}</Button>
           </div>
         </form>
       </DialogContent>
@@ -1006,12 +1015,13 @@ function EditMatchDialog({
 }
 
 function ResultBadge({ r }: { r: Result }) {
+  const { t } = useI18n();
   const map = {
     win: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
     loss: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
     draw: "bg-muted text-muted-foreground",
   } as const;
-  const label = { win: "승", loss: "패", draw: "무" }[r];
+  const label = { win: t("matches.win"), loss: t("matches.lose"), draw: t("matches.draw") }[r];
   return (
     <span
       className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${map[r]}`}
@@ -1030,12 +1040,13 @@ function CanonicalHint({
   game: Game;
   onApply: (v: string) => void;
 }) {
+  const { t } = useI18n();
   const canonical = normalizeDeckName(raw, game);
   if (!canonical || canonical === raw.trim()) return null;
   return (
     <div className="flex items-center gap-2 text-xs text-muted-foreground">
       <span>
-        저장 시:{" "}
+        {t("matches.onSave")}{" "}
         <span className="font-medium text-foreground">{canonical}</span>
       </span>
       <button
@@ -1043,7 +1054,7 @@ function CanonicalHint({
         onClick={() => onApply(canonical)}
         className="rounded border border-border px-1.5 py-0.5 text-[10px] hover:bg-accent"
       >
-        적용
+        {t("matches.apply")}
       </button>
     </div>
   );
@@ -1057,6 +1068,7 @@ function NewMatchDialog({
   lastMatch?: Match;
 }) {
   const { user } = useAuth();
+  const { t } = useI18n();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [keepRaw, setKeepRaw] = useState(false);
@@ -1160,7 +1172,7 @@ function NewMatchDialog({
       ? (decks.find((d) => d.id === form.deck_id)?.name ?? form.my_deck)
       : finalize(form.my_deck);
     if (!myDeck) {
-      toast.error("내 덱을 선택하거나 입력해 주세요");
+      toast.error(t("matches.myDeckRequiredToast"));
       return;
     }
     let oppLeader = finalize(form.opp_leader);
@@ -1192,7 +1204,11 @@ function NewMatchDialog({
       toast.error(error.message);
       return;
     }
-    toast.success(opponent ? `기록됨 (예상 ${previewDelta >= 0 ? "+" : ""}${previewDelta}점)` : "기록됨");
+    toast.success(
+      opponent
+        ? t("matches.recordedWithElo").replace("{delta}", `${previewDelta >= 0 ? "+" : ""}${previewDelta}`)
+        : t("matches.recordedToast")
+    );
     setOpen(false);
     qc.invalidateQueries({ queryKey: ["matches"] });
     onCreated();
@@ -1203,18 +1219,18 @@ function NewMatchDialog({
       <DialogTrigger asChild>
         <Button size="sm">
           <Plus className="mr-1 h-4 w-4" />
-          전적 추가
+          {t("matches.addMatch")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>전적 기록</DialogTitle>
+          <DialogTitle>{t("matches.addTitle")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           {/* 1) 날짜 + 게임 + 이벤트 */}
           <div className="grid grid-cols-3 gap-3">
             <div className="flex flex-col gap-1.5">
-              <Label>날짜</Label>
+              <Label>{t("matches.date")}</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -1238,24 +1254,24 @@ function NewMatchDialog({
               </Popover>
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label>게임</Label>
+              <Label>{t("matches.game")}</Label>
               <Select value={form.game} onValueChange={(v) => setForm({ ...form, game: v as Game, deck_id: "", opponent_deck_id: "" })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="optcg">원피스</SelectItem>
-                  <SelectItem value="ptcg">포켓몬</SelectItem>
-                  <SelectItem value="dtcg">디지몬</SelectItem>
+                  <SelectItem value="optcg">{t("matches.optcg")}</SelectItem>
+                  <SelectItem value="ptcg">{t("matches.ptcg")}</SelectItem>
+                  <SelectItem value="dtcg">{t("matches.dtcg")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label>이벤트</Label>
+              <Label>{t("matches.event")}</Label>
               <Select value={form.event} onValueChange={(v) => setForm({ ...form, event: v as EventT })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="friendly">친선</SelectItem>
-                  <SelectItem value="shop">매장 대회</SelectItem>
-                  <SelectItem value="official">공식 대회</SelectItem>
+                  <SelectItem value="friendly">{t("matches.eventFriendly")}</SelectItem>
+                  <SelectItem value="shop">{t("matches.eventShop")}</SelectItem>
+                  <SelectItem value="official">{t("matches.eventOfficial")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1264,23 +1280,23 @@ function NewMatchDialog({
           {/* 2) 선/후, 결과 (게임 바로 밑) */}
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <Label>선/후</Label>
+              <Label>{t("matches.turn")}</Label>
               <Select value={form.went_first} onValueChange={(v) => setForm({ ...form, went_first: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="true">선공</SelectItem>
-                  <SelectItem value="false">후공</SelectItem>
+                  <SelectItem value="true">{t("matches.first")}</SelectItem>
+                  <SelectItem value="false">{t("matches.second")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label>결과 (W/L/D)</Label>
+              <Label>{t("matches.resultLabel")}</Label>
               <Select value={form.result} onValueChange={(v) => setForm({ ...form, result: v as Result })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="win">승</SelectItem>
-                  <SelectItem value="loss">패</SelectItem>
-                  <SelectItem value="draw">무</SelectItem>
+                  <SelectItem value="win">{t("matches.win")}</SelectItem>
+                  <SelectItem value="loss">{t("matches.lose")}</SelectItem>
+                  <SelectItem value="draw">{t("matches.draw")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1288,7 +1304,7 @@ function NewMatchDialog({
 
           {/* 3) 내 덱 (저장된 덱 우선, 없으면 직접 입력) */}
           <div className="flex flex-col gap-1.5">
-            <Label>내 덱</Label>
+            <Label>{t("matches.myDeck")}</Label>
             {decks.length > 0 ? (
               <Select
                 value={form.deck_id || "manual"}
@@ -1301,14 +1317,14 @@ function NewMatchDialog({
                   setForm({ ...form, deck_id: v, my_deck: d?.name ?? form.my_deck });
                 }}
               >
-                <SelectTrigger><SelectValue placeholder="저장된 덱 선택" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("matches.selectSavedDeck")} /></SelectTrigger>
                 <SelectContent>
                   {decks.map((d) => (
                     <SelectItem key={d.id} value={d.id}>
                       {d.name}{d.leader ? ` · ${d.leader}` : ""}
                     </SelectItem>
                   ))}
-                  <SelectItem value="manual">직접 입력...</SelectItem>
+                  <SelectItem value="manual">{t("matches.manualInput")}</SelectItem>
                 </SelectContent>
               </Select>
             ) : null}
@@ -1317,7 +1333,7 @@ function NewMatchDialog({
                 <Input
                   value={form.my_deck}
                   onChange={(e) => setForm({ ...form, my_deck: e.target.value })}
-                  placeholder={decks.length === 0 ? "저장된 덱이 없습니다 — 직접 입력" : "예: 적 루피"}
+                  placeholder={decks.length === 0 ? t("matches.noSavedDecks") : t("matches.deckPlaceholder")}
                   required
                 />
                 {!keepRaw && (
@@ -1329,7 +1345,7 @@ function NewMatchDialog({
 
           {/* 4) 상대 정보 — 사용자 태그 + 상대 덱 */}
           <div className="space-y-2 rounded-md border border-border p-3">
-            <Label>상대</Label>
+            <Label>{t("matches.opponent")}</Label>
             <OpponentSearch
               selected={opponent}
               onSelect={(u) => {
@@ -1347,20 +1363,20 @@ function NewMatchDialog({
                 value={form.opponent_deck_id || "manual"}
                 onValueChange={(v) => setForm({ ...form, opponent_deck_id: v === "manual" ? "" : v })}
               >
-                <SelectTrigger><SelectValue placeholder="상대 저장 덱" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("matches.oppSavedDeck")} /></SelectTrigger>
                 <SelectContent>
                   {oppDecks.map((d) => (
                     <SelectItem key={d.id} value={d.id}>
                       {d.name}{d.leader ? ` · ${d.leader}` : ""}
                     </SelectItem>
                   ))}
-                  <SelectItem value="manual">직접 입력...</SelectItem>
+                  <SelectItem value="manual">{t("matches.manualInput")}</SelectItem>
                 </SelectContent>
               </Select>
             )}
             {opponent && oppDecks.length === 0 && (
               <p className="text-[11px] text-muted-foreground">
-                이 사용자가 공개한 덱이 없습니다. 직접 입력하면 상대가 나중에 자기 덱 정보를 수정할 수 있어요.
+                {t("matches.noOppDecksDesc")}
               </p>
             )}
 
@@ -1369,12 +1385,12 @@ function NewMatchDialog({
                 <Input
                   value={form.opp_leader}
                   onChange={(e) => setForm({ ...form, opp_leader: e.target.value })}
-                  placeholder="상대 리더"
+                  placeholder={t("matches.oppLeader")}
                 />
                 <Input
                   value={form.opp_deck}
                   onChange={(e) => setForm({ ...form, opp_deck: e.target.value })}
-                  placeholder="상대 덱 타입"
+                  placeholder={t("matches.oppDeck")}
                 />
               </div>
             )}
@@ -1383,22 +1399,22 @@ function NewMatchDialog({
           {/* 5) 대회 메모 + ELO 미리보기 */}
           {form.event !== "friendly" && (
             <div className="flex flex-col gap-1.5">
-              <Label>대회 메모</Label>
+              <Label>{t("matches.tournamentNote")}</Label>
               <Textarea
                 value={form.tournament_note}
                 onChange={(e) => setForm({ ...form, tournament_note: e.target.value })}
-                placeholder="라운드, 매장명, 비고 등"
+                placeholder={t("matches.tournamentNotePlaceholder")}
                 rows={2}
               />
             </div>
           )}
 
           <div className="flex flex-col gap-1.5">
-            <Label>경기 메모</Label>
+            <Label>{t("matches.matchNote")}</Label>
             <Textarea
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              placeholder="기억해 두고 싶은 점"
+              placeholder={t("matches.matchNotePlaceholder")}
               rows={2}
             />
           </div>
@@ -1406,15 +1422,15 @@ function NewMatchDialog({
           {opponent && ratings && (
             <div className="rounded-md bg-muted/40 px-3 py-2 text-xs">
               <p className="text-muted-foreground">
-                ELO 미리보기 — 내 점수 <span className="font-medium text-foreground">{ratings.me}</span> vs{" "}
+                {t("matches.eloPreviewTitle")} <span className="font-medium text-foreground">{ratings.me}</span> vs{" "}
                 <span className="font-medium text-foreground">{ratings.op}</span>
               </p>
               <p className="mt-0.5">
-                예상 변화:{" "}
+                {t("matches.expectedChange")}{" "}
                 <span className={cn("font-semibold", previewDelta > 0 ? "text-emerald-600" : previewDelta < 0 ? "text-rose-600" : "")}>
-                  {previewDelta > 0 ? "+" : ""}{previewDelta}점
+                  {previewDelta > 0 ? "+" : ""}{previewDelta}{t("matches.points")}
                 </span>
-                <span className="ml-2 text-muted-foreground">(K=32, 기대승률 {Math.round(expected * 100)}%)</span>
+                <span className="ml-2 text-muted-foreground">(K=32, {t("matches.expectedWinRate")} {Math.round(expected * 100)}%)</span>
               </p>
             </div>
           )}
@@ -1427,11 +1443,11 @@ function NewMatchDialog({
                 checked={keepRaw}
                 onChange={(e) => setKeepRaw(e.target.checked)}
               />
-              원문 그대로 저장
+              {t("matches.keepRaw")}
             </label>
             <div className="flex gap-2">
-              <Button type="button" variant="ghost" onClick={() => setOpen(false)}>취소</Button>
-              <Button type="submit">저장</Button>
+              <Button type="button" variant="ghost" onClick={() => setOpen(false)}>{t("common.cancel")}</Button>
+              <Button type="submit">{t("common.save")}</Button>
             </div>
           </div>
         </form>
@@ -1461,6 +1477,7 @@ async function runWithConcurrency<T>(
 function NormalizeButton({ onDone }: { onDone: () => void }) {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const { t } = useI18n();
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<{
     scanned: number;
@@ -1472,13 +1489,13 @@ function NormalizeButton({ onDone }: { onDone: () => void }) {
     if (!user) return;
     if (
       !confirm(
-        "기존 전적의 덱·리더 이름을 정규화 규칙으로 일괄 정리할까요? 변경된 항목만 업데이트됩니다.",
+        t("matches.normalizeConfirm"),
       )
     )
       return;
 
     setBusy(true);
-    const toastId = toast.loading("정리 준비 중...");
+    const toastId = toast.loading(t("matches.normalizingPrepare"));
     try {
       // 1) Total count up-front for progress.
       const { count, error: cErr } = await supabase
@@ -1488,7 +1505,7 @@ function NormalizeButton({ onDone }: { onDone: () => void }) {
       if (cErr) throw cErr;
       const total = count ?? 0;
       if (total === 0) {
-        toast.info("정리할 전적이 없습니다", { id: toastId });
+        toast.info(t("matches.noNormalizingMatches"), { id: toastId });
         return;
       }
       setProgress({ scanned: 0, total, updated: 0 });
@@ -1537,11 +1554,16 @@ function NormalizeButton({ onDone }: { onDone: () => void }) {
 
         scanned += data?.length ?? 0;
         setProgress({ scanned, total, updated: 0 });
-        toast.loading(`스캔 ${scanned}/${total}...`, { id: toastId });
+        toast.loading(
+          t("matches.normalizingScan")
+            .replace("{scanned}", String(scanned))
+            .replace("{total}", String(total)),
+          { id: toastId },
+        );
       }
 
       if (updates.length === 0) {
-        toast.success("이미 모두 정규화되어 있습니다", { id: toastId });
+        toast.success(t("matches.alreadyNormalized"), { id: toastId });
         return;
       }
 
@@ -1564,20 +1586,38 @@ function NormalizeButton({ onDone }: { onDone: () => void }) {
         const done = ok + fail;
         if (done % tickEvery === 0 || done === updates.length) {
           setProgress({ scanned: total, total, updated: ok });
-          toast.loading(`업데이트 ${done}/${updates.length}...`, { id: toastId });
+          toast.loading(
+            t("matches.normalizingUpdate")
+              .replace("{done}", String(done))
+              .replace("{total}", String(updates.length)),
+            { id: toastId },
+          );
         }
       });
 
       if (fail > 0) {
-        toast.error(`${ok}건 정리 / ${fail}건 실패`, { id: toastId });
+        toast.error(
+          t("matches.normalizedSuccessWithFailures")
+            .replace("{ok}", String(ok))
+            .replace("{fail}", String(fail)),
+          { id: toastId },
+        );
       } else {
-        toast.success(`${ok}건 정리됨 (총 ${total}건 중)`, { id: toastId });
+        toast.success(
+          t("matches.normalizedSuccess")
+            .replace("{ok}", String(ok))
+            .replace("{total}", String(total)),
+          { id: toastId },
+        );
       }
 
       qc.invalidateQueries({ queryKey: ["matches"] });
       onDone();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "정리 실패", { id: toastId });
+      toast.error(
+        e instanceof Error ? e.message : t("matches.normalizeFailed"),
+        { id: toastId },
+      );
     } finally {
       setBusy(false);
       setProgress(null);
@@ -1587,10 +1627,10 @@ function NormalizeButton({ onDone }: { onDone: () => void }) {
   const label = busy
     ? progress
       ? progress.scanned < progress.total
-        ? `스캔 ${progress.scanned}/${progress.total}`
-        : `정리 ${progress.updated}`
-      : "정리 중..."
-    : "이름 정리";
+        ? `${t("matches.scan")} ${progress.scanned}/${progress.total}`
+        : `${t("matches.apply")} ${progress.updated}`
+      : t("matches.normalizingInProgress")
+    : t("matches.normalizeBtn");
 
   return (
     <Button
@@ -1598,7 +1638,7 @@ function NormalizeButton({ onDone }: { onDone: () => void }) {
       variant="outline"
       onClick={run}
       disabled={busy}
-      title="기존 전적의 덱·리더 이름을 페이지/배치 단위로 정규화"
+      title={t("matches.normalizeTooltip")}
     >
       <Wand2 className="mr-1 h-4 w-4" />
       {label}
@@ -1669,6 +1709,7 @@ function FilterBar({
   onChange: (f: Filters) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const { t } = useI18n();
   const active =
     value.result !== "all" ||
     value.event !== "all" ||
@@ -1691,11 +1732,11 @@ function FilterBar({
             onClick={() => setOpen((o) => !o)}
             className="text-sm font-medium hover:underline"
           >
-            필터 {open ? "닫기" : "열기"}
+            {t("matches.filter")} {open ? t("matches.close") : t("matches.open")}
           </button>
           {active && (
             <span className="text-xs text-muted-foreground">
-              · {filteredCount}/{rows.length}건 일치
+              · {filteredCount}/{rows.length}{t("matches.countMatched")}
             </span>
           )}
         </div>
@@ -1705,60 +1746,60 @@ function FilterBar({
             onClick={() => onChange(emptyFilters)}
             className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
           >
-            <X className="h-3 w-3" /> 초기화
+            <X className="h-3 w-3" /> {t("matches.reset")}
           </button>
         )}
       </div>
       {open && (
         <div className="grid grid-cols-2 gap-3 border-t border-border p-4 md:grid-cols-4">
           <div className="flex flex-col gap-1">
-            <Label className="text-[11px]">결과</Label>
+            <Label className="text-[11px]">{t("matches.result")}</Label>
             <Select
               value={value.result}
               onValueChange={(v) => set("result", v as ResultFilter)}
             >
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                <SelectItem value="win">승</SelectItem>
-                <SelectItem value="loss">패</SelectItem>
-                <SelectItem value="draw">무</SelectItem>
+                <SelectItem value="all">{t("matches.all")}</SelectItem>
+                <SelectItem value="win">{t("matches.win")}</SelectItem>
+                <SelectItem value="loss">{t("matches.lose")}</SelectItem>
+                <SelectItem value="draw">{t("matches.draw")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="flex flex-col gap-1">
-            <Label className="text-[11px]">이벤트</Label>
+            <Label className="text-[11px]">{t("matches.event")}</Label>
             <Select
               value={value.event}
               onValueChange={(v) => set("event", v as EventT | "all")}
             >
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                <SelectItem value="friendly">친선</SelectItem>
-                <SelectItem value="shop">매장 대회</SelectItem>
-                <SelectItem value="official">공식 대회</SelectItem>
+                <SelectItem value="all">{t("matches.all")}</SelectItem>
+                <SelectItem value="friendly">{t("matches.eventFriendly")}</SelectItem>
+                <SelectItem value="shop">{t("matches.eventShop")}</SelectItem>
+                <SelectItem value="official">{t("matches.eventOfficial")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="flex flex-col gap-1">
-            <Label className="text-[11px]">내 덱</Label>
+            <Label className="text-[11px]">{t("matches.myDeck")}</Label>
             <Input
               value={value.myDeck}
               onChange={(e) => set("myDeck", e.target.value)}
-              placeholder="이름 일부"
+              placeholder={t("matches.namePartial")}
             />
           </div>
           <div className="flex flex-col gap-1">
-            <Label className="text-[11px]">상대</Label>
+            <Label className="text-[11px]">{t("matches.opponent")}</Label>
             <Input
               value={value.opp}
               onChange={(e) => set("opp", e.target.value)}
-              placeholder="리더/덱 일부"
+              placeholder={t("matches.leaderPartial")}
             />
           </div>
           <div className="flex flex-col gap-1">
-            <Label className="text-[11px]">시작일</Label>
+            <Label className="text-[11px]">{t("matches.startDate")}</Label>
             <Input
               type="date"
               value={value.from}
@@ -1766,7 +1807,7 @@ function FilterBar({
             />
           </div>
           <div className="flex flex-col gap-1">
-            <Label className="text-[11px]">종료일</Label>
+            <Label className="text-[11px]">{t("matches.endDate")}</Label>
             <Input
               type="date"
               value={value.to}
@@ -1774,11 +1815,11 @@ function FilterBar({
             />
           </div>
           <div className="col-span-2 flex flex-col gap-1">
-            <Label className="text-[11px]">키워드 (메모 포함)</Label>
+            <Label className="text-[11px]">{t("matches.keyword")}</Label>
             <Input
               value={value.q}
               onChange={(e) => set("q", e.target.value)}
-              placeholder="검색어"
+              placeholder={t("matches.searchPlaceholder")}
             />
           </div>
         </div>
@@ -1800,6 +1841,7 @@ function ImportExportButton({
 }) {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -1824,12 +1866,12 @@ function ImportExportButton({
     e.target.value = "";
     if (!file || !user) return;
     setBusy(true);
-    const toastId = toast.loading("파일 분석 중...");
+    const toastId = toast.loading(t("matches.analyzingFile"));
     try {
       const text = await file.text();
       const rows = parseImport(text);
       if (rows.length === 0) {
-        toast.error("가져올 유효한 행이 없습니다", { id: toastId });
+        toast.error(t("matches.noValidRows"), { id: toastId });
         return;
       }
       const payload = rows.map((r) => ({
@@ -1854,14 +1896,14 @@ function ImportExportButton({
           return;
         }
         ok += chunk.length;
-        toast.loading(`가져오는 중... ${ok}/${payload.length}`, { id: toastId });
+        toast.loading(`${t("matches.importing")} ${ok}/${payload.length}`, { id: toastId });
       }
-      toast.success(`${ok}건 가져옴`, { id: toastId });
+      toast.success(t("matches.importedSuccess").replace("{count}", String(ok)), { id: toastId });
       qc.invalidateQueries({ queryKey: ["matches"] });
       onImported();
       setOpen(false);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "가져오기 실패", { id: toastId });
+      toast.error(err instanceof Error ? err.message : t("matches.importFailed"), { id: toastId });
     } finally {
       setBusy(false);
     }
@@ -1872,17 +1914,17 @@ function ImportExportButton({
       <DialogTrigger asChild>
         <Button size="sm" variant="outline">
           <Download className="mr-1 h-4 w-4" />
-          내보내기/가져오기
+          {t("matches.importExport")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>전적 내보내기 / 가져오기</DialogTitle>
+          <DialogTitle>{t("matches.importExportTitle")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
             <p className="text-xs text-muted-foreground mb-2">
-              현재 로드된 {rows.length}건을 백업합니다.
+              {t("matches.backupDesc").replace("{count}", String(rows.length))}
             </p>
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={exportCsv}>
@@ -1895,8 +1937,7 @@ function ImportExportButton({
           </div>
           <div className="border-t border-border pt-4">
             <p className="text-xs text-muted-foreground mb-2">
-              CSV 또는 JSON 파일에서 가져오기. 헤더: game, event, my_deck,
-              opp_leader, opp_deck, went_first, result, notes, played_at
+              {t("matches.importDesc").replace("{headers}", "game, event, my_deck, opp_leader, opp_deck, went_first, result, notes, played_at")}
             </p>
             <input
               ref={fileRef}
@@ -1911,7 +1952,7 @@ function ImportExportButton({
               disabled={busy}
             >
               <Upload className="mr-1 h-4 w-4" />
-              {busy ? "가져오는 중..." : "파일 선택"}
+              {busy ? t("matches.importing") : t("matches.selectFile")}
             </Button>
           </div>
         </div>
@@ -1926,6 +1967,7 @@ function ImportExportButton({
 function TaggedAsOpponentSection({ onSaved }: { onSaved: () => void }) {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const { t, language } = useI18n();
 
   const { data: rows = [], refetch } = useQuery({
     queryKey: ["matches-as-opponent", user?.id],
@@ -1963,18 +2005,18 @@ function TaggedAsOpponentSection({ onSaved }: { onSaved: () => void }) {
 
   return (
     <section className="mt-8">
-      <h2 className="text-sm font-medium">내가 상대로 태그된 경기</h2>
+      <h2 className="text-sm font-medium">{t("matches.taggedMatches")}</h2>
       <p className="text-[11px] text-muted-foreground">
-        다른 사용자가 나를 상대로 기록한 경기예요. 내 덱 정보를 채우면 통계에 반영됩니다.
+        {t("matches.taggedMatchesDesc")}
       </p>
       <div className="mt-3 overflow-hidden rounded-lg border border-border bg-card">
         <table className="w-full text-sm">
           <thead className="border-b border-border bg-muted/30 text-xs text-muted-foreground">
             <tr>
-              <th className="px-3 py-2 text-left font-medium">일자</th>
-              <th className="px-3 py-2 text-left font-medium">게임</th>
-              <th className="px-3 py-2 text-left font-medium">상대 덱</th>
-              <th className="px-3 py-2 text-left font-medium">기록된 내 덱</th>
+              <th className="px-3 py-2 text-left font-medium">{t("matches.date")}</th>
+              <th className="px-3 py-2 text-left font-medium">{t("matches.game")}</th>
+              <th className="px-3 py-2 text-left font-medium">{t("matches.opponent")}</th>
+              <th className="px-3 py-2 text-left font-medium">{t("matches.myDeck")}</th>
               <th className="px-3 py-2"></th>
             </tr>
           </thead>
@@ -1982,19 +2024,19 @@ function TaggedAsOpponentSection({ onSaved }: { onSaved: () => void }) {
             {rows.map((m) => (
               <tr key={m.id} className="border-b border-border last:border-0">
                 <td className="px-3 py-2 text-muted-foreground">
-                  {new Date(m.played_at).toLocaleDateString("ko-KR")}
+                  {new Date(m.played_at).toLocaleDateString(language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US")}
                 </td>
-                <td className="px-3 py-2">{GAME_LABEL[m.game]}</td>
+                <td className="px-3 py-2">{t(`matches.${m.game}` as any)}</td>
                 <td className="px-3 py-2">{m.my_deck}</td>
                 <td className="px-3 py-2 text-muted-foreground">
                   {m.opp_leader || m.opp_deck || (
-                    <span className="italic">미입력</span>
+                    <span className="italic">{t("matches.notEntered")}</span>
                   )}
                 </td>
                 <td className="px-3 py-2 text-right">
                   <Button size="sm" variant="outline" onClick={() => setEditing(m)}>
                     <Pencil className="mr-1 h-3.5 w-3.5" />
-                    수정
+                    {t("common.edit")}
                   </Button>
                 </td>
               </tr>
@@ -2006,7 +2048,7 @@ function TaggedAsOpponentSection({ onSaved }: { onSaved: () => void }) {
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>내 덱 정보 입력</DialogTitle>
+            <DialogTitle>{t("matches.oppSelfEditTitle")}</DialogTitle>
           </DialogHeader>
           {editing && (
             <OpponentSelfEditForm
@@ -2042,6 +2084,7 @@ function OpponentSelfEditForm({
   const [oppLeader, setOppLeader] = useState(match.opp_leader ?? "");
   const [oppDeck, setOppDeck] = useState(match.opp_deck ?? "");
   const [busy, setBusy] = useState(false);
+  const { t } = useI18n();
 
   const onPickDeck = (id: string) => {
     setDeckId(id);
@@ -2067,7 +2110,7 @@ function OpponentSelfEditForm({
       toast.error(error.message);
       return;
     }
-    toast.success("저장됨");
+    toast.success(t("matches.editedToast"));
     onSaved();
   };
 
@@ -2075,13 +2118,13 @@ function OpponentSelfEditForm({
     <form onSubmit={submit} className="grid gap-3">
       {myDecks.length > 0 && (
         <div className="flex flex-col gap-1.5">
-          <Label>내 덱 선택</Label>
+          <Label>{t("matches.selectMyDeck")}</Label>
           <Select value={deckId || "_manual_"} onValueChange={onPickDeck}>
             <SelectTrigger>
-              <SelectValue placeholder="덱 선택" />
+              <SelectValue placeholder={t("matches.chooseDeck")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="_manual_">직접 입력</SelectItem>
+              <SelectItem value="_manual_">{t("matches.manualInputOption")}</SelectItem>
               {myDecks.map((d) => (
                 <SelectItem key={d.id} value={d.id}>
                   {d.name}
@@ -2093,19 +2136,19 @@ function OpponentSelfEditForm({
         </div>
       )}
       <div className="flex flex-col gap-1.5">
-        <Label>덱 이름</Label>
+        <Label>{t("matches.deckName")}</Label>
         <Input value={oppDeck} onChange={(e) => setOppDeck(e.target.value)} />
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label>리더 / 아키타입</Label>
+        <Label>{t("matches.leaderArchetype")}</Label>
         <Input value={oppLeader} onChange={(e) => setOppLeader(e.target.value)} />
       </div>
       <div className="mt-2 flex justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onClose}>
-          취소
+          {t("common.cancel")}
         </Button>
         <Button type="submit" disabled={busy}>
-          {busy ? "저장 중..." : "저장"}
+          {busy ? t("common.loading") : t("common.save")}
         </Button>
       </div>
     </form>

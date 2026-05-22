@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Layers, Trash2, Search, X } from "lucide-react";
+import { Layers, Trash2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -9,19 +9,35 @@ import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { DeckDialog } from "@/components/decks/deck-dialog";
-import { GAME_LABEL } from "@/lib/match-stats";
 import { colorHex, colorLabel, type Game } from "@/lib/deck-colors";
 import type { Tables } from "@/integrations/supabase/types";
+import { useI18n } from "@/i18n/language-context";
 
 type Deck = Tables<"decks">;
 
 export const Route = createFileRoute("/decks/")({
-  head: () => ({
-    meta: [
-      { title: "덱 빌더 — DuelNight" },
-      { name: "description", content: "덱 레시피 저장 및 관리." },
-    ],
-  }),
+  head: () => {
+    let locale = "ko";
+    if (typeof window !== "undefined") {
+      locale = localStorage.getItem("duelnight.i18n.locale") || "ko";
+    }
+    const titles: Record<string, string> = {
+      ko: "덱 빌더 — DuelNight",
+      en: "Deck Builder — DuelNight",
+      ja: "デッキビルダー — DuelNight",
+    };
+    const descs: Record<string, string> = {
+      ko: "덱 레시피 저장 및 관리.",
+      en: "Save and manage deck recipes.",
+      ja: "デッキレシピの保存と管理。",
+    };
+    return {
+      meta: [
+        { title: titles[locale] || titles.ko },
+        { name: "description", content: descs[locale] || descs.ko },
+      ],
+    };
+  },
   component: DecksPage,
 });
 
@@ -29,6 +45,7 @@ function DecksPage() {
   const { user, loading } = useAuth();
   const qc = useQueryClient();
   const [game, setGame] = useState<Game | "all">("all");
+  const { t, language } = useI18n();
 
   const { data: decks = [] } = useQuery({
     queryKey: ["decks", user?.id, game],
@@ -53,11 +70,11 @@ function DecksPage() {
   }, [decks]);
 
   const onDelete = async (id: string) => {
-    if (!confirm("이 덱을 삭제할까요? 연결된 전적은 유지됩니다.")) return;
+    if (!confirm(t("decks.deleteConfirm"))) return;
     const { error } = await supabase.from("decks").delete().eq("id", id);
     if (error) toast.error(error.message);
     else {
-      toast.success("삭제됨");
+      toast.success(t("decks.deletedToast"));
       qc.invalidateQueries({ queryKey: ["decks"] });
     }
   };
@@ -65,7 +82,7 @@ function DecksPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-6xl px-6 py-8 text-sm text-muted-foreground">
-        불러오는 중...
+        {t("decks.loading")}
       </div>
     );
   }
@@ -73,14 +90,14 @@ function DecksPage() {
   if (!user) {
     return (
       <div className="mx-auto max-w-6xl px-6 py-8">
-        <PageHeader title="덱 빌더" description="로그인 후 이용 가능" />
+        <PageHeader title={t("decks.title")} description={t("decks.loginRequired")} />
         <div className="mt-6 rounded-lg border border-dashed border-border bg-muted/30 px-6 py-16 text-center">
-          <p className="text-sm text-muted-foreground">로그인이 필요합니다</p>
+          <p className="text-sm text-muted-foreground">{t("decks.loginRequired")}</p>
           <Link
             to="/login"
             className="mt-4 inline-flex items-center justify-center rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90"
           >
-            로그인하러 가기
+            {t("decks.goToLogin")}
           </Link>
         </div>
       </div>
@@ -89,7 +106,7 @@ function DecksPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
-      <PageHeader title="덱 빌더" description="내 덱을 저장하고 전적과 연결하세요">
+      <PageHeader title={t("decks.title")} description={t("decks.desc")}>
         <div className="flex flex-wrap items-center gap-4">
           <DeckGameTabs value={game} onChange={setGame} counts={counts} />
           <DeckDialog
@@ -97,7 +114,7 @@ function DecksPage() {
             onSaved={() => qc.invalidateQueries({ queryKey: ["decks"] })}
             trigger={
               <Button size="sm">
-                <Layers className="mr-1.5 h-4 w-4" /> 덱 추가
+                <Layers className="mr-1.5 h-4 w-4" /> {t("decks.addDeck")}
               </Button>
             }
           />
@@ -108,8 +125,8 @@ function DecksPage() {
         <div className="mt-6">
           <EmptyState
             icon={Layers}
-            title="저장된 덱이 없어요"
-            description="우측 상단 '덱 추가'로 첫 덱을 등록해 보세요."
+            title={t("decks.emptyTitle")}
+            description={t("decks.emptyDesc")}
           />
         </div>
       ) : (
@@ -129,7 +146,7 @@ function DecksPage() {
                     {d.name}
                   </Link>
                   <p className="mt-1 text-[11px] text-muted-foreground">
-                    {GAME_LABEL[d.game]}
+                    {t(`matches.${d.game}`)}
                     {d.leader ? ` · ${d.leader}` : ""}
                   </p>
                   {d.colors && d.colors.length > 0 && (
@@ -144,7 +161,7 @@ function DecksPage() {
                   <Link
                     to="/decks/$id"
                     params={{ id: d.id }}
-                    title="덱 레시피"
+                    title={t("decks.recipeTooltip")}
                     className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
                   >
                     <Layers className="h-4 w-4" />
@@ -168,8 +185,8 @@ function DecksPage() {
                 </p>
               )}
               <div className="mt-4 flex items-center justify-between text-[10px] text-muted-foreground border-t border-border/40 pt-3">
-                <span>{d.is_public ? "공개" : "비공개"}</span>
-                <span>{new Date(d.updated_at).toLocaleDateString("ko-KR")}</span>
+                <span>{d.is_public ? t("decks.public") : t("decks.private")}</span>
+                <span>{new Date(d.updated_at).toLocaleDateString(language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US")}</span>
               </div>
             </li>
           ))}
@@ -180,13 +197,14 @@ function DecksPage() {
 }
 
 function ColorChip({ game, colorId }: { game: Game; colorId: string }) {
+  const { language } = useI18n();
   return (
     <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
       <span
         className="h-2 w-2 rounded-full ring-1 ring-border"
         style={{ backgroundColor: colorHex(game, colorId) }}
       />
-      {colorLabel(game, colorId)}
+      {colorLabel(game, colorId, language)}
     </span>
   );
 }
@@ -200,11 +218,12 @@ function DeckGameTabs({
   onChange: (v: Game | "all") => void;
   counts: Map<string, number>;
 }) {
+  const { t } = useI18n();
   const items: { id: Game | "all"; label: string }[] = [
-    { id: "all", label: "전체" },
-    { id: "optcg", label: "원피스" },
-    { id: "ptcg", label: "포켓몬" },
-    { id: "dtcg", label: "디지몬" },
+    { id: "all", label: t("decks.all") },
+    { id: "optcg", label: t("matches.optcg") },
+    { id: "ptcg", label: t("matches.ptcg") },
+    { id: "dtcg", label: t("matches.dtcg") },
   ];
   return (
     <div className="inline-flex items-center gap-1 rounded-lg border border-border bg-card p-1">

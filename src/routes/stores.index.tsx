@@ -38,6 +38,7 @@ import {
 import { toast } from "sonner";
 import { GAME_LABEL } from "@/lib/match-stats";
 import type { Database } from "@/integrations/supabase/types";
+import { useI18n } from "@/i18n/language-context";
 
 type Game = Database["public"]["Enums"]["tcg_game"];
 type Store = {
@@ -60,12 +61,28 @@ function mapUrl(s: { name: string; address: string | null; region: string | null
 }
 
 export const Route = createFileRoute("/stores/")({
-  head: () => ({
-    meta: [
-      { title: "TCG 매장 찾기 — DuelNight" },
-      { name: "description", content: "지역별 TCG 매장과 취급 게임을 찾고 즐겨찾기로 저장하세요." },
-    ],
-  }),
+  head: () => {
+    let locale = "ko";
+    if (typeof window !== "undefined") {
+      locale = localStorage.getItem("duelnight.i18n.locale") || "ko";
+    }
+    const titles: Record<string, string> = {
+      ko: "TCG 매장 찾기 — DuelNight",
+      en: "TCG Store Locator — DuelNight",
+      ja: "TCG店舗検索 — DuelNight",
+    };
+    const descs: Record<string, string> = {
+      ko: "지역별 TCG 매장과 취급 게임을 찾고 즐겨찾기로 저장하세요.",
+      en: "Find TCG stores by region and the games they carry. Save your favorites.",
+      ja: "地域別のTCG店舗と取扱ゲームを検索してお気に入りに保存しましょう。",
+    };
+    return {
+      meta: [
+        { title: titles[locale] || titles.ko },
+        { name: "description", content: descs[locale] || descs.ko },
+      ],
+    };
+  },
   component: StoresPage,
 });
 
@@ -73,6 +90,7 @@ function StoresPage() {
   const { user } = useAuth();
   const { isAdmin } = useIsAdmin();
   const qc = useQueryClient();
+  const { t } = useI18n();
   const [q, setQ] = useState("");
   const [game, setGame] = useState<Game | "all">("all");
   const [region, setRegion] = useState<string>("all");
@@ -123,7 +141,7 @@ function StoresPage() {
 
   const toggleFav = async (storeId: string) => {
     if (!user) {
-      toast.error("로그인이 필요합니다");
+      toast.error(t("stores.loginRequiredToast"));
       return;
     }
     const isFav = favSet.has(storeId);
@@ -145,11 +163,11 @@ function StoresPage() {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-8">
-      <PageHeader title="TCG 매장 찾기" description="지역·게임으로 매장을 찾고 즐겨찾기로 저장하세요">
+      <PageHeader title={t("stores.title")} description={t("stores.desc")}>
         <Input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="이름·지역·주소"
+          placeholder={t("stores.searchPlaceholder")}
           className="w-[180px]"
         />
         {isAdmin && <NewStoreDialog onCreated={() => refetch()} />}
@@ -158,10 +176,10 @@ function StoresPage() {
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <Select value={game} onValueChange={(v) => setGame(v as Game | "all")}>
           <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="게임" />
+            <SelectValue placeholder={t("stores.allGames")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">전체 게임</SelectItem>
+            <SelectItem value="all">{t("stores.allGames")}</SelectItem>
             {ALL_GAMES.map((g) => (
               <SelectItem key={g} value={g}>
                 {GAME_LABEL[g]}
@@ -171,10 +189,10 @@ function StoresPage() {
         </Select>
         <Select value={region} onValueChange={setRegion}>
           <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="지역" />
+            <SelectValue placeholder={t("stores.allRegions")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">전체 지역</SelectItem>
+            <SelectItem value="all">{t("stores.allRegions")}</SelectItem>
             {regions.map((r) => (
               <SelectItem key={r} value={r}>
                 {r}
@@ -188,18 +206,18 @@ function StoresPage() {
               checked={favOnly}
               onCheckedChange={(v) => setFavOnly(!!v)}
             />
-            즐겨찾기만
+            {t("stores.favoritesOnly")}
           </label>
         )}
-        <span className="ml-auto text-xs text-muted-foreground">{filtered.length}곳</span>
+        <span className="ml-auto text-xs text-muted-foreground">{t("stores.storeCount", { count: filtered.length })}</span>
       </div>
 
       {filtered.length === 0 ? (
         <div className="mt-6">
           <EmptyState
             icon={StoreIcon}
-            title="조건에 맞는 매장이 없어요"
-            description={isAdmin ? "관리자 페이지에서 매장을 등록해 주세요." : "필터를 조정해 보세요."}
+            title={t("stores.emptyTitle")}
+            description={isAdmin ? t("stores.emptyDescAdmin") : t("stores.emptyDescUser")}
           />
         </div>
       ) : (
@@ -228,7 +246,7 @@ function StoresPage() {
                         e.stopPropagation();
                         toggleFav(s.id);
                       }}
-                      title={isFav ? "즐겨찾기 해제" : "즐겨찾기"}
+                      title={isFav ? t("stores.removeFav") : t("stores.addFav")}
                       className={
                         isFav
                           ? "text-yellow-500"
@@ -242,14 +260,14 @@ function StoresPage() {
                         onClick={async (e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          if (!confirm("매장을 삭제할까요?")) return;
+                          if (!confirm(t("stores.confirmDelete"))) return;
                           const { error } = await supabase
                             .from("stores")
                             .delete()
                             .eq("id", s.id);
                           if (error) toast.error(error.message);
                           else {
-                            toast.success("삭제됨");
+                            toast.success(t("stores.deleteSuccess"));
                             refetch();
                           }
                         }}
@@ -292,7 +310,7 @@ function StoresPage() {
                     className="inline-flex items-center gap-1 hover:text-foreground"
                   >
                     <MapIcon className="h-3 w-3" />
-                    지도
+                    {t("stores.mapLink")}
                   </a>
                   {s.url && (
                     <a
@@ -303,7 +321,7 @@ function StoresPage() {
                       className="inline-flex items-center gap-1 hover:text-foreground"
                     >
                       <ExternalLink className="h-3 w-3" />
-                      링크
+                      {t("stores.urlLink")}
                     </a>
                   )}
                   <Link
@@ -311,7 +329,7 @@ function StoresPage() {
                     params={{ id: s.id }}
                     className="ml-auto text-primary hover:underline"
                   >
-                    상세 →
+                    {t("stores.detailLink")}
                   </Link>
                 </div>
                 {s.notes && (
@@ -330,6 +348,7 @@ function StoresPage() {
 
 function NewStoreDialog({ onCreated }: { onCreated: () => void }) {
   const { user } = useAuth();
+  const { t } = useI18n();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
@@ -352,7 +371,7 @@ function NewStoreDialog({ onCreated }: { onCreated: () => void }) {
     e.preventDefault();
     if (!user) return;
     if (!form.name.trim()) {
-      toast.error("매장 이름을 입력해 주세요");
+      toast.error(t("stores.nameRequired"));
       return;
     }
     const { error } = await supabase.from("stores").insert({
@@ -369,7 +388,7 @@ function NewStoreDialog({ onCreated }: { onCreated: () => void }) {
       toast.error(error.message);
       return;
     }
-    toast.success("등록됨");
+    toast.success(t("stores.addSuccess"));
     setOpen(false);
     setForm({ name: "", region: "", address: "", phone: "", url: "", notes: "", games: [] });
     qc.invalidateQueries({ queryKey: ["stores"] });
@@ -381,14 +400,14 @@ function NewStoreDialog({ onCreated }: { onCreated: () => void }) {
       <DialogTrigger asChild>
         <Button size="sm">
           <Plus className="mr-1 h-4 w-4" />
-          매장 등록
+          {t("stores.addStore")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle>매장 등록 (관리자)</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("stores.addStoreTitle")}</DialogTitle></DialogHeader>
         <form onSubmit={submit} className="space-y-3">
           <div className="flex flex-col gap-1.5">
-            <Label>매장 이름</Label>
+            <Label>{t("stores.fieldName")}</Label>
             <Input
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -397,15 +416,15 @@ function NewStoreDialog({ onCreated }: { onCreated: () => void }) {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <Label>지역</Label>
+              <Label>{t("stores.fieldRegion")}</Label>
               <Input
                 value={form.region}
                 onChange={(e) => setForm({ ...form, region: e.target.value })}
-                placeholder="예: 서울 강남"
+                placeholder={t("stores.placeholderRegion")}
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label>전화</Label>
+              <Label>{t("stores.fieldPhone")}</Label>
               <Input
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
@@ -413,14 +432,14 @@ function NewStoreDialog({ onCreated }: { onCreated: () => void }) {
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>주소</Label>
+            <Label>{t("stores.fieldAddress")}</Label>
             <Input
               value={form.address}
               onChange={(e) => setForm({ ...form, address: e.target.value })}
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>웹/SNS</Label>
+            <Label>{t("stores.fieldWebSns")}</Label>
             <Input
               type="url"
               value={form.url}
@@ -429,7 +448,7 @@ function NewStoreDialog({ onCreated }: { onCreated: () => void }) {
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>취급 게임</Label>
+            <Label>{t("stores.fieldGames")}</Label>
             <div className="flex flex-wrap gap-3">
               {ALL_GAMES.map((g) => (
                 <label key={g} className="inline-flex items-center gap-2 text-sm">
@@ -443,19 +462,19 @@ function NewStoreDialog({ onCreated }: { onCreated: () => void }) {
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>비고</Label>
+            <Label>{t("stores.fieldNotes")}</Label>
             <Textarea
               rows={3}
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              placeholder="대회 일정, 영업시간 등"
+              placeholder={t("stores.placeholderNotes")}
             />
           </div>
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
-              취소
+              {t("common.cancel")}
             </Button>
-            <Button type="submit">등록</Button>
+            <Button type="submit">{t("stores.addStore")}</Button>
           </div>
         </form>
       </DialogContent>
