@@ -1,5 +1,5 @@
 /**
- * TCG Hub 개인정보 마스킹 및 민감 정보 제거 스크립트
+ * DuelNight 개인정보 마스킹 및 민감 정보 제거 스크립트
  * (PII Anonymization Script for DB Snapshots and Direct Cleanup)
  *
  * 이 스크립트는 로컬 개발 서버용 DB 혹은 외부 공유용 SQL 백업 데이터에서
@@ -37,7 +37,7 @@ const colors = {
 function printBanner() {
   console.log(`
 ${colors.cyan}${colors.bold}=============================================================
-             TCG-Hub PII 개인정보 마스킹 도구             
+             DuelNight PII 개인정보 마스킹 도구             
                (Anonymization & Masking Tool)             
 =============================================================${colors.reset}
   `);
