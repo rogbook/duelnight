@@ -1,5 +1,5 @@
 /**
- * TCG-Hub 원격 DB 백업 및 PII 마스킹 스냅샷 자동화 도구
+ * DuelNight 원격 DB 백업 및 PII 마스킹 스냅샷 자동화 도구
  * (Remote DB Backup & Anonymized Snapshot Automation)
  *
  * 이 스크립트는 원격 Supabase DB의 주요 테이블 데이터를 페칭하여
@@ -92,7 +92,7 @@ function maskNotifications(notifications: any[]) {
 async function main() {
   console.log(`
 ${colors.cyan}${colors.bold}=============================================================
-             TCG-Hub 통합 DB 백업 및 익명화 파이프라인             
+             DuelNight 통합 DB 백업 및 익명화 파이프라인             
 =============================================================${colors.reset}
   `);
 

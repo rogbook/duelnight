@@ -1783,14 +1783,14 @@ function ImportExportButton({
 
   const exportCsv = () => {
     downloadFile(
-      `tcghub-matches-${new Date().toISOString().slice(0, 10)}.csv`,
+      `duelnight-matches-${new Date().toISOString().slice(0, 10)}.csv`,
       matchesToCsv(rows),
       "text/csv;charset=utf-8",
     );
   };
   const exportJson = () => {
     downloadFile(
-      `tcghub-matches-${new Date().toISOString().slice(0, 10)}.json`,
+      `duelnight-matches-${new Date().toISOString().slice(0, 10)}.json`,
       matchesToJson(rows),
       "application/json",
     );

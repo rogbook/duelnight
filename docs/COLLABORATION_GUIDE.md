@@ -1,4 +1,4 @@
-# TCG Hub 협업 개발 가이드 — Lovable + Antigravity + Claude
+# DuelNight 협업 개발 가이드 — Lovable + Antigravity + Claude
 
 > **최종 수정**: 2026-05-22
 > **적용 대상**: 프로젝트에 참여하는 모든 도구와 개발자

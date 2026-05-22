@@ -116,7 +116,7 @@ export function downloadRowsAsCsv(filename: string, rows: CardRow[]) {
   URL.revokeObjectURL(url);
 }
 
-const DRAFT_KEY = "tcghub.cards.upload.draft.v1";
+const DRAFT_KEY = "duelnight.cards.upload.draft.v1";
 export function saveDraft(rows: CardRow[]) {
   try {
     if (rows.length === 0) localStorage.removeItem(DRAFT_KEY);
