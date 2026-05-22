@@ -155,8 +155,38 @@ function CardsPage() {
   const rows = data?.rows ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-
   const resetPage = () => setPage(0);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && !CSS.supports("(animation-timeline: view()) and (animation-range: entry)")) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            const ratio = entry.intersectionRatio;
+            const el = entry.target as HTMLElement;
+            // Smooth scaling & opacity transition for non-supported browsers
+            el.style.opacity = String(0.3 + ratio * 0.7);
+            el.style.transform = `scale(${0.85 + ratio * 0.15}) translateY(${20 - ratio * 20}px)`;
+            el.style.transition = "opacity 0.15s ease-out, transform 0.15s ease-out";
+          });
+        },
+        {
+          threshold: Array.from({ length: 21 }, (_, i) => i / 20),
+        }
+      );
+
+      // Wait briefly for DOM commit to complete under TanStack Start / React 19, then observe elements
+      const timer = setTimeout(() => {
+        const elements = document.querySelectorAll(".scroll-reveal-card");
+        elements.forEach((el) => observer.observe(el));
+      }, 50);
+
+      return () => {
+        clearTimeout(timer);
+        observer.disconnect();
+      };
+    }
+  }, [rows]);
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
@@ -334,7 +364,7 @@ function CardTile({
   onClick: () => void;
 }) {
   return (
-    <li className="group relative">
+    <li className="group relative scroll-reveal-card">
       <button
         onClick={onClick}
         className="block w-full overflow-hidden rounded-lg border border-border bg-card text-left transition hover:border-primary"

@@ -184,3 +184,34 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 }
+
+/*
+ * Scroll-driven reveal animation for TCG cards.
+ * Uses native view() timeline where supported, with smooth fade-in and scale-up motion.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  @supports ((animation-timeline: view()) and (animation-range: entry)) {
+    @keyframes scroll-reveal-grow {
+      from {
+        opacity: 0;
+        transform: scale(0.85) translateY(20px);
+      }
+    }
+    @keyframes scroll-reveal-shrink {
+      to {
+        opacity: 0;
+        transform: scale(0.85) translateY(-20px);
+      }
+    }
+
+    .scroll-reveal-card {
+      /* Declare animation timeline and range AFTER the shorthand property */
+      animation:
+        scroll-reveal-grow auto linear backwards,
+        scroll-reveal-shrink auto linear forwards;
+      animation-timeline: view();
+      animation-range: entry, exit;
+    }
+  }
+}
+
