@@ -101,12 +101,22 @@ export const initPayPalButtons = async (
 
   if (paypal) {
     return paypal.Buttons({
-      createOrder: (data: any, actions: any) => {
+      createOrder: (_data: any, actions: any) => {
+        // USD 금액은 서버에서 계산된 값을 사용해야 하므로
+        // custom_data에 KRW 원금을 담아 서버 검증 시 환율 적용
+        // 여기서는 PayPal SDK가 요구하는 최소 구조만 전달하고,
+        // 실제 금액 검증은 서버(verifyPayPalPayment)에서 수행합니다.
+        const krwAmount = options.amount;
+        // 서버에서 설정된 환율을 사용해야 하지만, PayPal SDK는 생성 시점에
+        // USD 금액이 필요합니다. VITE_PAYPAL_KRW_RATE 환경변수로 관리하세요.
+        const rate = Number(import.meta.env.VITE_PAYPAL_KRW_RATE ?? 1400);
+        const usdAmount = (krwAmount / rate).toFixed(2);
         return actions.order.create({
           purchase_units: [
             {
               amount: {
-                value: (options.amount / 1400).toFixed(2), // Updated rate example
+                value: usdAmount,
+                currency_code: "USD",
               },
               description: options.orderName,
               custom_id: options.orderId,

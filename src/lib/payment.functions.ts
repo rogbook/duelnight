@@ -143,8 +143,14 @@ export const verifyPayPalPayment = createServerFn({ method: "POST" })
     try {
       assertValidCreditPackAmount(amount);
 
+      // 환경 변수로 프로덕션/샌드박스 분기
+      const isProduction = process.env.PAYPAL_ENV === "production";
+      const PAYPAL_BASE = isProduction
+        ? "https://api-m.paypal.com"
+        : "https://api-m.sandbox.paypal.com";
+
       const auth = btoa(`${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`);
-      const tokenRes = await fetch("https://api-m.sandbox.paypal.com/v1/oauth2/token", {
+      const tokenRes = await fetch(`${PAYPAL_BASE}/v1/oauth2/token`, {
         method: "POST",
         headers: {
           Authorization: `Basic ${auth}`,
@@ -154,8 +160,9 @@ export const verifyPayPalPayment = createServerFn({ method: "POST" })
       });
       const tokenData = await tokenRes.json();
       const accessToken = tokenData.access_token;
+      if (!accessToken) throw new Error("PayPal 액세스 토큰 발급 실패");
 
-      const orderRes = await fetch(`https://api-m.sandbox.paypal.com/v2/checkout/orders/${order_id}`, {
+      const orderRes = await fetch(`${PAYPAL_BASE}/v2/checkout/orders/${order_id}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -164,6 +171,19 @@ export const verifyPayPalPayment = createServerFn({ method: "POST" })
 
       if (orderData.status !== "COMPLETED") {
         throw new Error(`PayPal 주문이 완료되지 않았습니다. (상태: ${orderData.status})`);
+      }
+
+      // 서버에서 환율 적용 후 USD 금액 검증
+      const rate = Number(process.env.PAYPAL_KRW_RATE ?? 1400);
+      const expectedUsd = parseFloat((amount / rate).toFixed(2));
+      const capturedUsd = parseFloat(
+        orderData.purchase_units?.[0]?.payments?.captures?.[0]?.amount?.value ?? "0"
+      );
+      // 반올림 오차 허용 범위 ±0.05달러
+      if (Math.abs(capturedUsd - expectedUsd) > 0.05) {
+        throw new Error(
+          `PayPal 결제 금액 불일치: 예상 $${expectedUsd}, 실제 $${capturedUsd}`
+        );
       }
 
       await recordSuccessfulPayment({

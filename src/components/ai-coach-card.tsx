@@ -3,6 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useMemo } from "react";
 import type { Match, MatchStats, RatePack } from "@/lib/match-stats";
 import type { Database } from "@/integrations/supabase/types";
+import { useAuth } from "@/hooks/use-auth";
 
 type Game = Database["public"]["Enums"]["tcg_game"];
 type Period = "7" | "30" | "90" | "all";
@@ -26,10 +27,13 @@ const pickRate = (r: RatePack) => ({
   confidence: confidenceOf(r),
 });
 
-async function fetchCoach(payload: unknown): Promise<string> {
+async function fetchCoach(payload: unknown, accessToken: string): Promise<string> {
   const res = await fetch("/api/coach", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
     body: JSON.stringify(payload),
   });
   const data = (await res.json().catch(() => ({}))) as {
@@ -52,6 +56,7 @@ export function AiCoachCard({
   period: Period;
   game: Game | "all";
 }) {
+  const { session } = useAuth();
   const enoughData = rows.length >= 5;
 
   const payload = useMemo(
@@ -88,7 +93,11 @@ export function AiCoachCard({
   );
 
   const mutation = useMutation({
-    mutationFn: () => fetchCoach(payload),
+    mutationFn: () => {
+      const token = session?.access_token;
+      if (!token) throw new Error("로그인이 필요합니다.");
+      return fetchCoach(payload, token);
+    },
   });
 
   if (!enoughData) return null;

@@ -203,13 +203,23 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
   };
 
   const updateQty = async (id: string, qty: number) => {
-    if (qty < 1) await supabase.from("deck_cards").delete().eq("id", id);
-    else await supabase.from("deck_cards").update({ quantity: qty }).eq("id", id);
+    const { error } =
+      qty < 1
+        ? await supabase.from("deck_cards").delete().eq("id", id)
+        : await supabase.from("deck_cards").update({ quantity: qty }).eq("id", id);
+    if (error) {
+      toast.error("수량 변경에 실패했습니다: " + error.message);
+      return;
+    }
     refetch();
   };
 
   const removeCard = async (id: string) => {
-    await supabase.from("deck_cards").delete().eq("id", id);
+    const { error } = await supabase.from("deck_cards").delete().eq("id", id);
+    if (error) {
+      toast.error("카드 삭제에 실패했습니다: " + error.message);
+      return;
+    }
     refetch();
     qc.invalidateQueries({ queryKey: ["deck-cards"] });
   };
@@ -602,7 +612,16 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
 
       <div className="pt-2">
         <button
-          onClick={() => {
+          onClick={async () => {
+            // 덱의 updated_at을 갱신하여 실제 변경 시각을 DB에 기록
+            const { error } = await supabase
+              .from("decks")
+              .update({ updated_at: new Date().toISOString() })
+              .eq("id", deck.id);
+            if (error) {
+              toast.error("저장에 실패했습니다: " + error.message);
+              return;
+            }
             qc.invalidateQueries({ queryKey: ["decks"] });
             toast.success("덱 레시피가 저장되었습니다.");
           }}
