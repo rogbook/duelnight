@@ -17,9 +17,12 @@ import { Toaster } from "@/components/ui/sonner";
 import { NotificationBell } from "@/components/notification-bell";
 import { EnvBanner } from "@/components/env-banner";
 import { supabase } from "@/integrations/supabase/client";
+import { LanguageProvider, useI18n } from "@/i18n/language-context";
+import { LanguageSelector } from "@/components/language-selector";
 
 function AuthHeaderButton() {
   const { user } = useAuth();
+  const { t } = useI18n();
   if (user) {
     return (
       <div className="flex items-center gap-1.5 sm:gap-2">
@@ -30,7 +33,7 @@ function AuthHeaderButton() {
           onClick={() => supabase.auth.signOut()}
           className="rounded-md border border-border px-2.5 py-1 text-[11px] hover:bg-accent sm:px-3 sm:py-1.5 sm:text-xs"
         >
-          로그아웃
+          {t("common.logout")}
         </button>
       </div>
     );
@@ -40,7 +43,7 @@ function AuthHeaderButton() {
       to="/login"
       className="rounded-md bg-foreground px-2.5 py-1 text-[11px] font-medium text-background hover:opacity-90 sm:px-3 sm:py-1.5 sm:text-xs"
     >
-      로그인
+      {t("common.login")}
     </Link>
   );
 }
@@ -162,37 +165,40 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        {isBare ? (
-          <>
-            <EnvBanner />
-            <main className="min-h-screen bg-background">
-              <Outlet />
-            </main>
-            <Toaster />
-          </>
-        ) : (
-          <SidebarProvider>
-            <div className="flex min-h-screen w-full bg-background">
-              <AppSidebar />
-              <div className="flex flex-1 flex-col">
-                <EnvBanner />
-                <header
-                  className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-background/80 px-2 backdrop-blur sm:h-14 sm:gap-3 sm:px-4"
-                  style={{ paddingTop: "env(safe-area-inset-top)" }}
-                >
-                  <SidebarTrigger />
-                  <div className="flex-1" />
-                  <NotificationBell />
-                  <AuthHeaderButton />
-                </header>
-                <main className="flex-1">
-                  <Outlet />
-                </main>
+        <LanguageProvider>
+          {isBare ? (
+            <>
+              <EnvBanner />
+              <main className="min-h-screen bg-background">
+                <Outlet />
+              </main>
+              <Toaster />
+            </>
+          ) : (
+            <SidebarProvider>
+              <div className="flex min-h-screen w-full bg-background">
+                <AppSidebar />
+                <div className="flex flex-1 flex-col">
+                  <EnvBanner />
+                  <header
+                    className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-background/80 px-2 backdrop-blur sm:h-14 sm:gap-3 sm:px-4"
+                    style={{ paddingTop: "env(safe-area-inset-top)" }}
+                  >
+                    <SidebarTrigger />
+                    <div className="flex-1" />
+                    <LanguageSelector />
+                    <NotificationBell />
+                    <AuthHeaderButton />
+                  </header>
+                  <main className="flex-1">
+                    <Outlet />
+                  </main>
+                </div>
               </div>
-            </div>
-            <Toaster />
-          </SidebarProvider>
-        )}
+              <Toaster />
+            </SidebarProvider>
+          )}
+        </LanguageProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
