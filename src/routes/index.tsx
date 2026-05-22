@@ -18,7 +18,7 @@ import { useAuth } from "@/hooks/use-auth";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "덱로그 — 통합 관리 플랫폼" },
+      { title: "DuelNight — 통합 관리 플랫폼" },
       {
         name: "description",
         content:

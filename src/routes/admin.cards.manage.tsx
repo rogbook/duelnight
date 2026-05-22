@@ -43,7 +43,7 @@ const PAGE_SIZE = 30;
 export const Route = createFileRoute("/admin/cards/manage")({
   head: () => ({
     meta: [
-      { title: "카드 관리 — 관리자 — 덱로그" },
+      { title: "카드 관리 — 관리자 — DuelNight" },
       { name: "description", content: "등록된 카드를 검색·편집·삭제합니다." },
     ],
   }),

@@ -10,7 +10,7 @@ import { CardUploader } from "@/components/cards/card-uploader";
 export const Route = createFileRoute("/admin/cards")({
   head: () => ({
     meta: [
-      { title: "카드 DB 업로드 — 관리자 — 덱로그" },
+      { title: "카드 DB 업로드 — 관리자 — DuelNight" },
       { name: "description", content: "엑셀·이미지·폼으로 카드 데이터를 간편하게 등록·수정합니다." },
     ],
   }),

@@ -1,4 +1,4 @@
-# tcg-hub QA 체크리스트 (Publish 전 필수)
+# duelnight QA 체크리스트 (Publish 전 필수)
 
 > Preview URL에서 관리자 계정으로 아래 항목을 모두 통과해야 Publish 가능.
 > 통과 시 항목 옆에 ☑, 실패 시 이슈 번호/원인 메모.

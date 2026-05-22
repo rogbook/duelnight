@@ -6,7 +6,7 @@ import type { Database } from "@/integrations/supabase/types";
 
 type Announcement = Database["public"]["Tables"]["announcements"]["Row"];
 
-const SITE = "https://tcg-hub.lovable.app";
+const SITE = "https://duelnight.app";
 
 export const Route = createFileRoute("/announcements/$id")({
   loader: async ({ params }) => {
@@ -21,8 +21,8 @@ export const Route = createFileRoute("/announcements/$id")({
   },
   head: ({ loaderData }) => {
     const a = loaderData?.item;
-    if (!a) return { meta: [{ title: "공지를 찾을 수 없음 — 덱로그" }] };
-    const title = `${a.title} — 덱로그 공지`;
+    if (!a) return { meta: [{ title: "공지를 찾을 수 없음 — DuelNight" }] };
+    const title = `${a.title} — DuelNight 공지`;
     const desc = a.body.replace(/\s+/g, " ").slice(0, 150);
     const url = `${SITE}/announcements/${a.id}`;
     return {

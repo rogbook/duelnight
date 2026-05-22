@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 export const Route = createFileRoute("/cards/upload")({
   head: () => ({
     meta: [
-      { title: "카드 등록 — 덱로그" },
+      { title: "카드 등록 — DuelNight" },
       { name: "description", content: "관리자만 카드 데이터를 등록할 수 있습니다." },
     ],
   }),

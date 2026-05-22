@@ -17,7 +17,7 @@ const TIER_COLOR: Record<(typeof TIERS)[number], string> = {
   D: "bg-blue-500/15 border-blue-500/40",
 };
 
-const SITE = "https://tcg-hub.lovable.app";
+const SITE = "https://duelnight.app";
 
 export const Route = createFileRoute("/tier/$id")({
   loader: async ({ params }) => {
@@ -47,8 +47,8 @@ export const Route = createFileRoute("/tier/$id")({
   },
   head: ({ loaderData }) => {
     const l = loaderData?.list;
-    if (!l) return { meta: [{ title: "티어표를 찾을 수 없음 — 덱로그" }] };
-    const title = `${l.title} — 티어표 · 덱로그`;
+    if (!l) return { meta: [{ title: "티어표를 찾을 수 없음 — DuelNight" }] };
+    const title = `${l.title} — 티어표 · DuelNight`;
     const desc = `${l.title} 티어 메이킹 결과를 확인하세요.`;
     const url = `${SITE}/tier/${l.id}`;
     return {

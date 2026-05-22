@@ -20,7 +20,7 @@ type Notification = {
 
 export const Route = createFileRoute("/notifications")({
   head: () => ({
-    meta: [{ title: "알림 — 덱로그" }],
+    meta: [{ title: "알림 — DuelNight" }],
   }),
   component: NotificationsPage,
 });
