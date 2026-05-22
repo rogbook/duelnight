@@ -21,16 +21,33 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
+import { useI18n } from "@/i18n/language-context";
 
 type Announcement = Database["public"]["Tables"]["announcements"]["Row"];
 
 export const Route = createFileRoute("/announcements/")({
-  head: () => ({
-    meta: [
-      { title: "공지사항 — DuelNight" },
-      { name: "description", content: "DuelNight 공식 공지사항과 메타 정보." },
-    ],
-  }),
+  head: () => {
+    let locale = "ko";
+    if (typeof window !== "undefined") {
+      locale = localStorage.getItem("duelnight.i18n.locale") || "ko";
+    }
+    const titles: Record<string, string> = {
+      ko: "공지사항 — DuelNight",
+      en: "Announcements — DuelNight",
+      ja: "お知らせ — DuelNight",
+    };
+    const descs: Record<string, string> = {
+      ko: "DuelNight 공식 공지사항과 메타 정보.",
+      en: "DuelNight official announcements and meta updates.",
+      ja: "DuelNight公式のお知らせとメタ情報。",
+    };
+    return {
+      meta: [
+        { title: titles[locale] || titles.ko },
+        { name: "description", content: descs[locale] || descs.ko },
+      ],
+    };
+  },
   component: AnnouncementsPage,
 });
 
@@ -38,6 +55,7 @@ function AnnouncementsPage() {
   const { user } = useAuth();
   const { isAdmin } = useIsAdmin();
   const qc = useQueryClient();
+  const { t } = useI18n();
   const [editing, setEditing] = useState<Announcement | "new" | null>(null);
   const [reading, setReading] = useState<Announcement | null>(null);
 
@@ -61,19 +79,19 @@ function AnnouncementsPage() {
   };
 
   const remove = async (id: string) => {
-    if (!confirm("이 공지를 삭제할까요?")) return;
+    if (!confirm(t("announcements.confirmDelete"))) return;
     const { error } = await supabase.from("announcements").delete().eq("id", id);
     if (error) return toast.error(error.message);
-    toast.success("삭제했어요");
+    toast.success(t("announcements.deleteSuccess"));
     qc.invalidateQueries({ queryKey: ["announcements"] });
   };
 
   return (
     <div className="mx-auto w-full max-w-4xl px-6 py-8">
-      <PageHeader title="공지사항" description="DuelNight 공식 소식과 메타 정보">
+      <PageHeader title={t("announcements.title")} description={t("announcements.desc")}>
         {isAdmin && (
           <Button size="sm" onClick={() => setEditing("new")}>
-            <Plus className="mr-1 h-4 w-4" /> 새 공지
+            <Plus className="mr-1 h-4 w-4" /> {t("announcements.newAnnouncement")}
           </Button>
         )}
       </PageHeader>
@@ -82,11 +100,11 @@ function AnnouncementsPage() {
         <div className="mt-6">
           <EmptyState
             icon={Megaphone}
-            title="공지사항이 없어요"
+            title={t("announcements.emptyTitle")}
             description={
               isAdmin
-                ? "‘새 공지’ 버튼으로 첫 공지를 작성하세요."
-                : "관리자가 공지를 등록하면 이곳에 표시됩니다."
+                ? t("announcements.emptyDescAdmin")
+                : t("announcements.emptyDescUser")
             }
           />
         </div>
@@ -105,14 +123,14 @@ function AnnouncementsPage() {
                   <p className="truncate text-sm font-medium">{a.title}</p>
                   <p className="text-xs text-muted-foreground">
                     {new Date(a.created_at).toLocaleDateString()} ·{" "}
-                    <Eye className="inline h-3 w-3" /> {a.view_count}
+                    <Eye className="inline h-3 w-3" /> {t("announcements.viewCount", { count: a.view_count })}
                   </p>
                 </div>
                 <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                   <Link
                     to="/announcements/$id"
                     params={{ id: a.id }}
-                    aria-label="공유 페이지 열기"
+                    aria-label={t("announcements.ariaSharePage")}
                     className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
                   >
                     <ExternalLink className="h-4 w-4" />
@@ -124,7 +142,7 @@ function AnnouncementsPage() {
                         variant="ghost"
                         className="h-8 w-8"
                         onClick={() => setEditing(a)}
-                        aria-label="수정"
+                        aria-label={t("common.edit")}
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -133,7 +151,7 @@ function AnnouncementsPage() {
                         variant="ghost"
                         className="h-8 w-8"
                         onClick={() => remove(a.id)}
-                        aria-label="삭제"
+                        aria-label={t("common.delete")}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -148,7 +166,7 @@ function AnnouncementsPage() {
 
       {!isAdmin && user && (
         <p className="mt-4 text-xs text-muted-foreground">
-          관리자 권한이 있는 계정만 공지를 작성할 수 있습니다.
+          {t("announcements.adminOnlyNote")}
         </p>
       )}
 
@@ -172,6 +190,8 @@ function ReadDialog({
   item: Announcement | null;
   onClose: () => void;
 }) {
+  const { t } = useI18n();
+
   return (
     <Dialog open={!!item} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
@@ -183,7 +203,7 @@ function ReadDialog({
                 {item.title}
               </DialogTitle>
               <p className="text-xs text-muted-foreground">
-                {new Date(item.created_at).toLocaleString()} · 조회 {item.view_count}
+                {new Date(item.created_at).toLocaleString()} · {t("announcements.viewCount", { count: item.view_count })}
               </p>
             </DialogHeader>
             <div className="whitespace-pre-wrap text-sm leading-relaxed">
@@ -207,6 +227,7 @@ function EditDialog({
   onSaved: () => void;
   authorId: string;
 }) {
+  const { t } = useI18n();
   const [title, setTitle] = useState(item?.title ?? "");
   const [body, setBody] = useState(item?.body ?? "");
   const [pinned, setPinned] = useState(item?.pinned ?? false);
@@ -214,7 +235,7 @@ function EditDialog({
 
   const submit = async () => {
     if (!title.trim() || !body.trim()) {
-      return toast.error("제목과 본문을 입력하세요");
+      return toast.error(t("announcements.toastTitleBodyRequired"));
     }
     setSaving(true);
     if (item) {
@@ -234,7 +255,7 @@ function EditDialog({
       setSaving(false);
       if (error) return toast.error(error.message);
     }
-    toast.success("저장했어요");
+    toast.success(t("announcements.saveSuccess"));
     onSaved();
     onClose();
   };
@@ -243,39 +264,39 @@ function EditDialog({
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{item ? "공지 수정" : "새 공지"}</DialogTitle>
+          <DialogTitle>{item ? t("announcements.editTitle") : t("announcements.newTitle")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1">
-            <Label htmlFor="ann-title">제목</Label>
+            <Label htmlFor="ann-title">{t("announcements.fieldTitle")}</Label>
             <Input
               id="ann-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="공지 제목"
+              placeholder={t("announcements.placeholderTitle")}
             />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="ann-body">본문</Label>
+            <Label htmlFor="ann-body">{t("announcements.fieldBody")}</Label>
             <Textarea
               id="ann-body"
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              placeholder="공지 본문"
+              placeholder={t("announcements.placeholderBody")}
               className="min-h-40"
             />
           </div>
           <div className="flex items-center gap-2">
             <Switch id="ann-pinned" checked={pinned} onCheckedChange={setPinned} />
-            <Label htmlFor="ann-pinned">상단 고정</Label>
+            <Label htmlFor="ann-pinned">{t("announcements.fieldPinned")}</Label>
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            취소
+            {t("common.cancel")}
           </Button>
           <Button onClick={submit} disabled={saving}>
-            {saving ? "저장 중…" : "저장"}
+            {saving ? t("announcements.saving") : t("common.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

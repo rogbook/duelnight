@@ -16,51 +16,29 @@ import { PageHeader } from "@/components/page-header";
 import { GameFilter } from "@/components/game-filter";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { useI18n } from "@/i18n/language-context";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "DuelNight — 통합 관리 플랫폼" },
-      {
-        name: "description",
-        content:
-          "원피스·포켓몬·디지몬 TCG 일정, 카드, 전적, 매장, 매칭을 한 곳에서.",
-      },
-    ],
-  }),
+  head: () => {
+    const saved = typeof window !== "undefined" ? localStorage.getItem("duelnight.i18n.locale") : "ko";
+    const title = saved === "ja" ? "ダッシュボード — DuelNight" : saved === "en" ? "Dashboard — DuelNight" : "대시보드 — DuelNight";
+    const desc = saved === "ja" ? "ワンピース・ポケモン・デジモンTCGの日程、カード、戦績、店舗、マッチングを1箇所で。" : saved === "en" ? "Manage One Piece, Pokémon, and Digimon TCG schedules, cards, records, stores, and matchings in one place." : "원피스·포켓몬·디지몬 TCG 일정, 카드, 전적, 매장, 매칭을 한 곳에서.";
+    return {
+      meta: [
+        { title },
+        { name: "description", content: desc },
+      ],
+    };
+  },
   component: Dashboard,
 });
 
 /** 이번 시즌: 최근 90일 */
 const SEASON_START = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
 
-const shortcuts = [
-  {
-    title: "캘린더",
-    desc: "발매·대회 일정 한눈에",
-    to: "/calendar",
-    icon: Calendar,
-  },
-  { title: "카드 DB", desc: "전체 카드 검색", to: "/cards", icon: Library },
-  { title: "덱 빌더", desc: "레시피 작성·공유", to: "/decks", icon: Layers },
-  {
-    title: "내 컬렉션",
-    desc: "보유 카드와 자산",
-    to: "/collection",
-    icon: PackageOpen,
-  },
-  { title: "전적 기록", desc: "대전 결과 추적", to: "/matches", icon: Swords },
-  {
-    title: "리더보드",
-    desc: "시즌 랭킹과 티어",
-    to: "/leaderboard",
-    icon: Trophy,
-  },
-  { title: "매장 찾기", desc: "주변 TCG 매장", to: "/stores", icon: MapPin },
-  { title: "오프라인 매칭", desc: "LFG 세션", to: "/lfg", icon: Users },
-] as const;
-
 function useDashboardStats(userId: string) {
+  const { t } = useI18n();
+
   // 이번 시즌 승률 (최근 90일)
   const { data: matchData } = useQuery({
     queryKey: ["dashboard-matches", userId],
@@ -128,34 +106,39 @@ function useDashboardStats(userId: string) {
     decided === 0 ? "—%" : `${Math.round((wins / decided) * 100)}%`;
   const winRateHint =
     decided === 0
-      ? "전적을 기록하면 표시"
-      : `${wins}승 ${losses}패 (최근 90일)`;
+      ? t("dashboard.winRateHintEmpty")
+      : t("dashboard.winRateHint")
+          .replace("{wins}", String(wins))
+          .replace("{losses}", String(losses));
 
   // 랭킹 텍스트
-  const ratingStr = rankData ? `${rankData.rating}점` : "—";
+  const ratingStr = rankData ? `${rankData.rating}${t("matches.points", "점")}` : "—";
   const ratingHint = rankData
-    ? `${rankData.game.toUpperCase()} · ${rankData.matches_count}전`
-    : "리더보드 진입 전";
+    ? t("dashboard.ratingHint")
+        .replace("{game}", rankData.game.toUpperCase())
+        .replace("{count}", String(rankData.matches_count))
+    : t("dashboard.ratingHintEmpty");
 
   return [
-    { label: "이번 시즌 승률", value: winRateStr, hint: winRateHint },
+    { label: t("dashboard.winRate"), value: winRateStr, hint: winRateHint },
     {
-      label: "보유 카드",
+      label: t("dashboard.cards"),
       value: collectionCount?.toLocaleString() ?? "0",
-      hint: collectionCount ? "컬렉션 등록 완료" : "컬렉션을 등록해 주세요",
+      hint: collectionCount ? t("dashboard.cardsHint") : t("dashboard.cardsHintEmpty"),
     },
     {
-      label: "저장된 덱",
+      label: t("dashboard.decks"),
       value: deckCount?.toLocaleString() ?? "0",
-      hint: deckCount ? "덱 빌더에서 확인" : "덱 빌더에서 생성",
+      hint: deckCount ? t("dashboard.decksHint") : t("dashboard.decksHintEmpty"),
     },
-    { label: "최고 레이팅", value: ratingStr, hint: ratingHint },
+    { label: t("dashboard.rating"), value: ratingStr, hint: ratingHint },
   ];
 }
 
 function Dashboard() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const stats = useDashboardStats(user?.id ?? "");
 
   useEffect(() => {
@@ -168,11 +151,37 @@ function Dashboard() {
     return null;
   }
 
+  const localizedShortcuts = [
+    {
+      title: t("dashboard.shortcutCalendarTitle"),
+      desc: t("dashboard.shortcutCalendarDesc"),
+      to: "/calendar",
+      icon: Calendar,
+    },
+    { title: t("dashboard.shortcutCardsTitle"), desc: t("dashboard.shortcutCardsDesc"), to: "/cards", icon: Library },
+    { title: t("dashboard.shortcutDecksTitle"), desc: t("dashboard.shortcutDecksDesc"), to: "/decks", icon: Layers },
+    {
+      title: t("dashboard.shortcutCollectionTitle"),
+      desc: t("dashboard.shortcutCollectionDesc"),
+      to: "/collection",
+      icon: PackageOpen,
+    },
+    { title: t("dashboard.shortcutMatchesTitle"), desc: t("dashboard.shortcutMatchesDesc"), to: "/matches", icon: Swords },
+    {
+      title: t("dashboard.shortcutLeaderboardTitle"),
+      desc: t("dashboard.shortcutLeaderboardDesc"),
+      to: "/leaderboard",
+      icon: Trophy,
+    },
+    { title: t("dashboard.shortcutStoreTitle"), desc: t("dashboard.shortcutStoreDesc"), to: "/stores", icon: MapPin },
+    { title: t("dashboard.shortcutLfgTitle"), desc: t("dashboard.shortcutLfgDesc"), to: "/lfg", icon: Users },
+  ];
+
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
       <PageHeader
-        title="대시보드"
-        description="원피스·포켓몬·디지몬 TCG를 한 곳에서 관리하세요."
+        title={t("dashboard.title")}
+        description={t("dashboard.desc")}
       >
         <GameFilter />
       </PageHeader>
@@ -193,9 +202,9 @@ function Dashboard() {
       </section>
 
       <section className="mt-8">
-        <h2 className="text-sm font-medium text-foreground">바로가기</h2>
+        <h2 className="text-sm font-medium text-foreground">{t("dashboard.quickLinks")}</h2>
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {shortcuts.map((s) => (
+          {localizedShortcuts.map((s) => (
             <Link
               key={s.to}
               to={s.to}

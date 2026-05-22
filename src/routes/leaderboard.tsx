@@ -21,6 +21,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Database } from "@/integrations/supabase/types";
 import { GAME_LABEL } from "@/lib/match-stats";
+import { useI18n } from "@/i18n/language-context";
 
 type Game = Database["public"]["Enums"]["tcg_game"];
 
@@ -38,22 +39,38 @@ interface Row {
 }
 
 export const Route = createFileRoute("/leaderboard")({
-  head: () => ({
-    meta: [
-      { title: "리더보드 — DuelNight" },
-      {
-        name: "description",
-        content: "게임별 ELO 랭킹.",
-      },
-    ],
-  }),
+  head: () => {
+    let locale = "ko";
+    if (typeof window !== "undefined") {
+      locale = localStorage.getItem("duelnight.i18n.locale") || "ko";
+    }
+    const titles: Record<string, string> = {
+      ko: "리더보드 — DuelNight",
+      en: "Leaderboard — DuelNight",
+      ja: "リーダーボード — DuelNight",
+    };
+    const descs: Record<string, string> = {
+      ko: "게임별 ELO 랭킹.",
+      en: "ELO rankings by game.",
+      ja: "ゲーム別ELOランキング。",
+    };
+    return {
+      meta: [
+        { title: titles[locale] || titles.ko },
+        { name: "description", content: descs[locale] || descs.ko },
+      ],
+    };
+  },
   component: LeaderboardPage,
 });
 
 function LeaderboardPage() {
+  const { t, language } = useI18n();
   const [game, setGame] = useState<Game>("optcg");
   const [minTotal, setMinTotal] = useState(5);
   const [selected, setSelected] = useState<Row | null>(null);
+
+  const dateLocale = language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US";
 
   const { data = [], isLoading } = useQuery({
     queryKey: ["leaderboard", game, minTotal],
@@ -70,13 +87,13 @@ function LeaderboardPage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl px-6 py-8">
-      <PageHeader title="리더보드" description="게임별 ELO 랭킹 (각 게임 점수는 독립적으로 집계)">
+      <PageHeader title={t("leaderboard.title")} description={t("leaderboard.desc")}>
         <Select value={game} onValueChange={(v) => setGame(v as Game)}>
           <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="optcg">원피스</SelectItem>
-            <SelectItem value="ptcg">포켓몬</SelectItem>
-            <SelectItem value="dtcg">디지몬</SelectItem>
+            <SelectItem value="optcg">{t("matches.optcg")}</SelectItem>
+            <SelectItem value="ptcg">{t("matches.ptcg")}</SelectItem>
+            <SelectItem value="dtcg">{t("matches.dtcg")}</SelectItem>
           </SelectContent>
         </Select>
         <Select
@@ -85,22 +102,22 @@ function LeaderboardPage() {
         >
           <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="3">최소 3판</SelectItem>
-            <SelectItem value="5">최소 5판</SelectItem>
-            <SelectItem value="10">최소 10판</SelectItem>
-            <SelectItem value="20">최소 20판</SelectItem>
+            <SelectItem value="3">{t("leaderboard.minGames3")}</SelectItem>
+            <SelectItem value="5">{t("leaderboard.minGames5")}</SelectItem>
+            <SelectItem value="10">{t("leaderboard.minGames10")}</SelectItem>
+            <SelectItem value="20">{t("leaderboard.minGames20")}</SelectItem>
           </SelectContent>
         </Select>
       </PageHeader>
 
       {isLoading ? (
-        <p className="mt-8 text-center text-sm text-muted-foreground">불러오는 중...</p>
+        <p className="mt-8 text-center text-sm text-muted-foreground">{t("leaderboard.loading")}</p>
       ) : data.length === 0 ? (
         <div className="mt-6">
           <EmptyState
             icon={Trophy}
-            title="조건에 맞는 랭커가 없어요"
-            description="다른 게임을 선택하거나 최소 판수 조건을 낮춰보세요."
+            title={t("leaderboard.emptyTitle")}
+            description={t("leaderboard.emptyDesc")}
           />
         </div>
       ) : (
@@ -121,14 +138,15 @@ function LeaderboardPage() {
                 </Avatar>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">
-                    {r.display_name || r.username || "익명"}
+                    {r.display_name || r.username || t("leaderboard.anonymous")}
                     {r.username && (
                       <span className="ml-2 text-xs text-muted-foreground">@{r.username}</span>
                     )}
                   </p>
                   <p className="text-[11px] text-muted-foreground">
-                    {r.total}판 · {r.wins}승 {r.losses}패
-                    {r.draws ? ` ${r.draws}무` : ""} · 승률 {Number(r.win_rate).toFixed(1)}%
+                    {t("leaderboard.recordLine", { total: r.total, wins: r.wins, losses: r.losses })}
+                    {r.draws ? t("leaderboard.drawSuffix", { draws: r.draws }) : ""}
+                    {t("leaderboard.winRateSuffix", { rate: Number(r.win_rate).toFixed(1) })}
                   </p>
                 </div>
                 <div className="text-right">
@@ -146,6 +164,7 @@ function LeaderboardPage() {
         onOpenChange={(o) => !o && setSelected(null)}
         user={selected}
         game={game}
+        dateLocale={dateLocale}
       />
     </div>
   );
@@ -176,12 +195,16 @@ function UserMatchesDialog({
   onOpenChange,
   user,
   game,
+  dateLocale,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   user: Row | null;
   game: Game;
+  dateLocale: string;
 }) {
+  const { t } = useI18n();
+
   const { data: matches = [], isLoading } = useQuery({
     queryKey: ["user-recent", user?.user_id, game],
     enabled: !!user?.user_id,
@@ -210,9 +233,9 @@ function UserMatchesDialog({
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p>{user.display_name || user.username || "익명"}</p>
+                  <p>{user.display_name || user.username || t("leaderboard.anonymous")}</p>
                   <p className="text-xs font-normal text-muted-foreground">
-                    {GAME_LABEL[game]} · ELO {user.rating} · {user.total}판
+                    {GAME_LABEL[game]} · ELO {user.rating} · {t("leaderboard.totalGames", { total: user.total })}
                   </p>
                 </div>
               </DialogTitle>
@@ -220,12 +243,12 @@ function UserMatchesDialog({
 
             <section>
               <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                최근 대전 ({matches.length})
+                {t("leaderboard.recentGames", { count: matches.length })}
               </h3>
               {isLoading ? (
-                <p className="text-sm text-muted-foreground">불러오는 중...</p>
+                <p className="text-sm text-muted-foreground">{t("leaderboard.loading")}</p>
               ) : matches.length === 0 ? (
-                <p className="text-sm text-muted-foreground">기록 없음</p>
+                <p className="text-sm text-muted-foreground">{t("leaderboard.noRecords")}</p>
               ) : (
                 <ul className="divide-y divide-border rounded-md border border-border bg-card">
                   {matches.map((m) => (
@@ -237,8 +260,8 @@ function UserMatchesDialog({
                           {m.opp_leader || m.opp_deck || "—"}
                         </p>
                         <p className="text-[10px] text-muted-foreground">
-                          {new Date(m.played_at).toLocaleDateString("ko-KR")} ·{" "}
-                          {m.went_first ? "선공" : "후공"}
+                          {new Date(m.played_at).toLocaleDateString(dateLocale)} ·{" "}
+                          {m.went_first ? t("leaderboard.first") : t("leaderboard.second")}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -272,11 +295,16 @@ function UserMatchesDialog({
 }
 
 function ResultPill({ r }: { r: "win" | "loss" | "draw" }) {
+  const { t } = useI18n();
   const map = {
     win: "bg-emerald-500/10 text-emerald-600",
     loss: "bg-rose-500/10 text-rose-600",
     draw: "bg-muted text-muted-foreground",
   } as const;
-  const label = { win: "승", loss: "패", draw: "무" }[r];
+  const label = {
+    win: t("leaderboard.win"),
+    loss: t("leaderboard.loss"),
+    draw: t("leaderboard.draw"),
+  }[r];
   return <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${map[r]}`}>{label}</span>;
 }

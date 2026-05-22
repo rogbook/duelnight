@@ -19,24 +19,41 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import type { Tables, Database } from "@/integrations/supabase/types";
+import { useI18n } from "@/i18n/language-context";
 
 type Game = Database["public"]["Enums"]["tcg_game"];
-
 type Profile = Tables<"profiles">;
 
 export const Route = createFileRoute("/profile")({
-  head: () => ({
-    meta: [
-      { title: "프로필 — DuelNight" },
-      { name: "description", content: "내 프로필, 닉네임, 아바타." },
-    ],
-  }),
+  head: () => {
+    let locale = "ko";
+    if (typeof window !== "undefined") {
+      locale = localStorage.getItem("duelnight.i18n.locale") || "ko";
+    }
+    const titles: Record<string, string> = {
+      ko: "프로필 — DuelNight",
+      en: "Profile — DuelNight",
+      ja: "プロフィール — DuelNight",
+    };
+    const descs: Record<string, string> = {
+      ko: "내 프로필, 닉네임, 아바타.",
+      en: "My profile, username, and avatar.",
+      ja: "マイプロフィール、ユーザー名、アバター。",
+    };
+    return {
+      meta: [
+        { title: titles[locale] || titles.ko },
+        { name: "description", content: descs[locale] || descs.ko },
+      ],
+    };
+  },
   component: ProfilePage,
 });
 
 function ProfilePage() {
   const { user, loading } = useAuth();
   const qc = useQueryClient();
+  const { t } = useI18n();
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -76,7 +93,7 @@ function ProfilePage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-8 text-sm text-muted-foreground">
-        불러오는 중...
+        {t("profile.loading")}
       </div>
     );
   }
@@ -84,15 +101,15 @@ function ProfilePage() {
   if (!user) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-8">
-        <PageHeader title="프로필" description="로그인 후 이용할 수 있어요" />
+        <PageHeader title={t("profile.title")} description={t("profile.loginRequired")} />
         <div className="mt-6 rounded-lg border border-dashed border-border bg-muted/30 px-6 py-16 text-center">
           <User className="mx-auto h-8 w-8 text-muted-foreground" />
-          <p className="mt-3 text-sm text-muted-foreground">로그인이 필요합니다</p>
+          <p className="mt-3 text-sm text-muted-foreground">{t("profile.loginRequiredNote")}</p>
           <Link
             to="/login"
             className="mt-4 inline-flex items-center justify-center rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90"
           >
-            로그인하러 가기
+            {t("profile.goLogin")}
           </Link>
         </div>
       </div>
@@ -104,7 +121,7 @@ function ProfilePage() {
     if (!user) return;
     const username = form.username.trim() || null;
     if (username && !/^[a-zA-Z0-9_]{2,24}$/.test(username)) {
-      toast.error("닉네임은 영문/숫자/_ 2~24자여야 합니다.");
+      toast.error(t("profile.usernameInvalid"));
       return;
     }
     setSaving(true);
@@ -122,11 +139,11 @@ function ProfilePage() {
     setSaving(false);
     if (error) {
       toast.error(
-        error.code === "23505" ? "이미 사용 중인 닉네임입니다." : error.message,
+        error.code === "23505" ? t("profile.usernameTaken") : error.message,
       );
       return;
     }
-    toast.success("프로필이 저장되었습니다");
+    toast.success(t("profile.saveSuccess"));
     qc.invalidateQueries({ queryKey: ["profile"] });
   };
 
@@ -136,7 +153,7 @@ function ProfilePage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">
-      <PageHeader title="프로필" description="닉네임, 표시 이름, 아바타, 자기소개" />
+      <PageHeader title={t("profile.title")} description={t("profile.desc")} />
 
       <section className="mt-6 flex items-center gap-4 rounded-lg border border-border bg-card p-4">
         <Avatar className="h-16 w-16">
@@ -158,16 +175,16 @@ function ProfilePage() {
         className="mt-6 grid grid-cols-1 gap-4 rounded-lg border border-border bg-card p-4 md:grid-cols-2"
       >
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="display_name">표시 이름</Label>
+          <Label htmlFor="display_name">{t("profile.fieldDisplayName")}</Label>
           <Input
             id="display_name"
             value={form.display_name}
             onChange={(e) => setForm({ ...form, display_name: e.target.value })}
-            placeholder="화면에 표시될 이름"
+            placeholder={t("profile.placeholderDisplayName")}
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="username">닉네임 (영문/숫자/_)</Label>
+          <Label htmlFor="username">{t("profile.fieldUsername")}</Label>
           <Input
             id="username"
             value={form.username}
@@ -176,7 +193,7 @@ function ProfilePage() {
           />
         </div>
         <div className="md:col-span-2 flex flex-col gap-1.5">
-          <Label htmlFor="primary_game">주 게임 (캘린더 상단·알림 대상)</Label>
+          <Label htmlFor="primary_game">{t("profile.fieldPrimaryGame")}</Label>
           <Select
             value={form.primary_game || "none"}
             onValueChange={(v) =>
@@ -185,26 +202,26 @@ function ProfilePage() {
           >
             <SelectTrigger id="primary_game"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">선택 안 함</SelectItem>
-              <SelectItem value="optcg">원피스</SelectItem>
-              <SelectItem value="ptcg">포켓몬</SelectItem>
-              <SelectItem value="dtcg">디지몬</SelectItem>
+              <SelectItem value="none">{t("profile.noPrimaryGame")}</SelectItem>
+              <SelectItem value="optcg">{t("matches.optcg")}</SelectItem>
+              <SelectItem value="ptcg">{t("matches.ptcg")}</SelectItem>
+              <SelectItem value="dtcg">{t("matches.dtcg")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="md:col-span-2 flex flex-col gap-1.5">
-          <Label htmlFor="bio">자기소개</Label>
+          <Label htmlFor="bio">{t("profile.fieldBio")}</Label>
           <Textarea
             id="bio"
             value={form.bio}
             onChange={(e) => setForm({ ...form, bio: e.target.value })}
             rows={3}
-            placeholder="좋아하는 덱, 활동 매장 등"
+            placeholder={t("profile.placeholderBio")}
           />
         </div>
         <div className="md:col-span-2 flex justify-end">
           <Button type="submit" disabled={saving}>
-            {saving ? "저장 중..." : "저장"}
+            {saving ? t("profile.saving") : t("common.save")}
           </Button>
         </div>
       </form>

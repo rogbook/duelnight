@@ -21,6 +21,7 @@ import { GAME_LABEL } from "@/lib/match-stats";
 import { colorHex, colorLabel, type Game } from "@/lib/deck-colors";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
+import { useI18n } from "@/i18n/language-context";
 
 type Deck = Tables<"decks">;
 type Profile = Tables<"profiles">;
@@ -28,30 +29,61 @@ type CardRow = Tables<"cards">;
 type DeckCard = Tables<"deck_cards">;
 
 export const Route = createFileRoute("/decks/$id")({
+  head: () => {
+    let locale = "ko";
+    if (typeof window !== "undefined") {
+      locale = localStorage.getItem("duelnight.i18n.locale") || "ko";
+    }
+    const titles: Record<string, string> = {
+      ko: "덱 레시피 상세 — DuelNight",
+      en: "Deck Recipe Detail — DuelNight",
+      ja: "デッキレシピ詳細 — DuelNight",
+    };
+    const descs: Record<string, string> = {
+      ko: "등록된 덱 레시피 상세 정보 및 카드 목록.",
+      en: "Detailed information and card list of the registered deck recipe.",
+      ja: "登録されたデッキレシピの詳細情報とカードリスト。",
+    };
+    return {
+      meta: [
+        { title: titles[locale] || titles.ko },
+        { name: "description", content: descs[locale] || descs.ko },
+      ],
+    };
+  },
   component: DeckDetailPage,
-  errorComponent: ({ error }) => (
-    <div className="mx-auto max-w-3xl px-6 py-16 text-center">
-      <h1 className="text-xl font-bold">덱을 불러오지 못했어요</h1>
-      <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
-      <Link
-        to="/decks"
-        className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
-      >
-        <ArrowLeft className="h-4 w-4" /> 덱 빌더로 돌아가기
-      </Link>
-    </div>
-  ),
-  notFoundComponent: () => (
-    <div className="mx-auto max-w-3xl px-6 py-16 text-center">
-      <h1 className="text-xl font-bold">덱을 찾을 수 없습니다</h1>
-      <Link
-        to="/decks"
-        className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
-      >
-        <ArrowLeft className="h-4 w-4" /> 덱 빌더로 돌아가기
-      </Link>
-    </div>
-  ),
+  errorComponent: ({ error }) => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { t } = useI18n();
+    return (
+      <div className="mx-auto max-w-3xl px-6 py-16 text-center">
+        <h1 className="text-xl font-bold">{t("decks.loadFailed")}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+        <Link
+          to="/decks"
+          className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+        >
+          <ArrowLeft className="h-4 w-4" /> {t("decks.backToBuilder")}
+        </Link>
+      </div>
+    );
+  },
+  notFoundComponent: () => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { t } = useI18n();
+    return (
+      <div className="mx-auto max-w-3xl px-6 py-16 text-center">
+        <h1 className="text-xl font-bold">{t("decks.notFound")}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{t("decks.notFoundDesc")}</p>
+        <Link
+          to="/decks"
+          className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+        >
+          <ArrowLeft className="h-4 w-4" /> {t("decks.backToBuilder")}
+        </Link>
+      </div>
+    );
+  },
 });
 
 function DeckDetailPage() {
@@ -62,6 +94,7 @@ function DeckDetailPage() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<"info" | "recipe">("info");
   const [zoomCard, setZoomCard] = useState<{ url: string; name: string } | null>(null);
+  const { t, language } = useI18n();
 
   // ⚠️ 모든 훅은 조건부 return 이전에 호출되어야 함 (React Hooks rule).
 
@@ -148,7 +181,7 @@ function DeckDetailPage() {
   if (deckLoading || authLoading) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-16 text-center text-sm text-muted-foreground">
-        불러오는 중...
+        {t("decks.loading")}
       </div>
     );
   }
@@ -156,13 +189,13 @@ function DeckDetailPage() {
   if (deckError) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-16 text-center">
-        <h1 className="text-xl font-bold">덱을 불러오지 못했어요</h1>
+        <h1 className="text-xl font-bold">{t("decks.loadFailed")}</h1>
         <p className="mt-2 text-sm text-muted-foreground">{(deckError as Error).message}</p>
         <Link
           to="/decks"
           className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
         >
-          <ArrowLeft className="h-4 w-4" /> 덱 빌더로 돌아가기
+          <ArrowLeft className="h-4 w-4" /> {t("decks.backToBuilder")}
         </Link>
       </div>
     );
@@ -172,15 +205,15 @@ function DeckDetailPage() {
     return (
       <div className="mx-auto max-w-3xl px-6 py-16 text-center">
         <Layers className="mx-auto h-12 w-12 text-muted-foreground opacity-20" />
-        <h1 className="mt-4 text-xl font-bold">덱을 찾을 수 없습니다</h1>
+        <h1 className="mt-4 text-xl font-bold">{t("decks.notFound")}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          삭제되었거나 접근 권한이 없는 덱입니다.
+          {t("decks.notFoundDesc")}
         </p>
         <Link
           to="/decks"
           className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
         >
-          <ArrowLeft className="h-4 w-4" /> 덱 빌더로 돌아가기
+          <ArrowLeft className="h-4 w-4" /> {t("decks.backToBuilder")}
         </Link>
       </div>
     );
@@ -190,13 +223,13 @@ function DeckDetailPage() {
     return (
       <div className="mx-auto max-w-3xl px-6 py-16 text-center">
         <Layers className="mx-auto h-12 w-12 text-muted-foreground opacity-20" />
-        <h1 className="mt-4 text-xl font-bold">비공개 덱입니다</h1>
-        <p className="mt-2 text-sm text-muted-foreground">소유자만 열람할 수 있는 덱이에요.</p>
+        <h1 className="mt-4 text-xl font-bold">{t("decks.privateDeck")}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{t("decks.privateDeckDesc")}</p>
         <Link
           to="/decks"
           className="mt-8 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
         >
-          <ArrowLeft className="h-4 w-4" /> 덱 빌더로 돌아가기
+          <ArrowLeft className="h-4 w-4" /> {t("decks.backToBuilder")}
         </Link>
       </div>
     );
@@ -209,8 +242,8 @@ function DeckDetailPage() {
   };
 
   const onCopy = async () => {
-    if (!currentUserId) return toast.error("로그인이 필요합니다.");
-    const confirmCopy = confirm("이 덱을 내 덱으로 복사할까요?");
+    if (!currentUserId) return toast.error(t("matches.loginRequired"));
+    const confirmCopy = confirm(t("decks.copyConfirm"));
     if (!confirmCopy) return;
 
     try {
@@ -218,7 +251,7 @@ function DeckDetailPage() {
       const { data: newDeck, error: deckErr } = await supabase
         .from("decks")
         .insert({
-          name: `복사본: ${deck.name}`,
+          name: language === "ko" ? `복사본: ${deck.name}` : language === "ja" ? `コピー: ${deck.name}` : `Copy of ${deck.name}`,
           game: deck.game,
           leader: deck.leader,
           archetype: deck.archetype,
@@ -245,10 +278,10 @@ function DeckDetailPage() {
         if (cardsErr) throw cardsErr;
       }
 
-      toast.success("덱이 복사되었습니다! 목록에서 확인하세요.");
+      toast.success(t("decks.copySuccess"));
       navigate({ to: "/decks" });
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "덱 복사에 실패했습니다.");
+      toast.error(err instanceof Error ? err.message : t("decks.copyFailed"));
     }
   };
 
@@ -259,20 +292,20 @@ function DeckDetailPage() {
           className="fixed inset-0 z-[100] flex items-center justify-center bg-background/90 p-4 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
-          aria-label={`${zoomCard.name} 확대 이미지`}
+          aria-label={language === "ko" ? `${zoomCard.name} 확대 이미지` : language === "ja" ? `${zoomCard.name}拡大画像` : `${zoomCard.name} Zoomed Image`}
           onClick={() => setZoomCard(null)}
         >
           <button
             type="button"
             className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition-opacity hover:opacity-80"
             onClick={() => setZoomCard(null)}
-            aria-label="확대 이미지 닫기"
+            aria-label={t("decks.closeZoom")}
           >
             <X className="h-5 w-5" />
           </button>
           <img
             src={zoomCard.url}
-            alt={`${zoomCard.name} 확대`}
+            alt={language === "ko" ? `${zoomCard.name} 확대` : language === "ja" ? `${zoomCard.name}拡大` : `${zoomCard.name} Zoomed`}
             className="max-h-[88vh] max-w-[92vw] rounded-lg border border-border bg-card object-contain shadow-lg"
             onClick={(event) => event.stopPropagation()}
           />
@@ -285,7 +318,7 @@ function DeckDetailPage() {
           to="/decks"
           className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
         >
-          <ArrowLeft className="h-3.5 w-3.5" /> 덱 빌더
+          <ArrowLeft className="h-3.5 w-3.5" /> {t("decks.title")}
         </Link>
       </nav>
 
@@ -301,13 +334,13 @@ function DeckDetailPage() {
                   alt={deck.leader!}
                   className="h-64 w-44 rounded-lg object-cover shadow-xl ring-1 ring-border"
                 />
-                <p className="text-xs font-bold text-primary">LEADER</p>
+                <p className="text-xs font-bold text-primary">{t("decks.leaderLabel")}</p>
               </div>
             ) : (
               <div className="flex h-64 w-44 flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-background/50 text-muted-foreground">
                 <Layers className="h-10 w-10 opacity-20" />
                 <p className="mt-2 text-[10px] uppercase tracking-widest font-bold">
-                  {GAME_LABEL[deck.game]}
+                  {t(`matches.${deck.game}`)}
                 </p>
               </div>
             )}
@@ -318,7 +351,7 @@ function DeckDetailPage() {
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-1">
                 <p className="text-xs font-bold text-primary uppercase tracking-tighter">
-                  {GAME_LABEL[deck.game]}
+                  {t(`matches.${deck.game}`)}
                 </p>
                 <h1 className="text-2xl md:text-3xl font-black tracking-tight">{deck.name}</h1>
                 <div className="mt-3 flex flex-wrap gap-1.5">
@@ -331,11 +364,11 @@ function DeckDetailPage() {
                         className="h-2 w-2 rounded-full"
                         style={{ backgroundColor: colorHex(deck.game as Game, c) }}
                       />
-                      {colorLabel(deck.game as Game, c)}
+                      {colorLabel(deck.game as Game, c, language)}
                     </span>
                   ))}
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-foreground text-background px-2.5 py-1 text-[11px] font-bold">
-                    {totalCards}장 투입됨
+                    {t("decks.cardsCount").replace("{count}", String(totalCards))}
                   </span>
                 </div>
               </div>
@@ -351,7 +384,7 @@ function DeckDetailPage() {
                     }}
                     trigger={
                       <button className="flex items-center justify-center gap-2 rounded-lg bg-foreground px-4 py-2 text-xs font-bold text-background hover:opacity-90 transition-opacity shadow-lg">
-                        <Pencil className="h-3.5 w-3.5" /> 정보 수정
+                        <Pencil className="h-3.5 w-3.5" /> {t("decks.editInfo")}
                       </button>
                     }
                   />
@@ -360,7 +393,7 @@ function DeckDetailPage() {
                     onClick={onCopy}
                     className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground hover:opacity-90 transition-opacity shadow-lg"
                   >
-                    <Copy className="h-3.5 w-3.5" /> 내 덱으로 복사
+                    <Copy className="h-3.5 w-3.5" /> {t("decks.copyDeck")}
                   </button>
                 )}
               </div>
@@ -369,7 +402,7 @@ function DeckDetailPage() {
             {deck.notes && (
               <div className="mt-6">
                 <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1.5">
-                  MEMO
+                  {t("decks.memoTitle")}
                 </p>
                 <div className="rounded-xl bg-muted/50 p-4 text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap border border-border/50">
                   {deck.notes}
@@ -382,16 +415,16 @@ function DeckDetailPage() {
                 <div className="flex items-center gap-1.5">
                   <User className="h-3 w-3" />
                   <span className="font-medium text-foreground">
-                    {author?.display_name ?? author?.username ?? "익명"}
+                    {author?.display_name ?? author?.username ?? t("decks.anonymous")}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Calendar className="h-3 w-3" />
-                  <span>{new Date(deck.updated_at).toLocaleDateString("ko-KR")}</span>
+                  <span>{new Date(deck.updated_at).toLocaleDateString(language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US")}</span>
                 </div>
               </div>
               <span className="font-bold tracking-tighter">
-                {deck.is_public ? "PUBLIC DECK" : "PRIVATE DECK"}
+                {deck.is_public ? t("decks.publicDeckLabel") : t("decks.privateDeckLabel")}
               </span>
             </div>
           </div>
@@ -409,7 +442,7 @@ function DeckDetailPage() {
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Info className="h-4 w-4" /> 덱 상세 정보
+            <Info className="h-4 w-4" /> {t("decks.tabInfo")}
           </button>
           <button
             onClick={() => setTab("recipe")}
@@ -419,7 +452,7 @@ function DeckDetailPage() {
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            <List className="h-4 w-4" /> 덱 레시피 ({deckCards.length}종)
+            <List className="h-4 w-4" /> {t("decks.tabRecipe").replace("{count}", String(deckCards.length))}
           </button>
         </div>
 
@@ -428,27 +461,29 @@ function DeckDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
                 <h3 className="text-sm font-black mb-4 flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-primary" /> 아키타입 정보
+                  <Layers className="h-4 w-4 text-primary" /> {t("decks.archetypeTitle")}
                 </h3>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center py-2 border-b border-border/50">
-                    <span className="text-xs text-muted-foreground">리더</span>
-                    <span className="text-sm font-bold">{deck.leader || "없음"}</span>
+                    <span className="text-xs text-muted-foreground">{t("decks.leader")}</span>
+                    <span className="text-sm font-bold">{deck.leader || t("decks.none")}</span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b border-border/50">
-                    <span className="text-xs text-muted-foreground">아키타입</span>
-                    <span className="text-sm font-bold">{deck.archetype || "정보 없음"}</span>
+                    <span className="text-xs text-muted-foreground">{t("decks.archetype")}</span>
+                    <span className="text-sm font-bold">{deck.archetype || t("decks.noArchetypeInfo")}</span>
                   </div>
                 </div>
               </div>
 
               <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
                 <h3 className="text-sm font-black mb-4 flex items-center gap-2">
-                  <Check className="h-4 w-4 text-primary" /> 요약
+                  <Check className="h-4 w-4 text-primary" /> {t("decks.summaryTitle")}
                 </h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  이 덱은 {GAME_LABEL[deck.game]} 환경에서 사용되는 덱입니다. 현재 {totalCards}장의
-                  카드가 등록되어 있으며, {deck.is_public ? "공개" : "비공개"} 상태입니다.
+                  {t("decks.summaryDesc")
+                    .replace("{game}", t(`matches.${deck.game}`))
+                    .replace("{total}", String(totalCards))
+                    .replace("{status}", deck.is_public ? t("decks.public") : t("decks.private"))}
                 </p>
               </div>
             </div>
@@ -457,7 +492,7 @@ function DeckDetailPage() {
             {deckCards.length > 0 && (
               <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
                 <h3 className="text-sm font-black mb-4 flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-primary" /> 투입 카드 ({totalCards}장)
+                  <Layers className="h-4 w-4 text-primary" /> {t("decks.cardsInDeck").replace("{count}", String(totalCards))}
                 </h3>
                 <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
                   {deckCards.flatMap((dc) => {
@@ -473,10 +508,10 @@ function DeckDetailPage() {
                         }`}
                         title={
                           missing
-                            ? `${dc.card_code} — 카드 DB 미등록`
+                            ? t("decks.notRegisteredDbTooltip").replace("{code}", dc.card_code)
                             : `${card?.name ?? dc.card_code} (${i + 1}/${dc.quantity})`
                         }
-                        aria-label={`${card?.name ?? dc.card_code} 확대 보기`}
+                        aria-label={language === "ko" ? `${card?.name ?? dc.card_code} 확대 보기` : language === "ja" ? `${card?.name ?? dc.card_code}拡大表示` : `Zoom ${card?.name ?? dc.card_code}`}
                       >
                         {card?.image_url ? (
                           <img
@@ -488,7 +523,7 @@ function DeckDetailPage() {
                         ) : (
                           <div className="flex h-full w-full flex-col items-center justify-center gap-1 p-1 text-center">
                             <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[8px] font-bold text-amber-600 dark:text-amber-400">
-                              DB 미등록
+                              {t("decks.notRegisteredDb")}
                             </span>
                             <span className="text-[8px] text-muted-foreground break-all">
                               {dc.card_code}
@@ -498,7 +533,6 @@ function DeckDetailPage() {
                       </button>
                     ));
                   })}
-
                 </div>
               </div>
             )}
@@ -521,7 +555,7 @@ function DeckDetailPage() {
                       type="button"
                       onClick={() => openZoom(card?.image_url, card?.name ?? dc.card_code)}
                       className="group relative aspect-[2/3] overflow-hidden rounded-lg border border-border bg-muted text-left shadow-sm transition-all hover:shadow-md hover:ring-2 hover:ring-primary/40"
-                      aria-label={`${card?.name ?? dc.card_code} 확대 보기`}
+                      aria-label={language === "ko" ? `${card?.name ?? dc.card_code} 확대 보기` : language === "ja" ? `${card?.name ?? dc.card_code}拡大表示` : `Zoom ${card?.name ?? dc.card_code}`}
                     >
                       {card?.image_url ? (
                         <img
@@ -533,7 +567,7 @@ function DeckDetailPage() {
                       ) : (
                         <div className="flex h-full w-full flex-col items-center justify-center gap-2 p-3 text-center">
                           <span className="rounded bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
-                            DB 미등록
+                            {t("decks.notRegisteredDb")}
                           </span>
                           <span className="text-[10px] text-muted-foreground break-all">
                             {dc.card_code}
@@ -557,7 +591,9 @@ function DeckDetailPage() {
             {deckCards.length === 0 && (
               <div className="py-20 text-center rounded-2xl border-2 border-dashed border-border bg-muted/10">
                 <Layers className="mx-auto h-12 w-12 text-muted-foreground opacity-20" />
-                <p className="mt-4 text-sm text-muted-foreground">등록된 카드가 아직 없습니다.</p>
+                <p className="mt-4 text-sm text-muted-foreground">
+                  {language === "ko" ? "등록된 카드가 아직 없습니다." : language === "ja" ? "登録されたカードがまだありません。" : "No cards registered yet."}
+                </p>
               </div>
             )}
           </div>

@@ -5,25 +5,43 @@ import { useIsAdmin } from "@/hooks/use-is-admin";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useI18n } from "@/i18n/language-context";
 
 export const Route = createFileRoute("/cards/upload")({
-  head: () => ({
-    meta: [
-      { title: "카드 등록 — DuelNight" },
-      { name: "description", content: "관리자만 카드 데이터를 등록할 수 있습니다." },
-    ],
-  }),
+  head: () => {
+    let locale = "ko";
+    if (typeof window !== "undefined") {
+      locale = localStorage.getItem("duelnight.i18n.locale") || "ko";
+    }
+    const titles: Record<string, string> = {
+      ko: "카드 등록 — DuelNight",
+      en: "Card Upload — DuelNight",
+      ja: "カード登録 — DuelNight",
+    };
+    const descs: Record<string, string> = {
+      ko: "관리자만 카드 데이터를 등록할 수 있습니다.",
+      en: "Only administrators can upload card data.",
+      ja: "管理者のみがカードデータを登録できます。",
+    };
+    return {
+      meta: [
+        { title: titles[locale] || titles.ko },
+        { name: "description", content: descs[locale] || descs.ko },
+      ],
+    };
+  },
   component: CardsUploadPage,
 });
 
 function CardsUploadPage() {
+  const { t } = useI18n();
   const { user, loading } = useAuth();
   const { isAdmin, isLoading } = useIsAdmin();
 
   if (loading || isLoading) {
     return (
       <div className="mx-auto w-full max-w-5xl px-6 py-8">
-        <PageHeader title="카드 등록" description="권한 확인 중…" />
+        <PageHeader title={t("cards.uploadTitle")} description={t("cards.checkingPermission")} />
       </div>
     );
   }
@@ -36,20 +54,20 @@ function CardsUploadPage() {
   // 일반 사용자/비로그인 모두 접근 차단
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-8">
-      <PageHeader title="카드 등록" description="관리자 전용 기능입니다" />
+      <PageHeader title={t("cards.uploadTitle")} description={t("cards.adminOnlyFunc")} />
       <Card className="mt-6">
         <CardHeader>
           <div className="flex items-center gap-2">
             <Lock className="h-5 w-5 text-muted-foreground" />
-            <CardTitle>접근 권한이 없습니다</CardTitle>
+            <CardTitle>{t("cards.noPermissionTitle")}</CardTitle>
           </div>
           <CardDescription>
-            카드 등록·수정은 관리자만 수행할 수 있어요. 누락되었거나 잘못된 카드를 발견하면 운영자에게 문의해 주세요.
+            {t("cards.noPermissionDesc")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Button asChild variant="outline">
-            <Link to="/cards">카드 DB 둘러보기</Link>
+            <Link to="/cards">{t("cards.browseDb")}</Link>
           </Button>
         </CardContent>
       </Card>

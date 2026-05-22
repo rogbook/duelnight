@@ -32,50 +32,59 @@ import { EditCardDialog } from "@/components/cards/edit-card-dialog";
 import { normalizeImageUrl } from "@/components/cards/card-uploader";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
+import { useI18n } from "@/i18n/language-context";
+import { colorLabel, COLORS_BY_GAME } from "@/lib/deck-colors";
+import { GAME_LABEL } from "@/lib/match-stats";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"];
 type Review = Database["public"]["Tables"]["card_reviews"]["Row"];
 type Illustration = Database["public"]["Tables"]["card_illustrations"]["Row"];
 
 const PAGE_SIZE = 24;
-const TYPE_LABEL: Record<string, string> = {
-  leader: "리더",
-  character: "캐릭터",
-  event: "이벤트",
-  stage: "스테이지",
-  don: "DON!!",
-};
-const COLOR_LABEL: Record<string, string> = {
-  red: "적",
-  green: "녹",
-  blue: "청",
-  purple: "자",
-  black: "흑",
-  yellow: "황",
-};
 
 type Game = Database["public"]["Enums"]["tcg_game"];
-const GAME_LABEL: Record<Game, string> = {
-  optcg: "원피스",
-  ptcg: "포켓몬",
-  dtcg: "디지몬",
-};
 
 export const Route = createFileRoute("/cards/")({
-  head: () => ({
-    meta: [
-      { title: "카드 DB — DuelNight" },
-      {
-        name: "description",
-        content: "원피스·포켓몬·디지몬 TCG 카드 데이터베이스 검색·필터·즐겨찾기·평가.",
-      },
-    ],
-  }),
+  head: () => {
+    let locale = "ko";
+    if (typeof window !== "undefined") {
+      locale = localStorage.getItem("duelnight.i18n.locale") || "ko";
+    }
+    const titles: Record<string, string> = {
+      ko: "카드 DB — DuelNight",
+      en: "Card DB — DuelNight",
+      ja: "カードDB — DuelNight",
+    };
+    const descs: Record<string, string> = {
+      ko: "원피스·포켓몬·디지몬 TCG 카드 데이터베이스 검색·필터·즐겨찾기·평가.",
+      en: "One Piece, Pokémon, and Digimon TCG card database search, filters, favorites, and reviews.",
+      ja: "ワンピース・ポケモン・デジモンTCGカードデータベース検索・フィルター・お気に入り・評価。",
+    };
+    return {
+      meta: [
+        { title: titles[locale] || titles.ko },
+        {
+          name: "description",
+          content: descs[locale] || descs.ko,
+        },
+      ],
+    };
+  },
   component: CardsPage,
 });
 
 function CardsPage() {
+  const { t, language } = useI18n();
   const { user } = useAuth();
+
+  const getCardTypeLabel = (type: string) => {
+    if (type === "leader") return t("cards.typeLeader");
+    if (type === "character") return t("cards.typeCharacter");
+    if (type === "event") return t("cards.typeEvent");
+    if (type === "stage") return t("cards.typeStage");
+    if (type === "don") return t("cards.typeDon");
+    return type;
+  };
   const [game, setGame] = useState<Game>("optcg");
   const [q, setQ] = useState("");
   const [type, setType] = useState<string>("all");
@@ -190,7 +199,7 @@ function CardsPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
-      <PageHeader title="카드 DB" description={`${GAME_LABEL[game]} 카드 검색·필터·즐겨찾기`}>
+      <PageHeader title={t("cards.title")} description={`${t(`matches.${game}` as any)} ${t("cards.desc")}`}>
         <div className="inline-flex rounded-md border border-border bg-card p-0.5">
           {(Object.keys(GAME_LABEL) as Game[]).map((g) => (
             <button
@@ -207,7 +216,7 @@ function CardsPage() {
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              {GAME_LABEL[g]}
+              {t(`matches.${g}` as any)}
             </button>
           ))}
         </div>
@@ -222,7 +231,7 @@ function CardsPage() {
               setQ(e.target.value);
               resetPage();
             }}
-            placeholder="카드명 · 카드번호 · 특징 (예: 루피, OP12-004, 밀짚모자 해적단)"
+            placeholder={t("cards.searchPlaceholder")}
             className="pl-9"
           />
         </div>
@@ -234,13 +243,13 @@ function CardsPage() {
               resetPage();
             }}
           >
-            <SelectTrigger><SelectValue placeholder="종류" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder={t("cards.type")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">종류: 전체</SelectItem>
-              <SelectItem value="leader">리더</SelectItem>
-              <SelectItem value="character">캐릭터</SelectItem>
-              <SelectItem value="event">이벤트</SelectItem>
-              <SelectItem value="stage">스테이지</SelectItem>
+              <SelectItem value="all">{t("cards.typeAll")}</SelectItem>
+              <SelectItem value="leader">{t("cards.typeLeader")}</SelectItem>
+              <SelectItem value="character">{t("cards.typeCharacter")}</SelectItem>
+              <SelectItem value="event">{t("cards.typeEvent")}</SelectItem>
+              <SelectItem value="stage">{t("cards.typeStage")}</SelectItem>
             </SelectContent>
           </Select>
           <Select
@@ -250,9 +259,9 @@ function CardsPage() {
               resetPage();
             }}
           >
-            <SelectTrigger><SelectValue placeholder="세트" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder={t("cards.set")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">세트: 전체</SelectItem>
+              <SelectItem value="all">{t("cards.setAll")}</SelectItem>
               {sets.map((s) => (
                 <SelectItem key={s} value={s}>{s}</SelectItem>
               ))}
@@ -265,11 +274,13 @@ function CardsPage() {
               resetPage();
             }}
           >
-            <SelectTrigger><SelectValue placeholder="색상" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder={t("cards.color")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">색: 전체</SelectItem>
-              {Object.entries(COLOR_LABEL).map(([k, v]) => (
-                <SelectItem key={k} value={k}>{v}</SelectItem>
+              <SelectItem value="all">{t("cards.colorAll")}</SelectItem>
+              {(COLORS_BY_GAME[game] || []).map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {colorLabel(game, c.id, language)}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -278,7 +289,7 @@ function CardsPage() {
             variant={favOnly ? "default" : "outline"}
             onClick={() => {
               if (!user) {
-                toast.error("로그인이 필요합니다");
+                toast.error(t("cards.toastLoginRequired"));
                 return;
               }
               setFavOnly((v) => !v);
@@ -289,22 +300,22 @@ function CardsPage() {
             <Star
               className={`h-4 w-4 ${favOnly ? "fill-current" : ""}`}
             />
-            즐겨찾기만
+            {t("cards.favoritesOnly")}
           </Button>
         </div>
       </div>
 
       <p className="mt-4 text-xs text-muted-foreground">
-        총 <span className="font-semibold text-foreground">{total}</span>장
-        {isFetching && " · 로딩…"}
+        {t("cards.totalCards").replace("{total}", String(total))}
+        {isFetching && ` · ${t("common.loading")}`}
       </p>
 
       {rows.length === 0 ? (
         <div className="mt-6">
           <EmptyState
             icon={Library}
-            title="검색 결과가 없어요"
-            description="다른 키워드나 필터로 다시 시도해 보세요."
+            title={t("cards.noResults")}
+            description={t("cards.noResultsDesc")}
           />
         </div>
       ) : (
@@ -328,7 +339,7 @@ function CardsPage() {
             disabled={page === 0}
             onClick={() => setPage((p) => Math.max(0, p - 1))}
           >
-            이전
+            {t("cards.prev")}
           </Button>
           <span className="px-2 text-muted-foreground">
             {page + 1} / {totalPages}
@@ -339,7 +350,7 @@ function CardsPage() {
             disabled={page + 1 >= totalPages}
             onClick={() => setPage((p) => p + 1)}
           >
-            다음
+            {t("cards.next")}
           </Button>
         </div>
       )}
@@ -363,6 +374,7 @@ function CardTile({
   isFav: boolean;
   onClick: () => void;
 }) {
+  const { t, language } = useI18n();
   return (
     <li className="group relative scroll-reveal-card">
       <button
@@ -380,12 +392,12 @@ function CardTile({
           ) : (
             <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground">
               <ImageOff className="h-6 w-6" />
-              <span className="text-[10px]">이미지 없음</span>
+              <span className="text-[10px]">{t("cards.noImage")}</span>
             </div>
           ); })()}
           {card.type === "leader" && (
             <span className="absolute left-1 top-1 rounded bg-primary px-1.5 py-0.5 text-[10px] font-bold text-primary-foreground">
-              리더
+              {t("cards.typeLeader")}
             </span>
           )}
           {isFav && (
@@ -403,7 +415,7 @@ function CardTile({
                 key={c}
                 className="rounded bg-muted px-1 py-px text-[10px] text-muted-foreground"
               >
-                {COLOR_LABEL[c] ?? c}
+                {colorLabel(card.game as Game, c, language)}
               </span>
             ))}
             {card.rarity && (
@@ -434,9 +446,9 @@ function CardTile({
         params={{ code: card.code }}
         className="absolute bottom-1 right-1 rounded bg-background/80 px-1.5 py-0.5 text-[10px] text-muted-foreground opacity-0 backdrop-blur transition group-hover:opacity-100 hover:text-foreground"
         onClick={(e) => e.stopPropagation()}
-        aria-label="공유 가능한 상세 페이지로 이동"
+        aria-label={t("cards.detailAria")}
       >
-        상세 →
+        {t("cards.detail")}
       </Link>
     </li>
   );
@@ -453,6 +465,7 @@ function CardDetailDialog({
   onOpenChange: (o: boolean) => void;
   isFav: boolean;
 }) {
+  const { t, language } = useI18n();
   const { user } = useAuth();
   const { isAdmin } = useIsAdmin();
   const qc = useQueryClient();
@@ -460,18 +473,27 @@ function CardDetailDialog({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const getCardTypeLabel = (type: string) => {
+    if (type === "leader") return t("cards.typeLeader");
+    if (type === "character") return t("cards.typeCharacter");
+    if (type === "event") return t("cards.typeEvent");
+    if (type === "stage") return t("cards.typeStage");
+    if (type === "don") return t("cards.typeDon");
+    return type;
+  };
+
   const handleDelete = async () => {
     if (!card) return;
     setDeleting(true);
     try {
       const { error } = await supabase.from("cards").delete().eq("code", card.code);
       if (error) throw error;
-      toast.success("카드 삭제 완료");
+      toast.success(t("cards.deleteSuccess"));
       setConfirmDelete(false);
       onOpenChange(false);
       qc.invalidateQueries({ queryKey: ["cards"] });
     } catch (err) {
-      toast.error("삭제 실패: " + (err as Error).message);
+      toast.error(t("cards.deleteFailed") + (err as Error).message);
     } finally {
       setDeleting(false);
     }
@@ -510,14 +532,14 @@ function CardDetailDialog({
   const gallery = useMemo(() => {
     const list: { url: string; label: string }[] = [];
     const main = normalizeImageUrl(card?.image_url);
-    if (main) list.push({ url: main, label: "기본" });
+    if (main) list.push({ url: main, label: t("cards.primaryIllust") });
     for (const il of illusts) {
       const u = normalizeImageUrl(il.image_url);
       if (!u || list.some((x) => x.url === u)) continue;
-      list.push({ url: u, label: il.variant_label || "얼터" });
+      list.push({ url: u, label: il.variant_label || t("cards.altIllust") });
     }
     return list;
-  }, [card?.image_url, illusts]);
+  }, [card?.image_url, illusts, t]);
 
   const [activeUrl, setActiveUrl] = useState<string | null>(null);
   const displayUrl = activeUrl ?? normalizeImageUrl(card?.image_url) ?? null;
@@ -534,7 +556,7 @@ function CardDetailDialog({
 
   const toggleFav = async () => {
     if (!user || !card) {
-      toast.error("로그인이 필요합니다");
+      toast.error(t("cards.toastLoginRequired"));
       return;
     }
     if (isFav) {
@@ -566,7 +588,7 @@ function CardDetailDialog({
                 {card.name}
                 <button
                   onClick={toggleFav}
-                  aria-label="즐겨찾기"
+                  aria-label={t("cards.favoritesOnly")}
                   className="ml-auto rounded-md p-1 hover:bg-muted"
                 >
                   <Star
@@ -582,7 +604,7 @@ function CardDetailDialog({
             {isAdmin && (
               <div className="flex justify-end gap-1.5">
                 <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
-                  <Pencil className="h-3.5 w-3.5 mr-1" />편집
+                  <Pencil className="h-3.5 w-3.5 mr-1" />{t("common.edit")}
                 </Button>
                 <Button
                   size="sm"
@@ -590,7 +612,7 @@ function CardDetailDialog({
                   className="text-destructive hover:text-destructive"
                   onClick={() => setConfirmDelete(true)}
                 >
-                  <Trash2 className="h-3.5 w-3.5 mr-1" />삭제
+                  <Trash2 className="h-3.5 w-3.5 mr-1" />{t("common.delete")}
                 </Button>
               </div>
             )}
@@ -634,20 +656,20 @@ function CardDetailDialog({
               </div>
               <div className="space-y-2 text-sm">
                 <div className="flex flex-wrap gap-1">
-                  <Badge>{TYPE_LABEL[card.type] ?? card.type}</Badge>
+                  <Badge>{getCardTypeLabel(card.type)}</Badge>
                   {card.colors.map((c) => (
-                    <Badge key={c}>{COLOR_LABEL[c] ?? c}</Badge>
+                    <Badge key={c}>{colorLabel(card.game as Game, c, language)}</Badge>
                   ))}
                   {card.rarity && <Badge>{card.rarity}</Badge>}
                 </div>
-                <Stat label={card.type === "leader" ? "라이프" : "코스트"} value={card.cost} />
-                <Stat label="파워" value={card.power?.toLocaleString()} />
-                <Stat label="카운터" value={card.counter?.toLocaleString()} />
-                <Stat label="속성" value={card.attribute} />
-                <Stat label="세트" value={card.set_code} />
+                <Stat label={card.type === "leader" ? t("cards.life") : t("cards.cost")} value={card.cost} />
+                <Stat label={t("cards.power")} value={card.power?.toLocaleString()} />
+                <Stat label={t("cards.counter")} value={card.counter?.toLocaleString()} />
+                <Stat label={t("cards.attribute")} value={card.attribute} />
+                <Stat label={t("cards.set")} value={card.set_code} />
                 {card.traits && card.traits.length > 0 && (
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground">특징</p>
+                    <p className="text-xs font-semibold text-muted-foreground">{t("cards.traits")}</p>
                     <div className="mt-1 flex flex-wrap gap-1">
                       {card.traits.map((t) => (
                         <Badge key={t}>{t}</Badge>
@@ -658,7 +680,7 @@ function CardDetailDialog({
                 {card.effect && (
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground">
-                      효과
+                      {t("cards.effect")}
                     </p>
                     <p className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-2 text-sm leading-relaxed">
                       {card.effect}
@@ -671,7 +693,7 @@ function CardDetailDialog({
             <div className="mt-4 border-t border-border pt-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold">
-                  카드 평가{" "}
+                  {t("cards.reviewsTitle")}{" "}
                   <span className="font-normal text-muted-foreground">
                     ({reviews.length})
                   </span>
@@ -695,13 +717,13 @@ function CardDetailDialog({
                 />
               ) : (
                 <p className="mt-3 text-sm text-muted-foreground">
-                  평가를 남기려면 로그인하세요.
+                  {t("cards.ratingRequiredLogin")}
                 </p>
               )}
               <ul className="mt-3 space-y-2">
                 {reviews.length === 0 ? (
                   <li className="text-sm text-muted-foreground">
-                    첫 번째 평가를 남겨보세요.
+                    {t("cards.firstReviewPrompt")}
                   </li>
                 ) : (
                   reviews.map((r) => (
@@ -712,7 +734,9 @@ function CardDetailDialog({
                       <div className="flex items-center gap-2">
                         <RatingStars value={r.rating} />
                         <span className="text-xs text-muted-foreground">
-                          {new Date(r.created_at).toLocaleDateString("ko-KR")}
+                          {new Date(r.created_at).toLocaleDateString(
+                            language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US"
+                          )}
                         </span>
                       </div>
                       {r.body && (
@@ -744,19 +768,21 @@ function CardDetailDialog({
       <AlertDialog open={confirmDelete} onOpenChange={(o) => { if (!o && !deleting) setConfirmDelete(false); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>카드를 삭제할까요?</AlertDialogTitle>
+            <AlertDialogTitle>{t("cards.deleteConfirmTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {card?.code} · {card?.name} 카드를 영구 삭제합니다. 이 작업은 되돌릴 수 없습니다.
+              {t("cards.deleteConfirmDesc")
+                .replace("{code}", card?.code || "")
+                .replace("{name}", card?.name || "")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>취소</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting}>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={handleDelete}
               disabled={deleting}
             >
-              {deleting ? "삭제 중…" : "삭제"}
+              {deleting ? t("cards.deleting") : t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -774,6 +800,7 @@ function ReviewForm({
   existing: Review | null;
   onSaved: () => void;
 }) {
+  const { t } = useI18n();
   const { user } = useAuth();
   const [rating, setRating] = useState(existing?.rating ?? 5);
   const [body, setBody] = useState(existing?.body ?? "");
@@ -797,20 +824,20 @@ function ReviewForm({
       toast.error(error.message);
       return;
     }
-    toast.success(existing ? "평가를 수정했어요" : "평가를 등록했어요");
+    toast.success(existing ? t("cards.toastReviewUpdated") : t("cards.toastReviewSaved"));
     onSaved();
   };
 
   const remove = async () => {
     if (!user || !existing) return;
-    if (!confirm("내 평가를 삭제할까요?")) return;
+    if (!confirm(t("cards.toastDeleteReviewConfirm"))) return;
     const { error } = await supabase
       .from("card_reviews")
       .delete()
       .eq("id", existing.id);
     if (error) toast.error(error.message);
     else {
-      toast.success("삭제됨");
+      toast.success(t("cards.toastReviewDeleted"));
       setBody("");
       setRating(5);
       onSaved();
@@ -820,24 +847,24 @@ function ReviewForm({
   return (
     <form onSubmit={submit} className="mt-3 space-y-2">
       <div className="flex items-center gap-2">
-        <Label className="text-xs">내 평점</Label>
+        <Label className="text-xs">{t("cards.myRating")}</Label>
         <RatingInput value={rating} onChange={setRating} />
       </div>
       <Textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        placeholder="이 카드에 대한 의견을 남겨보세요"
+        placeholder={t("cards.opinionPlaceholder")}
         rows={2}
         maxLength={500}
       />
       <div className="flex justify-end gap-2">
         {existing && (
           <Button type="button" variant="ghost" size="sm" onClick={remove}>
-            삭제
+            {t("common.delete")}
           </Button>
         )}
         <Button type="submit" size="sm" disabled={busy}>
-          {existing ? "수정" : "등록"}
+          {existing ? t("common.edit") : t("common.confirm")}
         </Button>
       </div>
     </form>

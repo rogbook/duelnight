@@ -28,33 +28,53 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { GAME_LABEL } from "@/lib/match-stats";
 import type { Database } from "@/integrations/supabase/types";
+import { useI18n } from "@/i18n/language-context";
 
 type Game = Database["public"]["Enums"]["tcg_game"];
 type EventKind = Database["public"]["Enums"]["event_kind"];
 type Event = Database["public"]["Tables"]["events"]["Row"];
 
-const KIND_LABEL: Record<EventKind | "all", string> = {
-  all: "전체",
-  tournament: "대회",
-  release: "발매",
-  match: "매칭",
-};
-
 export const Route = createFileRoute("/calendar")({
-  head: () => ({
-    meta: [
-      { title: "대회·발매 캘린더 — DuelNight" },
-      { name: "description", content: "지역·게임별 TCG 대회, 상품 발매, 매칭 일정." },
-    ],
-  }),
+  head: () => {
+    let locale = "ko";
+    if (typeof window !== "undefined") {
+      locale = localStorage.getItem("duelnight.i18n.locale") || "ko";
+    }
+    const titles: Record<string, string> = {
+      ko: "대회·발매 캘린더 — DuelNight",
+      en: "Event Calendar — DuelNight",
+      ja: "大会・発売カレンダー — DuelNight",
+    };
+    const descs: Record<string, string> = {
+      ko: "지역·게임별 TCG 대회, 상품 발매, 매칭 일정.",
+      en: "TCG tournaments, product releases, and match schedules by region and game.",
+      ja: "地域・ゲーム別TCG大会、商品発売、マッチング日程。",
+    };
+    return {
+      meta: [
+        { title: titles[locale] || titles.ko },
+        { name: "description", content: descs[locale] || descs.ko },
+      ],
+    };
+  },
   component: CalendarPage,
 });
 
 function CalendarPage() {
   const { user } = useAuth();
+  const { t, language } = useI18n();
   const [game, setGame] = useState<Game | "all">("all");
   const [kind, setKind] = useState<EventKind | "all">("all");
   const [scope, setScope] = useState<"upcoming" | "past">("upcoming");
+
+  const dateLocale = language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US";
+
+  const KIND_LABEL: Record<EventKind | "all", string> = {
+    all: t("calendar.kindAll"),
+    tournament: t("calendar.kindTournament"),
+    release: t("calendar.kindRelease"),
+    match: t("calendar.kindMatch"),
+  };
 
   const { data: profile } = useQuery({
     queryKey: ["profile-primary-game", user?.id],
@@ -104,7 +124,6 @@ function CalendarPage() {
 
   const sortedEvents = useMemo(() => {
     if (!primaryGame) return events;
-    // Pin primary-game events to top within each day-group while preserving time order
     return [...events].sort((a, b) => {
       const aP = a.game === primaryGame ? 0 : 1;
       const bP = b.game === primaryGame ? 0 : 1;
@@ -116,7 +135,7 @@ function CalendarPage() {
   const grouped = useMemo(() => {
     const map = new Map<string, Event[]>();
     for (const ev of sortedEvents) {
-      const key = new Date(ev.starts_at).toLocaleDateString("ko-KR", {
+      const key = new Date(ev.starts_at).toLocaleDateString(dateLocale, {
         year: "numeric",
         month: "long",
         day: "numeric",
@@ -127,11 +146,11 @@ function CalendarPage() {
       map.set(key, arr);
     }
     return [...map.entries()];
-  }, [sortedEvents]);
+  }, [sortedEvents, dateLocale]);
 
   const toggleFav = async (eventId: string, isFav: boolean) => {
     if (!user) {
-      toast.error("로그인이 필요합니다");
+      toast.error(t("calendar.loginRequiredToast"));
       return;
     }
     if (isFav) {
@@ -146,7 +165,6 @@ function CalendarPage() {
         .insert({ user_id: user.id, event_id: eventId });
     }
     refetch();
-    // also refresh favorites
     void supabase
       .from("event_favorites")
       .select("event_id")
@@ -155,28 +173,28 @@ function CalendarPage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl px-6 py-8">
-      <PageHeader title="캘린더" description="대회 · 발매 · 매칭 일정">
+      <PageHeader title={t("calendar.title")} description={t("calendar.desc")}>
         <Select value={game} onValueChange={(v) => setGame(v as Game | "all")}>
           <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">전체</SelectItem>
-            <SelectItem value="optcg">원피스</SelectItem>
-            <SelectItem value="ptcg">포켓몬</SelectItem>
-            <SelectItem value="dtcg">디지몬</SelectItem>
+            <SelectItem value="all">{t("matches.all")}</SelectItem>
+            <SelectItem value="optcg">{t("matches.optcg")}</SelectItem>
+            <SelectItem value="ptcg">{t("matches.ptcg")}</SelectItem>
+            <SelectItem value="dtcg">{t("matches.dtcg")}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={scope} onValueChange={(v) => setScope(v as "upcoming" | "past")}>
           <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="upcoming">예정</SelectItem>
-            <SelectItem value="past">지난</SelectItem>
+            <SelectItem value="upcoming">{t("calendar.upcoming")}</SelectItem>
+            <SelectItem value="past">{t("calendar.past")}</SelectItem>
           </SelectContent>
         </Select>
         {user ? (
           <NewEventDialog onCreated={() => refetch()} />
         ) : (
           <Button asChild size="sm">
-            <Link to="/login">로그인하고 등록</Link>
+            <Link to="/login">{t("calendar.loginRequiredBtn")}</Link>
           </Button>
         )}
       </PageHeader>
@@ -192,7 +210,9 @@ function CalendarPage() {
 
       {primaryGame && (
         <p className="mt-3 text-xs text-muted-foreground">
-          내 주력: <span className="font-medium text-foreground">{GAME_LABEL[primaryGame]}</span> · 같은 게임 일정이 우선 표시됩니다.
+          {t("calendar.myPrimaryGame")}{" "}
+          <span className="font-medium text-foreground">{GAME_LABEL[primaryGame]}</span>{" "}
+          {t("calendar.primaryPriorityDesc")}
         </p>
       )}
 
@@ -200,8 +220,8 @@ function CalendarPage() {
         <div className="mt-6">
           <EmptyState
             icon={CalendarDays}
-            title="등록된 일정이 없어요"
-            description="첫 일정을 등록해 주세요."
+            title={t("calendar.emptyTitle")}
+            description={t("calendar.emptyDesc")}
           />
         </div>
       ) : (
@@ -237,14 +257,15 @@ function CalendarPage() {
                           </div>
                           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                             <span>
-                              {new Date(ev.starts_at).toLocaleTimeString("ko-KR", {
+                              {new Date(ev.starts_at).toLocaleTimeString(dateLocale, {
                                 hour: "2-digit",
                                 minute: "2-digit",
                               })}
                             </span>
                             {ev.early_release_at && (
                               <span className="rounded bg-amber-500/10 px-1.5 py-0.5 text-amber-600 dark:text-amber-400">
-                                선행 {new Date(ev.early_release_at).toLocaleDateString("ko-KR")}
+                                {t("calendar.earlyRelease")}{" "}
+                                {new Date(ev.early_release_at).toLocaleDateString(dateLocale)}
                               </span>
                             )}
                             {ev.location && (
@@ -262,7 +283,7 @@ function CalendarPage() {
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <ExternalLink className="h-3 w-3" />
-                                {ev.kind === "release" ? "공식" : "상세"}
+                                {ev.kind === "release" ? t("calendar.official") : t("calendar.detail")}
                               </a>
                             )}
                           </div>
@@ -277,7 +298,7 @@ function CalendarPage() {
                             <button
                               onClick={() => toggleFav(ev.id, isFav)}
                               className={isFav ? "text-amber-500" : "text-muted-foreground hover:text-amber-500"}
-                              title={isFav ? "즐겨찾기 해제" : "즐겨찾기"}
+                              title={isFav ? t("calendar.removeFav") : t("calendar.addFav")}
                             >
                               <Star className="h-4 w-4" fill={isFav ? "currentColor" : "none"} />
                             </button>
@@ -285,14 +306,14 @@ function CalendarPage() {
                           {user?.id === ev.user_id && (
                             <button
                               onClick={async () => {
-                                if (!confirm("일정을 삭제할까요?")) return;
+                                if (!confirm(t("calendar.confirmDelete"))) return;
                                 const { error } = await supabase
                                   .from("events")
                                   .delete()
                                   .eq("id", ev.id);
                                 if (error) toast.error(error.message);
                                 else {
-                                  toast.success("삭제됨");
+                                  toast.success(t("calendar.deleteSuccess"));
                                   refetch();
                                 }
                               }}
@@ -317,6 +338,7 @@ function CalendarPage() {
 
 function NewEventDialog({ onCreated }: { onCreated: () => void }) {
   const { user } = useAuth();
+  const { t } = useI18n();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
@@ -337,7 +359,7 @@ function NewEventDialog({ onCreated }: { onCreated: () => void }) {
     e.preventDefault();
     if (!user) return;
     if (!form.title.trim() || !form.starts_at) {
-      toast.error("제목과 시작일은 필수입니다");
+      toast.error(t("calendar.toastRequiredFields"));
       return;
     }
     const { error } = await supabase.from("events").insert({
@@ -360,7 +382,7 @@ function NewEventDialog({ onCreated }: { onCreated: () => void }) {
       toast.error(error.message);
       return;
     }
-    toast.success("등록됨");
+    toast.success(t("calendar.addSuccess"));
     setOpen(false);
     setForm({
       kind: "tournament",
@@ -387,44 +409,44 @@ function NewEventDialog({ onCreated }: { onCreated: () => void }) {
       <DialogTrigger asChild>
         <Button size="sm">
           <Plus className="mr-1 h-4 w-4" />
-          일정 등록
+          {t("calendar.addEvent")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>일정 등록</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("calendar.addEvent")}</DialogTitle></DialogHeader>
         <form onSubmit={submit} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <Label>종류</Label>
+              <Label>{t("calendar.fieldKind")}</Label>
               <Select
                 value={form.kind}
                 onValueChange={(v) => setForm({ ...form, kind: v as EventKind })}
               >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="tournament">대회</SelectItem>
-                  <SelectItem value="release">상품 발매</SelectItem>
-                  <SelectItem value="match">매칭 일정</SelectItem>
+                  <SelectItem value="tournament">{t("calendar.kindTournament")}</SelectItem>
+                  <SelectItem value="release">{t("calendar.kindRelease")}</SelectItem>
+                  <SelectItem value="match">{t("calendar.kindMatch")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label>게임</Label>
+              <Label>{t("calendar.fieldGame")}</Label>
               <Select
                 value={form.game}
                 onValueChange={(v) => setForm({ ...form, game: v as Game })}
               >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="optcg">원피스</SelectItem>
-                  <SelectItem value="ptcg">포켓몬</SelectItem>
-                  <SelectItem value="dtcg">디지몬</SelectItem>
+                  <SelectItem value="optcg">{t("matches.optcg")}</SelectItem>
+                  <SelectItem value="ptcg">{t("matches.ptcg")}</SelectItem>
+                  <SelectItem value="dtcg">{t("matches.dtcg")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>{isRelease ? "상품명" : "제목"}</Label>
+            <Label>{isRelease ? t("calendar.fieldNameProduct") : t("calendar.fieldNameTitle")}</Label>
             <Input
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
@@ -433,7 +455,7 @@ function NewEventDialog({ onCreated }: { onCreated: () => void }) {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <Label>{isRelease ? "발매일" : "시작"}</Label>
+              <Label>{isRelease ? t("calendar.fieldDateRelease") : t("calendar.fieldDateStart")}</Label>
               <Input
                 type="datetime-local"
                 value={form.starts_at}
@@ -442,7 +464,7 @@ function NewEventDialog({ onCreated }: { onCreated: () => void }) {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label>종료 (선택)</Label>
+              <Label>{t("calendar.fieldDateEnd")}</Label>
               <Input
                 type="datetime-local"
                 value={form.ends_at}
@@ -458,11 +480,11 @@ function NewEventDialog({ onCreated }: { onCreated: () => void }) {
                   checked={form.has_early}
                   onChange={(e) => setForm({ ...form, has_early: e.target.checked })}
                 />
-                선행 발매가 있어요
+                {t("calendar.hasEarlyRelease")}
               </label>
               {form.has_early && (
                 <div className="flex flex-col gap-1.5">
-                  <Label>선행 발매일</Label>
+                  <Label>{t("calendar.fieldDateEarly")}</Label>
                   <Input
                     type="datetime-local"
                     value={form.early_release_at}
@@ -471,7 +493,7 @@ function NewEventDialog({ onCreated }: { onCreated: () => void }) {
                 </div>
               )}
               <div className="flex flex-col gap-1.5">
-                <Label>공식 홈페이지 URL</Label>
+                <Label>{t("calendar.officialUrl")}</Label>
                 <Input
                   type="url"
                   value={form.product_url}
@@ -483,17 +505,16 @@ function NewEventDialog({ onCreated }: { onCreated: () => void }) {
           )}
           {!isRelease && (
             <div className="flex flex-col gap-1.5">
-              <Label>{isMatch ? "장소 / 매장" : "장소"}</Label>
+              <Label>{isMatch ? t("calendar.fieldLocationShop") : t("calendar.fieldLocation")}</Label>
               <Input
                 value={form.location}
                 onChange={(e) => setForm({ ...form, location: e.target.value })}
-                placeholder="매장/지역"
               />
             </div>
           )}
           {!isRelease && (
             <div className="flex flex-col gap-1.5">
-              <Label>상세 URL</Label>
+              <Label>{t("calendar.detailUrl")}</Label>
               <Input
                 type="url"
                 value={form.url}
@@ -503,19 +524,19 @@ function NewEventDialog({ onCreated }: { onCreated: () => void }) {
             </div>
           )}
           <div className="flex flex-col gap-1.5">
-            <Label>비고</Label>
+            <Label>{t("calendar.fieldNotes")}</Label>
             <Textarea
               rows={3}
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              placeholder={isMatch ? "상대, 포맷 등" : "포맷, 참가비, 인원 등"}
+              placeholder={isMatch ? t("calendar.placeholderNotesMatch") : t("calendar.placeholderNotesNormal")}
             />
           </div>
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
-              취소
+              {t("common.cancel")}
             </Button>
-            <Button type="submit">등록</Button>
+            <Button type="submit">{t("calendar.btnRegister")}</Button>
           </div>
         </form>
       </DialogContent>

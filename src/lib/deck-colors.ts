@@ -42,6 +42,27 @@ export const COLORS_BY_GAME: Record<Game, ColorOption[]> = {
   ],
 };
 
+const COLOR_TRANSLATIONS: Record<string, Record<string, string>> = {
+  red: { ko: "적", en: "Red", ja: "赤" },
+  blue: { ko: "청", en: "Blue", ja: "青" },
+  yellow: { ko: "황", en: "Yellow", ja: "黄" },
+  green: { ko: "녹", en: "Green", ja: "緑" },
+  black: { ko: "흑", en: "Black", ja: "黒" },
+  purple: { ko: "자", en: "Purple", ja: "紫" },
+  white: { ko: "백", en: "White", ja: "白" },
+  fire: { ko: "불", en: "Fire", ja: "炎" },
+  water: { ko: "물", en: "Water", ja: "水" },
+  grass: { ko: "풀", en: "Grass", ja: "草" },
+  lightning: { ko: "전기", en: "Lightning", ja: "雷" },
+  psychic: { ko: "초", en: "Psychic", ja: "超" },
+  fighting: { ko: "격투", en: "Fighting", ja: "闘" },
+  darkness: { ko: "악", en: "Darkness", ja: "悪" },
+  metal: { ko: "강철", en: "Metal", ja: "鋼" },
+  esper: { ko: "에스퍼", en: "Psychic (Esper)", ja: "エスパー" },
+  dragon: { ko: "드래곤", en: "Dragon", ja: "ドラゴン" },
+  normal: { ko: "노멀", en: "Normal", ja: "ノーマル" },
+};
+
 // Games that support a "리더" concept
 export const HAS_LEADER: Record<Game, boolean> = {
   optcg: true,
@@ -56,7 +77,11 @@ export const REQUIRES_MULTI_COLOR: Record<Game, boolean> = {
   dtcg: false,
 };
 
-export function colorLabel(game: Game, id: string): string {
+export function colorLabel(game: Game, id: string, lang: string = "ko"): string {
+  const trans = COLOR_TRANSLATIONS[id];
+  if (trans) {
+    return trans[lang] || trans["ko"] || id;
+  }
   return COLORS_BY_GAME[game].find((c) => c.id === id)?.label ?? id;
 }
 

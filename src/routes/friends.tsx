@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { OpponentSearch, type FoundUser } from "@/components/opponent-search";
 import { toast } from "sonner";
+import { useI18n } from "@/i18n/language-context";
 
 type Row = {
   id: string;
@@ -21,18 +22,35 @@ type Row = {
 };
 
 export const Route = createFileRoute("/friends")({
-  head: () => ({
-    meta: [
-      { title: "친구 — DuelNight" },
-      { name: "description", content: "친구 요청과 친구 목록을 관리하세요." },
-    ],
-  }),
+  head: () => {
+    let locale = "ko";
+    if (typeof window !== "undefined") {
+      locale = localStorage.getItem("duelnight.i18n.locale") || "ko";
+    }
+    const titles: Record<string, string> = {
+      ko: "친구 — DuelNight",
+      en: "Friends — DuelNight",
+      ja: "フレンド — DuelNight",
+    };
+    const descs: Record<string, string> = {
+      ko: "친구 요청과 친구 목록을 관리하세요.",
+      en: "Manage friend requests and your friends list.",
+      ja: "フレンドリクエストとフレンドリストを管理しましょう。",
+    };
+    return {
+      meta: [
+        { title: titles[locale] || titles.ko },
+        { name: "description", content: descs[locale] || descs.ko },
+      ],
+    };
+  },
   component: FriendsPage,
 });
 
 function FriendsPage() {
   const { user, loading } = useAuth();
   const qc = useQueryClient();
+  const { t } = useI18n();
   const [picked, setPicked] = useState<FoundUser | null>(null);
 
   const { data: rows = [], refetch } = useQuery({
@@ -62,12 +80,12 @@ function FriendsPage() {
     },
   });
 
-  if (loading) return <div className="mx-auto max-w-4xl px-6 py-8 text-sm text-muted-foreground">불러오는 중...</div>;
+  if (loading) return <div className="mx-auto max-w-4xl px-6 py-8 text-sm text-muted-foreground">{t("friends.loading")}</div>;
   if (!user) {
     return (
       <div className="mx-auto max-w-4xl px-6 py-8">
-        <PageHeader title="친구" description="로그인이 필요합니다" />
-        <Link to="/login" className="mt-4 inline-flex rounded-md bg-foreground px-4 py-2 text-sm text-background">로그인</Link>
+        <PageHeader title={t("friends.title")} description={t("friends.loginDesc")} />
+        <Link to="/login" className="mt-4 inline-flex rounded-md bg-foreground px-4 py-2 text-sm text-background">{t("friends.goLogin")}</Link>
       </div>
     );
   }
@@ -84,7 +102,7 @@ function FriendsPage() {
       status: "pending",
     });
     if (error) return toast.error(error.message);
-    toast.success("친구 요청을 보냈어요");
+    toast.success(t("friends.requestSent"));
     setPicked(null);
     qc.invalidateQueries({ queryKey: ["friendships"] });
     refetch();
@@ -93,7 +111,7 @@ function FriendsPage() {
   const accept = async (id: string) => {
     const { error } = await supabase.from("friendships").update({ status: "accepted" }).eq("id", id);
     if (error) return toast.error(error.message);
-    toast.success("수락됨");
+    toast.success(t("friends.accepted"));
     refetch();
   };
 
@@ -105,55 +123,55 @@ function FriendsPage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl px-6 py-8">
-      <PageHeader title="친구" description="친구를 추가하고 요청을 관리하세요" />
+      <PageHeader title={t("friends.title")} description={t("friends.desc")} />
 
       <section className="mt-6 rounded-lg border border-border bg-card p-4">
-        <h2 className="text-sm font-medium">친구 추가</h2>
+        <h2 className="text-sm font-medium">{t("friends.addFriend")}</h2>
         <div className="mt-3 flex flex-col gap-3 sm:flex-row">
           <div className="flex-1">
             <OpponentSearch selected={picked} onSelect={setPicked} onClear={() => setPicked(null)} />
           </div>
           <Button onClick={sendRequest} disabled={!picked || picked.friendship_status !== "none"}>
-            <UserPlus className="mr-1 h-4 w-4" /> 요청 보내기
+            <UserPlus className="mr-1 h-4 w-4" /> {t("friends.sendRequest")}
           </Button>
         </div>
         {picked && picked.friendship_status !== "none" && (
-          <p className="mt-2 text-xs text-muted-foreground">이미 친구이거나 대기중인 요청이 있습니다.</p>
+          <p className="mt-2 text-xs text-muted-foreground">{t("friends.alreadyFriend")}</p>
         )}
       </section>
 
-      <Section title={`받은 요청 (${incoming.length})`}>
+      <Section title={t("friends.incomingSection", { count: incoming.length })}>
         {incoming.length === 0 ? (
-          <Empty text="받은 요청이 없습니다" />
+          <Empty text={t("friends.noIncoming")} />
         ) : (
           incoming.map((r) => (
-            <UserRow key={r.id} other={r.other}>
-              <Button size="sm" onClick={() => accept(r.id)}><Check className="mr-1 h-3.5 w-3.5" />수락</Button>
+            <UserRow key={r.id} other={r.other} anonymous={t("friends.anonymous")}>
+              <Button size="sm" onClick={() => accept(r.id)}><Check className="mr-1 h-3.5 w-3.5" />{t("friends.accept")}</Button>
               <Button size="sm" variant="ghost" onClick={() => remove(r.id)}><X className="h-3.5 w-3.5" /></Button>
             </UserRow>
           ))
         )}
       </Section>
 
-      <Section title={`보낸 요청 (${outgoing.length})`}>
+      <Section title={t("friends.outgoingSection", { count: outgoing.length })}>
         {outgoing.length === 0 ? (
-          <Empty text="보낸 요청이 없습니다" />
+          <Empty text={t("friends.noOutgoing")} />
         ) : (
           outgoing.map((r) => (
-            <UserRow key={r.id} other={r.other}>
-              <span className="text-xs text-muted-foreground">대기중</span>
-              <Button size="sm" variant="ghost" onClick={() => remove(r.id)}>취소</Button>
+            <UserRow key={r.id} other={r.other} anonymous={t("friends.anonymous")}>
+              <span className="text-xs text-muted-foreground">{t("friends.pending")}</span>
+              <Button size="sm" variant="ghost" onClick={() => remove(r.id)}>{t("friends.cancel")}</Button>
             </UserRow>
           ))
         )}
       </Section>
 
-      <Section title={`친구 (${friends.length})`}>
+      <Section title={t("friends.friendsSection", { count: friends.length })}>
         {friends.length === 0 ? (
-          <EmptyState icon={Users} title="아직 친구가 없어요" description="위 검색에서 사용자를 찾아 요청을 보내세요." />
+          <EmptyState icon={Users} title={t("friends.noFriendsTitle")} description={t("friends.noFriendsDesc")} />
         ) : (
           friends.map((r) => (
-            <UserRow key={r.id} other={r.other}>
+            <UserRow key={r.id} other={r.other} anonymous={t("friends.anonymous")}>
               <Button size="sm" variant="ghost" onClick={() => remove(r.id)} className="text-destructive hover:text-destructive">
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
@@ -178,7 +196,7 @@ function Empty({ text }: { text: string }) {
   return <p className="rounded-md border border-dashed border-border px-4 py-6 text-center text-xs text-muted-foreground">{text}</p>;
 }
 
-function UserRow({ other, children }: { other: Row["other"]; children: React.ReactNode }) {
+function UserRow({ other, children, anonymous }: { other: Row["other"]; children: React.ReactNode; anonymous: string }) {
   return (
     <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-card px-3 py-2">
       <div className="flex items-center gap-2 min-w-0">
@@ -187,7 +205,7 @@ function UserRow({ other, children }: { other: Row["other"]; children: React.Rea
           <AvatarFallback>{(other?.display_name ?? other?.username ?? "?").slice(0, 1)}</AvatarFallback>
         </Avatar>
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium">{other?.display_name ?? other?.username ?? "익명"}</p>
+          <p className="truncate text-sm font-medium">{other?.display_name ?? other?.username ?? anonymous}</p>
           {other?.username && <p className="truncate text-[11px] text-muted-foreground">@{other.username}</p>}
         </div>
       </div>

@@ -12,22 +12,14 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { Database } from "@/integrations/supabase/types";
+import { useI18n } from "@/i18n/language-context";
+import { colorLabel } from "@/lib/deck-colors";
+import type { Game } from "@/lib/deck-colors";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"];
 type Illustration = Database["public"]["Tables"]["card_illustrations"]["Row"];
 
 const SITE = "https://duelnight.app";
-const TYPE_LABEL: Record<string, string> = {
-  leader: "리더",
-  character: "캐릭터",
-  event: "이벤트",
-  stage: "스테이지",
-  don: "DON!!",
-};
-const COLOR_LABEL: Record<string, string> = {
-  red: "적", green: "녹", blue: "청",
-  purple: "자", black: "흑", yellow: "황",
-};
 
 export const Route = createFileRoute("/cards_/$code")({
   loader: async ({ params }) => {
@@ -42,11 +34,33 @@ export const Route = createFileRoute("/cards_/$code")({
   },
   head: ({ loaderData }) => {
     const c = loaderData?.card;
-    if (!c) return { meta: [{ title: "카드를 찾을 수 없음 — DuelNight" }] };
+    let locale = "ko";
+    if (typeof window !== "undefined") {
+      locale = localStorage.getItem("duelnight.i18n.locale") || "ko";
+    }
+
+    if (!c) {
+      const titlesNotFound: Record<string, string> = {
+        ko: "카드를 찾을 수 없음 — DuelNight",
+        en: "Card Not Found — DuelNight",
+        ja: "カードが見つかりません — DuelNight",
+      };
+      return { meta: [{ title: titlesNotFound[locale] || titlesNotFound.ko }] };
+    }
+
+    const typeLabels: Record<string, Record<string, string>> = {
+      leader: { ko: "리더", en: "Leader", ja: "リーダー" },
+      character: { ko: "캐릭터", en: "Character", ja: "キャラクター" },
+      event: { ko: "이벤트", en: "Event", ja: "イベント" },
+      stage: { ko: "스테이지", en: "Stage", ja: "ステージ" },
+      don: { ko: "DON!!", en: "DON!!", ja: "DON!!" },
+    };
+
+    const typeLabel = typeLabels[c.type]?.[locale] || typeLabels[c.type]?.ko || c.type;
     const title = `${c.name} (${c.code}) — DuelNight`;
     const desc =
       (c.effect?.replace(/\s+/g, " ").slice(0, 150) ??
-        `${TYPE_LABEL[c.type] ?? c.type} · ${c.set_code}`) +
+        `${typeLabel} · ${c.set_code}`) +
       ` · ${c.set_code}`;
     const url = `${SITE}/cards/${encodeURIComponent(c.code)}`;
     const ogImage = normalizeImageUrl(c.image_url) ?? undefined;
@@ -79,7 +93,7 @@ export const Route = createFileRoute("/cards_/$code")({
             sku: c.code,
             image: ogImage,
             description: c.effect ?? undefined,
-            category: TYPE_LABEL[c.type] ?? c.type,
+            category: typeLabel,
             brand: { "@type": "Brand", name: "One Piece TCG" },
           }),
         },
@@ -87,20 +101,25 @@ export const Route = createFileRoute("/cards_/$code")({
     };
   },
   component: CardDetailPage,
-  notFoundComponent: () => (
-    <div className="mx-auto max-w-3xl px-6 py-16 text-center">
-      <h1 className="text-2xl font-semibold">카드를 찾을 수 없어요</h1>
-      <Link
-        to="/cards"
-        className="mt-4 inline-flex items-center gap-1 text-sm text-primary hover:underline"
-      >
-        <ArrowLeft className="h-4 w-4" /> 카드 DB로
-      </Link>
-    </div>
-  ),
+  notFoundComponent: () => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { t } = useI18n();
+    return (
+      <div className="mx-auto max-w-3xl px-6 py-16 text-center">
+        <h1 className="text-2xl font-semibold">{t("cards.cardNotFound")}</h1>
+        <Link
+          to="/cards"
+          className="mt-4 inline-flex items-center gap-1 text-sm text-primary hover:underline"
+        >
+          <ArrowLeft className="h-4 w-4" /> {t("cards.backToDb")}
+        </Link>
+      </div>
+    );
+  },
 });
 
 function CardDetailPage() {
+  const { t, language } = useI18n();
   const { card: loaderCard } = Route.useLoaderData();
   const [card, setCard] = useState<Card>(loaderCard);
   const [illusts, setIllusts] = useState<Illustration[]>([]);
@@ -110,6 +129,15 @@ function CardDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const { isAdmin } = useIsAdmin();
   const navigate = useNavigate();
+
+  const getCardTypeLabel = (type: string) => {
+    if (type === "leader") return t("cards.typeLeader");
+    if (type === "character") return t("cards.typeCharacter");
+    if (type === "event") return t("cards.typeEvent");
+    if (type === "stage") return t("cards.typeStage");
+    if (type === "don") return t("cards.typeDon");
+    return type;
+  };
 
   const refetch = async () => {
     const { data } = await supabase.from("cards").select("*").eq("code", card.code).maybeSingle();
@@ -124,10 +152,10 @@ function CardDetailPage() {
     try {
       const { error } = await supabase.from("cards").delete().eq("code", card.code);
       if (error) throw error;
-      toast.success("카드 삭제 완료");
+      toast.success(t("cards.deleteSuccess"));
       navigate({ to: "/cards" });
     } catch (err) {
-      toast.error("삭제 실패: " + (err as Error).message);
+      toast.error(t("cards.deleteFailed") + (err as Error).message);
       setDeleting(false);
       setConfirmDelete(false);
     }
@@ -150,11 +178,11 @@ function CardDetailPage() {
 
   const gallery: { url: string; label: string | null }[] = [];
   const mainUrl = normalizeImageUrl(card.image_url);
-  if (mainUrl) gallery.push({ url: mainUrl, label: "기본" });
+  if (mainUrl) gallery.push({ url: mainUrl, label: t("cards.primaryIllust") });
   for (const il of illusts) {
     const u = normalizeImageUrl(il.image_url);
     if (!u || gallery.some((x) => x.url === u)) continue;
-    gallery.push({ url: u, label: il.variant_label || "얼터" });
+    gallery.push({ url: u, label: il.variant_label || t("cards.altIllust") });
   }
   const displayUrl = activeUrl ?? mainUrl ?? null;
 
@@ -165,12 +193,12 @@ function CardDetailPage() {
           to="/cards"
           className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="h-3.5 w-3.5" /> 카드 DB
+          <ArrowLeft className="h-3.5 w-3.5" /> {t("cards.title")}
         </Link>
         {isAdmin && (
           <div className="flex gap-1.5">
             <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
-              <Pencil className="h-3.5 w-3.5 mr-1" />편집
+              <Pencil className="h-3.5 w-3.5 mr-1" />{t("common.edit")}
             </Button>
             <Button
               size="sm"
@@ -178,7 +206,7 @@ function CardDetailPage() {
               className="text-destructive hover:text-destructive"
               onClick={() => setConfirmDelete(true)}
             >
-              <Trash2 className="h-3.5 w-3.5 mr-1" />삭제
+              <Trash2 className="h-3.5 w-3.5 mr-1" />{t("common.delete")}
             </Button>
           </div>
         )}
@@ -227,38 +255,38 @@ function CardDetailPage() {
             <p className="text-xs text-muted-foreground">{card.code}</p>
             {card.status === "pending" && (
               <span className="rounded-md bg-yellow-500/15 px-2 py-0.5 text-[10px] font-semibold text-yellow-600 dark:text-yellow-400">
-                검수 중
+                {t("cards.statusPending")}
               </span>
             )}
             {card.status === "rejected" && (
               <span className="rounded-md bg-destructive/15 px-2 py-0.5 text-[10px] font-semibold text-destructive">
-                반려됨
+                {t("cards.statusRejected")}
               </span>
             )}
           </div>
           <h1 className="mt-1 text-2xl font-semibold">{card.name}</h1>
           {card.status === "rejected" && card.review_note && (
             <p className="mt-2 rounded-md border border-destructive/30 bg-destructive/5 p-2 text-xs text-destructive">
-              반려 사유: {card.review_note}
+              {t("cards.rejectReason").replace("{reason}", card.review_note)}
             </p>
           )}
           <div className="mt-3 flex flex-wrap gap-1.5">
-            <Tag>{TYPE_LABEL[card.type] ?? card.type}</Tag>
+            <Tag>{getCardTypeLabel(card.type)}</Tag>
             {card.colors.map((c: string) => (
-              <Tag key={c}>{COLOR_LABEL[c] ?? c}</Tag>
+              <Tag key={c}>{colorLabel(card.game as Game, c, language)}</Tag>
             ))}
             {card.rarity && <Tag>{card.rarity}</Tag>}
             <Tag>{card.set_code}</Tag>
           </div>
           <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-            <Stat label={card.type === "leader" ? "라이프" : "코스트"} value={card.cost} />
-            <Stat label="파워" value={card.power?.toLocaleString()} />
-            <Stat label="카운터" value={card.counter?.toLocaleString()} />
-            <Stat label="속성" value={card.attribute} />
+            <Stat label={card.type === "leader" ? t("cards.life") : t("cards.cost")} value={card.cost} />
+            <Stat label={t("cards.power")} value={card.power?.toLocaleString()} />
+            <Stat label={t("cards.counter")} value={card.counter?.toLocaleString()} />
+            <Stat label={t("cards.attribute")} value={card.attribute} />
           </dl>
           {card.traits && card.traits.length > 0 && (
             <div className="mt-4">
-              <p className="text-xs font-semibold text-muted-foreground">특징</p>
+              <p className="text-xs font-semibold text-muted-foreground">{t("cards.traits")}</p>
               <div className="mt-1 flex flex-wrap gap-1">
                 {card.traits.map((t: string) => (
                   <Tag key={t}>{t}</Tag>
@@ -268,7 +296,7 @@ function CardDetailPage() {
           )}
           {card.effect && (
             <div className="mt-4">
-              <p className="text-xs font-semibold text-muted-foreground">효과</p>
+              <p className="text-xs font-semibold text-muted-foreground">{t("cards.effect")}</p>
               <p className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-3 text-sm leading-relaxed">
                 {card.effect}
               </p>
@@ -288,19 +316,21 @@ function CardDetailPage() {
       <AlertDialog open={confirmDelete} onOpenChange={(o) => { if (!o && !deleting) setConfirmDelete(false); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>카드를 삭제할까요?</AlertDialogTitle>
+            <AlertDialogTitle>{t("cards.deleteConfirmTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {card.code} · {card.name} 카드를 영구 삭제합니다. 이 작업은 되돌릴 수 없습니다.
+              {t("cards.deleteConfirmDesc")
+                .replace("{code}", card.code)
+                .replace("{name}", card.name)}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>취소</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting}>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={handleDelete}
               disabled={deleting}
             >
-              {deleting ? "삭제 중…" : "삭제"}
+              {deleting ? t("cards.deleting") : t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

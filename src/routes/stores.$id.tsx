@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { GAME_LABEL } from "@/lib/match-stats";
 import type { Database } from "@/integrations/supabase/types";
+import { useI18n } from "@/i18n/language-context";
 
 type Store = Database["public"]["Tables"]["stores"]["Row"];
 
@@ -24,15 +25,36 @@ export const Route = createFileRoute("/stores/$id")({
     return { store: data as Store };
   },
   head: ({ loaderData }) => {
+    let locale = "ko";
+    if (typeof window !== "undefined") {
+      locale = localStorage.getItem("duelnight.i18n.locale") || "ko";
+    }
     const s = loaderData?.store;
-    if (!s) return { meta: [{ title: "매장을 찾을 수 없음 — DuelNight" }] };
-    const title = `${s.name} — 매장 · DuelNight`;
+    if (!s) {
+      const notFoundTitles: Record<string, string> = {
+        ko: "매장을 찾을 수 없음 — DuelNight",
+        en: "Store Not Found — DuelNight",
+        ja: "店舗が見つかりません — DuelNight",
+      };
+      return { meta: [{ title: notFoundTitles[locale] || notFoundTitles.ko }] };
+    }
+    const titleSuffixes: Record<string, string> = {
+      ko: "매장 · DuelNight",
+      en: "Store · DuelNight",
+      ja: "店舗 · DuelNight",
+    };
+    const defaultDescs: Record<string, string> = {
+      ko: "TCG 매장 정보",
+      en: "TCG Store Information",
+      ja: "TCG店舗情報",
+    };
+    const title = `${s.name} — ${titleSuffixes[locale] || titleSuffixes.ko}`;
     const desc =
       [s.region, s.address, s.notes]
         .filter(Boolean)
         .join(" · ")
         .replace(/\s+/g, " ")
-        .slice(0, 150) || "TCG 매장 정보";
+        .slice(0, 150) || defaultDescs[locale] || defaultDescs.ko;
     const url = `${SITE}/stores/${s.id}`;
     return {
       meta: [
@@ -63,23 +85,27 @@ export const Route = createFileRoute("/stores/$id")({
     };
   },
   component: StoreDetailPage,
-  notFoundComponent: () => (
-    <div className="mx-auto max-w-3xl px-6 py-16 text-center">
-      <h1 className="text-2xl font-semibold">매장을 찾을 수 없어요</h1>
-      <Link
-        to="/stores"
-        className="mt-4 inline-flex items-center gap-1 text-sm text-primary hover:underline"
-      >
-        <ArrowLeft className="h-4 w-4" /> 매장 목록으로
-      </Link>
-    </div>
-  ),
+  notFoundComponent: () => {
+    const { t } = useI18n();
+    return (
+      <div className="mx-auto max-w-3xl px-6 py-16 text-center">
+        <h1 className="text-2xl font-semibold">{t("storeDetail.notFoundTitle")}</h1>
+        <Link
+          to="/stores"
+          className="mt-4 inline-flex items-center gap-1 text-sm text-primary hover:underline"
+        >
+          <ArrowLeft className="h-4 w-4" /> {t("storeDetail.backToList")}
+        </Link>
+      </div>
+    );
+  },
 });
 
 function StoreDetailPage() {
   const { store } = Route.useLoaderData();
   const { user } = useAuth();
   const qc = useQueryClient();
+  const { t } = useI18n();
 
   const { data: isFav = false } = useQuery({
     queryKey: ["store-fav", store.id, user?.id],
@@ -97,7 +123,7 @@ function StoreDetailPage() {
 
   const toggleFav = async () => {
     if (!user) {
-      toast.error("로그인이 필요합니다");
+      toast.error(t("storeDetail.loginRequiredToast"));
       return;
     }
     if (isFav) {
@@ -127,7 +153,7 @@ function StoreDetailPage() {
         to="/stores"
         className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="h-3.5 w-3.5" /> 매장
+        <ArrowLeft className="h-3.5 w-3.5" /> {t("storeDetail.backLabel")}
       </Link>
       <div className="mt-4 rounded-lg border border-border bg-card p-6">
         <div className="flex items-start justify-between gap-3">
@@ -147,17 +173,17 @@ function StoreDetailPage() {
             className="shrink-0"
           >
             <Star className={`mr-1 h-4 w-4 ${isFav ? "fill-current" : ""}`} />
-            {isFav ? "즐겨찾기됨" : "즐겨찾기"}
+            {isFav ? t("storeDetail.favActive") : t("storeDetail.favInactive")}
           </Button>
         </div>
         {store.address && (
           <p className="mt-2 text-sm text-foreground/90">{store.address}</p>
         )}
         <div className="mt-3">
-          <p className="text-xs font-medium text-muted-foreground">취급 제품</p>
+          <p className="text-xs font-medium text-muted-foreground">{t("storeDetail.gamesLabel")}</p>
           <div className="mt-1 flex flex-wrap gap-1">
             {store.games.length === 0 ? (
-              <span className="text-xs text-muted-foreground">정보 없음</span>
+              <span className="text-xs text-muted-foreground">{t("storeDetail.noGames")}</span>
             ) : (
               store.games.map((g: Store["games"][number]) => (
                 <span
@@ -178,7 +204,7 @@ function StoreDetailPage() {
             className="inline-flex items-center gap-1 text-foreground hover:underline"
           >
             <MapIcon className="h-3.5 w-3.5" />
-            지도에서 보기
+            {t("storeDetail.viewMap")}
           </a>
           {store.phone && (
             <a
@@ -197,7 +223,7 @@ function StoreDetailPage() {
               className="inline-flex items-center gap-1 text-foreground hover:underline"
             >
               <ExternalLink className="h-3.5 w-3.5" />
-              웹사이트
+              {t("storeDetail.website")}
             </a>
           )}
         </div>
