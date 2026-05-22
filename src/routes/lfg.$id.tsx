@@ -48,7 +48,7 @@ type ChatMsg = {
   created_at: string;
 };
 
-const SITE = "https://tcg-hub.lovable.app";
+const SITE = "https://duelnight.app";
 
 function formatDateTime(value: string) {
   return new Intl.DateTimeFormat("ko-KR", {
@@ -84,8 +84,8 @@ export const Route = createFileRoute("/lfg/$id")({
   },
   head: ({ loaderData }) => {
     const p = loaderData?.post;
-    if (!p) return { meta: [{ title: "글을 찾을 수 없음 — 덱로그" }] };
-    const title = `${p.title} — LFG · 덱로그`;
+    if (!p) return { meta: [{ title: "글을 찾을 수 없음 — DuelNight" }] };
+    const title = `${p.title} — LFG · DuelNight`;
     const desc = (p.body ?? `${GAME_LABEL[p.game]} · ${p.location ?? "지역 미지정"}`)
       .replace(/\s+/g, " ")
       .slice(0, 150);

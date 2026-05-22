@@ -28,7 +28,7 @@ const emailSchema = z
 export const Route = createFileRoute("/admin/")({
   head: () => ({
     meta: [
-      { title: "관리자 — 덱로그" },
+      { title: "관리자 — DuelNight" },
       { name: "description", content: "관리자 권한 부여 및 관리." },
     ],
   }),

@@ -18,7 +18,7 @@ type Deck = Tables<"decks">;
 export const Route = createFileRoute("/decks/")({
   head: () => ({
     meta: [
-      { title: "덱 빌더 — 덱로그" },
+      { title: "덱 빌더 — DuelNight" },
       { name: "description", content: "덱 레시피 저장 및 관리." },
     ],
   }),

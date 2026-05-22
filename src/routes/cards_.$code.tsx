@@ -16,7 +16,7 @@ import type { Database } from "@/integrations/supabase/types";
 type Card = Database["public"]["Tables"]["cards"]["Row"];
 type Illustration = Database["public"]["Tables"]["card_illustrations"]["Row"];
 
-const SITE = "https://tcg-hub.lovable.app";
+const SITE = "https://duelnight.app";
 const TYPE_LABEL: Record<string, string> = {
   leader: "리더",
   character: "캐릭터",
@@ -42,8 +42,8 @@ export const Route = createFileRoute("/cards_/$code")({
   },
   head: ({ loaderData }) => {
     const c = loaderData?.card;
-    if (!c) return { meta: [{ title: "카드를 찾을 수 없음 — 덱로그" }] };
-    const title = `${c.name} (${c.code}) — 덱로그`;
+    if (!c) return { meta: [{ title: "카드를 찾을 수 없음 — DuelNight" }] };
+    const title = `${c.name} (${c.code}) — DuelNight`;
     const desc =
       (c.effect?.replace(/\s+/g, " ").slice(0, 150) ??
         `${TYPE_LABEL[c.type] ?? c.type} · ${c.set_code}`) +

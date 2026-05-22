@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 
-const BASE_URL = "https://tcg-hub.lovable.app";
+const BASE_URL = "https://duelnight.app";
 
 interface SitemapEntry {
   path: string;

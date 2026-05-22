@@ -72,7 +72,7 @@ const PERIOD_DAYS: Record<Period, number | null> = {
 export const Route = createFileRoute("/matches")({
   head: () => ({
     meta: [
-      { title: "전적 기록 — 덱로그" },
+      { title: "전적 기록 — DuelNight" },
       {
         name: "description",
         content: "대전 결과를 기록하고 덱·선후공·매치업 통계를 자동 계산.",
