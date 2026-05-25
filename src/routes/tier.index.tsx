@@ -19,16 +19,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Database } from "@/integrations/supabase/types";
+import { useI18n } from "@/i18n/language-context";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"];
 type TierList = Database["public"]["Tables"]["tier_lists"]["Row"];
 type Game = Database["public"]["Enums"]["tcg_game"];
-
-const GAME_OPTIONS: { value: Game; label: string }[] = [
-  { value: "optcg", label: "원피스" },
-  { value: "ptcg", label: "포켓몬" },
-  { value: "dtcg", label: "디지몬" },
-];
 
 const TIERS = ["S", "A", "B", "C", "D"] as const;
 type Tier = (typeof TIERS)[number] | "pool";
@@ -48,19 +43,37 @@ const emptyPlacements = (): Placements => ({
 });
 
 export const Route = createFileRoute("/tier/")({
-  head: () => ({
-    meta: [
-      { title: "티어 메이킹 — DuelNight" },
-      { name: "description", content: "리더 카드를 S/A/B/C/D 티어로 배치하고 공유하세요." },
-    ],
-  }),
+  head: () => {
+    let locale = "ko";
+    if (typeof window !== "undefined") {
+      locale = localStorage.getItem("duelnight.i18n.locale") || "ko";
+    }
+    const titles: Record<string, string> = {
+      ko: "티어 메이킹 — DuelNight",
+      en: "Tier Maker — DuelNight",
+      ja: "ティアメーカー — DuelNight",
+    };
+    const descs: Record<string, string> = {
+      ko: "리더 카드를 S/A/B/C/D 티어로 배치하고 공유하세요.",
+      en: "Place leaders in S/A/B/C/D tiers and share your list.",
+      ja: "リーダーカードをS/A/B/C/Dティアに配置して共有しましょう。",
+    };
+    return {
+      meta: [
+        { title: titles[locale] || titles.ko },
+        { name: "description", content: descs[locale] || descs.ko },
+      ],
+    };
+  },
   component: TierPage,
 });
 
 function TierPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const [title, setTitle] = useState("내 티어표");
+  const { t, language } = useI18n();
+
+  const [title, setTitle] = useState(t("tier.placeholderTitle"));
   const [isPublic, setIsPublic] = useState(true);
   const [placements, setPlacements] = useState<Placements>(emptyPlacements());
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -69,11 +82,18 @@ function TierPage() {
   const [game, setGame] = useState<Game>("optcg");
   const [setCode, setSetCode] = useState<string>("all");
 
+  const dateLocale = language === "ja" ? "ja-JP" : language === "en" ? "en-US" : "ko-KR";
+
+  const gameOptions = useMemo(() => [
+    { value: "optcg" as Game, label: t("matches.optcg") },
+    { value: "ptcg" as Game, label: t("matches.ptcg") },
+    { value: "dtcg" as Game, label: t("matches.dtcg") },
+  ], [t]);
+
   const { data: leaders = [] } = useQuery({
     queryKey: ["tier-leaders", game],
     queryFn: async () => {
       let q = supabase.from("cards").select("*").eq("game", game);
-      // 원피스는 리더 카드만, 그 외 게임은 모든 카드 후보
       if (game === "optcg") q = q.eq("type", "leader");
       const { data, error } = await q.order("code", { ascending: true });
       if (error) throw error;
@@ -87,7 +107,6 @@ function TierPage() {
     return [...set].sort();
   }, [leaders]);
 
-  // setCode가 현재 game에 없으면 리셋
   useEffect(() => {
     if (setCode !== "all" && !setOptions.includes(setCode)) {
       setSetCode("all");
@@ -154,7 +173,7 @@ function TierPage() {
 
   const reset = () => {
     setEditingId(null);
-    setTitle("내 티어표");
+    setTitle(t("tier.placeholderTitle"));
     setIsPublic(true);
     setPlacements(emptyPlacements());
     setSetCode("all");
@@ -178,8 +197,8 @@ function TierPage() {
   };
 
   const save = async () => {
-    if (!user) return toast.error("로그인이 필요합니다");
-    if (!title.trim()) return toast.error("제목을 입력하세요");
+    if (!user) return toast.error(t("tier.loginRequired"));
+    if (!title.trim()) return toast.error(t("tier.titleRequired"));
     const payload = {
       user_id: user.id,
       title: title.trim(),
@@ -193,7 +212,7 @@ function TierPage() {
         .update(payload)
         .eq("id", editingId);
       if (error) return toast.error(error.message);
-      toast.success("티어표를 저장했어요");
+      toast.success(t("tier.saveSuccess"));
     } else {
       const { data, error } = await supabase
         .from("tier_lists")
@@ -202,34 +221,33 @@ function TierPage() {
         .single();
       if (error) return toast.error(error.message);
       setEditingId(data.id);
-      toast.success("티어표를 저장했어요");
+      toast.success(t("tier.saveSuccess"));
     }
     qc.invalidateQueries({ queryKey: ["tier-lists-mine"] });
     qc.invalidateQueries({ queryKey: ["tier-lists-public"] });
   };
 
   const remove = async (id: string) => {
-    if (!confirm("이 티어표를 삭제할까요?")) return;
+    if (!confirm(t("tier.deleteConfirm"))) return;
     const { error } = await supabase.from("tier_lists").delete().eq("id", id);
     if (error) return toast.error(error.message);
     if (id === editingId) reset();
     qc.invalidateQueries({ queryKey: ["tier-lists-mine"] });
     qc.invalidateQueries({ queryKey: ["tier-lists-public"] });
-    toast.success("삭제했어요");
+    toast.success(t("tier.deleteSuccess"));
   };
 
   const share = async () => {
-    if (!editingId) return toast.error("먼저 저장한 뒤 공유하세요");
+    if (!editingId) return toast.error(t("tier.shareFirstNote"));
     const url = `${window.location.origin}/tier?id=${editingId}`;
     try {
       await navigator.clipboard.writeText(url);
-      toast.success("공유 링크를 복사했어요");
+      toast.success(t("tier.shareSuccess"));
     } catch {
       toast.message(url);
     }
   };
 
-  // ?id=... 로딩
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const id = params.get("id");
@@ -243,43 +261,42 @@ function TierPage() {
       if (error || !data) return;
       load(data as TierList);
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
-      <PageHeader title="티어 메이킹" description="리더를 드래그해 S/A/B/C/D 티어에 배치하세요">
+      <PageHeader title={t("tier.title")} description={t("tier.desc")}>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={reset}>
-            <Plus className="mr-1 h-4 w-4" /> 새로 만들기
+            <Plus className="mr-1 h-4 w-4" /> {t("tier.newBtn")}
           </Button>
           <Button variant="outline" size="sm" onClick={share} disabled={!editingId}>
-            <Share2 className="mr-1 h-4 w-4" /> 공유
+            <Share2 className="mr-1 h-4 w-4" /> {t("tier.shareBtn")}
           </Button>
           <Button size="sm" onClick={save}>
-            <Save className="mr-1 h-4 w-4" /> 저장
+            <Save className="mr-1 h-4 w-4" /> {t("tier.saveBtn")}
           </Button>
         </div>
       </PageHeader>
 
       <div className="mt-6 grid gap-3 rounded-lg border border-border bg-card p-4 sm:grid-cols-[1fr_auto_auto_auto]">
         <div className="space-y-1">
-          <Label htmlFor="tier-title">제목</Label>
+          <Label htmlFor="tier-title">{t("tier.fieldTitle")}</Label>
           <Input
             id="tier-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="예: 2026년 5월 메타 티어"
+            placeholder={t("tier.placeholderTitle")}
           />
         </div>
         <div className="space-y-1">
-          <Label>게임</Label>
+          <Label>{t("tier.fieldGame")}</Label>
           <Select value={game} onValueChange={(v) => setGame(v as Game)}>
             <SelectTrigger className="w-[120px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {GAME_OPTIONS.map((g) => (
+              {gameOptions.map((g) => (
                 <SelectItem key={g.value} value={g.value}>
                   {g.label}
                 </SelectItem>
@@ -288,13 +305,13 @@ function TierPage() {
           </Select>
         </div>
         <div className="space-y-1">
-          <Label>세트</Label>
+          <Label>{t("tier.fieldSet")}</Label>
           <Select value={setCode} onValueChange={setSetCode}>
             <SelectTrigger className="w-[140px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">전체 세트</SelectItem>
+              <SelectItem value="all">{t("tier.allSets")}</SelectItem>
               {setOptions.map((s) => (
                 <SelectItem key={s} value={s}>
                   {s}
@@ -305,7 +322,7 @@ function TierPage() {
         </div>
         <div className="flex items-end gap-2">
           <Switch id="tier-public" checked={isPublic} onCheckedChange={setIsPublic} />
-          <Label htmlFor="tier-public">공개</Label>
+          <Label htmlFor="tier-public">{t("tier.fieldPublic")}</Label>
         </div>
       </div>
 
@@ -325,10 +342,10 @@ function TierPage() {
       </div>
 
       <section className="mt-8">
-        <h2 className="text-sm font-semibold">리더 풀 ({pool.length})</h2>
+        <h2 className="text-sm font-semibold">{t("tier.leaderPool", { count: pool.length })}</h2>
         {leaders.length === 0 ? (
           <p className="mt-2 text-sm text-muted-foreground">
-            등록된 리더 카드가 없습니다. 카드 DB에 리더 데이터를 추가하세요.
+            {t("tier.noLeaders")}
           </p>
         ) : (
           <div
@@ -357,9 +374,9 @@ function TierPage() {
 
       {user && (
         <section className="mt-8">
-          <h2 className="text-sm font-semibold">내 티어표</h2>
+          <h2 className="text-sm font-semibold">{t("tier.myTiers")}</h2>
           {myLists.length === 0 ? (
-            <p className="mt-2 text-sm text-muted-foreground">아직 저장한 티어표가 없어요.</p>
+            <p className="mt-2 text-sm text-muted-foreground">{t("tier.noMyTiers")}</p>
           ) : (
             <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
               {myLists.map((l) => (
@@ -373,20 +390,20 @@ function TierPage() {
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">{l.title}</p>
                       <p className="text-[11px] text-muted-foreground">
-                        {l.is_public ? "공개" : "비공개"} ·{" "}
-                        {new Date(l.updated_at).toLocaleDateString()}
+                        {l.is_public ? t("tier.fieldPublic") : t("common.private", "비공개")} ·{" "}
+                        {new Date(l.updated_at).toLocaleDateString(dateLocale)}
                       </p>
                     </div>
                     <div className="flex gap-1">
                       <Button size="sm" variant="outline" onClick={() => load(l)}>
-                        편집
+                        {t("common.edit")}
                       </Button>
                       <Button
                         size="icon"
                         variant="ghost"
                         className="h-8 w-8"
                         onClick={() => remove(l.id)}
-                        aria-label="삭제"
+                        aria-label={t("common.delete")}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -400,13 +417,13 @@ function TierPage() {
       )}
 
       <section className="mt-8">
-        <h2 className="text-sm font-semibold">최근 공개 티어표</h2>
+        <h2 className="text-sm font-semibold">{t("tier.publicTiers")}</h2>
         {publicLists.length === 0 ? (
           <div className="mt-3">
             <EmptyState
               icon={Trophy}
-              title="공개된 티어표가 없어요"
-              description="첫 번째 티어표를 만들어 공유해 보세요."
+              title={t("tier.noPublicTiers")}
+              description={t("tier.firstTierPlaceholder")}
             />
           </div>
         ) : (
@@ -415,14 +432,14 @@ function TierPage() {
               <li key={l.id} className="rounded-lg border border-border bg-card p-3">
                 <p className="truncate text-sm font-medium">{l.title}</p>
                 <p className="text-[11px] text-muted-foreground">
-                  {new Date(l.updated_at).toLocaleDateString()}
+                  {new Date(l.updated_at).toLocaleDateString(dateLocale)}
                 </p>
                 <Link
                   to="/tier/$id"
                   params={{ id: l.id }}
                   className="mt-2 inline-block text-xs text-primary hover:underline"
                 >
-                  자세히 보기 →
+                  {t("tier.viewDetail")}
                 </Link>
               </li>
             ))}
@@ -451,6 +468,8 @@ function TierRow({
   setDragging: (s: string | null) => void;
 }) {
   const [over, setOver] = useState(false);
+  const { t } = useI18n();
+
   return (
     <div
       className={`flex gap-2 rounded-lg border-2 ${TIER_COLOR[tier]} ${
@@ -484,7 +503,7 @@ function TierRow({
               onDragStart={() => setDragging(code)}
               onDragEnd={() => setDragging(null)}
               isDragging={dragging === code}
-              title="더블클릭으로 풀로 이동"
+              title={t("tier.doubleClickNote")}
             />
           );
         })}

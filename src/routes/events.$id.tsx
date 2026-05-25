@@ -8,16 +8,11 @@ import { downloadIcs } from "@/lib/ics";
 import { GAME_LABEL } from "@/lib/match-stats";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
+import { useI18n } from "@/i18n/language-context";
 
 type Event = Database["public"]["Tables"]["events"]["Row"];
 
 const SITE = "https://duelnight.app";
-
-const KIND_LABEL: Record<Database["public"]["Enums"]["event_kind"], string> = {
-  tournament: "대회",
-  release: "발매",
-  match: "매칭",
-};
 
 function googleCalendarUrl(ev: Event) {
   const fmt = (iso: string) =>
@@ -46,9 +41,25 @@ export const Route = createFileRoute("/events/$id")({
     return { event: data as Event };
   },
   head: ({ loaderData }) => {
+    let locale = "ko";
+    if (typeof window !== "undefined") {
+      locale = localStorage.getItem("duelnight.i18n.locale") || "ko";
+    }
     const e = loaderData?.event;
-    if (!e) return { meta: [{ title: "일정을 찾을 수 없음 — DuelNight" }] };
-    const title = `${e.title} — ${KIND_LABEL[e.kind]} · DuelNight`;
+    if (!e) {
+      const notFoundTitles: Record<string, string> = {
+        ko: "일정을 찾을 수 없음 — DuelNight",
+        en: "Event Not Found — DuelNight",
+        ja: "日程が見つかりません — DuelNight",
+      };
+      return { meta: [{ title: notFoundTitles[locale] || notFoundTitles.ko }] };
+    }
+    const kindLabels: Record<string, string> = {
+      tournament: locale === "ja" ? "大会" : locale === "en" ? "Tournament" : "대회",
+      release: locale === "ja" ? "発売" : locale === "en" ? "Release" : "발매",
+      match: locale === "ja" ? "マッチ" : locale === "en" ? "Match" : "매칭",
+    };
+    const title = `${e.title} — ${kindLabels[e.kind] || e.kind} · DuelNight`;
     const desc =
       (e.notes ?? `${GAME_LABEL[e.game]} · ${e.location ?? ""}`)
         .replace(/\s+/g, " ")
@@ -86,23 +97,35 @@ export const Route = createFileRoute("/events/$id")({
     };
   },
   component: EventDetailPage,
-  notFoundComponent: () => (
-    <div className="mx-auto max-w-3xl px-6 py-16 text-center">
-      <h1 className="text-2xl font-semibold">일정을 찾을 수 없어요</h1>
-      <Link
-        to="/calendar"
-        className="mt-4 inline-flex items-center gap-1 text-sm text-primary hover:underline"
-      >
-        <ArrowLeft className="h-4 w-4" /> 캘린더로
-      </Link>
-    </div>
-  ),
+  notFoundComponent: () => {
+    const { t } = useI18n();
+    return (
+      <div className="mx-auto max-w-3xl px-6 py-16 text-center">
+        <h1 className="text-2xl font-semibold">{t("eventsDetail.notFoundTitle")}</h1>
+        <Link
+          to="/calendar"
+          className="mt-4 inline-flex items-center gap-1 text-sm text-primary hover:underline"
+        >
+          <ArrowLeft className="h-4 w-4" /> {t("eventsDetail.backToCalendar")}
+        </Link>
+      </div>
+    );
+  },
 });
 
 function EventDetailPage() {
   const { event } = Route.useLoaderData() as { event: Event };
   const { user } = useAuth();
-  const fmt = (iso: string) => new Date(iso).toLocaleString("ko-KR");
+  const { t, language } = useI18n();
+
+  const dateLocale = language === "ja" ? "ja-JP" : language === "en" ? "en-US" : "ko-KR";
+  const fmt = (iso: string) => new Date(iso).toLocaleString(dateLocale);
+
+  const kindLabels: Record<string, string> = {
+    tournament: t("eventsDetail.kindTournament"),
+    release: t("eventsDetail.kindRelease"),
+    match: t("eventsDetail.kindMatch"),
+  };
 
   const { data: isFav = false, refetch: refetchFav } = useQuery({
     queryKey: ["event-fav", event.id, user?.id],
@@ -121,7 +144,7 @@ function EventDetailPage() {
 
   const toggleFav = async () => {
     if (!user) {
-      toast.error("로그인이 필요합니다");
+      toast.error(t("eventsDetail.loginRequired"));
       return;
     }
     if (isFav) {
@@ -130,12 +153,12 @@ function EventDetailPage() {
         .delete()
         .eq("user_id", user.id)
         .eq("event_id", event.id);
-      toast.success("즐겨찾기 해제");
+      toast.success(t("eventsDetail.favRemoveSuccess"));
     } else {
       await supabase
         .from("event_favorites")
         .insert({ user_id: user.id, event_id: event.id });
-      toast.success("즐겨찾기에 추가됨 · 변경 시 알림 받음");
+      toast.success(t("eventsDetail.favAddSuccess"));
     }
     refetchFav();
   };
@@ -146,7 +169,7 @@ function EventDetailPage() {
         to="/calendar"
         className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="h-3.5 w-3.5" /> 캘린더
+        <ArrowLeft className="h-3.5 w-3.5" /> {t("eventsDetail.backToCalendarLink")}
       </Link>
       <div className="mt-4 rounded-lg border border-border bg-card p-6">
         <div className="flex items-center gap-2">
@@ -154,7 +177,7 @@ function EventDetailPage() {
             {GAME_LABEL[event.game]}
           </span>
           <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-secondary-foreground">
-            {KIND_LABEL[event.kind]}
+            {kindLabels[event.kind] || event.kind}
           </span>
         </div>
         <h1 className="mt-2 text-2xl font-semibold">{event.title}</h1>
@@ -166,7 +189,7 @@ function EventDetailPage() {
           </span>
           {event.early_release_at && (
             <span className="rounded bg-amber-500/10 px-2 py-0.5 text-amber-600 dark:text-amber-400">
-              선행 발매: {fmt(event.early_release_at)}
+              {t("eventsDetail.earlyRelease", { date: fmt(event.early_release_at) })}
             </span>
           )}
           {event.location && (
@@ -183,7 +206,7 @@ function EventDetailPage() {
               className="inline-flex items-center gap-1 text-foreground hover:underline"
             >
               <ExternalLink className="h-3.5 w-3.5" />
-              {event.kind === "release" ? "공식 홈페이지" : "공식 링크"}
+              {event.kind === "release" ? t("eventsDetail.officialHomepage") : t("eventsDetail.officialLink")}
             </a>
           )}
         </div>
@@ -201,7 +224,7 @@ function EventDetailPage() {
             onClick={toggleFav}
           >
             <Star className="mr-1 h-4 w-4" fill={isFav ? "currentColor" : "none"} />
-            {isFav ? "즐겨찾기 해제" : "즐겨찾기 + 변경 알림"}
+            {isFav ? t("eventsDetail.favRemove") : t("eventsDetail.favAdd")}
           </Button>
           <Button size="sm" variant="outline" asChild>
             <a
@@ -210,7 +233,7 @@ function EventDetailPage() {
               rel="noopener noreferrer"
             >
               <CalIcon className="mr-1 h-4 w-4" />
-              Google 캘린더에 추가
+              {t("eventsDetail.addToGoogleCalendar")}
             </a>
           </Button>
           <Button
@@ -229,7 +252,7 @@ function EventDetailPage() {
             }
           >
             <Download className="mr-1 h-4 w-4" />
-            .ics 다운로드
+            {t("eventsDetail.downloadIcs")}
           </Button>
         </div>
       </div>

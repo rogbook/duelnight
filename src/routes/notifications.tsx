@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useI18n } from "@/i18n/language-context";
 
 type Notification = {
   id: string;
@@ -19,15 +20,29 @@ type Notification = {
 };
 
 export const Route = createFileRoute("/notifications")({
-  head: () => ({
-    meta: [{ title: "알림 — DuelNight" }],
-  }),
+  head: () => {
+    let locale = "ko";
+    if (typeof window !== "undefined") {
+      locale = localStorage.getItem("duelnight.i18n.locale") || "ko";
+    }
+    const titles: Record<string, string> = {
+      ko: "알림 — DuelNight",
+      en: "Notifications — DuelNight",
+      ja: "通知 — DuelNight",
+    };
+    return {
+      meta: [{ title: titles[locale] || titles.ko }],
+    };
+  },
   component: NotificationsPage,
 });
 
 function NotificationsPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const { t, language } = useI18n();
+
+  const dateLocale = language === "ja" ? "ja-JP" : language === "en" ? "en-US" : "ko-KR";
 
   const { data = [] } = useQuery({
     queryKey: ["notifications-all", user?.id],
@@ -46,9 +61,9 @@ function NotificationsPage() {
   if (!user) {
     return (
       <div className="mx-auto w-full max-w-3xl px-6 py-8">
-        <PageHeader title="알림" description="로그인이 필요합니다" />
+        <PageHeader title={t("notifications.title")} description={t("notifications.loginRequired")} />
         <Link to="/login" className="mt-4 inline-block text-sm text-primary hover:underline">
-          로그인하러 가기 →
+          {t("notifications.goToLogin")}
         </Link>
       </div>
     );
@@ -58,7 +73,7 @@ function NotificationsPage() {
     await supabase.from("notifications").update({ read_at: new Date().toISOString() }).is("read_at", null);
     qc.invalidateQueries({ queryKey: ["notifications"] });
     qc.invalidateQueries({ queryKey: ["notifications-all"] });
-    toast.success("모두 읽음 처리했어요");
+    toast.success(t("notifications.markAllReadSuccess"));
   };
 
   const remove = async (id: string) => {
@@ -69,15 +84,19 @@ function NotificationsPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">
-      <PageHeader title="알림" description="새 일정·즐겨찾기 변경 등 알림 모음">
+      <PageHeader title={t("notifications.title")} description={t("notifications.desc")}>
         <Button size="sm" variant="outline" onClick={markAllRead}>
-          <Check className="mr-1 h-4 w-4" /> 모두 읽음
+          <Check className="mr-1 h-4 w-4" /> {t("notifications.markAllReadBtn")}
         </Button>
       </PageHeader>
 
       {data.length === 0 ? (
         <div className="mt-6">
-          <EmptyState icon={Bell} title="알림이 없어요" description="새 일정이 등록되면 여기에 표시됩니다." />
+          <EmptyState
+            icon={Bell}
+            title={t("notifications.emptyTitle")}
+            description={t("notifications.emptyDesc")}
+          />
         </div>
       ) : (
         <ul className="mt-6 divide-y divide-border rounded-lg border border-border bg-card">
@@ -93,13 +112,13 @@ function NotificationsPage() {
                 )}
                 {n.body && <p className="mt-0.5 text-xs text-muted-foreground">{n.body}</p>}
                 <p className="mt-1 text-[10px] text-muted-foreground">
-                  {new Date(n.created_at).toLocaleString("ko-KR")}
+                  {new Date(n.created_at).toLocaleString(dateLocale)}
                 </p>
               </div>
               <button
                 onClick={() => remove(n.id)}
                 className="text-muted-foreground hover:text-destructive"
-                aria-label="삭제"
+                aria-label={t("notifications.deleteBtn")}
               >
                 <Trash2 className="h-4 w-4" />
               </button>

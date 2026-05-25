@@ -7,11 +7,23 @@ import { Coins, Zap, ShieldCheck, Gem } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { PaymentDialog } from "@/components/payment/PaymentDialog";
 import { toast } from "sonner";
+import { useI18n } from "@/i18n/language-context";
 
 export const Route = createFileRoute("/store")({
-  head: () => ({
-    meta: [{ title: "상점 — DuelNight" }],
-  }),
+  head: () => {
+    let locale = "ko";
+    if (typeof window !== "undefined") {
+      locale = localStorage.getItem("duelnight.i18n.locale") || "ko";
+    }
+    const titles: Record<string, string> = {
+      ko: "상점 — DuelNight",
+      en: "Store — DuelNight",
+      ja: "ショップ — DuelNight",
+    };
+    return {
+      meta: [{ title: titles[locale] || titles.ko }],
+    };
+  },
   component: StorePage,
 });
 
@@ -45,12 +57,13 @@ const CREDIT_PACKS = [
 
 function StorePage() {
   const { session } = useAuth();
+  const { t, language } = useI18n();
   const [selectedPack, setSelectedPack] = useState<typeof CREDIT_PACKS[0] | null>(null);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
   const handlePurchase = (pack: typeof CREDIT_PACKS[0]) => {
     if (!session) {
-      toast.error("로그인이 필요한 서비스입니다.");
+      toast.error(t("creditStore.loginRequired"));
       return;
     }
     setSelectedPack(pack);
@@ -59,15 +72,24 @@ function StorePage() {
 
   const handlePaymentSuccess = (data: any) => {
     console.log("Payment success data:", data);
-    toast.success(`${selectedPack?.name} 구매가 성공적으로 완료되었습니다!`);
-    // Here you would typically call a Supabase function to update user credits
+    toast.success(t("creditStore.purchaseSuccess", { name: selectedPack?.name ?? "" }));
+  };
+
+  const renderPrice = (amount: number) => {
+    if (language === "en") {
+      return t("creditStore.priceUSD", { price: (amount / 1000).toFixed(2) });
+    }
+    if (language === "ja") {
+      return t("creditStore.priceJPY", { price: (amount / 10).toLocaleString() });
+    }
+    return t("creditStore.priceKRW", { price: amount.toLocaleString() });
   };
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
       <PageHeader
-        title="크레딧 상점"
-        description="팩 개봉 및 프리미엄 기능을 위한 크레딧을 충전하세요"
+        title={t("creditStore.title")}
+        description={t("creditStore.desc")}
       />
 
       <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -84,15 +106,17 @@ function StorePage() {
               </div>
               <CardTitle className="text-xl">{pack.name}</CardTitle>
               <p className="text-sm text-muted-foreground">
-                {pack.bonus > 0 ? `+${pack.bonus.toLocaleString()} Bonus Credits` : 'Standard Pack'}
+                {pack.bonus > 0
+                  ? t("creditStore.bonusCredits", { bonus: pack.bonus.toLocaleString() })
+                  : t("creditStore.standardPack")}
               </p>
             </CardHeader>
             <CardContent className="text-center">
-              <div className="text-3xl font-bold">{pack.amount.toLocaleString()}원</div>
+              <div className="text-3xl font-bold">{renderPrice(pack.amount)}</div>
             </CardContent>
             <CardFooter>
               <Button onClick={() => handlePurchase(pack)} className="w-full" variant={pack.popular ? "default" : "outline"}>
-                구매하기
+                {t("creditStore.purchaseBtn")}
               </Button>
             </CardFooter>
           </Card>
@@ -105,10 +129,9 @@ function StorePage() {
             <ShieldCheck className="h-6 w-6" />
           </div>
           <div>
-            <h3 className="text-lg font-bold">안전한 결제 보장</h3>
+            <h3 className="text-lg font-bold">{t("creditStore.secureTitle")}</h3>
             <p className="max-w-md text-sm text-muted-foreground">
-              DuelNight는 국내외 검증된 결제 대행사(PortOne, PayPal)를 통해 안전한 결제 환경을 제공합니다. 
-              결제 정보는 시스템에 직접 저장되지 않습니다.
+              {t("creditStore.secureDesc")}
             </p>
           </div>
         </div>
