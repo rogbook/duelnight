@@ -5,16 +5,29 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { useI18n } from "@/i18n/language-context";
 
 export const Route = createFileRoute("/reset-password")({
-  head: () => ({
-    meta: [{ title: "비밀번호 재설정 — DuelNight" }],
-  }),
+  head: () => {
+    let locale = "ko";
+    if (typeof window !== "undefined") {
+      locale = localStorage.getItem("duelnight.i18n.locale") || "ko";
+    }
+    const titles: Record<string, string> = {
+      ko: "비밀번호 재설정 — DuelNight",
+      en: "Reset Password — DuelNight",
+      ja: "パスワード再設定 — DuelNight",
+    };
+    return {
+      meta: [{ title: titles[locale] || titles.ko }],
+    };
+  },
   component: ResetPasswordPage,
 });
 
 function ResetPasswordPage() {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const [password, setPassword] = useState("");
@@ -36,11 +49,11 @@ function ResetPasswordPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password.length < 6) {
-      toast.error("비밀번호는 최소 6자 이상이어야 합니다.");
+      toast.error(t("auth.passwordMinLengthError"));
       return;
     }
     if (password !== confirm) {
-      toast.error("비밀번호 확인이 일치하지 않습니다.");
+      toast.error(t("auth.passwordMismatchError"));
       return;
     }
     setBusy(true);
@@ -50,26 +63,28 @@ function ResetPasswordPage() {
       toast.error(error.message);
       return;
     }
-    toast.success("비밀번호가 변경되었습니다. 다시 로그인해 주세요.");
+    toast.success(t("auth.resetPasswordSuccess"));
     await supabase.auth.signOut();
     navigate({ to: "/login" });
   };
 
   return (
     <div className="mx-auto flex min-h-[80vh] max-w-sm flex-col justify-center px-6">
-      <h1 className="text-2xl font-semibold tracking-tight">비밀번호 재설정</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">
+        {t("auth.resetPasswordTitle")}
+      </h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        새 비밀번호를 입력해 주세요.
+        {t("auth.resetPasswordDesc")}
       </p>
 
       {!ready ? (
         <div className="mt-6 rounded-md border border-dashed border-border bg-muted/30 p-4 text-xs text-muted-foreground">
-          이메일로 받은 재설정 링크에서 이 페이지로 이동해야 합니다. 링크가 만료되었을 수 있어요.
+          {t("auth.resetPasswordInvalidLink")}
         </div>
       ) : (
         <form onSubmit={submit} className="mt-6 flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="password">새 비밀번호</Label>
+            <Label htmlFor="password">{t("auth.newPasswordInput")}</Label>
             <Input
               id="password"
               type="password"
@@ -80,7 +95,7 @@ function ResetPasswordPage() {
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="confirm">비밀번호 확인</Label>
+            <Label htmlFor="confirm">{t("auth.confirmNewPasswordInput")}</Label>
             <Input
               id="confirm"
               type="password"
@@ -91,7 +106,7 @@ function ResetPasswordPage() {
             />
           </div>
           <Button type="submit" disabled={busy} className="mt-2">
-            {busy ? "변경 중..." : "비밀번호 변경"}
+            {busy ? t("auth.processing") : t("auth.resetPasswordBtn")}
           </Button>
         </form>
       )}

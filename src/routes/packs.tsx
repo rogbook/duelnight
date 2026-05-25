@@ -15,28 +15,37 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
+import { useI18n } from "@/i18n/language-context";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"];
 
 export const Route = createFileRoute("/packs")({
-  head: () => ({
-    meta: [
-      { title: "팩 시뮬레이터 — DuelNight" },
-      { name: "description", content: "OPTCG 부스터 팩 개봉 시뮬레이션." },
-    ],
-  }),
+  head: () => {
+    let locale = "ko";
+    if (typeof window !== "undefined") {
+      locale = localStorage.getItem("duelnight.i18n.locale") || "ko";
+    }
+    const titles: Record<string, string> = {
+      ko: "팩 시뮬레이터 — DuelNight",
+      en: "Pack Simulator — DuelNight",
+      ja: "パックシミュレーター — DuelNight",
+    };
+    const descs: Record<string, string> = {
+      ko: "OPTCG 부스터 팩 개봉 시뮬레이션.",
+      en: "OPTCG booster pack opening simulation.",
+      ja: "OPTCGブースターパック開封シミュレーション。",
+    };
+    return {
+      meta: [
+        { title: titles[locale] || titles.ko },
+        { name: "description", content: descs[locale] || descs.ko },
+      ],
+    };
+  },
   component: PacksPage,
 });
 
-// 팩 1개당 12장. 보통 1 SR/SEC, 2 R, 나머지 C/UC. 데이터 부족 시 풀에서 균등.
 const PACK_SIZE = 12;
-const PACK_OPTIONS = [
-  { label: "1팩 (12장)", packs: 1 },
-  { label: "5팩 (60장)", packs: 5 },
-  { label: "10팩 (120장)", packs: 10 },
-  { label: "1박스 (24팩)", packs: 24 },
-];
-
 const RARITY_ORDER = ["SEC", "SR", "R", "UC", "C", "L"];
 
 function pickWeighted<T>(items: T[], weight: (t: T) => number): T {
@@ -69,9 +78,17 @@ function rarityWeight(r: string | null | undefined): number {
 }
 
 function PacksPage() {
+  const { t } = useI18n();
   const [setCode, setSetCode] = useState<string>("");
   const [packs, setPacks] = useState<number>(1);
   const [results, setResults] = useState<Card[]>([]);
+
+  const packOptions = useMemo(() => [
+    { label: t("packs.packLabel", { count: 1, cards: 12 }), packs: 1 },
+    { label: t("packs.packLabel", { count: 5, cards: 60 }), packs: 5 },
+    { label: t("packs.packLabel", { count: 10, cards: 120 }), packs: 10 },
+    { label: t("packs.boxLabel"), packs: 24 },
+  ], [t]);
 
   const { data: sets = [] } = useQuery({
     queryKey: ["pack-sets"],
@@ -103,7 +120,7 @@ function PacksPage() {
 
   const open = () => {
     if (pool.length === 0) {
-      toast.error("이 세트에는 개봉 가능한 카드가 없어요");
+      toast.error(t("packs.noCardsError"));
       return;
     }
     const rares = pool.filter((c) =>
@@ -114,9 +131,7 @@ function PacksPage() {
     );
     const pulled: Card[] = [];
     for (let p = 0; p < packs; p++) {
-      // 1팩 = SR/SEC 보장 1장 + 나머지 가중치 추첨
       if (rares.length > 0) {
-        // SEC는 SR보다 훨씬 희귀
         pulled.push(pickWeighted(rares, (c) => rarityWeight(c.rarity)));
       }
       const restPool = commons.length > 0 ? commons : pool;
@@ -145,18 +160,17 @@ function PacksPage() {
     });
   }, [results]);
 
-
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
       <PageHeader
-        title="팩 시뮬레이터"
-        description="세트와 수량을 골라 부스터 개봉을 시뮬레이션하세요"
+        title={t("packs.title")}
+        description={t("packs.desc")}
       />
 
       <div className="mt-6 grid gap-3 rounded-lg border border-border bg-card p-4 sm:grid-cols-[1fr_1fr_auto]">
         <Select value={setCode} onValueChange={setSetCode}>
           <SelectTrigger>
-            <SelectValue placeholder="세트 선택" />
+            <SelectValue placeholder={t("packs.selectSet")} />
           </SelectTrigger>
           <SelectContent>
             {sets.map((s) => (
@@ -174,7 +188,7 @@ function PacksPage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {PACK_OPTIONS.map((o) => (
+            {packOptions.map((o) => (
               <SelectItem key={o.packs} value={String(o.packs)}>
                 {o.label}
               </SelectItem>
@@ -183,7 +197,7 @@ function PacksPage() {
         </Select>
         <Button onClick={open} className="gap-1">
           <Sparkles className="h-4 w-4" />
-          개봉하기
+          {t("packs.openBtn")}
         </Button>
       </div>
 
@@ -191,22 +205,15 @@ function PacksPage() {
         <div className="mt-8">
           <EmptyState
             icon={PackageOpen}
-            title="아직 개봉 결과가 없어요"
-            description="세트와 팩 수량을 선택한 뒤 ‘개봉하기’를 눌러 보세요."
+            title={t("packs.emptyTitle")}
+            description={t("packs.emptyDesc")}
           />
         </div>
       ) : (
         <>
           <div className="mt-6">
             <p className="text-sm text-muted-foreground">
-              총{" "}
-              <span className="font-semibold text-foreground">
-                {results.length}
-              </span>
-              장 · 종류{" "}
-              <span className="font-semibold text-foreground">
-                {tally.length}
-              </span>
+              {t("packs.summary", { total: results.length, count: tally.length })}
             </p>
           </div>
 
