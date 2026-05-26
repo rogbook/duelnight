@@ -7,8 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { normalizeImageUrl } from "@/components/cards/card-uploader";
-import { Loader2, Save, FolderOpen, ImageOff, ArrowRight } from "lucide-react";
+import { Loader2, Save, FolderOpen, ImageOff, ArrowRight, Trash2, Plus, Keyboard } from "lucide-react";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type CardRow = Database["public"]["Tables"]["cards"]["Row"];
 type Game = Database["public"]["Enums"]["tcg_game"];
@@ -22,6 +24,99 @@ export function SetConfigView() {
   const [cardsLoading, setCardsLoading] = useState(false);
   const [savingCode, setSavingCode] = useState<string | null>(null);
   const [editedSets, setEditedSets] = useState<Record<string, string>>({});
+
+  const [newSetName, setNewSetName] = useState("");
+  const [addingSet, setAddingSet] = useState(false);
+  const [deletingSet, setDeletingSet] = useState(false);
+
+  // 세트 추가 액션
+  const handleCreateSet = async () => {
+    const trimmedName = newSetName.trim();
+    if (!trimmedName) {
+      toast.error("세트 이름을 입력해 주세요.");
+      return;
+    }
+    
+    // 중복 체크
+    const isDup = sets.some(s => s.toLowerCase() === trimmedName.toLowerCase());
+    if (isDup) {
+      toast.error("이미 존재하는 세트 이름입니다.");
+      return;
+    }
+
+    setAddingSet(true);
+    try {
+      const dummyCode = `DUMMY-${trimmedName.replace(/[^A-Za-z0-9]/g, "").toUpperCase()}`;
+      // 더미 코드 중복 및 길이 제한(최대 30자) 방지를 위해 뒤에 고유 숫자 덧붙임
+      const finalCode = dummyCode.slice(0, 20) + "-" + Date.now().toString().slice(-6);
+
+      const { error } = await supabase
+        .from("cards")
+        .insert({
+          code: finalCode,
+          name: "[세트 생성 임시 더미]",
+          set_code: trimmedName,
+          game: "optcg",
+          type: "character",
+          colors: [],
+          traits: [],
+          status: "pending" as const,
+        });
+
+      if (error) throw error;
+
+      toast.success(`신규 세트 [${trimmedName}]가 생성되었습니다.`);
+      setNewSetName("");
+      await refreshSets();
+      setActiveSet(trimmedName);
+    } catch (e) {
+      toast.error("세트 추가 실패: " + (e as Error).message);
+    } finally {
+      setAddingSet(false);
+    }
+  };
+
+  // 세트 삭제 액션
+  const handleDeleteSet = async () => {
+    if (!activeSet || activeSet === "미분류") {
+      toast.error("삭제할 수 없는 세트이거나 세트가 선택되지 않았습니다.");
+      return;
+    }
+
+    const confirmDel = window.confirm(
+      `정말 [${activeSet}] 세트를 삭제하시겠습니까?\n이 세트에 등록된 카드는 모두 '미분류' 세트로 안전하게 이동하며, 해당 세트는 목록에서 완전히 소멸됩니다.`
+    );
+    if (!confirmDel) return;
+
+    setDeletingSet(true);
+    try {
+      // 1. 소속 일반 카드는 '미분류' 세트로 일괄 Batch Update
+      const { error: updErr } = await supabase
+        .from("cards")
+        .update({ set_code: "미분류" })
+        .eq("set_code", activeSet)
+        .not("code", "like", "DUMMY-%");
+      if (updErr) throw updErr;
+
+      // 2. 세트 생성용 임시 더미 카드들은 DB에서 소거
+      const { error: delErr } = await supabase
+        .from("cards")
+        .delete()
+        .eq("set_code", activeSet)
+        .like("code", "DUMMY-%");
+      if (delErr) throw delErr;
+
+      toast.success(`[${activeSet}] 세트가 삭제되고, 소속 카드는 '미분류' 세트로 이동되었습니다.`);
+      
+      // 세트 목록 갱신 및 포커싱 이동
+      await refreshSets();
+      setActiveSet("");
+    } catch (e) {
+      toast.error("세트 삭제 실패: " + (e as Error).message);
+    } finally {
+      setDeletingSet(false);
+    }
+  };
 
   // 세트 목록이 불러와졌을 때 첫 번째 세트를 활성화
   useEffect(() => {
@@ -138,6 +233,36 @@ export function SetConfigView() {
               </button>
             ))
           )}
+
+          {/* 신규 세트 추가 폼 */}
+          <div className="mt-4 pt-4 border-t border-border/60 px-1 space-y-2">
+            <Label className="text-[11px] font-bold text-muted-foreground flex items-center gap-1">
+              <Plus className="h-3 w-3 text-primary" /> 신규 세트 추가
+            </Label>
+            <div className="flex gap-1">
+              <Input
+                value={newSetName}
+                onChange={(e) => setNewSetName(e.target.value)}
+                placeholder="세트명 (예: OP05 부스터)"
+                className="h-8 text-xs bg-background border-border/80"
+                disabled={addingSet}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && newSetName.trim()) {
+                    e.preventDefault();
+                    handleCreateSet();
+                  }
+                }}
+              />
+              <Button
+                size="sm"
+                onClick={handleCreateSet}
+                disabled={addingSet || !newSetName.trim()}
+                className="h-8 px-3 text-xs shrink-0"
+              >
+                {addingSet ? <Loader2 className="h-3 w-3 animate-spin" /> : "추가"}
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -149,7 +274,21 @@ export function SetConfigView() {
               <Badge variant="outline" className="px-2 py-0.5 text-xs bg-primary/10 text-primary border-primary/20 font-bold">
                 {activeSet || "선택된 세트 없음"}
               </Badge>
-              소속 카드 ({cards.length}장)
+              {activeSet && activeSet !== "미분류" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDeleteSet}
+                  disabled={deletingSet}
+                  className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10 hover:text-destructive rounded-full shrink-0"
+                  title="세트 삭제"
+                >
+                  {deletingSet ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                </Button>
+              )}
+              <span className="text-xs font-semibold text-muted-foreground/80">
+                소속 카드 ({cards.length}장)
+              </span>
             </CardTitle>
             <CardDescription className="text-xs mt-1">
               각 카드별 소속 세트 코드를 편집하고 이동시킬 수 있습니다.
