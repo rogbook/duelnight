@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ImagePlus, Loader2, Save, Star, X } from "lucide-react";
+import { ImagePlus, Loader2, Save, Star, X, Keyboard } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { normalizeImageUrl } from "@/components/cards/card-uploader";
 import { ImageUploadDialog } from "@/components/cards/image-upload-dialog";
+import { useUniqueSets } from "@/hooks/use-unique-sets";
 
 type CardRow = Database["public"]["Tables"]["cards"]["Row"];
 type Game = Database["public"]["Enums"]["tcg_game"];
@@ -31,6 +32,10 @@ const GAMES: Game[] = ["optcg", "ptcg", "dtcg"];
 export function EditCardDialog({
   card, onClose, onSaved,
 }: { card: CardRow; onClose: () => void; onSaved: () => void }) {
+  const { sets } = useUniqueSets();
+  const [isManualSet, setIsManualSet] = useState(false);
+  const displaySets = Array.from(new Set([card.set_code, ...sets])).filter(Boolean).sort((a, b) => a.localeCompare(b));
+
   const [form, setForm] = useState({
     code: card.code,
     name: card.name,
@@ -51,6 +56,7 @@ export function EditCardDialog({
   const [initialAltImages, setInitialAltImages] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
+
 
   // 기존 추가 일러스트 로드
   useEffect(() => {
@@ -224,8 +230,57 @@ export function EditCardDialog({
             <p className="mt-1 text-[10px] text-muted-foreground">변경 시 중복 확인 후 저장됩니다</p>
           </div>
           <div>
-            <Label className="text-xs">세트 *</Label>
-            <Input value={form.set_code} onChange={(e) => setForm({ ...form, set_code: e.target.value })} />
+            <Label className="text-xs flex items-center justify-between">
+              <span>세트 *</span>
+              {!isManualSet && (
+                <button
+                  type="button"
+                  onClick={() => setIsManualSet(true)}
+                  className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
+                >
+                  <Keyboard className="h-3 w-3" />직접 입력
+                </button>
+              )}
+            </Label>
+            {isManualSet ? (
+              <div className="relative flex items-center">
+                <Input
+                  value={form.set_code}
+                  onChange={(e) => setForm({ ...form, set_code: e.target.value })}
+                  placeholder="예: OP01"
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsManualSet(false)}
+                  className="absolute right-2 text-[10px] text-muted-foreground hover:text-foreground"
+                >
+                  선택창으로
+                </button>
+              </div>
+            ) : (
+              <Select
+                value={form.set_code}
+                onValueChange={(v) => {
+                  if (v === "__NEW_SET__") {
+                    setIsManualSet(true);
+                  } else {
+                    setForm({ ...form, set_code: v });
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="세트 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  {displaySets.map((s) => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                  <SelectItem value="__NEW_SET__" className="text-primary font-medium">
+                    + 직접 입력 / 신규 세트 추가
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
           <div>
             <Label className="text-xs">색상 (쉼표 구분)</Label>
