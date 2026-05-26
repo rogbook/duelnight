@@ -45,6 +45,7 @@ export const ko = {
     announcements: "공지사항",
     shop: "상점",
     adminCardsUpload: "카드 등록",
+    more: "더보기",
   },
   matches: {
     title: "전적 기록",

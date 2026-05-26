@@ -45,6 +45,7 @@ export const ja = {
     announcements: "お知らせ",
     shop: "ショップ",
     adminCardsUpload: "カード登録",
+    more: "その他",
   },
   matches: {
     title: "戦績記録",

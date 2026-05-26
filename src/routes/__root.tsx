@@ -12,6 +12,7 @@ import {
 import appCss from "../styles.css?url";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { BottomTabBar } from "@/components/bottom-tab-bar";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/sonner";
 import { NotificationBell } from "@/components/notification-bell";
@@ -19,6 +20,7 @@ import { EnvBanner } from "@/components/env-banner";
 import { supabase } from "@/integrations/supabase/client";
 import { LanguageProvider, useI18n } from "@/i18n/language-context";
 import { LanguageSelector } from "@/components/language-selector";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 function AuthHeaderButton() {
   const { user } = useAuth();
@@ -173,6 +175,7 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isBare = pathname === "/intro" || pathname === "/login";
+  const isMobile = useIsMobile();
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -186,6 +189,27 @@ function RootComponent() {
               </main>
               <Toaster />
             </>
+          ) : isMobile ? (
+            <div className="flex min-h-screen w-full flex-col bg-background">
+              <EnvBanner />
+              <header
+                className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-background/80 px-4 backdrop-blur"
+                style={{ paddingTop: "env(safe-area-inset-top)" }}
+              >
+                <div className="flex-1" />
+                <LanguageSelector />
+                <NotificationBell />
+                <AuthHeaderButton />
+              </header>
+              <main
+                className="flex-1"
+                style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 3.5rem)" }}
+              >
+                <Outlet />
+              </main>
+              <BottomTabBar />
+              <Toaster />
+            </div>
           ) : (
             <SidebarProvider>
               <div className="flex min-h-screen w-full bg-background">
