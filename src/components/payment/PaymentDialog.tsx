@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,12 +8,12 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CreditCard, Globe, CheckCircle2, Loader2, FlaskConical, ShieldAlert } from "lucide-react";
+import { CreditCard, Loader2, ShieldAlert, ShieldCheck, Lock } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { processPortOnePayment, initPayPalButtons, PaymentOptions } from "@/lib/payment";
-import { verifyPortOnePayment, verifyPayPalPayment } from "@/lib/payment.functions";
+import { createStripeCheckoutSession } from "@/lib/payment.functions";
+import { PaymentOptions } from "@/lib/payment";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { useI18n } from "@/i18n/language-context";
 
 interface PaymentDialogProps {
   open: boolean;
@@ -26,183 +26,132 @@ export function PaymentDialog({
   open,
   onOpenChange,
   options,
-  onSuccess,
 }: PaymentDialogProps) {
   const { session } = useAuth();
-  const [method, setMethod] = useState<"domestic" | "intl" | null>(null);
+  const { t, language } = useI18n();
   const [busy, setBusy] = useState(false);
-  const [showPayPal, setShowPayPal] = useState(false);
   
   const isTestMode = import.meta.env.DEV;
 
-  const handleDomesticPayment = async () => {
+  const handleStripeCheckout = async () => {
     if (!session) {
-      toast.error("로그인이 필요합니다.");
+      toast.error(t("creditStore.loginRequired"));
       return;
     }
     
     setBusy(true);
     try {
-      const result = await processPortOnePayment({
-        ...options,
-        sandbox: isTestMode,
-        userEmail: session.user.email,
-        custom_data: { user_id: session.user.id }
+      // 1. Stripe Checkout Session 발급 (TanStack Server Function)
+      const result = await createStripeCheckoutSession({
+        data: { packId: options.packId }
       });
 
-      // SERVER-SIDE VERIFICATION (TanStack Server Function)
-      const verifyResult = await verifyPortOnePayment({
-        data: {
-          imp_uid: result.imp_uid,
-          merchant_uid: result.merchant_uid,
-          amount: options.amount
-        }
-      });
-
-      if (!verifyResult.success) {
-        throw new Error(verifyResult.error || "결제 검증에 실패했습니다.");
+      if (!result.url) {
+        throw new Error("결제 세션 주소를 발급받지 못했습니다.");
       }
 
-      toast.success("결제가 성공적으로 검증되고 완료되었습니다!");
-      onSuccess(result);
-      onOpenChange(false);
+      toast.loading(t("common.loading", "결제 페이지로 이동 중..."));
+      
+      // 2. Stripe Checkout 결제창 리디렉션
+      window.location.href = result.url;
     } catch (err) {
-      toast.error(`결제 실패: ${(err as Error).message}`);
+      toast.error(`결제 오류: ${(err as Error).message}`);
     } finally {
       setBusy(false);
     }
   };
 
-  const handleIntlSelection = () => {
-    setMethod("intl");
-    setShowPayPal(true);
-  };
-
-  useEffect(() => {
-    if (showPayPal && method === "intl") {
-      const initPayPal = async () => {
-        try {
-          const buttons = await initPayPalButtons(
-            options,
-            async (details) => {
-              // Verify PayPal on server (TanStack Server Function)
-              const verifyResult = await verifyPayPalPayment({
-                data: {
-                  order_id: details.id,
-                  amount: options.amount
-                }
-              });
-
-              if (!verifyResult.success) {
-                throw new Error(verifyResult.error || "PayPal verification failed");
-              }
-              
-              toast.success("PayPal 결제 검증 완료!");
-              onSuccess(details);
-              onOpenChange(false);
-            },
-            (err) => toast.error(`PayPal 오류: ${err.message}`)
-          );
-          if (buttons) {
-            buttons.render("#paypal-button-container");
-          }
-        } catch (err) {
-          toast.error(`PayPal 초기화 실패: ${(err as Error).message}`);
-        }
-      };
-      initPayPal();
+  const renderPriceLabel = () => {
+    if (language === "en") {
+      return t("creditStore.priceUSD", { price: (options.amount / 1000).toFixed(2) });
     }
-  }, [showPayPal, method]);
+    if (language === "ja") {
+      return t("creditStore.priceJPY", { price: (options.amount / 10).toLocaleString() });
+    }
+    return t("creditStore.priceKRW", { price: options.amount.toLocaleString() });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[400px] border border-border bg-card/95 backdrop-blur-md">
+        <DialogHeader className="text-center pb-2">
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-2xl font-bold">결제 방법 선택</DialogTitle>
+            <DialogTitle className="text-xl font-bold tracking-tight">
+              {t("creditStore.title")}
+            </DialogTitle>
             {isTestMode && (
-              <div className="flex items-center space-x-2 rounded-full bg-amber-100 px-3 py-1 text-amber-700">
-                <FlaskConical className="h-3.5 w-3.5" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Sandbox Mode</span>
+              <div className="flex items-center space-x-1.5 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-amber-500 text-[10px] font-bold uppercase tracking-wider">
+                Sandbox
               </div>
             )}
           </div>
-          <DialogDescription>
-            {options.orderName} - {options.amount.toLocaleString()}원
+          <DialogDescription className="text-sm text-muted-foreground mt-1">
+            {options.orderName} Recharge
           </DialogDescription>
         </DialogHeader>
 
-        {!session && (
-          <div className="flex flex-col items-center gap-3 rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-destructive">
-            <ShieldAlert className="h-8 w-8" />
-            <p className="text-sm font-medium text-center">결제를 진행하려면 먼저 로그인해야 합니다.</p>
-          </div>
-        )}
-
-        <div className="grid gap-4 py-4">
-          <button
-            onClick={() => {
-              setMethod("domestic");
-              setShowPayPal(false);
-            }}
-            className={cn(
-              "flex items-center gap-4 rounded-xl border-2 p-4 text-left transition-all hover:border-primary/50",
-              method === "domestic" ? "border-primary bg-primary/5" : "border-border"
-            )}
-          >
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-              <CreditCard className="h-6 w-6" />
-            </div>
-            <div className="flex-1">
-              <div className="font-bold">국내 결제</div>
-              <div className="text-xs text-muted-foreground">신용카드, 계좌이체, 간편결제 (포트원)</div>
-            </div>
-            {method === "domestic" && <CheckCircle2 className="h-5 w-5 text-primary" />}
-          </button>
-
-          <button
-            onClick={handleIntlSelection}
-            className={cn(
-              "flex items-center gap-4 rounded-xl border-2 p-4 text-left transition-all hover:border-primary/50",
-              method === "intl" ? "border-primary bg-primary/5" : "border-border"
-            )}
-          >
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100 text-yellow-600">
-              <Globe className="h-6 w-6" />
-            </div>
-            <div className="flex-1">
-              <div className="font-bold">해외 결제</div>
-              <div className="text-xs text-muted-foreground">PayPal, International Credit Cards</div>
-            </div>
-            {method === "intl" && <CheckCircle2 className="h-5 w-5 text-primary" />}
-          </button>
-        </div>
-
-        {method === "intl" && showPayPal && (
-          <div className="mt-2 min-h-[150px] rounded-lg bg-muted/50 p-4">
-            <p className="mb-4 text-center text-xs text-muted-foreground">
-              PayPal 버튼을 클릭하여 결제를 진행해 주세요.
+        {!session ? (
+          <div className="flex flex-col items-center gap-3 rounded-xl border border-destructive/20 bg-destructive/5 p-5 text-destructive mt-2">
+            <ShieldAlert className="h-10 w-10 text-destructive/80 animate-pulse" />
+            <p className="text-sm font-medium text-center leading-relaxed">
+              {t("creditStore.loginRequired")}
             </p>
-            {/* PayPal Button Container would go here */}
-            <div id="paypal-button-container" className="flex justify-center">
-               <Button variant="outline" className="w-full" disabled>
-                 PayPal SDK 연동 준비 중... (Client ID 필요)
-               </Button>
+          </div>
+        ) : (
+          <div className="mt-2 space-y-4">
+            {/* Purchase Item Card */}
+            <div className="rounded-2xl border border-border bg-muted/30 p-5 text-center shadow-inner">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <CreditCard className="h-5 w-5" />
+              </div>
+              <h3 className="text-md font-semibold text-foreground">{options.orderName}</h3>
+              <p className="text-3xl font-extrabold text-primary tracking-tight mt-1">
+                {renderPriceLabel()}
+              </p>
+            </div>
+
+            {/* Secure Badges */}
+            <div className="rounded-xl border border-border/50 bg-background/50 p-4 space-y-2.5 text-xs">
+              <div className="flex items-start gap-2.5">
+                <ShieldCheck className="h-4.5 w-4.5 text-emerald-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-foreground">{t("creditStore.secureTitle")}</p>
+                  <p className="text-muted-foreground mt-0.5 leading-relaxed">
+                    {t("creditStore.secureDesc")}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2.5 pt-2 border-t border-border/30 text-[10px] text-muted-foreground">
+                <Lock className="h-3 w-3 shrink-0" />
+                <span>SSL Secured & Stripe Global Compliance</span>
+              </div>
             </div>
           </div>
         )}
 
-        <DialogFooter className="mt-4">
+        <DialogFooter className="mt-5 flex gap-2">
           <Button
             variant="ghost"
             onClick={() => onOpenChange(false)}
             disabled={busy}
+            className="flex-1"
           >
-            취소
+            {t("common.cancel")}
           </Button>
-          {method === "domestic" && (
-            <Button onClick={handleDomesticPayment} disabled={busy} className="min-w-[100px]">
-              {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "결제하기"}
+          {session && (
+            <Button
+              onClick={handleStripeCheckout}
+              disabled={busy}
+              className="flex-1 min-w-[120px] font-medium"
+            >
+              {busy ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {t("auth.processing")}
+                </>
+              ) : (
+                t("creditStore.purchaseBtn")
+              )}
             </Button>
           )}
         </DialogFooter>
