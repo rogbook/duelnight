@@ -754,7 +754,7 @@ export const en = {
     purchaseBtn: "Purchase",
     purchaseSuccess: "Successfully purchased {name}!",
     secureTitle: "Secure Payment Guaranteed",
-    secureDesc: "DuelNight provides a secure payment environment through proven PG providers (PortOne, PayPal). Your payment details are never stored directly on our servers.",
+    secureDesc: "DuelNight provides a secure payment environment through Stripe, the global standard for online payments. Your payment details are never stored directly on our servers.",
     bonusCredits: "+{bonus} Bonus Credits",
     standardPack: "Standard Pack",
     priceKRW: "{price} KRW",
