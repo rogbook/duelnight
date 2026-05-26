@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Sparkles, Trophy, Users, ScanLine, BarChart3, Calendar, Crown, Coins } from "lucide-react";
 import { useI18n } from "@/i18n/language-context";
+import { LanguageSelector } from "@/components/language-selector";
 
 const BRAND = {
   name: "DuelNight",
@@ -54,6 +55,7 @@ function IntroPage() {
             </span>
           </Link>
           <div className="flex items-center gap-2">
+            <LanguageSelector />
             <Link
               to="/login"
               className="rounded-md border border-border px-3 py-1.5 text-xs hover:bg-accent sm:text-sm"
@@ -154,7 +156,7 @@ function IntroPage() {
 
           <div className="mt-10 grid gap-4 md:grid-cols-3">
             <PriceCard
-              name="Free"
+              name={t("intro.priceFreeName")}
               price={language === "en" ? "$0" : language === "ja" ? "¥0" : "₩0"}
               period={t("intro.priceFreePeriod")}
               icon={<Sparkles className="h-5 w-5 text-muted-foreground" />}
@@ -168,7 +170,7 @@ function IntroPage() {
               cta={t("intro.ctaFreeStart")}
             />
             <PriceCard
-              name="Pro"
+              name={t("intro.priceProName")}
               price={proPrice}
               period={t("intro.priceProPeriod")}
               highlight
@@ -183,7 +185,7 @@ function IntroPage() {
               cta={t("intro.ctaProStart")}
             />
             <PriceCard
-              name={t("intro.ctaCreditCharge")}
+              name={t("intro.priceCreditName")}
               price={creditPrice}
               period={t("intro.priceCreditPeriod")}
               icon={<Coins className="h-5 w-5 text-emerald-500" />}
