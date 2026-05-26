@@ -100,22 +100,6 @@ export function EditCardDialog({
         }
       }
 
-      const newName = form.name.trim();
-      const newSet = form.set_code.trim();
-      if (newSet !== card.set_code || newName !== card.name) {
-        const { data: dupSet } = await supabase
-          .from("cards")
-          .select("code")
-          .eq("set_code", newSet)
-          .eq("name", newName)
-          .neq("id", card.id)
-          .maybeSingle();
-        if (dupSet) {
-          toast.error(`이미 같은 세트(${newSet})에 동일한 이름의 카드가 있습니다: ${dupSet.code}`);
-          setSaving(false);
-          return;
-        }
-      }
 
       const { error } = await supabase
         .from("cards")
