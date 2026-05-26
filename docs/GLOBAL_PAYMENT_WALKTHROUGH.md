@@ -39,6 +39,7 @@
   - `PaymentDialog`는 깔끔하고 품격 있는 충전 팩 요약과 Stripe 결제 보안 보장 배지만을 노출하며, 충전 실행 시 백엔드의 `createStripeCheckoutSession` 서버 함수로부터 Checkout URL을 취득해 Stripe 결제창으로 유저 브라우저를 직접 넘겨줍니다.
   - 결제 성공 후 돌아왔을 때 성공 매개변수(`success=true`, `session_id=...`)가 수신되는 즉시 마운트 라이프사이클 훅이 작동해 백엔드의 `verifyStripePayment`를 동적 호출합니다. 
   - Stripe 서버로부터 성공 여부가 공인되면, 크레딧 밸런스를 즉시 업데이트한 뒤 브라우저 히스토리 대체(`window.history.replaceState`)를 실행해 URL 파라미터를 깨끗이 씻어내어 리프레시 중복 요청을 철통 방어합니다.
+  - **Stripe Link & 스마트 결제 수단 지원**: 결제 세션 발급 시 특정 결제수단 수동 매핑(`payment_method_types`)을 걷어내고 Stripe의 현대적인 스마트 자동 결제(Dynamic Payment Methods) 방식을 적용했습니다. 이를 통해 Stripe 대시보드(Dashboard) 내의 스위치 조작만으로 **원클릭 Link 결제**, **Apple Pay**, **Google Pay** 등 글로벌 간편 결제 채널을 소스코드 빌드 없이 원격으로 즉각 켜고 끌 수 있는 고도화된 아키텍처를 확보했습니다.
 
 ---
 
