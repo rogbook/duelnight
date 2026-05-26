@@ -18,6 +18,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { NotificationBell } from "@/components/notification-bell";
 import { EnvBanner } from "@/components/env-banner";
 import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
 import { LanguageProvider, useI18n } from "@/i18n/language-context";
 import { LanguageSelector } from "@/components/language-selector";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -175,7 +176,15 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isBare = pathname === "/intro" || pathname === "/login";
+  
+  // SSR 하이드레이션 불일치 에러를 방어하기 위해 mounted 상태 관리
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const isMobile = useIsMobile();
+  const renderMobile = mounted && isMobile;
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -189,7 +198,7 @@ function RootComponent() {
               </main>
               <Toaster />
             </>
-          ) : isMobile ? (
+          ) : renderMobile ? (
             <div className="flex min-h-screen w-full flex-col bg-background">
               <EnvBanner />
               <header
