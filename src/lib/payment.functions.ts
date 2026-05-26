@@ -73,11 +73,12 @@ function getPriceAndCurrency(packId: string, countryCode: string) {
 
 async function recordSuccessfulPayment(params: {
   userId: string;
-  orderId: string; // Stripe Session ID
+  orderId: string; // Stripe Session ID or Merchant UID
   amount: number; // Local price
   currency: string;
   packId: string;
   paymentIntentId?: string;
+  provider: "stripe" | "portone";
 }) {
   const pack = CREDIT_PACKS[params.packId];
   if (!pack) throw new Error("Invalid pack ID");
@@ -100,9 +101,9 @@ async function recordSuccessfulPayment(params: {
     {
       user_id: params.userId,
       order_id: params.orderId,
-      imp_uid: params.paymentIntentId ?? null, // Save Stripe Payment Intent ID here
+      imp_uid: params.paymentIntentId ?? null,
       amount: pack.amount, // Save as base KRW amount for global stats compatibility
-      provider: "stripe",
+      provider: params.provider,
       status: "completed",
     },
     { onConflict: "order_id" },
@@ -233,6 +234,7 @@ export const verifyStripePayment = createServerFn({ method: "POST" })
         currency,
         packId,
         paymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : undefined,
+        provider: "stripe",
       });
 
       return { success: true };
@@ -241,3 +243,60 @@ export const verifyStripePayment = createServerFn({ method: "POST" })
       return { success: false, error: (error as Error).message };
     }
   });
+
+/** PortOne 결제 사후 검증 서버 함수 */
+export const verifyPortOnePayment = createServerFn({ method: "POST" })
+  .inputValidator((d: { imp_uid: string; merchant_uid: string; amount: number; packId: string }) => d)
+  .handler(async ({ data }) => {
+    const { imp_uid, merchant_uid, amount, packId } = data;
+    const userId = await getAuthenticatedUserId();
+
+    try {
+      // 1. PortOne 토큰 발급
+      const tokenRes = await fetch("https://api.iamport.kr/users/getToken", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imp_key: process.env.PORTONE_API_KEY,
+          imp_secret: process.env.PORTONE_API_SECRET,
+        }),
+      });
+      const tokenData = await tokenRes.json();
+      if (!tokenRes.ok) throw new Error("PortOne 인증 토큰 획득 실패");
+      const { access_token } = tokenData.response;
+
+      // 2. 결제 데이터 상세 조회
+      const paymentRes = await fetch(`https://api.iamport.kr/payments/${imp_uid}`, {
+        headers: { Authorization: access_token },
+      });
+      const paymentData = await paymentRes.json();
+      if (!paymentRes.ok) throw new Error("결제 내역 조회 실패");
+      const payment = paymentData.response;
+
+      // 3. 금액 위변조 검증
+      if (payment.amount !== amount) {
+        throw new Error("결제 금액 위변조가 감지되었습니다.");
+      }
+
+      if (payment.status !== "paid") {
+        throw new Error("결제 상태가 완료(paid)가 아닙니다.");
+      }
+
+      // 4. 공용 비즈니스 로직을 통한 안전 가산 처리
+      await recordSuccessfulPayment({
+        userId,
+        orderId: merchant_uid,
+        amount,
+        currency: "krw",
+        packId,
+        paymentIntentId: imp_uid,
+        provider: "portone",
+      });
+
+      return { success: true };
+    } catch (error) {
+      console.error("PortOne verification error:", error);
+      return { success: false, error: (error as Error).message };
+    }
+  });
+

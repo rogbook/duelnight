@@ -754,7 +754,7 @@ export const ja = {
     purchaseBtn: "購入する",
     purchaseSuccess: "{name} の購入が完了しました！",
     secureTitle: "安全な決済の保証",
-    secureDesc: "DuelNightは、グローバル決済標準であるStripeを通じて安全で信頼性の高い決済環境を提供します。決済情報はシステムに直接保存されません。",
+    secureDesc: "DuelNightは、公認の決済代行業者（StripeおよびPortOne）を通じて安全な決済環境を提供します。決済情報は暗号化され、システムに直接保存されません。",
     bonusCredits: "+{bonus} ボーナスクレジット",
     standardPack: "通常パック",
     priceKRW: "{price} ウォン",
