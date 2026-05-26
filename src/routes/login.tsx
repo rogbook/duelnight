@@ -96,28 +96,6 @@ function LoginPage() {
     }
   };
 
-  const signInWithNaver = async () => {
-    setBusy(true);
-    try {
-      toast.info(t("auth.naverPreparing"));
-    } catch (err) {
-      toast.error(`${t("auth.naverError")}: ${(err as Error).message}`);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const signInWithKakao = async () => {
-    setBusy(true);
-    try {
-      toast.info(t("auth.kakaoPreparing"));
-    } catch (err) {
-      toast.error(`${t("auth.kakaoError")}: ${(err as Error).message}`);
-    } finally {
-      setBusy(false);
-    }
-  };
-
   return (
     <div className="mx-auto flex min-h-[80vh] max-w-sm flex-col justify-center px-6">
       <h1 className="text-2xl font-semibold tracking-tight">
@@ -142,30 +120,6 @@ function LoginPage() {
             />
           </svg>
           {t("auth.googleLogin")}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={signInWithNaver}
-          disabled={busy}
-          className="w-full"
-        >
-          <span className="mr-2 inline-flex h-4 w-4 items-center justify-center rounded-sm bg-[#03C75A] text-[10px] font-bold text-white">
-            N
-          </span>
-          {t("auth.naverLogin")}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={signInWithKakao}
-          disabled={busy}
-          className="w-full"
-        >
-          <span className="mr-2 inline-flex h-4 w-4 items-center justify-center rounded-sm bg-[#FEE500] text-[10px] font-bold text-[#3C1E1E]">
-            K
-          </span>
-          {t("auth.kakaoLogin")}
         </Button>
       </div>
 

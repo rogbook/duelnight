@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Coins, Zap, ShieldCheck, Gem } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { PaymentDialog } from "@/components/payment/PaymentDialog";
+import { verifyStripePayment } from "@/lib/payment.functions";
 import { toast } from "sonner";
 import { useI18n } from "@/i18n/language-context";
 
@@ -61,6 +62,39 @@ function StorePage() {
   const [selectedPack, setSelectedPack] = useState<typeof CREDIT_PACKS[0] | null>(null);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
+  // 1. Stripe Checkout 리디렉션 파라미터 감지 및 검증
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const success = params.get("success");
+    const sessionId = params.get("session_id");
+
+    if (success === "true" && sessionId) {
+      const verify = async () => {
+        const toastId = toast.loading(t("common.loading", "결제 결과 확인 중..."));
+        try {
+          const res = await verifyStripePayment({
+            data: { session_id: sessionId }
+          });
+
+          if (res.success) {
+            toast.success(t("creditStore.purchaseSuccess", { name: "Credits" }), { id: toastId });
+            
+            // 성공 시 URL 지분 제거하여 리프레시 중복 방지
+            const cleanUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, cleanUrl);
+          } else {
+            toast.error(res.error || "결제 검증에 실패했습니다.", { id: toastId });
+          }
+        } catch (err) {
+          toast.error(`결제 처리 오류: ${(err as Error).message}`, { id: toastId });
+        }
+      };
+      verify();
+    }
+  }, [t]);
+
   const handlePurchase = (pack: typeof CREDIT_PACKS[0]) => {
     if (!session) {
       toast.error(t("creditStore.loginRequired"));
@@ -68,11 +102,6 @@ function StorePage() {
     }
     setSelectedPack(pack);
     setIsPaymentOpen(true);
-  };
-
-  const handlePaymentSuccess = (data: any) => {
-    console.log("Payment success data:", data);
-    toast.success(t("creditStore.purchaseSuccess", { name: selectedPack?.name ?? "" }));
   };
 
   const renderPrice = (amount: number) => {
@@ -145,8 +174,9 @@ function StorePage() {
             amount: selectedPack.amount,
             orderName: selectedPack.name,
             orderId: `order_${Date.now()}`,
+            packId: selectedPack.id,
           }}
-          onSuccess={handlePaymentSuccess}
+          onSuccess={() => {}}
         />
       )}
     </div>
