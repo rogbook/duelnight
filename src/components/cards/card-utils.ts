@@ -44,7 +44,10 @@ export function normalizeColor(raw: string): string {
 /** 행을 안전하게 자동 보정 (코드 대문자/공백 제거, 색상 한글→영문, 레어도 대문자) */
 export function autoFixRow(r: CardRow): CardRow {
   const code = (r.code || "").trim().toUpperCase().replace(/\s+/g, "");
-  const set_code = (r.set_code || "").trim().toUpperCase().replace(/\s+/g, "");
+  // set_code는 사실상 "세트 이름"으로 사용되므로 한글/영문/일문 모두 안전하게
+  // 양끝 공백만 제거하고 연속 공백을 1칸으로 정규화 (내부 공백은 보존).
+  // 영문 대문자화는 ASCII에만 영향 → 한글/일본어에는 무해.
+  const set_code = (r.set_code || "").trim().replace(/\s+/g, " ").toUpperCase();
   const colors = (r.colors || []).map(normalizeColor).filter(Boolean);
   const rarity = r.rarity ? r.rarity.trim().toUpperCase() : r.rarity;
   return {
