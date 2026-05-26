@@ -754,7 +754,7 @@ export const ko = {
     purchaseBtn: "구매하기",
     purchaseSuccess: "{name} 구매가 성공적으로 완료되었습니다!",
     secureTitle: "안전한 결제 보장",
-    secureDesc: "DuelNight는 국내외 검증된 결제 대행사(PortOne, PayPal)를 통해 안전한 결제 환경을 제공합니다. 결제 정보는 시스템에 직접 저장되지 않습니다.",
+    secureDesc: "DuelNight는 글로벌 결제 표준인 Stripe를 통해 안전하고 신뢰할 수 있는 결제 환경을 제공합니다. 결제 정보는 시스템에 직접 저장되지 않습니다.",
     bonusCredits: "+{bonus} 보너스 크레딧",
     standardPack: "일반 팩",
     priceKRW: "{price}원",

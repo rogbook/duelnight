@@ -48,6 +48,8 @@
   - Stripe SDK를 런타임에 동적으로 바인딩하여 컴파일 부하 및 에러 여지 차단.
   - `payments` 테이블의 `provider: string` 수용력을 이용해 `"stripe"`를 정상 기록.
   - `user_credits` 가산 로직이 충전 팩 ID(`credits-small`, `credits-medium`, `credits-large`)에 매칭된 정확한 보너스 합산 크레딧(+1,000 / +5,000 / +10,000)을 즉시 지급하도록 완결성 확보.
+* **UI/UX 번역 팩의 결제사 문구 최종 동기화 완료** (2026-05-26)
+  - 기존 번역 팩 파일([`ko.ts`](file:///Users/hyukkwon/Library/Mobile%20Documents/com~apple%20Docs/Development/tcg-hub/src/i18n/locales/ko.ts), [`en.ts`](file:///Users/hyukkwon/Library/Mobile%20Documents/com~apple%20Docs/Development/tcg-hub/src/i18n/locales/en.ts), [`ja.ts`](file:///Users/hyukkwon/Library/Mobile%20Documents/com~apple%20Docs/Development/tcg-hub/src/i18n/locales/ja.ts))의 `creditStore.secureDesc`에 잔존해 있던 포트원(PortOne) 및 페이팔(PayPal) 안내 문구를 글로벌 아키텍처 개편 스펙에 부합하도록 **Stripe 단일 결제사 문구**로 최종 갱신하여 UI 불일치 현상을 해결했습니다.
 
 ---
 
