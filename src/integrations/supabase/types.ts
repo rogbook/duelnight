@@ -859,7 +859,6 @@ export type Database = {
           primary_game: Database["public"]["Enums"]["tcg_game"] | null
           updated_at: string
           username: string | null
-          country_code: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -870,7 +869,6 @@ export type Database = {
           primary_game?: Database["public"]["Enums"]["tcg_game"] | null
           updated_at?: string
           username?: string | null
-          country_code?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -881,7 +879,6 @@ export type Database = {
           primary_game?: Database["public"]["Enums"]["tcg_game"] | null
           updated_at?: string
           username?: string | null
-          country_code?: string | null
         }
         Relationships: []
       }
