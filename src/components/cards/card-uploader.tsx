@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Upload, Download, Trash2, Plus, Image as ImageIcon, FileSpreadsheet, Pencil, X, Wand2, ShieldCheck, AlertTriangle, Save, Sparkles, ScanLine, Crop, ArrowUp, Star } from "lucide-react";
+import { Upload, Download, Trash2, Plus, Image as ImageIcon, FileSpreadsheet, Pencil, X, Wand2, ShieldCheck, AlertTriangle, Save, Sparkles, ScanLine, Crop, ArrowUp, Star, Keyboard } from "lucide-react";
 import { ImageEditDialog } from "./image-edit-dialog";
 import { ImageUploadDialog } from "./image-upload-dialog";
 import { toast } from "sonner";
+import { useUniqueSets } from "@/hooks/use-unique-sets";
 import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -279,6 +280,7 @@ type Props = {
 };
 
 export function CardUploader({ isAdmin, onComplete }: Props) {
+  const { sets } = useUniqueSets();
   const [rows, setRows] = useState<CardRow[]>([]);
   const [errors, setErrors] = useState<{ line: number; reason: string }[]>([]);
   const [busy, setBusy] = useState(false);
@@ -1059,7 +1061,21 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
                           </Badge>
                         )}
                       </td>
-                      <td className="px-1 py-1"><Input value={r.set_code} onChange={e => updateRow(i, { set_code: e.target.value })} className={`h-7 text-xs w-20 ${fieldErr("set_code") ? errCls : ""}`} /></td>
+                      <td className="px-1 py-1">
+                        <Select 
+                          value={r.set_code} 
+                          onValueChange={v => updateRow(i, { set_code: v })}
+                        >
+                          <SelectTrigger className={`h-7 text-xs w-24 ${fieldErr("set_code") ? errCls : ""}`}>
+                            <SelectValue placeholder="세트 선택" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from(new Set([r.set_code, ...sets])).filter(Boolean).sort((a, b) => a.localeCompare(b)).map(s => (
+                              <SelectItem key={s} value={s}>{s}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </td>
                       <td className="px-1 py-1">
                         <Select value={r.game} onValueChange={v => updateRow(i, { game: v as Game })}>
                           <SelectTrigger className="h-7 text-xs w-24"><SelectValue /></SelectTrigger>
@@ -1142,7 +1158,11 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
 }
 
 function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
+  const { sets } = useUniqueSets();
+  const [isManualSet, setIsManualSet] = useState(false);
   const [r, setR] = useState<CardRow>(emptyRow());
+  const displaySets = Array.from(new Set([r.set_code, ...sets])).filter(Boolean).sort((a, b) => a.localeCompare(b));
+
   const [imgUploading, setImgUploading] = useState(false);
   const [imgDialogOpen, setImgDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1252,8 +1272,57 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
         <Input value={r.code} onChange={e => setR({ ...r, code: e.target.value })} placeholder="OP01-001" />
       </div>
       <div className="space-y-1.5">
-        <Label>세트 *</Label>
-        <Input value={r.set_code} onChange={e => setR({ ...r, set_code: e.target.value })} placeholder="OP01" />
+        <Label className="flex items-center justify-between">
+          <span>세트 *</span>
+          {!isManualSet && (
+            <button
+              type="button"
+              onClick={() => setIsManualSet(true)}
+              className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
+            >
+              <Keyboard className="h-3 w-3" />직접 입력
+            </button>
+          )}
+        </Label>
+        {isManualSet ? (
+          <div className="relative flex items-center">
+            <Input
+              value={r.set_code}
+              onChange={e => setR({ ...r, set_code: e.target.value })}
+              placeholder="예: OP01"
+            />
+            <button
+              type="button"
+              onClick={() => setIsManualSet(false)}
+              className="absolute right-2 text-[10px] text-muted-foreground hover:text-foreground"
+            >
+              선택창으로
+            </button>
+          </div>
+        ) : (
+          <Select
+            value={r.set_code}
+            onValueChange={v => {
+              if (v === "__NEW_SET__") {
+                setIsManualSet(true);
+              } else {
+                setR({ ...r, set_code: v });
+              }
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="세트 선택" />
+            </SelectTrigger>
+            <SelectContent>
+              {displaySets.map(s => (
+                <SelectItem key={s} value={s}>{s}</SelectItem>
+              ))}
+              <SelectItem value="__NEW_SET__" className="text-primary font-medium">
+                + 직접 입력 / 신규 세트 추가
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        )}
       </div>
       <div className="space-y-1.5">
         <Label>게임</Label>
