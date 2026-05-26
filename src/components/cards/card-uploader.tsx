@@ -1147,6 +1147,28 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
   const [imgDialogOpen, setImgDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // 실시간 입력 차단(trim/split 제거)을 방지하기 위한 임시 로컬 문자열 상태
+  const [colorsInput, setColorsInput] = useState("");
+  const [traitsInput, setTraitsInput] = useState("");
+
+  // 외부(예: OCR 등) 또는 내부 초기화에 의해 r.colors가 변경될 때 로컬 문자열 동기화
+  useEffect(() => {
+    if (r.colors && r.colors.length > 0) {
+      setColorsInput(r.colors.join("|"));
+    } else {
+      setColorsInput("");
+    }
+  }, [r.colors]);
+
+  // 외부(예: OCR 등) 또는 내부 초기화에 의해 r.traits가 변경될 때 로컬 문자열 동기화
+  useEffect(() => {
+    if (r.traits && r.traits.length > 0) {
+      setTraitsInput(r.traits.join(", "));
+    } else {
+      setTraitsInput("");
+    }
+  }, [r.traits]);
+
   const safeSegment = (s: string, fallback: string) =>
     (s || "").trim().replace(/[^A-Za-z0-9_-]/g, "").toUpperCase() || fallback;
 
@@ -1203,15 +1225,23 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
     }
   };
 
-
   const submit = () => {
     if (!r.code || !r.set_code || !r.name) { toast.error("코드, 세트, 이름은 필수입니다"); return; }
+    
+    // 최종 전송 시점에 비로소 파싱하여 어레이화
+    const parsedColors = colorsInput.split(/[|,;]/).map(s => s.trim()).filter(Boolean);
+    const parsedTraits = traitsInput.split(/[|,;/]/).map(s => s.trim()).filter(Boolean);
+
     onAdd({
       ...r,
+      colors: parsedColors,
+      traits: parsedTraits,
       image_url: normalizeImageUrl(r.image_url),
       extra_images: (r.extra_images ?? []).map(u => normalizeImageUrl(u)).filter((u): u is string => !!u),
     });
     setR(emptyRow());
+    setColorsInput("");
+    setTraitsInput("");
     toast.success("표에 추가됨");
   };
 
@@ -1245,7 +1275,7 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
       </div>
       <div className="space-y-1.5">
         <Label>색상 (구분자: | , ;)</Label>
-        <Input value={r.colors.join("|")} onChange={e => setR({ ...r, colors: e.target.value.split(/[|,;]/).map(s => s.trim()).filter(Boolean) })} placeholder="red|green" />
+        <Input value={colorsInput} onChange={e => setColorsInput(e.target.value)} placeholder="red|green" />
       </div>
       <div className="space-y-1.5">
         <Label>레어도</Label>
@@ -1270,8 +1300,8 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
       <div className="md:col-span-2 space-y-1.5">
         <Label>특징 <span className="text-xs text-muted-foreground">(쉼표 또는 | 로 구분, 예: 밀짚모자 해적단, 초신성)</span></Label>
         <Input
-          value={r.traits?.join(", ") ?? ""}
-          onChange={e => setR({ ...r, traits: e.target.value.split(/[|,;/]/).map(s => s.trim()).filter(Boolean) })}
+          value={traitsInput}
+          onChange={e => setTraitsInput(e.target.value)}
           placeholder="밀짚모자 해적단, 초신성"
         />
       </div>
