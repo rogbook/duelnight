@@ -1,5 +1,22 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import {
+  MobileStatScroll,
+  MobileTurnRatioCard,
+  MobileDeckCards,
+  MobileMatchupCards,
+  MobileEventCards,
+  MobileOpponentCards,
+  MobileRecentCards,
+} from "@/components/match-stat-cards";
 import { Swords, Trash2, Plus, Wand2, Pencil, Download, Upload, X, Eye, CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -94,6 +111,7 @@ export const Route = createFileRoute("/matches")({
 function MatchesPage() {
   const { t } = useI18n();
   const { user, loading } = useAuth();
+  const isMobile = useIsMobile();
   const [game, setGame] = useState<Game | "all">("all");
   const [period, setPeriod] = useState<Period>("30");
   const [chartUnit, setChartUnit] = useState<ChartUnit>("day");
@@ -175,7 +193,7 @@ function MatchesPage() {
         <div className="flex flex-wrap items-center gap-2">
           <ImportExportButton rows={allRows} onImported={() => refetch()} />
           <NormalizeButton onDone={() => refetch()} />
-          <NewMatchDialog onCreated={() => refetch()} lastMatch={allRows[0]} />
+          <NewMatchButton onCreated={() => refetch()} lastMatch={allRows[0]} />
         </div>
       </div>
 
@@ -185,7 +203,11 @@ function MatchesPage() {
         onChange={setFilters}
       />
 
-      <StatGrid stats={stats} streak={streak} />
+      {isMobile ? (
+        <MobileStatScroll stats={stats} streak={streak} />
+      ) : (
+        <StatGrid stats={stats} streak={streak} />
+      )}
 
       <section className="mt-6 rounded-lg border border-border bg-card">
         <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
@@ -202,17 +224,28 @@ function MatchesPage() {
 
       <AiCoachCard rows={rows} stats={stats} period={period} game={game} />
 
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <DeckTable rows={stats.byDeck} />
-        <MatchupTable rows={stats.matchups} />
-      </div>
+      {isMobile ? (
+        <>
+          <MobileTurnRatioCard stats={stats} />
+          <MobileDeckCards rows={stats.byDeck} />
+          <MobileMatchupCards rows={stats.matchups} />
+          <MobileEventCards rows={stats.byEvent} />
+          <MobileOpponentCards rows={stats.topOpponents} allRows={rows} game={game} />
+        </>
+      ) : (
+        <>
+          <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <DeckTable rows={stats.byDeck} />
+            <MatchupTable rows={stats.matchups} />
+          </div>
+          <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <EventTable rows={stats.byEvent} />
+            <OpponentTable rows={stats.topOpponents} allRows={rows} game={game} />
+          </div>
+        </>
+      )}
 
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <EventTable rows={stats.byEvent} />
-        <OpponentTable rows={stats.topOpponents} allRows={rows} game={game} />
-      </div>
-
-      <RecentList rows={rows} onDeleted={() => refetch()} />
+      <RecentList rows={rows} onDeleted={() => refetch()} isMobile={isMobile} />
 
       <TaggedAsOpponentSection onSaved={() => refetch()} />
     </div>
@@ -588,9 +621,11 @@ function OpponentTable({
 function RecentList({
   rows,
   onDeleted,
+  isMobile = false,
 }: {
   rows: Match[];
   onDeleted: () => void;
+  isMobile?: boolean;
 }) {
   const { t, language } = useI18n();
   const [editing, setEditing] = useState<Match | null>(null);
@@ -630,92 +665,101 @@ function RecentList({
   return (
     <section className="mt-8">
       <h2 className="text-sm font-medium">{t("matches.recentMatches")}</h2>
-      <div className="mt-3 overflow-hidden rounded-lg border border-border bg-card">
-        <table className="w-full text-sm">
-          <thead className="border-b border-border bg-muted/30 text-xs text-muted-foreground">
-            <tr>
-              <th className="px-3 py-2 text-left font-medium">{t("matches.date")}</th>
-              <th className="px-3 py-2 text-left font-medium">{t("matches.game")}</th>
-              <th className="px-3 py-2 text-left font-medium">{t("matches.event")}</th>
-              <th className="px-3 py-2 text-left font-medium">{t("matches.myDeck")}</th>
-              <th className="px-3 py-2 text-left font-medium">{t("matches.opponent")}</th>
-              <th className="px-3 py-2 text-left font-medium">{t("matches.turn")}</th>
-              <th className="px-3 py-2 text-left font-medium">{t("matches.result")}</th>
-              <th className="px-3 py-2 text-left font-medium">{t("matches.score")}</th>
-              <th className="px-3 py-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {pageRows.map((m) => (
-              <tr
-                key={m.id}
-                onClick={() => setViewing(m)}
-                className="cursor-pointer border-b border-border transition hover:bg-muted/30 last:border-0"
-              >
-                <td className="px-3 py-2 text-muted-foreground">
-                  {new Date(m.played_at).toLocaleDateString(localeStr)}
-                </td>
-                <td className="px-3 py-2">{t(`matches.${m.game}` as any)}</td>
-                <td className="px-3 py-2 text-muted-foreground">
-                  {t(`matches.event${m.event.charAt(0).toUpperCase() + m.event.slice(1)}` as any)}
-                </td>
-                <td className="px-3 py-2">{m.my_deck}</td>
-                <td className="px-3 py-2 text-muted-foreground">
-                  {m.opp_leader || m.opp_deck || "—"}
-                </td>
-                <td className="px-3 py-2">{m.went_first ? t("matches.first") : t("matches.second")}</td>
-                <td className="px-3 py-2">
-                  <ResultBadge r={m.result} />
-                </td>
-                <td className="px-3 py-2">
-                  {m.points_delta != null ? (
-                    <span
-                      className={
-                        "tabular-nums text-xs font-medium " +
-                        (m.points_delta > 0
-                          ? "text-emerald-600"
-                          : m.points_delta < 0
-                            ? "text-rose-600"
-                            : "text-muted-foreground")
-                      }
-                    >
-                      {m.points_delta > 0 ? "+" : ""}
-                      {m.points_delta}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">—</span>
-                  )}
-                </td>
-                <td className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center justify-end gap-2">
-                    <button
-                      onClick={() => setViewing(m)}
-                      className="text-muted-foreground hover:text-foreground"
-                      aria-label={t("matches.viewDetail")}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => setEditing(m)}
-                      className="text-muted-foreground hover:text-foreground"
-                      aria-label={t("common.edit")}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => onDelete(m.id)}
-                      className="text-muted-foreground hover:text-destructive"
-                      aria-label={t("common.delete")}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </td>
+      {isMobile ? (
+        <MobileRecentCards
+          rows={pageRows}
+          onView={(m) => setViewing(m)}
+          onEdit={(m) => setEditing(m)}
+          onDelete={(id) => onDelete(id)}
+        />
+      ) : (
+        <div className="mt-3 overflow-hidden rounded-lg border border-border bg-card">
+          <table className="w-full text-sm">
+            <thead className="border-b border-border bg-muted/30 text-xs text-muted-foreground">
+              <tr>
+                <th className="px-3 py-2 text-left font-medium">{t("matches.date")}</th>
+                <th className="px-3 py-2 text-left font-medium">{t("matches.game")}</th>
+                <th className="px-3 py-2 text-left font-medium">{t("matches.event")}</th>
+                <th className="px-3 py-2 text-left font-medium">{t("matches.myDeck")}</th>
+                <th className="px-3 py-2 text-left font-medium">{t("matches.opponent")}</th>
+                <th className="px-3 py-2 text-left font-medium">{t("matches.turn")}</th>
+                <th className="px-3 py-2 text-left font-medium">{t("matches.result")}</th>
+                <th className="px-3 py-2 text-left font-medium">{t("matches.score")}</th>
+                <th className="px-3 py-2"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {pageRows.map((m) => (
+                <tr
+                  key={m.id}
+                  onClick={() => setViewing(m)}
+                  className="cursor-pointer border-b border-border transition hover:bg-muted/30 last:border-0"
+                >
+                  <td className="px-3 py-2 text-muted-foreground">
+                    {new Date(m.played_at).toLocaleDateString(localeStr)}
+                  </td>
+                  <td className="px-3 py-2">{t(`matches.${m.game}` as any)}</td>
+                  <td className="px-3 py-2 text-muted-foreground">
+                    {t(`matches.event${m.event.charAt(0).toUpperCase() + m.event.slice(1)}` as any)}
+                  </td>
+                  <td className="px-3 py-2">{m.my_deck}</td>
+                  <td className="px-3 py-2 text-muted-foreground">
+                    {m.opp_leader || m.opp_deck || "—"}
+                  </td>
+                  <td className="px-3 py-2">{m.went_first ? t("matches.first") : t("matches.second")}</td>
+                  <td className="px-3 py-2">
+                    <ResultBadge r={m.result} />
+                  </td>
+                  <td className="px-3 py-2">
+                    {m.points_delta != null ? (
+                      <span
+                        className={
+                          "tabular-nums text-xs font-medium " +
+                          (m.points_delta > 0
+                            ? "text-emerald-600"
+                            : m.points_delta < 0
+                              ? "text-rose-600"
+                              : "text-muted-foreground")
+                        }
+                      >
+                        {m.points_delta > 0 ? "+" : ""}
+                        {m.points_delta}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => setViewing(m)}
+                        className="text-muted-foreground hover:text-foreground"
+                        aria-label={t("matches.viewDetail")}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setEditing(m)}
+                        className="text-muted-foreground hover:text-foreground"
+                        aria-label={t("common.edit")}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => onDelete(m.id)}
+                        className="text-muted-foreground hover:text-destructive"
+                        aria-label={t("common.delete")}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
       {totalPages > 1 && (
         <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
           <span>
@@ -1453,6 +1497,315 @@ function NewMatchDialog({
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ─── Mobile 3-step bottom sheet ───────────────────────────────────────────────
+
+const GAME_OPTIONS: { value: Game; label: string; sub: string }[] = [
+  { value: "optcg", label: "원피스 TCG", sub: "ONE PIECE CARD GAME" },
+  { value: "ptcg",  label: "포켓몬 TCG", sub: "Pokémon Trading Card Game" },
+  { value: "dtcg",  label: "디지몬 TCG", sub: "Digimon Card Game" },
+];
+
+function NewMatchMobileDrawer({
+  onCreated,
+  lastMatch,
+}: {
+  onCreated: () => void;
+  lastMatch?: Match;
+}) {
+  const { user } = useAuth();
+  const { t } = useI18n();
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [step, setStep] = useState(1);
+  const [keepRaw, setKeepRaw] = useState(false);
+
+  const initial = () => ({
+    game: (lastMatch?.game ?? "optcg") as Game,
+    my_deck: lastMatch?.my_deck ?? "",
+    deck_id: "" as string,
+    went_first: "true",
+    result: "win" as Result,
+    played_at: new Date(),
+  });
+  const [form, setForm] = useState(initial);
+
+  const { data: decks = [] } = useQuery({
+    queryKey: ["decks-for-match", user?.id, form.game],
+    enabled: !!user && open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("decks")
+        .select("id,name,leader,game")
+        .eq("user_id", user!.id)
+        .eq("game", form.game)
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  useEffect(() => {
+    if (!open) return;
+    setForm(initial());
+    setStep(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, lastMatch?.id]);
+
+  const submit = async () => {
+    if (!user) return;
+    const myDeck = form.deck_id
+      ? (decks.find((d) => d.id === form.deck_id)?.name ?? form.my_deck)
+      : keepRaw
+        ? form.my_deck.trim()
+        : normalizeDeckName(form.my_deck, form.game);
+    if (!myDeck) {
+      toast.error(t("matches.myDeckRequiredToast"));
+      return;
+    }
+    const { error } = await supabase.from("matches").insert({
+      user_id: user.id,
+      game: form.game,
+      event: "friendly" as EventT,
+      my_deck: myDeck,
+      opp_leader: null,
+      opp_deck: null,
+      went_first: form.went_first === "true",
+      result: form.result,
+      notes: null,
+      deck_id: form.deck_id || null,
+      played_at: form.played_at.toISOString(),
+      opponent_user_id: null,
+      opponent_deck_id: null,
+      tournament_note: null,
+    });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(t("matches.recordedToast"));
+    setOpen(false);
+    qc.invalidateQueries({ queryKey: ["matches"] });
+    onCreated();
+  };
+
+  const stepDots = (
+    <div className="flex items-center gap-1.5">
+      {[1, 2, 3].map((s) => (
+        <div
+          key={s}
+          className={cn(
+            "h-1.5 rounded-full transition-all duration-200",
+            step === s ? "w-5 bg-foreground" : step > s ? "w-2.5 bg-foreground/40" : "w-2.5 bg-muted",
+          )}
+        />
+      ))}
+    </div>
+  );
+
+  return (
+    <Drawer open={open} onOpenChange={setOpen}>
+      <DrawerTrigger asChild>
+        <Button size="sm">
+          <Plus className="mr-1 h-4 w-4" />
+          {t("matches.addMatch")}
+        </Button>
+      </DrawerTrigger>
+      <DrawerContent className="max-h-[82vh]">
+        <DrawerHeader className="flex flex-row items-center justify-between pb-0">
+          <DrawerTitle className="text-base">{t("matches.addTitle")}</DrawerTitle>
+          {stepDots}
+        </DrawerHeader>
+
+        <div className="overflow-y-auto px-4 pb-8 pt-4" data-vaul-no-drag>
+          {/* ── Step 1: 게임 선택 ── */}
+          {step === 1 && (
+            <div className="space-y-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t("matches.game")}
+              </p>
+              {GAME_OPTIONS.map((g) => (
+                <button
+                  key={g.value}
+                  type="button"
+                  onClick={() => {
+                    setForm((f) => ({ ...f, game: g.value, deck_id: "" }));
+                    setStep(2);
+                  }}
+                  className={cn(
+                    "flex w-full items-center gap-4 rounded-2xl border-2 px-5 py-4 text-left transition-all active:scale-[0.98]",
+                    form.game === g.value
+                      ? "border-foreground bg-accent"
+                      : "border-border hover:border-foreground/30",
+                  )}
+                >
+                  <div>
+                    <p className="text-base font-semibold">{g.label}</p>
+                    <p className="text-[11px] text-muted-foreground">{g.sub}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* ── Step 2: 선/후공 + 승패 ── */}
+          {step === 2 && (
+            <div className="space-y-5">
+              {/* 선/후공 */}
+              <div className="space-y-2">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("matches.turn")}
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { value: "true",  label: t("matches.first") },
+                    { value: "false", label: t("matches.second") },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setForm((f) => ({ ...f, went_first: opt.value }))}
+                      className={cn(
+                        "rounded-2xl border-2 py-4 text-sm font-semibold transition-all active:scale-[0.98]",
+                        form.went_first === opt.value
+                          ? "border-foreground bg-foreground text-background"
+                          : "border-border hover:border-foreground/30",
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 승패 */}
+              <div className="space-y-2">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("matches.resultLabel")}
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { value: "win",  label: t("matches.win"),  active: "bg-emerald-600 border-emerald-600 text-white" },
+                    { value: "loss", label: t("matches.lose"), active: "bg-rose-600 border-rose-600 text-white" },
+                    { value: "draw", label: t("matches.draw"), active: "bg-foreground border-foreground text-background" },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setForm((f) => ({ ...f, result: opt.value as Result }))}
+                      className={cn(
+                        "rounded-2xl border-2 py-4 text-sm font-semibold transition-all active:scale-[0.98]",
+                        form.result === opt.value ? opt.active : "border-border hover:border-foreground/30",
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-1">
+                <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(1)}>
+                  ← {t("common.back")}
+                </Button>
+                <Button type="button" className="flex-1" onClick={() => setStep(3)}>
+                  {t("common.confirm")} →
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Step 3: 덱 선택 ── */}
+          {step === 3 && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("matches.myDeck")}
+                </p>
+                {decks.length > 0 && (
+                  <Select
+                    value={form.deck_id || "manual"}
+                    onValueChange={(v) => {
+                      if (v === "manual") {
+                        setForm((f) => ({ ...f, deck_id: "" }));
+                        return;
+                      }
+                      const d = decks.find((x) => x.id === v);
+                      setForm((f) => ({ ...f, deck_id: v, my_deck: d?.name ?? f.my_deck }));
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={t("matches.selectSavedDeck")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {decks.map((d) => (
+                        <SelectItem key={d.id} value={d.id}>
+                          {d.name}{d.leader ? ` · ${d.leader}` : ""}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="manual">{t("matches.manualInput")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+                {(decks.length === 0 || !form.deck_id) && (
+                  <>
+                    <Input
+                      value={form.my_deck}
+                      onChange={(e) => setForm((f) => ({ ...f, my_deck: e.target.value }))}
+                      placeholder={decks.length === 0 ? t("matches.noSavedDecks") : t("matches.deckPlaceholder")}
+                      autoComplete="off"
+                    />
+                    {!keepRaw && (
+                      <CanonicalHint
+                        raw={form.my_deck}
+                        game={form.game}
+                        onApply={(v) => setForm((f) => ({ ...f, my_deck: v }))}
+                      />
+                    )}
+                  </>
+                )}
+              </div>
+
+              <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                <input
+                  type="checkbox"
+                  className="h-3.5 w-3.5"
+                  checked={keepRaw}
+                  onChange={(e) => setKeepRaw(e.target.checked)}
+                />
+                {t("matches.keepRaw")}
+              </label>
+
+              <div className="flex gap-2 pt-1">
+                <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(2)}>
+                  ← {t("common.back")}
+                </Button>
+                <Button type="button" className="flex-1" onClick={submit}>
+                  {t("common.save")}
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </DrawerContent>
+    </Drawer>
+  );
+}
+
+function NewMatchButton({
+  onCreated,
+  lastMatch,
+}: {
+  onCreated: () => void;
+  lastMatch?: Match;
+}) {
+  const isMobile = useIsMobile();
+  return isMobile ? (
+    <NewMatchMobileDrawer onCreated={onCreated} lastMatch={lastMatch} />
+  ) : (
+    <NewMatchDialog onCreated={onCreated} lastMatch={lastMatch} />
   );
 }
 

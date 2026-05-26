@@ -45,6 +45,7 @@ export const en = {
     announcements: "Announcements",
     shop: "Shop",
     adminCardsUpload: "Upload Cards",
+    more: "More",
   },
   matches: {
     title: "Match Records",
