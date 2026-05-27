@@ -585,3 +585,53 @@ function ChatDialog({
     </Dialog>
   );
 }
+
+function ContactDetails({
+  postId,
+  isAuthor,
+  myStatus,
+}: {
+  postId: string;
+  isAuthor: boolean;
+  myStatus?: "pending" | "accepted" | "rejected" | "cancelled";
+}) {
+  const { t } = useI18n();
+  const canView = isAuthor || myStatus === "accepted";
+  const { data } = useQuery({
+    queryKey: ["lfg-contact", postId],
+    enabled: canView,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("get_lfg_contact", { _post_id: postId });
+      if (error) throw error;
+      const row = Array.isArray(data) && data.length > 0 ? data[0] : null;
+      return row as { contact: string | null; kakao_link: string | null } | null;
+    },
+  });
+
+  if (!canView || !data || (!data.contact && !data.kakao_link)) return null;
+
+  return (
+    <div className="mt-5 space-y-2 rounded-md bg-muted/50 p-3 text-sm">
+      {data.contact && (
+        <div>
+          <p className="text-xs font-semibold text-muted-foreground">{t("lfg.contactLabel")}</p>
+          <p>{data.contact}</p>
+        </div>
+      )}
+      {data.kakao_link && (
+        <div>
+          <p className="text-xs font-semibold text-muted-foreground">{t("lfg.kakaoLabel")}</p>
+          <a
+            href={data.kakao_link}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="break-all text-primary hover:underline"
+          >
+            {data.kakao_link}
+          </a>
+        </div>
+      )}
+    </div>
+  );
+}
+
