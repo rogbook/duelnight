@@ -300,3 +300,26 @@ const PAYPAL_BASE = isProduction
 ### 수정 내용
 - `loader` 제거, 클라이언트 `useAuth` + `useQuery`로 권한 판정 전환
 - `decks` 테이블에 관리자 SELECT 정책 추가 (`has_role(auth.uid(),'admin')`)
+
+---
+
+## 2026-05-27 — 세트 관리 근본 개선 (card_sets 테이블 도입)
+
+### 배경
+- 빈 세트를 목록에 표시하기 위해 `DUMMY-*` placeholder 카드를 `cards` 테이블에 넣어왔음
+- "더미 카드 일괄 삭제" 작업 시 사용자가 만든 빈 세트가 함께 사라지는 사고 발생
+
+### 변경
+- 신규 테이블 `public.card_sets` 추가 (id, name UNIQUE, created_by, created_at, updated_at)
+- RLS: SELECT 전체 공개 / INSERT·UPDATE·DELETE 관리자 한정
+- 기존 `cards.set_code` distinct 값들을 모두 `card_sets`에 이관
+- DUMMY-* 카드 전체 삭제 (더 이상 필요 없음)
+- `useUniqueSets` 훅: `cards` → `card_sets`에서 직접 조회
+- `SetConfigView`: 세트 추가/삭제 로직을 `card_sets` 기준으로 재작성
+  - 세트 추가: DUMMY 카드 insert 대신 `card_sets` row insert
+  - 세트 삭제: 소속 카드는 '미분류'로 update, `card_sets` row delete
+
+### 효과
+- 빈 세트도 정상 표시 (DUMMY 의존 제거)
+- 카드 데이터에 영향 없이 세트만 독립적으로 CRUD 가능
+- 향후 `cards`에 대한 bulk delete가 세트 목록에 영향 미치지 않음
