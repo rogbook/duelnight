@@ -6,9 +6,19 @@ const REDIRECT_URI = `${process.env.APP_URL || "http://localhost:3000"}/api/driv
 
 export async function getGoogleAuthUrl(userId: string) {
   const scopes = ["https://www.googleapis.com/auth/drive.readonly", "https://www.googleapis.com/auth/userinfo.email"];
-  const state = encodeURIComponent(JSON.stringify({ userId }));
-  
-  return `https://accounts.google.com/o/oauth2/v2/auth?` + 
+
+  // CSRF 방어: 서버에서 nonce 생성 및 저장. 콜백에서만 검증 가능.
+  const nonce = crypto.randomUUID() + crypto.randomUUID().replace(/-/g, "");
+  const { error } = await supabaseAdmin.from("oauth_states").insert({
+    nonce,
+    user_id: userId,
+    provider: "google_drive",
+  });
+  if (error) throw new Error(`Failed to persist OAuth state: ${error.message}`);
+
+  const state = encodeURIComponent(JSON.stringify({ nonce }));
+
+  return `https://accounts.google.com/o/oauth2/v2/auth?` +
     `client_id=${CLIENT_ID}&` +
     `redirect_uri=${REDIRECT_URI}&` +
     `response_type=code&` +
@@ -16,6 +26,27 @@ export async function getGoogleAuthUrl(userId: string) {
     `access_type=offline&` +
     `prompt=consent&` +
     `state=${state}`;
+}
+
+/**
+ * Nonce를 검증하고 1회성으로 소비(삭제)한 뒤, 연결된 user_id를 반환합니다.
+ * 만료(15분) 또는 미존재 시 null 반환.
+ */
+export async function consumeOAuthState(nonce: string, provider = "google_drive"): Promise<string | null> {
+  if (!nonce) return null;
+  const { data, error } = await supabaseAdmin
+    .from("oauth_states")
+    .select("user_id, expires_at")
+    .eq("nonce", nonce)
+    .eq("provider", provider)
+    .maybeSingle();
+  if (error || !data) return null;
+
+  // 1회성: 즉시 삭제
+  await supabaseAdmin.from("oauth_states").delete().eq("nonce", nonce);
+
+  if (new Date(data.expires_at).getTime() < Date.now()) return null;
+  return data.user_id as string;
 }
 
 export async function exchangeCodeForTokens(code: string) {
@@ -74,7 +105,7 @@ export async function getValidAccessToken(userId: string) {
   if (expiresAt.getTime() - now.getTime() < 5 * 60 * 1000) {
     const newTokens = await refreshAccessToken(tokenData.refresh_token);
     const expires_at = new Date(Date.now() + newTokens.expires_in * 1000).toISOString();
-    
+
     await supabaseAdmin
       .from("user_drive_tokens")
       .update({
