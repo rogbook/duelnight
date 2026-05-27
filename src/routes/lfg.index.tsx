@@ -39,7 +39,6 @@ type Post = {
   title: string;
   location: string | null;
   meet_at: string | null;
-  contact: string | null;
   body: string | null;
   status: string;
   created_at: string;
@@ -48,7 +47,6 @@ type Post = {
   games_count: number | null;
   duration_minutes: number | null;
   quick_match: boolean;
-  kakao_link: string | null;
   profiles?: { display_name: string | null; username: string | null } | null;
   store?: { id: string; name: string; address: string | null } | null;
 };
@@ -156,7 +154,7 @@ function LfgPage() {
     queryFn: async () => {
       let q = supabase
         .from("lfg_posts")
-        .select("*")
+        .select("id, user_id, game, title, location, meet_at, body, status, category, store_id, updated_at, games_count, duration_minutes, quick_match, created_at")
         .order("created_at", { ascending: false });
       if (game !== "all") q = q.eq("game", game);
       if (category !== "all") q = q.eq("category", category);

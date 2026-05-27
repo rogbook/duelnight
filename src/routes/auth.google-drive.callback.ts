@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { exchangeCodeForTokens, getDriveEmail } from "@/lib/google-drive.server";
+import { consumeOAuthState, exchangeCodeForTokens, getDriveEmail } from "@/lib/google-drive.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export const Route = createFileRoute("/auth/google-drive/callback")({
@@ -15,10 +15,24 @@ export const Route = createFileRoute("/auth/google-drive/callback")({
         }
 
         try {
-          const state = JSON.parse(decodeURIComponent(stateStr));
-          const userId = state.userId;
+          // state는 { nonce } 형식. nonce를 통해 서버 측 매핑된 user_id를 검증.
+          let nonce: string | null = null;
+          try {
+            const parsed = JSON.parse(decodeURIComponent(stateStr));
+            nonce = typeof parsed?.nonce === "string" ? parsed.nonce : null;
+          } catch {
+            nonce = null;
+          }
 
-          if (!userId) throw new Error("No user ID in state");
+          if (!nonce) {
+            throw redirect({ to: "/cards/upload", search: { error: "invalid_state" } });
+          }
+
+          const userId = await consumeOAuthState(nonce, "google_drive");
+          if (!userId) {
+            // CSRF 또는 만료된 state
+            throw redirect({ to: "/cards/upload", search: { error: "invalid_state" } });
+          }
 
           const tokens = await exchangeCodeForTokens(code);
           const email = await getDriveEmail(tokens.access_token);
@@ -39,6 +53,8 @@ export const Route = createFileRoute("/auth/google-drive/callback")({
 
           throw redirect({ to: "/cards/upload", search: { drive: "connected" } });
         } catch (err) {
+          // redirect는 throw로 전파됨 — 그대로 다시 throw
+          if (err && typeof err === "object" && "isRedirect" in (err as any)) throw err;
           console.error("OAuth callback error:", err);
           throw redirect({ to: "/cards/upload", search: { error: "oauth_failed" } });
         }

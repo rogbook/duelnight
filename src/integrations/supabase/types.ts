@@ -801,6 +801,30 @@ export type Database = {
         }
         Relationships: []
       }
+      oauth_states: {
+        Row: {
+          created_at: string
+          expires_at: string
+          nonce: string
+          provider: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          nonce: string
+          provider: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          nonce?: string
+          provider?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number
@@ -1179,6 +1203,13 @@ export type Database = {
           username: string
           win_rate: number
           wins: number
+        }[]
+      }
+      get_lfg_contact: {
+        Args: { _post_id: string }
+        Returns: {
+          contact: string
+          kakao_link: string
         }[]
       }
       get_user_recent_matches: {

@@ -54,7 +54,7 @@ export const Route = createFileRoute("/lfg/$id")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
       .from("lfg_posts")
-      .select("*")
+      .select("id, user_id, game, title, location, meet_at, body, status, category, store_id, updated_at, games_count, duration_minutes, quick_match, created_at")
       .eq("id", params.id)
       .maybeSingle();
     if (error) throw error;
@@ -134,7 +134,7 @@ function LfgDetailPage() {
   const { data: post = initialPost, refetch: refetchPost } = useQuery({
     queryKey: ["lfg-post", initialPost.id],
     queryFn: async () => {
-      const { data } = await supabase.from("lfg_posts").select("*").eq("id", initialPost.id).maybeSingle();
+      const { data } = await supabase.from("lfg_posts").select("id, user_id, game, title, location, meet_at, body, status, category, store_id, updated_at, games_count, duration_minutes, quick_match, created_at").eq("id", initialPost.id).maybeSingle();
       return (data ?? initialPost) as Post;
     },
     initialData: initialPost,
@@ -294,29 +294,8 @@ function LfgDetailPage() {
           </p>
         )}
 
-        {(post.contact || post.kakao_link) && (
-          <div className="mt-5 space-y-2 rounded-md bg-muted/50 p-3 text-sm">
-            {post.contact && (
-              <div>
-                <p className="text-xs font-semibold text-muted-foreground">{t("lfg.contactLabel")}</p>
-                <p>{post.contact}</p>
-              </div>
-            )}
-            {post.kakao_link && (
-              <div>
-                <p className="text-xs font-semibold text-muted-foreground">{t("lfg.kakaoLabel")}</p>
-                <a
-                  href={post.kakao_link}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="break-all text-primary hover:underline"
-                >
-                  {post.kakao_link}
-                </a>
-              </div>
-            )}
-          </div>
-        )}
+        <ContactDetails postId={post.id} isAuthor={isAuthor} myStatus={myParticipant?.status} />
+
 
         <div className="mt-6 flex flex-wrap gap-2">
           {!user && (
@@ -606,3 +585,53 @@ function ChatDialog({
     </Dialog>
   );
 }
+
+function ContactDetails({
+  postId,
+  isAuthor,
+  myStatus,
+}: {
+  postId: string;
+  isAuthor: boolean;
+  myStatus?: "pending" | "accepted" | "rejected" | "cancelled";
+}) {
+  const { t } = useI18n();
+  const canView = isAuthor || myStatus === "accepted";
+  const { data } = useQuery({
+    queryKey: ["lfg-contact", postId],
+    enabled: canView,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("get_lfg_contact", { _post_id: postId });
+      if (error) throw error;
+      const row = Array.isArray(data) && data.length > 0 ? data[0] : null;
+      return row as { contact: string | null; kakao_link: string | null } | null;
+    },
+  });
+
+  if (!canView || !data || (!data.contact && !data.kakao_link)) return null;
+
+  return (
+    <div className="mt-5 space-y-2 rounded-md bg-muted/50 p-3 text-sm">
+      {data.contact && (
+        <div>
+          <p className="text-xs font-semibold text-muted-foreground">{t("lfg.contactLabel")}</p>
+          <p>{data.contact}</p>
+        </div>
+      )}
+      {data.kakao_link && (
+        <div>
+          <p className="text-xs font-semibold text-muted-foreground">{t("lfg.kakaoLabel")}</p>
+          <a
+            href={data.kakao_link}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="break-all text-primary hover:underline"
+          >
+            {data.kakao_link}
+          </a>
+        </div>
+      )}
+    </div>
+  );
+}
+
