@@ -106,7 +106,9 @@ export const Route = createFileRoute("/matches")({
       ],
     };
   },
+  component: MatchesPage,
 });
+
 
 function MatchesPage() {
   const { t } = useI18n();
