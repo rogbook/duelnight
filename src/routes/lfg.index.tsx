@@ -39,7 +39,6 @@ type Post = {
   title: string;
   location: string | null;
   meet_at: string | null;
-  contact: string | null;
   body: string | null;
   status: string;
   created_at: string;
@@ -48,7 +47,6 @@ type Post = {
   games_count: number | null;
   duration_minutes: number | null;
   quick_match: boolean;
-  kakao_link: string | null;
   profiles?: { display_name: string | null; username: string | null } | null;
   store?: { id: string; name: string; address: string | null } | null;
 };
