@@ -98,8 +98,24 @@ export const disconnectDriveFn = createServerFn({ method: "POST" })
     return { success: true };
   });
 
+const MAX_DRIVE_IMPORT_BATCH = 50;
+const DRIVE_FILE_ID_RE = /^[a-zA-Z0-9_-]{8,128}$/;
+
 export const importDriveFilesFn = createServerFn({ method: "POST" })
-  .inputValidator((d: { fileIds: string[] }) => d)
+  .inputValidator((d: { fileIds: string[] }) => {
+    if (!Array.isArray(d?.fileIds) || d.fileIds.length === 0) {
+      throw new Error("fileIds is required");
+    }
+    if (d.fileIds.length > MAX_DRIVE_IMPORT_BATCH) {
+      throw new Error(`최대 ${MAX_DRIVE_IMPORT_BATCH}개까지 한 번에 가져올 수 있습니다.`);
+    }
+    for (const id of d.fileIds) {
+      if (typeof id !== "string" || !DRIVE_FILE_ID_RE.test(id)) {
+        throw new Error("잘못된 파일 ID 형식");
+      }
+    }
+    return d;
+  })
   .handler(async ({ data }) => {
     const userId = await getAuthenticatedUserId();
     const { fileIds } = data;

@@ -294,29 +294,8 @@ function LfgDetailPage() {
           </p>
         )}
 
-        {(post.contact || post.kakao_link) && (
-          <div className="mt-5 space-y-2 rounded-md bg-muted/50 p-3 text-sm">
-            {post.contact && (
-              <div>
-                <p className="text-xs font-semibold text-muted-foreground">{t("lfg.contactLabel")}</p>
-                <p>{post.contact}</p>
-              </div>
-            )}
-            {post.kakao_link && (
-              <div>
-                <p className="text-xs font-semibold text-muted-foreground">{t("lfg.kakaoLabel")}</p>
-                <a
-                  href={post.kakao_link}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="break-all text-primary hover:underline"
-                >
-                  {post.kakao_link}
-                </a>
-              </div>
-            )}
-          </div>
-        )}
+        <ContactDetails postId={post.id} isAuthor={isAuthor} myStatus={myParticipant?.status} />
+
 
         <div className="mt-6 flex flex-wrap gap-2">
           {!user && (
