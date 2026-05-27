@@ -46,22 +46,15 @@ export function SetConfigView() {
 
     setAddingSet(true);
     try {
-      const dummyCode = `DUMMY-${trimmedName.replace(/[^A-Za-z0-9]/g, "").toUpperCase()}`;
-      // 더미 코드 중복 및 길이 제한(최대 30자) 방지를 위해 뒤에 고유 숫자 덧붙임
-      const finalCode = dummyCode.slice(0, 20) + "-" + Date.now().toString().slice(-6);
+      // '미분류' 세트가 없는 경우를 대비해 같이 보장
+      await supabase.from("card_sets").upsert(
+        [{ name: "미분류" }],
+        { onConflict: "name", ignoreDuplicates: true }
+      );
 
       const { error } = await supabase
-        .from("cards")
-        .insert({
-          code: finalCode,
-          name: "[세트 생성 임시 더미]",
-          set_code: trimmedName,
-          game: "optcg",
-          type: "character",
-          colors: [],
-          traits: [],
-          status: "pending" as const,
-        });
+        .from("card_sets")
+        .insert({ name: trimmedName });
 
       if (error) throw error;
 
@@ -90,25 +83,28 @@ export function SetConfigView() {
 
     setDeletingSet(true);
     try {
-      // 1. 소속 일반 카드는 '미분류' 세트로 일괄 Batch Update
+      // 0. '미분류' 세트가 없으면 먼저 생성 (FK는 없지만 목록에 노출 필요)
+      await supabase.from("card_sets").upsert(
+        [{ name: "미분류" }],
+        { onConflict: "name", ignoreDuplicates: true }
+      );
+
+      // 1. 소속 카드는 모두 '미분류'로 이동
       const { error: updErr } = await supabase
         .from("cards")
         .update({ set_code: "미분류" })
-        .eq("set_code", activeSet)
-        .not("code", "like", "DUMMY-%");
+        .eq("set_code", activeSet);
       if (updErr) throw updErr;
 
-      // 2. 세트 생성용 임시 더미 카드들은 DB에서 소거
+      // 2. card_sets 테이블에서 해당 세트 row 삭제
       const { error: delErr } = await supabase
-        .from("cards")
+        .from("card_sets")
         .delete()
-        .eq("set_code", activeSet)
-        .like("code", "DUMMY-%");
+        .eq("name", activeSet);
       if (delErr) throw delErr;
 
       toast.success(`[${activeSet}] 세트가 삭제되고, 소속 카드는 '미분류' 세트로 이동되었습니다.`);
-      
-      // 세트 목록 갱신 및 포커싱 이동
+
       await refreshSets();
       setActiveSet("");
     } catch (e) {
