@@ -156,7 +156,7 @@ function LfgPage() {
     queryFn: async () => {
       let q = supabase
         .from("lfg_posts")
-        .select("*")
+        .select("id, user_id, game, title, location, meet_at, body, status, category, store_id, updated_at, games_count, duration_minutes, quick_match, created_at")
         .order("created_at", { ascending: false });
       if (game !== "all") q = q.eq("game", game);
       if (category !== "all") q = q.eq("category", category);

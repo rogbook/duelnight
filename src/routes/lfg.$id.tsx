@@ -54,7 +54,7 @@ export const Route = createFileRoute("/lfg/$id")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
       .from("lfg_posts")
-      .select("*")
+      .select("id, user_id, game, title, location, meet_at, body, status, category, store_id, updated_at, games_count, duration_minutes, quick_match, created_at")
       .eq("id", params.id)
       .maybeSingle();
     if (error) throw error;
@@ -134,7 +134,7 @@ function LfgDetailPage() {
   const { data: post = initialPost, refetch: refetchPost } = useQuery({
     queryKey: ["lfg-post", initialPost.id],
     queryFn: async () => {
-      const { data } = await supabase.from("lfg_posts").select("*").eq("id", initialPost.id).maybeSingle();
+      const { data } = await supabase.from("lfg_posts").select("id, user_id, game, title, location, meet_at, body, status, category, store_id, updated_at, games_count, duration_minutes, quick_match, created_at").eq("id", initialPost.id).maybeSingle();
       return (data ?? initialPost) as Post;
     },
     initialData: initialPost,
