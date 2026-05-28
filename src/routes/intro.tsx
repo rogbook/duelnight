@@ -568,7 +568,7 @@ function MiniPlan({
         (reduced ? "" : "transition ") +
         (highlight
           ? "border-primary/60 bg-gradient-to-br from-primary/[0.08] to-transparent ring-1 ring-primary/20"
-          : "border-border/60 bg-card/40")
+          : "border-border/60 bg-card/80")
       }
     >
       {highlight && (
