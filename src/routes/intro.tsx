@@ -483,7 +483,7 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
       </div>
 
       {/* 하단 고정 CTA */}
-      <div className="sticky bottom-0 z-30 border-t border-border/60 bg-background/90 px-4 py-3 backdrop-blur-xl">
+      <div className="sticky bottom-0 z-30 border-t border-border/60 bg-background/95 px-4 py-3">
         <div className="flex items-center gap-2">
           <Link
             to="/login"
