@@ -387,13 +387,21 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
+    const dismissHint = () => {
+      if (hintDismissedRef.current) return;
+      hintDismissedRef.current = true;
+      setHintVisible(false);
+      if (typeof window !== "undefined") localStorage.setItem("duelnight.intro.hint", "1");
+    };
     const onScroll = () => {
+      dismissHint();
       const w = el.clientWidth;
       if (w === 0) return;
       const i = Math.round(el.scrollLeft / w);
       setIndex(Math.max(0, Math.min(slides.length - 1, i)));
     };
     const pause = () => {
+      dismissHint();
       pausedUntilRef.current = Date.now() + 6000;
     };
     el.addEventListener("scroll", onScroll, { passive: true });
