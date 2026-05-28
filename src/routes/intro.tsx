@@ -370,16 +370,21 @@ function MobileIntro({ proPrice, creditPrice, onShowLogin }: { proPrice: string;
               {t("intro.bottomCtaTitle")}
             </h2>
             <p className="relative mt-2 text-[13px] leading-relaxed text-muted-foreground">{t("intro.bottomCtaDesc")}</p>
-            <Link
-              to="/login"
+            <button
+              type="button"
+              onClick={onShowLogin}
               className="relative mt-5 inline-flex w-full items-center justify-center gap-1.5 rounded-2xl bg-gradient-to-br from-primary to-primary/90 px-5 py-3 text-[13px] font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:shadow-primary/40"
             >
               {t("intro.ctaFreeStart")}
               <ChevronRight className="h-4 w-4" />
-            </Link>
-            <Link to="/login" className="relative mt-2.5 text-[11px] text-muted-foreground transition hover:text-foreground">
+            </button>
+            <button
+              type="button"
+              onClick={onShowLogin}
+              className="relative mt-2.5 text-[11px] text-muted-foreground transition hover:text-foreground"
+            >
               {t("common.login")} →
-            </Link>
+            </button>
           </div>
         </SlideShell>
       ),
