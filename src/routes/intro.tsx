@@ -98,12 +98,13 @@ function IntroPage() {
             </h1>
             <p className="mt-5 text-base text-muted-foreground sm:text-lg">{t("intro.description")}</p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <Link
-                to="/login"
+              <button
+                type="button"
+                onClick={() => setLoginOpen(true)}
                 className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
               >
                 {t("intro.nowStartFree")}
-              </Link>
+              </button>
               <a
                 href="#pricing"
                 className="rounded-lg border border-border px-5 py-2.5 text-sm font-semibold hover:bg-accent"
