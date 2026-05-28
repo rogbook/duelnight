@@ -339,6 +339,7 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
             {!reduced && (
               <div className="pointer-events-none absolute inset-x-0 -top-4 mx-auto h-28 w-28 rounded-full bg-gradient-to-br from-primary/30 to-amber-500/20 blur-2xl transform-gpu" />
             )}
+            <span className="relative grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-primary to-amber-500 text-primary-foreground shadow-lg shadow-primary/30 ring-1 ring-white/10">
               <Sparkles className="h-6 w-6" />
             </span>
             <h2 className="relative mt-4 text-[1.5rem] font-bold leading-tight tracking-[-0.02em]">
