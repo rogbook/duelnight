@@ -564,7 +564,7 @@ function MiniPlan({
   return (
     <div
       className={
-        "relative overflow-hidden rounded-2xl border p-3.5 backdrop-blur " +
+        "relative overflow-hidden rounded-2xl border p-3.5 " +
         (reduced ? "" : "transition ") +
         (highlight
           ? "border-primary/60 bg-gradient-to-br from-primary/[0.08] to-transparent ring-1 ring-primary/20"
