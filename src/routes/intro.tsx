@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Sparkles, Trophy, Users, ScanLine, BarChart3, Calendar, Crown, Coins, ChevronRight } from "lucide-react";
+import { Sparkles, Trophy, Users, ScanLine, BarChart3, Calendar, Crown, Coins, ChevronRight, MoveHorizontal } from "lucide-react";
 import { useI18n } from "@/i18n/language-context";
 import { LanguageSelector } from "@/components/language-selector";
 
@@ -209,6 +209,8 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
   const [reduced, setReduced] = useState(false);
+  const [hintVisible, setHintVisible] = useState(false);
+  const hintDismissedRef = useRef(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -218,6 +220,24 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
   }, []);
+
+  // 스와이프 힌트: 첫 방문 시에만 표시
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const seen = localStorage.getItem("duelnight.intro.hint");
+    if (!seen) setHintVisible(true);
+  }, []);
+
+  // 힌트 4.5초 후 자동 사라짐
+  useEffect(() => {
+    if (!hintVisible) return;
+    const timer = window.setTimeout(() => {
+      hintDismissedRef.current = true;
+      setHintVisible(false);
+      if (typeof window !== "undefined") localStorage.setItem("duelnight.intro.hint", "1");
+    }, 4500);
+    return () => clearTimeout(timer);
+  }, [hintVisible]);
 
   const slides: Array<{ key: string; kicker?: string; node: React.ReactNode }> = [
     {
@@ -367,13 +387,21 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
+    const dismissHint = () => {
+      if (hintDismissedRef.current) return;
+      hintDismissedRef.current = true;
+      setHintVisible(false);
+      if (typeof window !== "undefined") localStorage.setItem("duelnight.intro.hint", "1");
+    };
     const onScroll = () => {
+      dismissHint();
       const w = el.clientWidth;
       if (w === 0) return;
       const i = Math.round(el.scrollLeft / w);
       setIndex(Math.max(0, Math.min(slides.length - 1, i)));
     };
     const pause = () => {
+      dismissHint();
       pausedUntilRef.current = Date.now() + 6000;
     };
     el.addEventListener("scroll", onScroll, { passive: true });
@@ -464,6 +492,17 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
             </section>
           ))}
         </div>
+
+        {index === 0 && hintVisible && (
+          <div className="absolute inset-x-0 bottom-9 z-10 flex justify-center pointer-events-none">
+            <div className={"inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background/95 px-3 py-1.5 shadow-sm " + (reduced ? "" : "animate-pulse")}>
+              <MoveHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-[11px] text-muted-foreground">
+                {language === "en" ? "Swipe to explore" : language === "ja" ? "スワイプして見る" : "좌우로 넘기세요"}
+              </span>
+            </div>
+          </div>
+        )}
 
         <div className="absolute inset-x-0 bottom-3 flex justify-center gap-1.5">
           {slides.map((s, i) => (
