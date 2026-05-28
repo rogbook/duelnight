@@ -335,9 +335,10 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
       kicker: t("intro.bottomCtaTitle"),
       node: (
         <SlideShell>
-          <div className="relative flex flex-col items-center text-center">
-            <div className="pointer-events-none absolute inset-x-0 -top-6 mx-auto h-40 w-40 rounded-full bg-gradient-to-br from-primary/30 to-amber-500/20 blur-3xl" />
-            <span className="relative grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-primary to-amber-500 text-primary-foreground shadow-lg shadow-primary/30 ring-1 ring-white/10">
+          <div className="relative flex flex-col items-center text-center" style={{ contain: "paint" }}>
+            {!reduced && (
+              <div className="pointer-events-none absolute inset-x-0 -top-4 mx-auto h-28 w-28 rounded-full bg-gradient-to-br from-primary/30 to-amber-500/20 blur-2xl transform-gpu" />
+            )}
               <Sparkles className="h-6 w-6" />
             </span>
             <h2 className="relative mt-4 text-[1.5rem] font-bold leading-tight tracking-[-0.02em]">
