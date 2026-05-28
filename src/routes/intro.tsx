@@ -221,6 +221,24 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
+  // 스와이프 힌트: 첫 방문 시에만 표시
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const seen = localStorage.getItem("duelnight.intro.hint");
+    if (!seen) setHintVisible(true);
+  }, []);
+
+  // 힌트 4.5초 후 자동 사라짐
+  useEffect(() => {
+    if (!hintVisible) return;
+    const timer = window.setTimeout(() => {
+      hintDismissedRef.current = true;
+      setHintVisible(false);
+      if (typeof window !== "undefined") localStorage.setItem("duelnight.intro.hint", "1");
+    }, 4500);
+    return () => clearTimeout(timer);
+  }, [hintVisible]);
+
   const slides: Array<{ key: string; kicker?: string; node: React.ReactNode }> = [
     {
       key: "hero",
