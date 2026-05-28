@@ -493,6 +493,17 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
           ))}
         </div>
 
+        {index === 0 && hintVisible && (
+          <div className="absolute inset-x-0 bottom-9 z-10 flex justify-center pointer-events-none">
+            <div className={"inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background/95 px-3 py-1.5 shadow-sm " + (reduced ? "" : "animate-pulse")}>
+              <MoveHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-[11px] text-muted-foreground">
+                {language === "en" ? "Swipe to explore" : language === "ja" ? "スワイプして見る" : "좌우로 넘기세요"}
+              </span>
+            </div>
+          </div>
+        )}
+
         <div className="absolute inset-x-0 bottom-3 flex justify-center gap-1.5">
           {slides.map((s, i) => (
             <button
