@@ -78,7 +78,7 @@ function IntroPage() {
       </header>
 
       {/* ===== MOBILE: 스와이프 슬라이드 인트로 ===== */}
-      <MobileIntro proPrice={proPrice} creditPrice={creditPrice} />
+      <MobileIntro proPrice={proPrice} creditPrice={creditPrice} onShowLogin={() => setLoginOpen(true)} />
 
       {/* ===== DESKTOP: 기존 풀 레이아웃 ===== */}
       <div className="hidden md:block">
