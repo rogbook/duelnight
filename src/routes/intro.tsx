@@ -295,6 +295,7 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
 
             <div className="mt-4 space-y-2">
               <MiniPlan
+                reduced={reduced}
                 icon={<Sparkles className="h-3.5 w-3.5 text-muted-foreground" />}
                 name={t("intro.priceFreeName")}
                 price={language === "en" ? "$0" : language === "ja" ? "¥0" : "₩0"}
@@ -302,6 +303,7 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
                 bullets={[t("intro.priceFreeFeature1"), t("intro.priceFreeFeature4")]}
               />
               <MiniPlan
+                reduced={reduced}
                 icon={<Crown className="h-3.5 w-3.5 text-amber-500" />}
                 name={t("intro.priceProName")}
                 price={proPrice}
@@ -310,6 +312,7 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
                 highlight
               />
               <MiniPlan
+                reduced={reduced}
                 icon={<Coins className="h-3.5 w-3.5 text-emerald-500" />}
                 name={t("intro.priceCreditName")}
                 price={creditPrice}
