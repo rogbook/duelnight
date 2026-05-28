@@ -37,6 +37,7 @@ export const Route = createFileRoute("/intro")({
 
 function IntroPage() {
   const { t, language } = useI18n();
+  const [loginOpen, setLoginOpen] = useState(false);
 
   // 화폐 및 가격 동적 표시
   const proPrice = language === "en" ? "$4.99" : language === "ja" ? "¥500" : "₩4,900";
