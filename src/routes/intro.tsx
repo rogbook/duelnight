@@ -417,7 +417,7 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
   return (
     <div className="md:hidden">
       {/* 상단 진행 바 + 카운터 */}
-      <div className="sticky top-14 z-20 border-b border-border/40 bg-background/85 px-5 py-2.5 backdrop-blur-xl">
+      <div className="sticky top-14 z-20 border-b border-border/40 bg-background/95 px-5 py-2.5">
         <div className="flex items-center justify-between text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
           <span
             key={`kicker-${index}`}
