@@ -498,7 +498,7 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
           <Link
             to="/login"
             className={
-              "inline-flex items-center justify-center rounded-2xl border border-border/70 bg-background/60 px-4 py-3 text-sm font-medium backdrop-blur hover:bg-accent " +
+              "inline-flex items-center justify-center rounded-2xl border border-border/70 bg-background px-4 py-3 text-sm font-medium hover:bg-accent " +
               (reduced ? "" : "transition")
             }
           >
