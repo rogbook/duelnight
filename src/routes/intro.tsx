@@ -208,7 +208,7 @@ function IntroPage() {
 /* ============================================================
  *  MOBILE 전용: 스와이프 슬라이드 인트로 + 하단 고정 CTA
  * ============================================================ */
-function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice: string }) {
+function MobileIntro({ proPrice, creditPrice, onShowLogin }: { proPrice: string; creditPrice: string; onShowLogin: () => void }) {
   const { t, language } = useI18n();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
