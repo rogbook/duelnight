@@ -662,10 +662,10 @@ function Feature({ icon, title, desc }: { icon: React.ReactNode; title: string; 
 }
 
 function PriceCard({
-  name, price, period, features, cta, highlight, icon,
+  name, price, period, features, cta, highlight, icon, onCtaClick,
 }: {
   name: string; price: string; period: string; features: string[]; cta: string;
-  highlight?: boolean; icon: React.ReactNode;
+  highlight?: boolean; icon: React.ReactNode; onCtaClick?: () => void;
 }) {
   const { t } = useI18n();
   return (
