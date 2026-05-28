@@ -209,6 +209,8 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
   const [reduced, setReduced] = useState(false);
+  const [hintVisible, setHintVisible] = useState(false);
+  const hintDismissedRef = useRef(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
