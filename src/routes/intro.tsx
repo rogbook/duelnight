@@ -175,6 +175,7 @@ function IntroPage() {
                   t("intro.priceCreditFeature4"), t("intro.priceCreditFeature5"),
                 ]}
                 cta={t("intro.ctaCreditCharge")}
+                onCtaClick={() => setLoginOpen(true)}
               />
             </div>
           </div>
