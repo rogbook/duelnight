@@ -209,139 +209,131 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
 
-  const slides: Array<{ key: string; node: React.ReactNode }> = [
+  const slides: Array<{ key: string; kicker?: string; node: React.ReactNode }> = [
     {
       key: "hero",
+      kicker: t("intro.gameIntegrated"),
       node: (
         <SlideShell>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-[11px] text-muted-foreground">
-            <Sparkles className="h-3 w-3" />
-            {t("intro.gameIntegrated")}
-          </span>
-          <h1 className="mt-5 text-3xl font-bold leading-tight tracking-tight">
-            {t("intro.heroTitle1")}
-            <br />
-            <span className="bg-gradient-to-r from-primary to-amber-500 bg-clip-text text-transparent">
-              {t("intro.heroTitle2")}
+          <div className="relative">
+            <div className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-20 right-0 h-48 w-48 rounded-full bg-amber-500/10 blur-3xl" />
+
+            <span className="relative inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/60 px-3 py-1 text-[11px] font-medium tracking-wide text-muted-foreground backdrop-blur">
+              <Sparkles className="h-3 w-3 text-primary" />
+              {t("intro.gameIntegrated")}
             </span>
-          </h1>
-          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{t("intro.description")}</p>
-          <p className="mt-4 text-[11px] text-amber-500">{t("intro.testPhaseNotice")}</p>
+
+            <h1 className="relative mt-6 text-[2.625rem] font-bold leading-[1.05] tracking-[-0.03em]">
+              {t("intro.heroTitle1")}
+              <br />
+              <span className="bg-gradient-to-br from-primary via-primary to-amber-500 bg-clip-text text-transparent">
+                {t("intro.heroTitle2")}
+              </span>
+            </h1>
+
+            <p className="relative mt-5 text-[15px] leading-relaxed text-muted-foreground">
+              {t("intro.description")}
+            </p>
+
+            <div className="relative mt-7 flex items-center gap-2 text-[11px] text-amber-500/90">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500" />
+              {t("intro.testPhaseNotice")}
+            </div>
+          </div>
         </SlideShell>
       ),
     },
     {
       key: "f1",
-      node: (
-        <FeatureSlide
-          icon={<BarChart3 className="h-6 w-6" />}
-          title={t("intro.featureTitle1")}
-          desc={t("intro.featureDesc1")}
-          accent="from-sky-500/20 to-transparent"
-        />
-      ),
+      kicker: t("intro.featureTitle1"),
+      node: <FeatureSlide num="01" icon={<BarChart3 className="h-6 w-6" />} title={t("intro.featureTitle1")} desc={t("intro.featureDesc1")} tint="sky" />,
     },
     {
       key: "f2",
-      node: (
-        <FeatureSlide
-          icon={<ScanLine className="h-6 w-6" />}
-          title={t("intro.featureTitle2")}
-          desc={t("intro.featureDesc2")}
-          accent="from-emerald-500/20 to-transparent"
-        />
-      ),
+      kicker: t("intro.featureTitle2"),
+      node: <FeatureSlide num="02" icon={<ScanLine className="h-6 w-6" />} title={t("intro.featureTitle2")} desc={t("intro.featureDesc2")} tint="emerald" />,
     },
     {
       key: "f3",
-      node: (
-        <FeatureSlide
-          icon={<Trophy className="h-6 w-6" />}
-          title={t("intro.featureTitle3")}
-          desc={t("intro.featureDesc3")}
-          accent="from-amber-500/20 to-transparent"
-        />
-      ),
+      kicker: t("intro.featureTitle3"),
+      node: <FeatureSlide num="03" icon={<Trophy className="h-6 w-6" />} title={t("intro.featureTitle3")} desc={t("intro.featureDesc3")} tint="amber" />,
     },
     {
       key: "f4",
-      node: (
-        <FeatureSlide
-          icon={<Calendar className="h-6 w-6" />}
-          title={t("intro.featureTitle4")}
-          desc={t("intro.featureDesc4")}
-          accent="from-violet-500/20 to-transparent"
-        />
-      ),
+      kicker: t("intro.featureTitle4"),
+      node: <FeatureSlide num="04" icon={<Calendar className="h-6 w-6" />} title={t("intro.featureTitle4")} desc={t("intro.featureDesc4")} tint="violet" />,
     },
     {
       key: "f5",
-      node: (
-        <FeatureSlide
-          icon={<Users className="h-6 w-6" />}
-          title={t("intro.featureTitle5")}
-          desc={t("intro.featureDesc5")}
-          accent="from-pink-500/20 to-transparent"
-        />
-      ),
+      kicker: t("intro.featureTitle5"),
+      node: <FeatureSlide num="05" icon={<Users className="h-6 w-6" />} title={t("intro.featureTitle5")} desc={t("intro.featureDesc5")} tint="pink" />,
     },
     {
       key: "pricing",
+      kicker: t("intro.pricingTitle"),
       node: (
         <SlideShell>
-          <h2 className="text-2xl font-bold tracking-tight">{t("intro.pricingTitle")}</h2>
-          <p className="mt-2 text-sm text-muted-foreground">{t("intro.pricingDesc")}</p>
-          <p className="mt-1 text-[11px] text-amber-500">{t("intro.pricingTestNotice")}</p>
+          <div className="relative">
+            <div className="pointer-events-none absolute -top-16 right-0 h-44 w-44 rounded-full bg-primary/15 blur-3xl" />
+            <span className="inline-flex rounded-full border border-border/60 bg-background/60 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+              Pricing
+            </span>
+            <h2 className="mt-4 text-[1.75rem] font-bold leading-tight tracking-[-0.02em]">{t("intro.pricingTitle")}</h2>
+            <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">{t("intro.pricingDesc")}</p>
+            <p className="mt-1 text-[11px] text-amber-500/90">{t("intro.pricingTestNotice")}</p>
 
-          <div className="mt-5 space-y-3">
-            <MiniPlan
-              icon={<Sparkles className="h-4 w-4 text-muted-foreground" />}
-              name={t("intro.priceFreeName")}
-              price={language === "en" ? "$0" : language === "ja" ? "¥0" : "₩0"}
-              period={t("intro.priceFreePeriod")}
-              bullets={[t("intro.priceFreeFeature1"), t("intro.priceFreeFeature4"), t("intro.priceFreeFeature5")]}
-            />
-            <MiniPlan
-              icon={<Crown className="h-4 w-4 text-amber-500" />}
-              name={t("intro.priceProName")}
-              price={proPrice}
-              period={t("intro.priceProPeriod")}
-              bullets={[t("intro.priceProFeature2"), t("intro.priceProFeature3"), t("intro.priceProFeature4")]}
-              highlight
-            />
-            <MiniPlan
-              icon={<Coins className="h-4 w-4 text-emerald-500" />}
-              name={t("intro.priceCreditName")}
-              price={creditPrice}
-              period={t("intro.priceCreditPeriod")}
-              bullets={[t("intro.priceCreditFeature1"), t("intro.priceCreditFeature3")]}
-            />
+            <div className="mt-5 space-y-2.5">
+              <MiniPlan
+                icon={<Sparkles className="h-3.5 w-3.5 text-muted-foreground" />}
+                name={t("intro.priceFreeName")}
+                price={language === "en" ? "$0" : language === "ja" ? "¥0" : "₩0"}
+                period={t("intro.priceFreePeriod")}
+                bullets={[t("intro.priceFreeFeature1"), t("intro.priceFreeFeature4"), t("intro.priceFreeFeature5")]}
+              />
+              <MiniPlan
+                icon={<Crown className="h-3.5 w-3.5 text-amber-500" />}
+                name={t("intro.priceProName")}
+                price={proPrice}
+                period={t("intro.priceProPeriod")}
+                bullets={[t("intro.priceProFeature2"), t("intro.priceProFeature3"), t("intro.priceProFeature4")]}
+                highlight
+              />
+              <MiniPlan
+                icon={<Coins className="h-3.5 w-3.5 text-emerald-500" />}
+                name={t("intro.priceCreditName")}
+                price={creditPrice}
+                period={t("intro.priceCreditPeriod")}
+                bullets={[t("intro.priceCreditFeature1"), t("intro.priceCreditFeature3")]}
+              />
+            </div>
           </div>
         </SlideShell>
       ),
     },
     {
       key: "cta",
+      kicker: t("intro.bottomCtaTitle"),
       node: (
         <SlideShell>
-          <div className="flex flex-col items-center text-center">
-            <span className="grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-primary to-amber-500 text-primary-foreground">
+          <div className="relative flex flex-col items-center text-center">
+            <div className="pointer-events-none absolute inset-x-0 -top-10 mx-auto h-56 w-56 rounded-full bg-gradient-to-br from-primary/30 to-amber-500/20 blur-3xl" />
+            <span className="relative grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-primary to-amber-500 text-primary-foreground shadow-lg shadow-primary/30 ring-1 ring-white/10">
               <Sparkles className="h-7 w-7" />
             </span>
-            <h2 className="mt-4 text-2xl font-bold tracking-tight">{t("intro.bottomCtaTitle")}</h2>
-            <p className="mt-2 text-sm text-muted-foreground">{t("intro.bottomCtaDesc")}</p>
+            <h2 className="relative mt-5 text-[1.875rem] font-bold leading-tight tracking-[-0.02em]">
+              {t("intro.bottomCtaTitle")}
+            </h2>
+            <p className="relative mt-3 text-[14px] leading-relaxed text-muted-foreground">{t("intro.bottomCtaDesc")}</p>
             <Link
               to="/login"
-              className="mt-6 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground hover:opacity-90"
+              className="relative mt-7 inline-flex w-full items-center justify-center gap-1.5 rounded-2xl bg-gradient-to-br from-primary to-primary/90 px-5 py-3.5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:shadow-primary/40"
             >
               {t("intro.ctaFreeStart")}
               <ChevronRight className="h-4 w-4" />
             </Link>
-            <Link
-              to="/login"
-              className="mt-3 text-xs text-muted-foreground hover:text-foreground hover:underline"
-            >
-              {t("common.login")}
+            <Link to="/login" className="relative mt-3 text-xs text-muted-foreground transition hover:text-foreground">
+              {t("common.login")} →
             </Link>
           </div>
         </SlideShell>
@@ -349,7 +341,6 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
     },
   ];
 
-  // 스크롤 위치로 현재 인덱스 추적
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
@@ -369,9 +360,28 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
     el.scrollTo({ left: i * el.clientWidth, behavior: "smooth" });
   };
 
+  const progress = ((index + 1) / slides.length) * 100;
+
   return (
     <div className="md:hidden">
-      {/* 슬라이더 영역 — 헤더(56px)와 하단 CTA(약 76px) 제외 */}
+      {/* 상단 진행 바 + 카운터 */}
+      <div className="sticky top-14 z-20 border-b border-border/40 bg-background/85 px-5 py-2.5 backdrop-blur-xl">
+        <div className="flex items-center justify-between text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          <span className="truncate text-foreground/80">{slides[index]?.kicker}</span>
+          <span className="tabular-nums">
+            <span className="text-foreground">{String(index + 1).padStart(2, "0")}</span>
+            <span className="mx-1 opacity-40">/</span>
+            <span>{String(slides.length).padStart(2, "0")}</span>
+          </span>
+        </div>
+        <div className="mt-2 h-[2px] w-full overflow-hidden rounded-full bg-muted">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-primary to-amber-500 transition-[width] duration-500"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
+
       <div className="relative">
         <div
           ref={scrollerRef}
@@ -382,7 +392,7 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
             <section
               key={s.key}
               className="min-w-full shrink-0 snap-center px-5"
-              style={{ minHeight: "calc(100vh - 56px - 76px)" }}
+              style={{ minHeight: "calc(100vh - 56px - 56px - 84px)" }}
             >
               <div className="flex h-full items-center">
                 <div className="w-full">{s.node}</div>
@@ -391,8 +401,7 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
           ))}
         </div>
 
-        {/* 인디케이터 */}
-        <div className="absolute inset-x-0 bottom-2 flex justify-center gap-1.5">
+        <div className="absolute inset-x-0 bottom-3 flex justify-center gap-1.5">
           {slides.map((s, i) => (
             <button
               key={s.key}
@@ -400,26 +409,27 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
               aria-label={`슬라이드 ${i + 1}`}
               onClick={() => goTo(i)}
               className={
-                "h-1.5 rounded-full transition-all " +
-                (i === index ? "w-6 bg-primary" : "w-1.5 bg-muted-foreground/40")
+                "h-1 rounded-full transition-all duration-300 " +
+                (i === index ? "w-5 bg-foreground" : "w-1 bg-foreground/25")
               }
             />
           ))}
         </div>
       </div>
 
-      {/* 하단 고정 CTA — 모바일에서 항상 노출 */}
-      <div className="sticky bottom-0 z-30 border-t border-border bg-background/95 px-4 py-3 backdrop-blur">
+      {/* 하단 고정 CTA */}
+      <div className="sticky bottom-0 z-30 border-t border-border/60 bg-background/90 px-4 py-3 backdrop-blur-xl">
         <div className="flex items-center gap-2">
           <Link
             to="/login"
-            className="inline-flex flex-1 items-center justify-center rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:opacity-90"
+            className="inline-flex flex-1 items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-primary to-primary/90 px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition active:scale-[0.98]"
           >
             {t("intro.nowStartFree")}
+            <ChevronRight className="h-4 w-4" />
           </Link>
           <Link
             to="/login"
-            className="inline-flex items-center justify-center rounded-xl border border-border px-4 py-3 text-sm font-medium hover:bg-accent"
+            className="inline-flex items-center justify-center rounded-2xl border border-border/70 bg-background/60 px-4 py-3 text-sm font-medium backdrop-blur transition hover:bg-accent"
           >
             {t("common.login")}
           </Link>
@@ -430,22 +440,45 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
 }
 
 function SlideShell({ children }: { children: React.ReactNode }) {
-  return <div className="mx-auto w-full max-w-md py-8">{children}</div>;
+  return <div className="mx-auto w-full max-w-md py-6">{children}</div>;
 }
 
+const TINTS: Record<string, { glow: string; ring: string; iconBg: string; iconText: string }> = {
+  sky:     { glow: "from-sky-500/20",     ring: "ring-sky-500/20",     iconBg: "bg-sky-500/10",     iconText: "text-sky-500" },
+  emerald: { glow: "from-emerald-500/20", ring: "ring-emerald-500/20", iconBg: "bg-emerald-500/10", iconText: "text-emerald-500" },
+  amber:   { glow: "from-amber-500/20",   ring: "ring-amber-500/20",   iconBg: "bg-amber-500/10",   iconText: "text-amber-500" },
+  violet:  { glow: "from-violet-500/20",  ring: "ring-violet-500/20",  iconBg: "bg-violet-500/10",  iconText: "text-violet-500" },
+  pink:    { glow: "from-pink-500/20",    ring: "ring-pink-500/20",    iconBg: "bg-pink-500/10",    iconText: "text-pink-500" },
+};
+
 function FeatureSlide({
-  icon, title, desc, accent,
+  num, icon, title, desc, tint,
 }: {
-  icon: React.ReactNode; title: string; desc: string; accent: string;
+  num: string; icon: React.ReactNode; title: string; desc: string; tint: keyof typeof TINTS;
 }) {
+  const c = TINTS[tint];
   return (
     <SlideShell>
-      <div className={`rounded-3xl border border-border bg-gradient-to-b ${accent} p-6`}>
-        <div className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
-          {icon}
+      <div className={`relative overflow-hidden rounded-[28px] border border-border/60 bg-card/40 p-7 ring-1 ${c.ring} backdrop-blur-xl`}>
+        <div className={`pointer-events-none absolute -top-20 -right-10 h-56 w-56 rounded-full bg-gradient-to-br ${c.glow} to-transparent blur-3xl`} />
+
+        <div className="relative flex items-start justify-between">
+          <div className={`grid h-14 w-14 place-items-center rounded-2xl ${c.iconBg} ${c.iconText} ring-1 ${c.ring}`}>
+            {icon}
+          </div>
+          <span className="font-mono text-[11px] font-medium tracking-[0.15em] text-muted-foreground/70">
+            {num}
+          </span>
         </div>
-        <h2 className="mt-5 text-2xl font-bold tracking-tight">{title}</h2>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{desc}</p>
+
+        <h2 className="relative mt-7 text-[1.75rem] font-bold leading-[1.15] tracking-[-0.025em]">
+          {title}
+        </h2>
+        <p className="relative mt-3 text-[14px] leading-relaxed text-muted-foreground">
+          {desc}
+        </p>
+
+        <div className="relative mt-6 h-px w-12 bg-gradient-to-r from-foreground/40 to-transparent" />
       </div>
     </SlideShell>
   );
@@ -460,25 +493,32 @@ function MiniPlan({
   return (
     <div
       className={
-        "rounded-2xl border bg-card p-4 " +
-        (highlight ? "border-primary shadow-sm shadow-primary/10" : "border-border")
+        "relative overflow-hidden rounded-2xl border p-3.5 backdrop-blur transition " +
+        (highlight
+          ? "border-primary/60 bg-gradient-to-br from-primary/[0.08] to-transparent ring-1 ring-primary/20"
+          : "border-border/60 bg-card/40")
       }
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      {highlight && (
+        <span className="absolute right-3 top-3 rounded-full bg-primary px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-primary-foreground">
+          Best
+        </span>
+      )}
+      <div className="flex items-center justify-between pr-12">
+        <div className="flex items-center gap-1.5">
           {icon}
-          <span className="text-sm font-semibold">{name}</span>
+          <span className="text-[13px] font-semibold">{name}</span>
         </div>
-        <div className="flex items-baseline gap-1">
-          <span className="text-base font-bold">{price}</span>
+        <div className="flex items-baseline gap-0.5">
+          <span className="text-[15px] font-bold tabular-nums">{price}</span>
           <span className="text-[10px] text-muted-foreground">{period}</span>
         </div>
       </div>
-      <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+      <ul className="mt-2 space-y-1 text-[11.5px] text-muted-foreground">
         {bullets.map((b) => (
           <li key={b} className="flex gap-1.5">
-            <span className="mt-1 inline-block h-1 w-1 shrink-0 rounded-full bg-primary" />
-            <span>{b}</span>
+            <span className={"mt-1.5 inline-block h-0.5 w-2 shrink-0 rounded-full " + (highlight ? "bg-primary" : "bg-foreground/30")} />
+            <span className="leading-snug">{b}</span>
           </li>
         ))}
       </ul>
