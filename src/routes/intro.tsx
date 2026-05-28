@@ -247,7 +247,7 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
             </p>
 
             <div className="relative mt-5 flex items-center gap-2 text-[10.5px] text-amber-500/90">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500" />
+              <span className={"h-1.5 w-1.5 rounded-full bg-amber-500 " + (reduced ? "" : "animate-pulse")} />
               {t("intro.testPhaseNotice")}
             </div>
           </div>
