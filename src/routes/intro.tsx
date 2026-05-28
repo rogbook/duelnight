@@ -208,6 +208,16 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
   const { t, language } = useI18n();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
+  const [reduced, setReduced] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setReduced(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
 
   const slides: Array<{ key: string; kicker?: string; node: React.ReactNode }> = [
     {
