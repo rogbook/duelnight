@@ -382,21 +382,15 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
         </div>
       </div>
 
-      <div className="relative">
+      <div className="relative pb-10">
         <div
           ref={scrollerRef}
           className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           style={{ scrollSnapType: "x mandatory" }}
         >
           {slides.map((s) => (
-            <section
-              key={s.key}
-              className="min-w-full shrink-0 snap-center px-5"
-              style={{ minHeight: "calc(100vh - 56px - 56px - 84px)" }}
-            >
-              <div className="flex h-full items-center">
-                <div className="w-full">{s.node}</div>
-              </div>
+            <section key={s.key} className="min-w-full shrink-0 snap-center px-4 py-4">
+              {s.node}
             </section>
           ))}
         </div>
