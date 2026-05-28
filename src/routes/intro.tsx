@@ -408,7 +408,10 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
       {/* 상단 진행 바 + 카운터 */}
       <div className="sticky top-14 z-20 border-b border-border/40 bg-background/85 px-5 py-2.5 backdrop-blur-xl">
         <div className="flex items-center justify-between text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          <span key={`kicker-${index}`} className="truncate text-foreground/80 animate-fade-in">
+          <span
+            key={`kicker-${index}`}
+            className={reduced ? "truncate text-foreground/80" : "truncate text-foreground/80 animate-fade-in"}
+          >
             {slides[index]?.kicker}
           </span>
           <span className="tabular-nums">
@@ -419,7 +422,10 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
         </div>
         <div className="mt-2 h-[2px] w-full overflow-hidden rounded-full bg-muted">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-primary to-amber-500 transition-[width] duration-700 ease-out"
+            className={
+              "h-full rounded-full bg-gradient-to-r from-primary to-amber-500 " +
+              (reduced ? "" : "transition-[width] duration-700 ease-out")
+            }
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -434,7 +440,10 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
           {slides.map((s, i) => (
             <section
               key={s.key}
-              className="min-w-full shrink-0 snap-center px-4 py-4 transition-all duration-500 ease-out"
+              className={
+                "min-w-full shrink-0 snap-center px-4 py-4 " +
+                (reduced ? "" : "transition-all duration-500 ease-out")
+              }
               style={{
                 opacity: i === index ? 1 : 0.35,
                 transform: i === index ? "scale(1)" : "scale(0.96)",
@@ -445,7 +454,6 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
           ))}
         </div>
 
-
         <div className="absolute inset-x-0 bottom-3 flex justify-center gap-1.5">
           {slides.map((s, i) => (
             <button
@@ -454,7 +462,8 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
               aria-label={`슬라이드 ${i + 1}`}
               onClick={() => goTo(i)}
               className={
-                "h-1 rounded-full transition-all duration-300 " +
+                "h-1 rounded-full " +
+                (reduced ? "" : "transition-all duration-300 ") +
                 (i === index ? "w-5 bg-foreground" : "w-1 bg-foreground/25")
               }
             />
@@ -467,14 +476,20 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
         <div className="flex items-center gap-2">
           <Link
             to="/login"
-            className="inline-flex flex-1 items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-primary to-primary/90 px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition active:scale-[0.98]"
+            className={
+              "inline-flex flex-1 items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-primary to-primary/90 px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 " +
+              (reduced ? "" : "transition active:scale-[0.98]")
+            }
           >
             {t("intro.nowStartFree")}
             <ChevronRight className="h-4 w-4" />
           </Link>
           <Link
             to="/login"
-            className="inline-flex items-center justify-center rounded-2xl border border-border/70 bg-background/60 px-4 py-3 text-sm font-medium backdrop-blur transition hover:bg-accent"
+            className={
+              "inline-flex items-center justify-center rounded-2xl border border-border/70 bg-background/60 px-4 py-3 text-sm font-medium backdrop-blur hover:bg-accent " +
+              (reduced ? "" : "transition")
+            }
           >
             {t("common.login")}
           </Link>
