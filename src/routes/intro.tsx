@@ -203,6 +203,7 @@ function IntroPage() {
           </div>
         </footer>
       </div>
+      <LoginModal open={loginOpen} onOpenChange={setLoginOpen} />
     </div>
   );
 }
