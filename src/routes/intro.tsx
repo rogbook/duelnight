@@ -530,8 +530,8 @@ function FeatureSlide({
   const c = TINTS[tint];
   return (
     <SlideShell>
-      <div className={`relative overflow-hidden rounded-3xl border border-border/60 bg-card/40 p-5 ring-1 ${c.ring} backdrop-blur-xl`}>
-        <div className={`pointer-events-none absolute -top-16 -right-8 h-40 w-40 rounded-full bg-gradient-to-br ${c.glow} to-transparent blur-3xl`} />
+      <div className={`relative overflow-hidden rounded-3xl border border-border/60 bg-card/80 p-5 ring-1 ${c.ring}`} style={{ contain: "paint" }}>
+        <div className={`pointer-events-none absolute -top-12 -right-6 h-28 w-28 rounded-full bg-gradient-to-br ${c.glow} to-transparent blur-2xl transform-gpu`} />
 
         <div className="relative flex items-start justify-between">
           <div className={`grid h-11 w-11 place-items-center rounded-xl ${c.iconBg} ${c.iconText} ring-1 ${c.ring}`}>
