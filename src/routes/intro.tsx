@@ -150,6 +150,7 @@ function IntroPage() {
                   t("intro.priceFreeFeature4"), t("intro.priceFreeFeature5"),
                 ]}
                 cta={t("intro.ctaFreeStart")}
+                onCtaClick={() => setLoginOpen(true)}
               />
               <PriceCard
                 name={t("intro.priceProName")}
