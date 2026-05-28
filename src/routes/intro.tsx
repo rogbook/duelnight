@@ -275,28 +275,28 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
       node: (
         <SlideShell>
           <div className="relative">
-            <div className="pointer-events-none absolute -top-16 right-0 h-44 w-44 rounded-full bg-primary/15 blur-3xl" />
-            <span className="inline-flex rounded-full border border-border/60 bg-background/60 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+            <div className="pointer-events-none absolute -top-12 right-0 h-36 w-36 rounded-full bg-primary/15 blur-3xl" />
+            <span className="inline-flex rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
               Pricing
             </span>
-            <h2 className="mt-4 text-[1.75rem] font-bold leading-tight tracking-[-0.02em]">{t("intro.pricingTitle")}</h2>
-            <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">{t("intro.pricingDesc")}</p>
-            <p className="mt-1 text-[11px] text-amber-500/90">{t("intro.pricingTestNotice")}</p>
+            <h2 className="mt-3 text-[1.5rem] font-bold leading-tight tracking-[-0.02em]">{t("intro.pricingTitle")}</h2>
+            <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">{t("intro.pricingDesc")}</p>
+            <p className="mt-1 text-[10px] text-amber-500/90">{t("intro.pricingTestNotice")}</p>
 
-            <div className="mt-5 space-y-2.5">
+            <div className="mt-4 space-y-2">
               <MiniPlan
                 icon={<Sparkles className="h-3.5 w-3.5 text-muted-foreground" />}
                 name={t("intro.priceFreeName")}
                 price={language === "en" ? "$0" : language === "ja" ? "¥0" : "₩0"}
                 period={t("intro.priceFreePeriod")}
-                bullets={[t("intro.priceFreeFeature1"), t("intro.priceFreeFeature4"), t("intro.priceFreeFeature5")]}
+                bullets={[t("intro.priceFreeFeature1"), t("intro.priceFreeFeature4")]}
               />
               <MiniPlan
                 icon={<Crown className="h-3.5 w-3.5 text-amber-500" />}
                 name={t("intro.priceProName")}
                 price={proPrice}
                 period={t("intro.priceProPeriod")}
-                bullets={[t("intro.priceProFeature2"), t("intro.priceProFeature3"), t("intro.priceProFeature4")]}
+                bullets={[t("intro.priceProFeature2"), t("intro.priceProFeature3")]}
                 highlight
               />
               <MiniPlan
@@ -304,7 +304,7 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
                 name={t("intro.priceCreditName")}
                 price={creditPrice}
                 period={t("intro.priceCreditPeriod")}
-                bullets={[t("intro.priceCreditFeature1"), t("intro.priceCreditFeature3")]}
+                bullets={[t("intro.priceCreditFeature1")]}
               />
             </div>
           </div>
@@ -317,22 +317,22 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
       node: (
         <SlideShell>
           <div className="relative flex flex-col items-center text-center">
-            <div className="pointer-events-none absolute inset-x-0 -top-10 mx-auto h-56 w-56 rounded-full bg-gradient-to-br from-primary/30 to-amber-500/20 blur-3xl" />
-            <span className="relative grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-primary to-amber-500 text-primary-foreground shadow-lg shadow-primary/30 ring-1 ring-white/10">
-              <Sparkles className="h-7 w-7" />
+            <div className="pointer-events-none absolute inset-x-0 -top-6 mx-auto h-40 w-40 rounded-full bg-gradient-to-br from-primary/30 to-amber-500/20 blur-3xl" />
+            <span className="relative grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-primary to-amber-500 text-primary-foreground shadow-lg shadow-primary/30 ring-1 ring-white/10">
+              <Sparkles className="h-6 w-6" />
             </span>
-            <h2 className="relative mt-5 text-[1.875rem] font-bold leading-tight tracking-[-0.02em]">
+            <h2 className="relative mt-4 text-[1.5rem] font-bold leading-tight tracking-[-0.02em]">
               {t("intro.bottomCtaTitle")}
             </h2>
-            <p className="relative mt-3 text-[14px] leading-relaxed text-muted-foreground">{t("intro.bottomCtaDesc")}</p>
+            <p className="relative mt-2 text-[13px] leading-relaxed text-muted-foreground">{t("intro.bottomCtaDesc")}</p>
             <Link
               to="/login"
-              className="relative mt-7 inline-flex w-full items-center justify-center gap-1.5 rounded-2xl bg-gradient-to-br from-primary to-primary/90 px-5 py-3.5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:shadow-primary/40"
+              className="relative mt-5 inline-flex w-full items-center justify-center gap-1.5 rounded-2xl bg-gradient-to-br from-primary to-primary/90 px-5 py-3 text-[13px] font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:shadow-primary/40"
             >
               {t("intro.ctaFreeStart")}
               <ChevronRight className="h-4 w-4" />
             </Link>
-            <Link to="/login" className="relative mt-3 text-xs text-muted-foreground transition hover:text-foreground">
+            <Link to="/login" className="relative mt-2.5 text-[11px] text-muted-foreground transition hover:text-foreground">
               {t("common.login")} →
             </Link>
           </div>
