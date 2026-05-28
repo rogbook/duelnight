@@ -434,7 +434,7 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
 }
 
 function SlideShell({ children }: { children: React.ReactNode }) {
-  return <div className="mx-auto w-full max-w-md py-6">{children}</div>;
+  return <div className="mx-auto w-full max-w-sm py-2">{children}</div>;
 }
 
 const TINTS: Record<string, { glow: string; ring: string; iconBg: string; iconText: string }> = {
@@ -453,26 +453,26 @@ function FeatureSlide({
   const c = TINTS[tint];
   return (
     <SlideShell>
-      <div className={`relative overflow-hidden rounded-[28px] border border-border/60 bg-card/40 p-7 ring-1 ${c.ring} backdrop-blur-xl`}>
-        <div className={`pointer-events-none absolute -top-20 -right-10 h-56 w-56 rounded-full bg-gradient-to-br ${c.glow} to-transparent blur-3xl`} />
+      <div className={`relative overflow-hidden rounded-3xl border border-border/60 bg-card/40 p-5 ring-1 ${c.ring} backdrop-blur-xl`}>
+        <div className={`pointer-events-none absolute -top-16 -right-8 h-40 w-40 rounded-full bg-gradient-to-br ${c.glow} to-transparent blur-3xl`} />
 
         <div className="relative flex items-start justify-between">
-          <div className={`grid h-14 w-14 place-items-center rounded-2xl ${c.iconBg} ${c.iconText} ring-1 ${c.ring}`}>
+          <div className={`grid h-11 w-11 place-items-center rounded-xl ${c.iconBg} ${c.iconText} ring-1 ${c.ring}`}>
             {icon}
           </div>
-          <span className="font-mono text-[11px] font-medium tracking-[0.15em] text-muted-foreground/70">
+          <span className="font-mono text-[10px] font-medium tracking-[0.15em] text-muted-foreground/70">
             {num}
           </span>
         </div>
 
-        <h2 className="relative mt-7 text-[1.75rem] font-bold leading-[1.15] tracking-[-0.025em]">
+        <h2 className="relative mt-5 text-[1.375rem] font-bold leading-[1.2] tracking-[-0.02em]">
           {title}
         </h2>
-        <p className="relative mt-3 text-[14px] leading-relaxed text-muted-foreground">
+        <p className="relative mt-2 text-[12.5px] leading-relaxed text-muted-foreground">
           {desc}
         </p>
 
-        <div className="relative mt-6 h-px w-12 bg-gradient-to-r from-foreground/40 to-transparent" />
+        <div className="relative mt-4 h-px w-10 bg-gradient-to-r from-foreground/40 to-transparent" />
       </div>
     </SlideShell>
   );
