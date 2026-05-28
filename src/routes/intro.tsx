@@ -377,9 +377,7 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
 
   // 자동 슬라이드 (4.5초 간격, 사용자 인터랙션 시 일시 정지, 모션 감소 설정 존중)
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) return;
+    if (reduced) return;
 
     const timer = window.setInterval(() => {
       if (Date.now() < pausedUntilRef.current) return;
@@ -394,13 +392,13 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
     }, 4500);
 
     return () => window.clearInterval(timer);
-  }, [slides.length]);
+  }, [slides.length, reduced]);
 
   const goTo = (i: number) => {
     pausedUntilRef.current = Date.now() + 6000;
     const el = scrollerRef.current;
     if (!el) return;
-    el.scrollTo({ left: i * el.clientWidth, behavior: "smooth" });
+    el.scrollTo({ left: i * el.clientWidth, behavior: reduced ? "auto" : "smooth" });
   };
 
   const progress = ((index + 1) / slides.length) * 100;
