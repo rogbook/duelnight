@@ -696,8 +696,9 @@ function PriceCard({
           </li>
         ))}
       </ul>
-      <Link
-        to="/login"
+      <button
+        type="button"
+        onClick={onCtaClick}
         className={
           "mt-6 inline-flex w-full items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold " +
           (highlight
@@ -706,7 +707,7 @@ function PriceCard({
         }
       >
         {cta}
-      </Link>
+      </button>
     </div>
   );
 }
