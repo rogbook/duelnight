@@ -545,15 +545,16 @@ function FeatureSlide({
 }
 
 function MiniPlan({
-  icon, name, price, period, bullets, highlight,
+  icon, name, price, period, bullets, highlight, reduced,
 }: {
   icon: React.ReactNode; name: string; price: string; period: string;
-  bullets: string[]; highlight?: boolean;
+  bullets: string[]; highlight?: boolean; reduced?: boolean;
 }) {
   return (
     <div
       className={
-        "relative overflow-hidden rounded-2xl border p-3.5 backdrop-blur transition " +
+        "relative overflow-hidden rounded-2xl border p-3.5 backdrop-blur " +
+        (reduced ? "" : "transition ") +
         (highlight
           ? "border-primary/60 bg-gradient-to-br from-primary/[0.08] to-transparent ring-1 ring-primary/20"
           : "border-border/60 bg-card/40")
