@@ -288,9 +288,11 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
       kicker: t("intro.pricingTitle"),
       node: (
         <SlideShell>
-          <div className="relative">
-            <div className="pointer-events-none absolute -top-12 right-0 h-36 w-36 rounded-full bg-primary/15 blur-3xl" />
-            <span className="inline-flex rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+          <div className="relative" style={{ contain: "paint" }}>
+            {!reduced && (
+              <div className="pointer-events-none absolute -top-10 right-0 h-28 w-28 rounded-full bg-primary/15 blur-2xl transform-gpu" />
+            )}
+            <span className="inline-flex rounded-full border border-border/60 bg-background/80 px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
               Pricing
             </span>
             <h2 className="mt-3 text-[1.5rem] font-bold leading-tight tracking-[-0.02em]">{t("intro.pricingTitle")}</h2>
