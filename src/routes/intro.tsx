@@ -225,11 +225,15 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
       kicker: t("intro.gameIntegrated"),
       node: (
         <SlideShell>
-          <div className="relative">
-            <div className="pointer-events-none absolute -top-16 left-1/2 h-48 w-48 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-16 right-0 h-36 w-36 rounded-full bg-amber-500/10 blur-3xl" />
+          <div className="relative" style={{ contain: "paint" }}>
+            {!reduced && (
+              <>
+                <div className="pointer-events-none absolute -top-12 left-1/2 h-32 w-32 -translate-x-1/2 rounded-full bg-primary/20 blur-2xl transform-gpu" />
+                <div className="pointer-events-none absolute -bottom-12 right-0 h-24 w-24 rounded-full bg-amber-500/10 blur-2xl transform-gpu" />
+              </>
+            )}
 
-            <span className="relative inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/60 px-2.5 py-1 text-[10px] font-medium tracking-wide text-muted-foreground backdrop-blur">
+            <span className="relative inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/90 px-2.5 py-1 text-[10px] font-medium tracking-wide text-muted-foreground">
               <Sparkles className="h-3 w-3 text-primary" />
               {t("intro.gameIntegrated")}
             </span>
@@ -284,9 +288,11 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
       kicker: t("intro.pricingTitle"),
       node: (
         <SlideShell>
-          <div className="relative">
-            <div className="pointer-events-none absolute -top-12 right-0 h-36 w-36 rounded-full bg-primary/15 blur-3xl" />
-            <span className="inline-flex rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+          <div className="relative" style={{ contain: "paint" }}>
+            {!reduced && (
+              <div className="pointer-events-none absolute -top-10 right-0 h-28 w-28 rounded-full bg-primary/15 blur-2xl transform-gpu" />
+            )}
+            <span className="inline-flex rounded-full border border-border/60 bg-background/80 px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
               Pricing
             </span>
             <h2 className="mt-3 text-[1.5rem] font-bold leading-tight tracking-[-0.02em]">{t("intro.pricingTitle")}</h2>
@@ -329,8 +335,10 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
       kicker: t("intro.bottomCtaTitle"),
       node: (
         <SlideShell>
-          <div className="relative flex flex-col items-center text-center">
-            <div className="pointer-events-none absolute inset-x-0 -top-6 mx-auto h-40 w-40 rounded-full bg-gradient-to-br from-primary/30 to-amber-500/20 blur-3xl" />
+          <div className="relative flex flex-col items-center text-center" style={{ contain: "paint" }}>
+            {!reduced && (
+              <div className="pointer-events-none absolute inset-x-0 -top-4 mx-auto h-28 w-28 rounded-full bg-gradient-to-br from-primary/30 to-amber-500/20 blur-2xl transform-gpu" />
+            )}
             <span className="relative grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-primary to-amber-500 text-primary-foreground shadow-lg shadow-primary/30 ring-1 ring-white/10">
               <Sparkles className="h-6 w-6" />
             </span>
@@ -409,7 +417,7 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
   return (
     <div className="md:hidden">
       {/* 상단 진행 바 + 카운터 */}
-      <div className="sticky top-14 z-20 border-b border-border/40 bg-background/85 px-5 py-2.5 backdrop-blur-xl">
+      <div className="sticky top-14 z-20 border-b border-border/40 bg-background/95 px-5 py-2.5">
         <div className="flex items-center justify-between text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
           <span
             key={`kicker-${index}`}
@@ -475,7 +483,7 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
       </div>
 
       {/* 하단 고정 CTA */}
-      <div className="sticky bottom-0 z-30 border-t border-border/60 bg-background/90 px-4 py-3 backdrop-blur-xl">
+      <div className="sticky bottom-0 z-30 border-t border-border/60 bg-background/95 px-4 py-3">
         <div className="flex items-center gap-2">
           <Link
             to="/login"
@@ -490,7 +498,7 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
           <Link
             to="/login"
             className={
-              "inline-flex items-center justify-center rounded-2xl border border-border/70 bg-background/60 px-4 py-3 text-sm font-medium backdrop-blur hover:bg-accent " +
+              "inline-flex items-center justify-center rounded-2xl border border-border/70 bg-background px-4 py-3 text-sm font-medium hover:bg-accent " +
               (reduced ? "" : "transition")
             }
           >
@@ -522,8 +530,8 @@ function FeatureSlide({
   const c = TINTS[tint];
   return (
     <SlideShell>
-      <div className={`relative overflow-hidden rounded-3xl border border-border/60 bg-card/40 p-5 ring-1 ${c.ring} backdrop-blur-xl`}>
-        <div className={`pointer-events-none absolute -top-16 -right-8 h-40 w-40 rounded-full bg-gradient-to-br ${c.glow} to-transparent blur-3xl`} />
+      <div className={`relative overflow-hidden rounded-3xl border border-border/60 bg-card/80 p-5 ring-1 ${c.ring}`} style={{ contain: "paint" }}>
+        <div className={`pointer-events-none absolute -top-12 -right-6 h-28 w-28 rounded-full bg-gradient-to-br ${c.glow} to-transparent blur-2xl transform-gpu`} />
 
         <div className="relative flex items-start justify-between">
           <div className={`grid h-11 w-11 place-items-center rounded-xl ${c.iconBg} ${c.iconText} ring-1 ${c.ring}`}>
@@ -556,11 +564,11 @@ function MiniPlan({
   return (
     <div
       className={
-        "relative overflow-hidden rounded-2xl border p-3.5 backdrop-blur " +
+        "relative overflow-hidden rounded-2xl border p-3.5 " +
         (reduced ? "" : "transition ") +
         (highlight
           ? "border-primary/60 bg-gradient-to-br from-primary/[0.08] to-transparent ring-1 ring-primary/20"
-          : "border-border/60 bg-card/40")
+          : "border-border/60 bg-card/80")
       }
     >
       {highlight && (
