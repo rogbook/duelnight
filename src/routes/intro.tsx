@@ -341,6 +341,8 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
     },
   ];
 
+  const pausedUntilRef = useRef<number>(0);
+
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
@@ -350,11 +352,42 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
       const i = Math.round(el.scrollLeft / w);
       setIndex(Math.max(0, Math.min(slides.length - 1, i)));
     };
+    const pause = () => {
+      pausedUntilRef.current = Date.now() + 6000;
+    };
     el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
+    el.addEventListener("pointerdown", pause, { passive: true });
+    el.addEventListener("touchstart", pause, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      el.removeEventListener("pointerdown", pause);
+      el.removeEventListener("touchstart", pause);
+    };
+  }, [slides.length]);
+
+  // 자동 슬라이드 (4.5초 간격, 사용자 인터랙션 시 일시 정지, 모션 감소 설정 존중)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) return;
+
+    const timer = window.setInterval(() => {
+      if (Date.now() < pausedUntilRef.current) return;
+      const el = scrollerRef.current;
+      if (!el) return;
+      if (document.hidden) return;
+      const w = el.clientWidth;
+      if (w === 0) return;
+      const current = Math.round(el.scrollLeft / w);
+      const next = (current + 1) % slides.length;
+      el.scrollTo({ left: next * w, behavior: "smooth" });
+    }, 4500);
+
+    return () => window.clearInterval(timer);
   }, [slides.length]);
 
   const goTo = (i: number) => {
+    pausedUntilRef.current = Date.now() + 6000;
     const el = scrollerRef.current;
     if (!el) return;
     el.scrollTo({ left: i * el.clientWidth, behavior: "smooth" });
@@ -367,7 +400,9 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
       {/* 상단 진행 바 + 카운터 */}
       <div className="sticky top-14 z-20 border-b border-border/40 bg-background/85 px-5 py-2.5 backdrop-blur-xl">
         <div className="flex items-center justify-between text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          <span className="truncate text-foreground/80">{slides[index]?.kicker}</span>
+          <span key={`kicker-${index}`} className="truncate text-foreground/80 animate-fade-in">
+            {slides[index]?.kicker}
+          </span>
           <span className="tabular-nums">
             <span className="text-foreground">{String(index + 1).padStart(2, "0")}</span>
             <span className="mx-1 opacity-40">/</span>
@@ -376,7 +411,7 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
         </div>
         <div className="mt-2 h-[2px] w-full overflow-hidden rounded-full bg-muted">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-primary to-amber-500 transition-[width] duration-500"
+            className="h-full rounded-full bg-gradient-to-r from-primary to-amber-500 transition-[width] duration-700 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -388,12 +423,20 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
           className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           style={{ scrollSnapType: "x mandatory" }}
         >
-          {slides.map((s) => (
-            <section key={s.key} className="min-w-full shrink-0 snap-center px-4 py-4">
+          {slides.map((s, i) => (
+            <section
+              key={s.key}
+              className="min-w-full shrink-0 snap-center px-4 py-4 transition-all duration-500 ease-out"
+              style={{
+                opacity: i === index ? 1 : 0.35,
+                transform: i === index ? "scale(1)" : "scale(0.96)",
+              }}
+            >
               {s.node}
             </section>
           ))}
         </div>
+
 
         <div className="absolute inset-x-0 bottom-3 flex justify-center gap-1.5">
           {slides.map((s, i) => (
