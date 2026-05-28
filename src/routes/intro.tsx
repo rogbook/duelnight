@@ -216,15 +216,15 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
       node: (
         <SlideShell>
           <div className="relative">
-            <div className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-20 right-0 h-48 w-48 rounded-full bg-amber-500/10 blur-3xl" />
+            <div className="pointer-events-none absolute -top-16 left-1/2 h-48 w-48 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-16 right-0 h-36 w-36 rounded-full bg-amber-500/10 blur-3xl" />
 
-            <span className="relative inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/60 px-3 py-1 text-[11px] font-medium tracking-wide text-muted-foreground backdrop-blur">
+            <span className="relative inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/60 px-2.5 py-1 text-[10px] font-medium tracking-wide text-muted-foreground backdrop-blur">
               <Sparkles className="h-3 w-3 text-primary" />
               {t("intro.gameIntegrated")}
             </span>
 
-            <h1 className="relative mt-6 text-[2.625rem] font-bold leading-[1.05] tracking-[-0.03em]">
+            <h1 className="relative mt-4 text-[2rem] font-bold leading-[1.1] tracking-[-0.03em]">
               {t("intro.heroTitle1")}
               <br />
               <span className="bg-gradient-to-br from-primary via-primary to-amber-500 bg-clip-text text-transparent">
@@ -232,11 +232,11 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
               </span>
             </h1>
 
-            <p className="relative mt-5 text-[15px] leading-relaxed text-muted-foreground">
+            <p className="relative mt-4 text-[13.5px] leading-relaxed text-muted-foreground">
               {t("intro.description")}
             </p>
 
-            <div className="relative mt-7 flex items-center gap-2 text-[11px] text-amber-500/90">
+            <div className="relative mt-5 flex items-center gap-2 text-[10.5px] text-amber-500/90">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500" />
               {t("intro.testPhaseNotice")}
             </div>
