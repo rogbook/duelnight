@@ -535,8 +535,9 @@ function MobileIntro({ proPrice, creditPrice, onShowLogin }: { proPrice: string;
       {/* 하단 고정 CTA */}
       <div className="sticky bottom-0 z-30 border-t border-border/60 bg-background/95 px-4 py-3">
         <div className="flex items-center gap-2">
-          <Link
-            to="/login"
+          <button
+            type="button"
+            onClick={onShowLogin}
             className={
               "inline-flex flex-1 items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-primary to-primary/90 px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 " +
               (reduced ? "" : "transition active:scale-[0.98]")
@@ -544,16 +545,17 @@ function MobileIntro({ proPrice, creditPrice, onShowLogin }: { proPrice: string;
           >
             {t("intro.nowStartFree")}
             <ChevronRight className="h-4 w-4" />
-          </Link>
-          <Link
-            to="/login"
+          </button>
+          <button
+            type="button"
+            onClick={onShowLogin}
             className={
               "inline-flex items-center justify-center rounded-2xl border border-border/70 bg-background px-4 py-3 text-sm font-medium hover:bg-accent " +
               (reduced ? "" : "transition")
             }
           >
             {t("common.login")}
-          </Link>
+          </button>
         </div>
       </div>
     </div>
