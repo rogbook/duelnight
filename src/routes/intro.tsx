@@ -225,11 +225,15 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
       kicker: t("intro.gameIntegrated"),
       node: (
         <SlideShell>
-          <div className="relative">
-            <div className="pointer-events-none absolute -top-16 left-1/2 h-48 w-48 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-16 right-0 h-36 w-36 rounded-full bg-amber-500/10 blur-3xl" />
+          <div className="relative" style={{ contain: "paint" }}>
+            {!reduced && (
+              <>
+                <div className="pointer-events-none absolute -top-12 left-1/2 h-32 w-32 -translate-x-1/2 rounded-full bg-primary/20 blur-2xl transform-gpu" />
+                <div className="pointer-events-none absolute -bottom-12 right-0 h-24 w-24 rounded-full bg-amber-500/10 blur-2xl transform-gpu" />
+              </>
+            )}
 
-            <span className="relative inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/60 px-2.5 py-1 text-[10px] font-medium tracking-wide text-muted-foreground backdrop-blur">
+            <span className="relative inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/90 px-2.5 py-1 text-[10px] font-medium tracking-wide text-muted-foreground">
               <Sparkles className="h-3 w-3 text-primary" />
               {t("intro.gameIntegrated")}
             </span>
