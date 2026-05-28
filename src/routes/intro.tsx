@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Sparkles, Trophy, Users, ScanLine, BarChart3, Calendar, Crown, Coins, ChevronRight, MoveHorizontal } from "lucide-react";
 import { useI18n } from "@/i18n/language-context";
 import { LanguageSelector } from "@/components/language-selector";
+import { LoginModal } from "@/components/login-modal";
 
 const BRAND = {
   name: "DuelNight",
@@ -36,6 +37,7 @@ export const Route = createFileRoute("/intro")({
 
 function IntroPage() {
   const { t, language } = useI18n();
+  const [loginOpen, setLoginOpen] = useState(false);
 
   // 화폐 및 가격 동적 표시
   const proPrice = language === "en" ? "$4.99" : language === "ja" ? "¥500" : "₩4,900";
@@ -57,24 +59,26 @@ function IntroPage() {
           </Link>
           <div className="flex items-center gap-1.5 sm:gap-2">
             <LanguageSelector />
-            <Link
-              to="/login"
+            <button
+              type="button"
+              onClick={() => setLoginOpen(true)}
               className="rounded-md border border-border px-2.5 py-1.5 text-xs hover:bg-accent sm:px-3 sm:text-sm"
             >
               {t("common.login")}
-            </Link>
-            <Link
-              to="/login"
+            </button>
+            <button
+              type="button"
+              onClick={() => setLoginOpen(true)}
               className="hidden sm:inline-flex rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 sm:text-sm"
             >
               {t("intro.freeStart")}
-            </Link>
+            </button>
           </div>
         </div>
       </header>
 
       {/* ===== MOBILE: 스와이프 슬라이드 인트로 ===== */}
-      <MobileIntro proPrice={proPrice} creditPrice={creditPrice} />
+      <MobileIntro proPrice={proPrice} creditPrice={creditPrice} onShowLogin={() => setLoginOpen(true)} />
 
       {/* ===== DESKTOP: 기존 풀 레이아웃 ===== */}
       <div className="hidden md:block">
@@ -94,12 +98,13 @@ function IntroPage() {
             </h1>
             <p className="mt-5 text-base text-muted-foreground sm:text-lg">{t("intro.description")}</p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <Link
-                to="/login"
+              <button
+                type="button"
+                onClick={() => setLoginOpen(true)}
                 className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
               >
                 {t("intro.nowStartFree")}
-              </Link>
+              </button>
               <a
                 href="#pricing"
                 className="rounded-lg border border-border px-5 py-2.5 text-sm font-semibold hover:bg-accent"
@@ -145,6 +150,7 @@ function IntroPage() {
                   t("intro.priceFreeFeature4"), t("intro.priceFreeFeature5"),
                 ]}
                 cta={t("intro.ctaFreeStart")}
+                onCtaClick={() => setLoginOpen(true)}
               />
               <PriceCard
                 name={t("intro.priceProName")}
@@ -157,6 +163,7 @@ function IntroPage() {
                   t("intro.priceProFeature4"), t("intro.priceProFeature5"),
                 ]}
                 cta={t("intro.ctaProStart")}
+                onCtaClick={() => setLoginOpen(true)}
               />
               <PriceCard
                 name={t("intro.priceCreditName")}
@@ -168,6 +175,7 @@ function IntroPage() {
                   t("intro.priceCreditFeature4"), t("intro.priceCreditFeature5"),
                 ]}
                 cta={t("intro.ctaCreditCharge")}
+                onCtaClick={() => setLoginOpen(true)}
               />
             </div>
           </div>
@@ -178,12 +186,13 @@ function IntroPage() {
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">{t("intro.bottomCtaTitle")}</h2>
           <p className="mt-3 text-muted-foreground">{t("intro.bottomCtaDesc")}</p>
           <div className="mt-6">
-            <Link
-              to="/login"
+            <button
+              type="button"
+              onClick={() => setLoginOpen(true)}
               className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:opacity-90"
             >
               {t("intro.ctaFreeStart")}
-            </Link>
+            </button>
           </div>
         </section>
 
@@ -197,6 +206,7 @@ function IntroPage() {
           </div>
         </footer>
       </div>
+      <LoginModal open={loginOpen} onOpenChange={setLoginOpen} />
     </div>
   );
 }
@@ -204,7 +214,7 @@ function IntroPage() {
 /* ============================================================
  *  MOBILE 전용: 스와이프 슬라이드 인트로 + 하단 고정 CTA
  * ============================================================ */
-function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice: string }) {
+function MobileIntro({ proPrice, creditPrice, onShowLogin }: { proPrice: string; creditPrice: string; onShowLogin: () => void }) {
   const { t, language } = useI18n();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
@@ -366,16 +376,21 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
               {t("intro.bottomCtaTitle")}
             </h2>
             <p className="relative mt-2 text-[13px] leading-relaxed text-muted-foreground">{t("intro.bottomCtaDesc")}</p>
-            <Link
-              to="/login"
+            <button
+              type="button"
+              onClick={onShowLogin}
               className="relative mt-5 inline-flex w-full items-center justify-center gap-1.5 rounded-2xl bg-gradient-to-br from-primary to-primary/90 px-5 py-3 text-[13px] font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:shadow-primary/40"
             >
               {t("intro.ctaFreeStart")}
               <ChevronRight className="h-4 w-4" />
-            </Link>
-            <Link to="/login" className="relative mt-2.5 text-[11px] text-muted-foreground transition hover:text-foreground">
+            </button>
+            <button
+              type="button"
+              onClick={onShowLogin}
+              className="relative mt-2.5 text-[11px] text-muted-foreground transition hover:text-foreground"
+            >
               {t("common.login")} →
-            </Link>
+            </button>
           </div>
         </SlideShell>
       ),
@@ -524,8 +539,9 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
       {/* 하단 고정 CTA */}
       <div className="sticky bottom-0 z-30 border-t border-border/60 bg-background/95 px-4 py-3">
         <div className="flex items-center gap-2">
-          <Link
-            to="/login"
+          <button
+            type="button"
+            onClick={onShowLogin}
             className={
               "inline-flex flex-1 items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-primary to-primary/90 px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 " +
               (reduced ? "" : "transition active:scale-[0.98]")
@@ -533,16 +549,17 @@ function MobileIntro({ proPrice, creditPrice }: { proPrice: string; creditPrice:
           >
             {t("intro.nowStartFree")}
             <ChevronRight className="h-4 w-4" />
-          </Link>
-          <Link
-            to="/login"
+          </button>
+          <button
+            type="button"
+            onClick={onShowLogin}
             className={
               "inline-flex items-center justify-center rounded-2xl border border-border/70 bg-background px-4 py-3 text-sm font-medium hover:bg-accent " +
               (reduced ? "" : "transition")
             }
           >
             {t("common.login")}
-          </Link>
+          </button>
         </div>
       </div>
     </div>
@@ -648,10 +665,10 @@ function Feature({ icon, title, desc }: { icon: React.ReactNode; title: string; 
 }
 
 function PriceCard({
-  name, price, period, features, cta, highlight, icon,
+  name, price, period, features, cta, highlight, icon, onCtaClick,
 }: {
   name: string; price: string; period: string; features: string[]; cta: string;
-  highlight?: boolean; icon: React.ReactNode;
+  highlight?: boolean; icon: React.ReactNode; onCtaClick?: () => void;
 }) {
   const { t } = useI18n();
   return (
@@ -682,8 +699,9 @@ function PriceCard({
           </li>
         ))}
       </ul>
-      <Link
-        to="/login"
+      <button
+        type="button"
+        onClick={onCtaClick}
         className={
           "mt-6 inline-flex w-full items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold " +
           (highlight
@@ -692,7 +710,7 @@ function PriceCard({
         }
       >
         {cta}
-      </Link>
+      </button>
     </div>
   );
 }
