@@ -24,7 +24,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -40,6 +42,88 @@ import { GAME_LABEL } from "@/lib/match-stats";
 import type { Database } from "@/integrations/supabase/types";
 import { useI18n } from "@/i18n/language-context";
 
+/* ── 한국 주요 지역 (그룹별) ── */
+export const KR_REGIONS: { group: string; cities: string[] }[] = [
+  {
+    group: "서울",
+    cities: [
+      "서울 강남", "서울 강동", "서울 강북", "서울 강서",
+      "서울 건대", "서울 구로", "서울 노원", "서울 마포",
+      "서울 목동", "서울 서초", "서울 성수", "서울 신촌",
+      "서울 압구정", "서울 역삼", "서울 용산", "서울 종로", "서울 홍대",
+    ],
+  },
+  {
+    group: "경기",
+    cities: [
+      "고양 일산", "광명", "구리", "군포", "김포",
+      "남양주", "부천 상동", "부천 신중동", "부천 역곡",
+      "분당 서현", "분당 수내", "성남", "수원 권선", "수원 영통", "수원 인계",
+      "시흥", "안산", "안양", "양주", "용인", "의정부", "이천",
+      "파주", "평택", "하남", "화성 동탄",
+    ],
+  },
+  {
+    group: "인천",
+    cities: ["인천 계양", "인천 남동", "인천 부평", "인천 연수", "인천 주안"],
+  },
+  {
+    group: "부산",
+    cities: ["부산 광안", "부산 서면", "부산 연산", "부산 해운대"],
+  },
+  {
+    group: "대구",
+    cities: ["대구 동성로", "대구 범어", "대구 수성"],
+  },
+  {
+    group: "광주",
+    cities: ["광주 상무", "광주 충장"],
+  },
+  {
+    group: "대전",
+    cities: ["대전 둔산", "대전 은행"],
+  },
+  {
+    group: "울산",
+    cities: ["울산 남구", "울산 중구"],
+  },
+  {
+    group: "기타",
+    cities: ["강원", "경남", "경북", "세종", "전남", "전북", "제주", "충남", "충북"],
+  },
+];
+
+/* ── 지도 앱 ── */
+export type MapProvider = "kakao" | "naver" | "google";
+
+const MAP_PROVIDER_LABELS: Record<MapProvider, string> = {
+  kakao: "카카오맵",
+  naver: "네이버지도",
+  google: "구글맵",
+};
+
+function buildMapUrl(
+  s: { name: string; address: string | null; region: string | null },
+  provider: MapProvider
+): string {
+  const q = encodeURIComponent(s.address || `${s.name} ${s.region ?? ""}`.trim());
+  if (provider === "kakao") return `https://map.kakao.com/?q=${q}`;
+  if (provider === "naver") return `https://map.naver.com/v5/search/${q}`;
+  return `https://www.google.com/maps/search/?api=1&query=${q}`;
+}
+
+function useMapProvider(): [MapProvider, (p: MapProvider) => void] {
+  const [provider, setProviderState] = useState<MapProvider>(() => {
+    if (typeof window === "undefined") return "kakao";
+    return (localStorage.getItem("duelnight.map.provider") as MapProvider) ?? "kakao";
+  });
+  const setProvider = (p: MapProvider) => {
+    setProviderState(p);
+    if (typeof window !== "undefined") localStorage.setItem("duelnight.map.provider", p);
+  };
+  return [provider, setProvider];
+}
+
 type Game = Database["public"]["Enums"]["tcg_game"];
 type Store = {
   id: string;
@@ -54,11 +138,6 @@ type Store = {
 };
 
 const ALL_GAMES: Game[] = ["optcg", "ptcg", "dtcg"];
-
-function mapUrl(s: { name: string; address: string | null; region: string | null }) {
-  const q = encodeURIComponent(s.address || `${s.name} ${s.region ?? ""}`.trim());
-  return `https://www.google.com/maps/search/?api=1&query=${q}`;
-}
 
 export const Route = createFileRoute("/stores/")({
   head: () => {
@@ -95,6 +174,7 @@ function StoresPage() {
   const [game, setGame] = useState<Game | "all">("all");
   const [region, setRegion] = useState<string>("all");
   const [favOnly, setFavOnly] = useState(false);
+  const [mapProvider, setMapProvider] = useMapProvider();
 
   const { data: stores = [], refetch } = useQuery({
     queryKey: ["stores"],
@@ -187,6 +267,8 @@ function StoresPage() {
             ))}
           </SelectContent>
         </Select>
+
+        {/* 지역 필터 — DB 기준 동적 목록 */}
         <Select value={region} onValueChange={setRegion}>
           <SelectTrigger className="w-[160px]">
             <SelectValue placeholder={t("stores.allRegions")} />
@@ -200,6 +282,7 @@ function StoresPage() {
             ))}
           </SelectContent>
         </Select>
+
         {user && (
           <label className="ml-1 inline-flex items-center gap-2 text-sm">
             <Checkbox
@@ -209,7 +292,27 @@ function StoresPage() {
             {t("stores.favoritesOnly")}
           </label>
         )}
-        <span className="ml-auto text-xs text-muted-foreground">{t("stores.storeCount", { count: filtered.length })}</span>
+
+        {/* 지도 앱 선택 */}
+        <div className="ml-auto flex items-center gap-1">
+          {(["kakao", "naver", "google"] as MapProvider[]).map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => setMapProvider(p)}
+              className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                mapProvider === p
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-background text-muted-foreground hover:border-primary/50"
+              }`}
+            >
+              {MAP_PROVIDER_LABELS[p]}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="mt-1 flex justify-end">
+        <span className="text-xs text-muted-foreground">{t("stores.storeCount", { count: filtered.length })}</span>
       </div>
 
       {filtered.length === 0 ? (
@@ -303,14 +406,14 @@ function StoresPage() {
                     </a>
                   )}
                   <a
-                    href={mapUrl(s)}
+                    href={buildMapUrl(s, mapProvider)}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
                     className="inline-flex items-center gap-1 hover:text-foreground"
                   >
                     <MapIcon className="h-3 w-3" />
-                    {t("stores.mapLink")}
+                    {MAP_PROVIDER_LABELS[mapProvider]}
                   </a>
                   {s.url && (
                     <a
@@ -354,12 +457,16 @@ function NewStoreDialog({ onCreated }: { onCreated: () => void }) {
   const [form, setForm] = useState({
     name: "",
     region: "",
+    regionCustom: "",   // "기타 직접입력" 선택 시 사용
     address: "",
     phone: "",
     url: "",
     notes: "",
     games: [] as Game[],
   });
+
+  // 최종 지역값: "기타" 선택이면 직접입력값 사용
+  const resolvedRegion = form.region === "__custom__" ? form.regionCustom : form.region;
 
   const toggleGame = (g: Game) =>
     setForm((f) => ({
@@ -377,7 +484,7 @@ function NewStoreDialog({ onCreated }: { onCreated: () => void }) {
     const { error } = await supabase.from("stores").insert({
       user_id: user.id,
       name: form.name.trim(),
-      region: form.region.trim() || null,
+      region: resolvedRegion.trim() || null,
       address: form.address.trim() || null,
       games: form.games,
       phone: form.phone.trim() || null,
@@ -390,7 +497,7 @@ function NewStoreDialog({ onCreated }: { onCreated: () => void }) {
     }
     toast.success(t("stores.addSuccess"));
     setOpen(false);
-    setForm({ name: "", region: "", address: "", phone: "", url: "", notes: "", games: [] });
+    setForm({ name: "", region: "", regionCustom: "", address: "", phone: "", url: "", notes: "", games: [] });
     qc.invalidateQueries({ queryKey: ["stores"] });
     onCreated();
   };
@@ -417,11 +524,39 @@ function NewStoreDialog({ onCreated }: { onCreated: () => void }) {
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
               <Label>{t("stores.fieldRegion")}</Label>
-              <Input
+              <Select
                 value={form.region}
-                onChange={(e) => setForm({ ...form, region: e.target.value })}
-                placeholder={t("stores.placeholderRegion")}
-              />
+                onValueChange={(v) => setForm({ ...form, region: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t("stores.placeholderRegion")} />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {KR_REGIONS.map((grp) => (
+                    <SelectGroup key={grp.group}>
+                      <SelectLabel className="text-xs text-muted-foreground">
+                        {grp.group}
+                      </SelectLabel>
+                      {grp.cities.map((city) => (
+                        <SelectItem key={city} value={city}>
+                          {city}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  ))}
+                  <SelectGroup>
+                    <SelectItem value="__custom__">기타 (직접 입력)</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              {form.region === "__custom__" && (
+                <Input
+                  className="mt-1"
+                  value={form.regionCustom}
+                  onChange={(e) => setForm({ ...form, regionCustom: e.target.value })}
+                  placeholder="지역명 직접 입력"
+                />
+              )}
             </div>
             <div className="flex flex-col gap-1.5">
               <Label>{t("stores.fieldPhone")}</Label>

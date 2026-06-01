@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { GAME_LABEL } from "@/lib/match-stats";
 import type { Database } from "@/integrations/supabase/types";
 import { useI18n } from "@/i18n/language-context";
+import { buildMapUrl, useMapProvider, MAP_PROVIDER_LABELS, type MapProvider } from "./stores.index";
 
 type Store = Database["public"]["Tables"]["stores"]["Row"];
 
@@ -106,6 +107,7 @@ function StoreDetailPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { t } = useI18n();
+  const [mapProvider, setMapProvider] = useMapProvider();
 
   const { data: isFav = false } = useQuery({
     queryKey: ["store-fav", store.id, user?.id],
@@ -143,9 +145,7 @@ function StoreDetailPage() {
     qc.invalidateQueries({ queryKey: ["store-favorites", user.id] });
   };
 
-  const mapHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-    store.address || `${store.name} ${store.region ?? ""}`.trim()
-  )}`;
+  const mapHref = buildMapUrl(store, mapProvider);
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">
@@ -196,7 +196,25 @@ function StoreDetailPage() {
             )}
           </div>
         </div>
-        <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
+        {/* 지도 앱 선택 */}
+        <div className="mt-4 flex flex-wrap items-center gap-1.5">
+          {(["kakao", "naver", "google"] as MapProvider[]).map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => setMapProvider(p)}
+              className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                mapProvider === p
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-background text-muted-foreground hover:border-primary/50"
+              }`}
+            >
+              {MAP_PROVIDER_LABELS[p]}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-4 text-sm">
           <a
             href={mapHref}
             target="_blank"
@@ -204,7 +222,7 @@ function StoreDetailPage() {
             className="inline-flex items-center gap-1 text-foreground hover:underline"
           >
             <MapIcon className="h-3.5 w-3.5" />
-            {t("storeDetail.viewMap")}
+            {MAP_PROVIDER_LABELS[mapProvider]}에서 열기
           </a>
           {store.phone && (
             <a
