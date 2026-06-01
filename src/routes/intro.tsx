@@ -4,6 +4,7 @@ import { Sparkles, Trophy, Users, ScanLine, BarChart3, Calendar, Crown, Coins, C
 import { useI18n } from "@/i18n/language-context";
 import { LanguageSelector } from "@/components/language-selector";
 import { LoginModal } from "@/components/login-modal";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const BRAND = {
   name: "DuelNight",
