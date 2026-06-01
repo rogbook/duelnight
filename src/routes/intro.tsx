@@ -4,7 +4,6 @@ import { Sparkles, Trophy, Users, ScanLine, BarChart3, Calendar, Crown, Coins, C
 import { useI18n } from "@/i18n/language-context";
 import { LanguageSelector } from "@/components/language-selector";
 import { LoginModal } from "@/components/login-modal";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const BRAND = {
   name: "DuelNight",
@@ -213,124 +212,177 @@ function IntroPage() {
 }
 
 /* ============================================================
- *  MOBILE 전용: 스와이프 슬라이드 인트로 + 하단 고정 CTA
+ *  MOBILE 전용 인트로
  * ============================================================ */
 function MobileIntro({ onShowLogin }: { proPrice: string; creditPrice: string; onShowLogin: () => void }) {
   const { t } = useI18n();
-  const [activeFeature, setActiveFeature] = useState<number | null>(null);
+  const [expanded, setExpanded] = useState<number | null>(null);
 
   const features = [
-    { icon: <BarChart3 className="h-4 w-4" />, title: t("intro.featureTitle1"), desc: t("intro.featureDesc1"), tint: "text-sky-500 bg-sky-500/10" },
-    { icon: <ScanLine className="h-4 w-4" />, title: t("intro.featureTitle2"), desc: t("intro.featureDesc2"), tint: "text-emerald-500 bg-emerald-500/10" },
-    { icon: <Trophy className="h-4 w-4" />, title: t("intro.featureTitle3"), desc: t("intro.featureDesc3"), tint: "text-amber-500 bg-amber-500/10" },
-    { icon: <Calendar className="h-4 w-4" />, title: t("intro.featureTitle4"), desc: t("intro.featureDesc4"), tint: "text-violet-500 bg-violet-500/10" },
-    { icon: <Users className="h-4 w-4" />, title: t("intro.featureTitle5"), desc: t("intro.featureDesc5"), tint: "text-pink-500 bg-pink-500/10" },
+    {
+      icon: <BarChart3 className="h-5 w-5" />,
+      title: t("intro.featureTitle1"),
+      desc: t("intro.featureDesc1"),
+      color: "text-sky-500",
+      bg: "bg-sky-500/10",
+      border: "border-sky-500/20",
+    },
+    {
+      icon: <ScanLine className="h-5 w-5" />,
+      title: t("intro.featureTitle2"),
+      desc: t("intro.featureDesc2"),
+      color: "text-emerald-500",
+      bg: "bg-emerald-500/10",
+      border: "border-emerald-500/20",
+    },
+    {
+      icon: <Trophy className="h-5 w-5" />,
+      title: t("intro.featureTitle3"),
+      desc: t("intro.featureDesc3"),
+      color: "text-amber-500",
+      bg: "bg-amber-500/10",
+      border: "border-amber-500/20",
+    },
+    {
+      icon: <Calendar className="h-5 w-5" />,
+      title: t("intro.featureTitle4"),
+      desc: t("intro.featureDesc4"),
+      color: "text-violet-500",
+      bg: "bg-violet-500/10",
+      border: "border-violet-500/20",
+    },
+    {
+      icon: <Users className="h-5 w-5" />,
+      title: t("intro.featureTitle5"),
+      desc: t("intro.featureDesc5"),
+      color: "text-pink-500",
+      bg: "bg-pink-500/10",
+      border: "border-pink-500/20",
+    },
+    {
+      icon: <Sparkles className="h-5 w-5" />,
+      title: t("intro.featureTitle6"),
+      desc: t("intro.featureDesc6"),
+      color: "text-primary",
+      bg: "bg-primary/10",
+      border: "border-primary/20",
+    },
   ];
 
-  const active = activeFeature !== null ? features[activeFeature] : null;
-
   return (
-    <div className="md:hidden">
-      <div className="px-5 pb-28 pt-8">
-        <div className="text-center">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/40 px-2.5 py-1 text-[10px] font-medium text-muted-foreground">
-            <Sparkles className="h-3 w-3 text-primary" />
-            {t("intro.gameIntegrated")}
-          </span>
-          <h1 className="mt-4 text-[1.875rem] font-bold leading-[1.15] tracking-[-0.02em]">
-            {t("intro.heroTitle1")}
-            <br />
-            <span className="bg-gradient-to-br from-primary to-amber-500 bg-clip-text text-transparent">
-              {t("intro.heroTitle2")}
+    <div className="md:hidden flex flex-col min-h-[calc(100svh-3.5rem)]">
+      {/* ── Hero ── */}
+      <section className="relative overflow-hidden px-5 pt-10 pb-8 text-center">
+        {/* 배경 그라데이션 블롭 */}
+        <div className="pointer-events-none absolute -top-16 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-primary/15 blur-3xl" />
+        <div className="pointer-events-none absolute top-8 right-0 h-32 w-32 rounded-full bg-amber-500/10 blur-2xl" />
+
+        {/* 게임 배지 */}
+        <div className="relative flex items-center justify-center gap-2 mb-5">
+          {["OPTCG", "PTCG", "DTCG"].map((g) => (
+            <span
+              key={g}
+              className="rounded-full border border-border/60 bg-card/80 px-2.5 py-0.5 text-[10px] font-semibold tracking-wide text-muted-foreground"
+            >
+              {g}
             </span>
-          </h1>
-          <p className="mx-auto mt-3 max-w-[18rem] text-[13px] leading-relaxed text-muted-foreground">
-            {t("intro.description")}
-          </p>
+          ))}
         </div>
 
+        {/* 헤드라인 */}
+        <h1 className="relative text-[2rem] font-bold leading-[1.12] tracking-[-0.03em]">
+          {t("intro.heroTitle1")}
+          <br />
+          <span className="bg-gradient-to-r from-primary via-primary to-amber-500 bg-clip-text text-transparent">
+            {t("intro.heroTitle2")}
+          </span>
+        </h1>
+
+        <p className="relative mx-auto mt-3 max-w-[17rem] text-[13px] leading-relaxed text-muted-foreground">
+          {t("intro.description")}
+        </p>
+
+        {/* 주 CTA */}
         <button
           type="button"
           onClick={onShowLogin}
-          className="mt-7 inline-flex w-full items-center justify-center gap-1.5 rounded-2xl bg-gradient-to-br from-primary to-primary/90 px-5 py-3.5 text-[14px] font-semibold text-primary-foreground shadow-lg shadow-primary/20"
+          className="relative mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-4 text-[15px] font-bold text-primary-foreground shadow-lg shadow-primary/25 active:scale-[0.97] transition-transform"
         >
+          <Sparkles className="h-4 w-4" />
           {t("intro.nowStartFree")}
-          <ChevronRight className="h-4 w-4" />
         </button>
+
         <button
           type="button"
           onClick={onShowLogin}
-          className="mt-2 block w-full text-center text-[12px] text-muted-foreground"
+          className="mt-2.5 text-[12px] text-muted-foreground active:text-foreground transition-colors"
         >
           {t("common.login")} →
         </button>
+      </section>
 
-        <ul className="mt-8 divide-y divide-border/50 overflow-hidden rounded-2xl border border-border/60 bg-card/60">
-          {features.map((f, i) => (
-            <li key={f.title}>
+      {/* ── 구분선 ── */}
+      <div className="mx-5 h-px bg-border/50" />
+
+      {/* ── 기능 아코디언 ── */}
+      <section className="flex-1 px-4 pt-5 pb-6">
+        <p className="mb-3 px-1 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+          주요 기능
+        </p>
+        <div className="space-y-2">
+          {features.map((f, i) => {
+            const isOpen = expanded === i;
+            return (
               <button
+                key={f.title}
                 type="button"
-                onClick={() => setActiveFeature(i)}
-                className="flex w-full items-center gap-3 px-4 py-3 text-left transition active:bg-accent/50"
+                onClick={() => setExpanded(isOpen ? null : i)}
+                className={`w-full rounded-xl border text-left transition-all duration-200 ${
+                  isOpen
+                    ? `${f.border} ${f.bg}`
+                    : "border-border/60 bg-card/50 active:bg-accent/40"
+                }`}
               >
-                <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${f.tint}`}>
-                  {f.icon}
-                </span>
-                <span className="flex-1 text-[13.5px] font-medium leading-tight">{f.title}</span>
-                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-              </button>
-            </li>
-          ))}
-        </ul>
-
-        <Dialog open={activeFeature !== null} onOpenChange={(v) => !v && setActiveFeature(null)}>
-          <DialogContent className="max-w-sm gap-0 p-0">
-            {active && (
-              <div className="p-6">
-                <div className={`grid h-12 w-12 place-items-center rounded-2xl ${active.tint}`}>
-                  {active.icon}
+                <div className="flex items-center gap-3 px-4 py-3">
+                  <span
+                    className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${f.bg} ${f.color}`}
+                  >
+                    {f.icon}
+                  </span>
+                  <span className="flex-1 text-[14px] font-semibold leading-tight">
+                    {f.title}
+                  </span>
+                  <span
+                    className={`text-[18px] leading-none text-muted-foreground/50 transition-transform duration-200 ${
+                      isOpen ? "rotate-45" : ""
+                    }`}
+                  >
+                    +
+                  </span>
                 </div>
-                <DialogHeader className="mt-4">
-                  <DialogTitle className="text-left text-lg">{active.title}</DialogTitle>
-                </DialogHeader>
-                <p className="mt-2 text-left text-[13px] leading-relaxed text-muted-foreground">
-                  {active.desc}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveFeature(null);
-                    onShowLogin();
-                  }}
-                  className="mt-5 inline-flex w-full items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-primary to-primary/90 px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20"
-                >
-                  {t("intro.nowStartFree")}
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveFeature(null)}
-                  className="mt-2 block w-full text-center text-[11px] text-muted-foreground"
-                >
-                  {t("common.cancel", "닫기")}
-                </button>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
+                {isOpen && (
+                  <p className="px-4 pb-3.5 text-[13px] leading-relaxed text-muted-foreground">
+                    {f.desc}
+                  </p>
+                )}
+              </button>
+            );
+          })}
+        </div>
 
-        <p className="mt-5 text-center text-[11px] leading-relaxed text-muted-foreground/80">
+        <p className="mt-6 text-center text-[11px] leading-relaxed text-muted-foreground/60">
           {t("intro.testPhaseNotice")}
         </p>
-      </div>
+      </section>
 
-      <div className="sticky bottom-0 z-30 border-t border-border/60 bg-background/95 px-4 py-3">
+      {/* ── 하단 고정 CTA ── */}
+      <div className="sticky bottom-0 z-30 border-t border-border/50 bg-background/95 backdrop-blur px-4 py-3 safe-area-bottom">
         <button
           type="button"
           onClick={onShowLogin}
-          className="inline-flex w-full items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-primary to-primary/90 px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition active:scale-[0.98]"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3.5 text-[14px] font-bold text-primary-foreground shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform"
         >
-          {t("intro.nowStartFree")}
+          {t("intro.ctaFreeStart")}
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>
