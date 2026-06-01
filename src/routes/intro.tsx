@@ -263,12 +263,18 @@ function MobileIntro({ onShowLogin }: { proPrice: string; creditPrice: string; o
 
         <ul className="mt-8 divide-y divide-border/50 overflow-hidden rounded-2xl border border-border/60 bg-card/60">
           {features.map((f) => (
-            <li key={f.title} className="flex items-center gap-3 px-4 py-3">
-              <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${f.tint}`}>
-                {f.icon}
-              </span>
-              <span className="flex-1 text-[13.5px] font-medium leading-tight">{f.title}</span>
-              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+            <li key={f.title}>
+              <button
+                type="button"
+                onClick={onShowLogin}
+                className="flex w-full items-center gap-3 px-4 py-3 text-left transition active:bg-accent/50"
+              >
+                <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${f.tint}`}>
+                  {f.icon}
+                </span>
+                <span className="flex-1 text-[13.5px] font-medium leading-tight">{f.title}</span>
+                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+              </button>
             </li>
           ))}
         </ul>
