@@ -58,13 +58,19 @@ function LoginPage() {
     setBusy(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: { emailRedirectTo: `${window.location.origin}/` },
         });
         if (error) throw error;
         toast.success(t("auth.signupSuccess"));
+        if (data.session) {
+          navigate({ to: "/matches" });
+        } else {
+          const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+          if (!signInErr) navigate({ to: "/matches" });
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
