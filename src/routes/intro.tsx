@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Sparkles, Trophy, Users, ScanLine, BarChart3, Calendar, Crown, Coins, ChevronRight } from "lucide-react";
+import { Sparkles, Trophy, Users, ScanLine, BarChart3, Calendar, Crown, Coins, ChevronRight, ChevronDown } from "lucide-react";
 import { useI18n } from "@/i18n/language-context";
 import { LanguageSelector } from "@/components/language-selector";
 import { LoginModal } from "@/components/login-modal";
@@ -219,70 +219,27 @@ function MobileIntro({ onShowLogin }: { proPrice: string; creditPrice: string; o
   const [expanded, setExpanded] = useState<number | null>(null);
 
   const features = [
-    {
-      icon: <BarChart3 className="h-5 w-5" />,
-      title: t("intro.featureTitle1"),
-      desc: t("intro.featureDesc1"),
-      color: "text-sky-500",
-      bg: "bg-sky-500/10",
-      border: "border-sky-500/20",
-    },
-    {
-      icon: <ScanLine className="h-5 w-5" />,
-      title: t("intro.featureTitle2"),
-      desc: t("intro.featureDesc2"),
-      color: "text-emerald-500",
-      bg: "bg-emerald-500/10",
-      border: "border-emerald-500/20",
-    },
-    {
-      icon: <Trophy className="h-5 w-5" />,
-      title: t("intro.featureTitle3"),
-      desc: t("intro.featureDesc3"),
-      color: "text-amber-500",
-      bg: "bg-amber-500/10",
-      border: "border-amber-500/20",
-    },
-    {
-      icon: <Calendar className="h-5 w-5" />,
-      title: t("intro.featureTitle4"),
-      desc: t("intro.featureDesc4"),
-      color: "text-violet-500",
-      bg: "bg-violet-500/10",
-      border: "border-violet-500/20",
-    },
-    {
-      icon: <Users className="h-5 w-5" />,
-      title: t("intro.featureTitle5"),
-      desc: t("intro.featureDesc5"),
-      color: "text-pink-500",
-      bg: "bg-pink-500/10",
-      border: "border-pink-500/20",
-    },
-    {
-      icon: <Sparkles className="h-5 w-5" />,
-      title: t("intro.featureTitle6"),
-      desc: t("intro.featureDesc6"),
-      color: "text-primary",
-      bg: "bg-primary/10",
-      border: "border-primary/20",
-    },
+    { icon: <BarChart3 className="h-4.5 w-4.5" />, title: t("intro.featureTitle1"), desc: t("intro.featureDesc1") },
+    { icon: <ScanLine className="h-4.5 w-4.5" />,  title: t("intro.featureTitle2"), desc: t("intro.featureDesc2") },
+    { icon: <Trophy className="h-4.5 w-4.5" />,    title: t("intro.featureTitle3"), desc: t("intro.featureDesc3") },
+    { icon: <Calendar className="h-4.5 w-4.5" />,  title: t("intro.featureTitle4"), desc: t("intro.featureDesc4") },
+    { icon: <Users className="h-4.5 w-4.5" />,     title: t("intro.featureTitle5"), desc: t("intro.featureDesc5") },
+    { icon: <Sparkles className="h-4.5 w-4.5" />,  title: t("intro.featureTitle6"), desc: t("intro.featureDesc6") },
   ];
 
   return (
-    <div className="md:hidden flex flex-col min-h-[calc(100svh-3.5rem)]">
+    <div className="md:hidden flex flex-col">
       {/* ── Hero ── */}
-      <section className="relative overflow-hidden px-5 pt-10 pb-8 text-center">
-        {/* 배경 그라데이션 블롭 */}
-        <div className="pointer-events-none absolute -top-16 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-primary/15 blur-3xl" />
-        <div className="pointer-events-none absolute top-8 right-0 h-32 w-32 rounded-full bg-amber-500/10 blur-2xl" />
+      <section className="px-5 pt-12 pb-8 text-center">
+        {/* 상단 얇은 그라데이션 강조선 */}
+        <div className="pointer-events-none absolute top-14 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
 
         {/* 게임 배지 */}
-        <div className="relative flex items-center justify-center gap-2 mb-5">
-          {["OPTCG", "PTCG", "DTCG"].map((g) => (
+        <div className="flex items-center justify-center gap-1.5 mb-6">
+          {["ONE PIECE", "Pokémon", "Digimon"].map((g) => (
             <span
               key={g}
-              className="rounded-full border border-border/60 bg-card/80 px-2.5 py-0.5 text-[10px] font-semibold tracking-wide text-muted-foreground"
+              className="rounded-full border border-border bg-muted/40 px-2.5 py-0.5 text-[10px] text-muted-foreground"
             >
               {g}
             </span>
@@ -290,46 +247,43 @@ function MobileIntro({ onShowLogin }: { proPrice: string; creditPrice: string; o
         </div>
 
         {/* 헤드라인 */}
-        <h1 className="relative text-[2rem] font-bold leading-[1.12] tracking-[-0.03em]">
+        <h1 className="text-[1.875rem] font-bold leading-[1.15] tracking-[-0.02em]">
           {t("intro.heroTitle1")}
           <br />
-          <span className="bg-gradient-to-r from-primary via-primary to-amber-500 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-primary to-amber-500 bg-clip-text text-transparent">
             {t("intro.heroTitle2")}
           </span>
         </h1>
 
-        <p className="relative mx-auto mt-3 max-w-[17rem] text-[13px] leading-relaxed text-muted-foreground">
+        <p className="mx-auto mt-3 max-w-[16rem] text-[13px] leading-relaxed text-muted-foreground">
           {t("intro.description")}
         </p>
 
-        {/* 주 CTA */}
+        {/* CTA */}
         <button
           type="button"
           onClick={onShowLogin}
-          className="relative mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-4 text-[15px] font-bold text-primary-foreground shadow-lg shadow-primary/25 active:scale-[0.97] transition-transform"
+          className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3.5 text-[14px] font-semibold text-primary-foreground active:opacity-80 transition-opacity"
         >
-          <Sparkles className="h-4 w-4" />
           {t("intro.nowStartFree")}
+          <ChevronRight className="h-4 w-4" />
         </button>
 
         <button
           type="button"
           onClick={onShowLogin}
-          className="mt-2.5 text-[12px] text-muted-foreground active:text-foreground transition-colors"
+          className="mt-3 text-[12px] text-muted-foreground active:text-foreground transition-colors"
         >
           {t("common.login")} →
         </button>
       </section>
 
       {/* ── 구분선 ── */}
-      <div className="mx-5 h-px bg-border/50" />
+      <div className="mx-5 h-px bg-border" />
 
       {/* ── 기능 아코디언 ── */}
-      <section className="flex-1 px-4 pt-5 pb-6">
-        <p className="mb-3 px-1 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
-          주요 기능
-        </p>
-        <div className="space-y-2">
+      <section className="px-4 pt-6 pb-10">
+        <div className="divide-y divide-border rounded-xl border border-border overflow-hidden">
           {features.map((f, i) => {
             const isOpen = expanded === i;
             return (
@@ -337,31 +291,23 @@ function MobileIntro({ onShowLogin }: { proPrice: string; creditPrice: string; o
                 key={f.title}
                 type="button"
                 onClick={() => setExpanded(isOpen ? null : i)}
-                className={`w-full rounded-xl border text-left transition-all duration-200 ${
-                  isOpen
-                    ? `${f.border} ${f.bg}`
-                    : "border-border/60 bg-card/50 active:bg-accent/40"
-                }`}
+                className="w-full bg-card text-left active:bg-muted/50 transition-colors"
               >
-                <div className="flex items-center gap-3 px-4 py-3">
-                  <span
-                    className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${f.bg} ${f.color}`}
-                  >
+                <div className="flex items-center gap-3 px-4 py-3.5">
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/8 text-primary">
                     {f.icon}
                   </span>
-                  <span className="flex-1 text-[14px] font-semibold leading-tight">
+                  <span className="flex-1 text-[13.5px] font-medium">
                     {f.title}
                   </span>
-                  <span
-                    className={`text-[18px] leading-none text-muted-foreground/50 transition-transform duration-200 ${
-                      isOpen ? "rotate-45" : ""
+                  <ChevronDown
+                    className={`h-4 w-4 text-muted-foreground/50 transition-transform duration-200 ${
+                      isOpen ? "rotate-180" : ""
                     }`}
-                  >
-                    +
-                  </span>
+                  />
                 </div>
                 {isOpen && (
-                  <p className="px-4 pb-3.5 text-[13px] leading-relaxed text-muted-foreground">
+                  <p className="px-4 pb-4 text-[12.5px] leading-relaxed text-muted-foreground border-t border-border/50 pt-3">
                     {f.desc}
                   </p>
                 )}
@@ -370,22 +316,10 @@ function MobileIntro({ onShowLogin }: { proPrice: string; creditPrice: string; o
           })}
         </div>
 
-        <p className="mt-6 text-center text-[11px] leading-relaxed text-muted-foreground/60">
+        <p className="mt-6 text-center text-[11px] text-muted-foreground/50">
           {t("intro.testPhaseNotice")}
         </p>
       </section>
-
-      {/* ── 하단 고정 CTA ── */}
-      <div className="sticky bottom-0 z-30 border-t border-border/50 bg-background/95 backdrop-blur px-4 py-3 safe-area-bottom">
-        <button
-          type="button"
-          onClick={onShowLogin}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3.5 text-[14px] font-bold text-primary-foreground shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform"
-        >
-          {t("intro.ctaFreeStart")}
-          <ChevronRight className="h-4 w-4" />
-        </button>
-      </div>
     </div>
   );
 }
