@@ -216,14 +216,17 @@ function IntroPage() {
  * ============================================================ */
 function MobileIntro({ onShowLogin }: { proPrice: string; creditPrice: string; onShowLogin: () => void }) {
   const { t } = useI18n();
+  const [activeFeature, setActiveFeature] = useState<number | null>(null);
 
   const features = [
-    { icon: <BarChart3 className="h-4 w-4" />, title: t("intro.featureTitle1"), tint: "text-sky-500 bg-sky-500/10" },
-    { icon: <ScanLine className="h-4 w-4" />, title: t("intro.featureTitle2"), tint: "text-emerald-500 bg-emerald-500/10" },
-    { icon: <Trophy className="h-4 w-4" />, title: t("intro.featureTitle3"), tint: "text-amber-500 bg-amber-500/10" },
-    { icon: <Calendar className="h-4 w-4" />, title: t("intro.featureTitle4"), tint: "text-violet-500 bg-violet-500/10" },
-    { icon: <Users className="h-4 w-4" />, title: t("intro.featureTitle5"), tint: "text-pink-500 bg-pink-500/10" },
+    { icon: <BarChart3 className="h-4 w-4" />, title: t("intro.featureTitle1"), desc: t("intro.featureDesc1"), tint: "text-sky-500 bg-sky-500/10" },
+    { icon: <ScanLine className="h-4 w-4" />, title: t("intro.featureTitle2"), desc: t("intro.featureDesc2"), tint: "text-emerald-500 bg-emerald-500/10" },
+    { icon: <Trophy className="h-4 w-4" />, title: t("intro.featureTitle3"), desc: t("intro.featureDesc3"), tint: "text-amber-500 bg-amber-500/10" },
+    { icon: <Calendar className="h-4 w-4" />, title: t("intro.featureTitle4"), desc: t("intro.featureDesc4"), tint: "text-violet-500 bg-violet-500/10" },
+    { icon: <Users className="h-4 w-4" />, title: t("intro.featureTitle5"), desc: t("intro.featureDesc5"), tint: "text-pink-500 bg-pink-500/10" },
   ];
+
+  const active = activeFeature !== null ? features[activeFeature] : null;
 
   return (
     <div className="md:hidden">
@@ -262,11 +265,11 @@ function MobileIntro({ onShowLogin }: { proPrice: string; creditPrice: string; o
         </button>
 
         <ul className="mt-8 divide-y divide-border/50 overflow-hidden rounded-2xl border border-border/60 bg-card/60">
-          {features.map((f) => (
+          {features.map((f, i) => (
             <li key={f.title}>
               <button
                 type="button"
-                onClick={onShowLogin}
+                onClick={() => setActiveFeature(i)}
                 className="flex w-full items-center gap-3 px-4 py-3 text-left transition active:bg-accent/50"
               >
                 <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${f.tint}`}>
@@ -278,6 +281,42 @@ function MobileIntro({ onShowLogin }: { proPrice: string; creditPrice: string; o
             </li>
           ))}
         </ul>
+
+        <Dialog open={activeFeature !== null} onOpenChange={(v) => !v && setActiveFeature(null)}>
+          <DialogContent className="max-w-sm gap-0 p-0">
+            {active && (
+              <div className="p-6">
+                <div className={`grid h-12 w-12 place-items-center rounded-2xl ${active.tint}`}>
+                  {active.icon}
+                </div>
+                <DialogHeader className="mt-4">
+                  <DialogTitle className="text-left text-lg">{active.title}</DialogTitle>
+                </DialogHeader>
+                <p className="mt-2 text-left text-[13px] leading-relaxed text-muted-foreground">
+                  {active.desc}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveFeature(null);
+                    onShowLogin();
+                  }}
+                  className="mt-5 inline-flex w-full items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-primary to-primary/90 px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20"
+                >
+                  {t("intro.nowStartFree")}
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveFeature(null)}
+                  className="mt-2 block w-full text-center text-[11px] text-muted-foreground"
+                >
+                  {t("common.cancel", "닫기")}
+                </button>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
 
         <p className="mt-5 text-center text-[11px] leading-relaxed text-muted-foreground/80">
           {t("intro.testPhaseNotice")}
