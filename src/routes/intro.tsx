@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
-import { Sparkles, Trophy, Users, ScanLine, BarChart3, Calendar, Crown, Coins, ChevronRight, MoveHorizontal } from "lucide-react";
+import { useState } from "react";
+import { Sparkles, Trophy, Users, ScanLine, BarChart3, Calendar, Crown, Coins, ChevronRight } from "lucide-react";
 import { useI18n } from "@/i18n/language-context";
 import { LanguageSelector } from "@/components/language-selector";
 import { LoginModal } from "@/components/login-modal";
@@ -214,445 +214,84 @@ function IntroPage() {
 /* ============================================================
  *  MOBILE 전용: 스와이프 슬라이드 인트로 + 하단 고정 CTA
  * ============================================================ */
-function MobileIntro({ proPrice, creditPrice, onShowLogin }: { proPrice: string; creditPrice: string; onShowLogin: () => void }) {
-  const { t, language } = useI18n();
-  const scrollerRef = useRef<HTMLDivElement>(null);
-  const [index, setIndex] = useState(0);
-  const [reduced, setReduced] = useState(false);
-  const [hintVisible, setHintVisible] = useState(false);
-  const hintDismissedRef = useRef(false);
+function MobileIntro({ onShowLogin }: { proPrice: string; creditPrice: string; onShowLogin: () => void }) {
+  const { t } = useI18n();
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduced(mq.matches);
-    const onChange = (e: MediaQueryListEvent) => setReduced(e.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-
-  // 스와이프 힌트: 첫 방문 시에만 표시
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const seen = localStorage.getItem("duelnight.intro.hint");
-    if (!seen) setHintVisible(true);
-  }, []);
-
-  // 힌트 4.5초 후 자동 사라짐
-  useEffect(() => {
-    if (!hintVisible) return;
-    const timer = window.setTimeout(() => {
-      hintDismissedRef.current = true;
-      setHintVisible(false);
-      if (typeof window !== "undefined") localStorage.setItem("duelnight.intro.hint", "1");
-    }, 4500);
-    return () => clearTimeout(timer);
-  }, [hintVisible]);
-
-  const slides: Array<{ key: string; kicker?: string; node: React.ReactNode }> = [
-    {
-      key: "hero",
-      kicker: t("intro.gameIntegrated"),
-      node: (
-        <SlideShell>
-          <div className="relative" style={{ contain: "paint" }}>
-            {!reduced && (
-              <>
-                <div className="pointer-events-none absolute -top-12 left-1/2 h-32 w-32 -translate-x-1/2 rounded-full bg-primary/20 blur-2xl transform-gpu" />
-                <div className="pointer-events-none absolute -bottom-12 right-0 h-24 w-24 rounded-full bg-amber-500/10 blur-2xl transform-gpu" />
-              </>
-            )}
-
-            <span className="relative inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/90 px-2.5 py-1 text-[10px] font-medium tracking-wide text-muted-foreground">
-              <Sparkles className="h-3 w-3 text-primary" />
-              {t("intro.gameIntegrated")}
-            </span>
-
-            <h1 className="relative mt-4 text-[2rem] font-bold leading-[1.1] tracking-[-0.03em]">
-              {t("intro.heroTitle1")}
-              <br />
-              <span className="bg-gradient-to-br from-primary via-primary to-amber-500 bg-clip-text text-transparent">
-                {t("intro.heroTitle2")}
-              </span>
-            </h1>
-
-            <p className="relative mt-4 text-[13.5px] leading-relaxed text-muted-foreground">
-              {t("intro.description")}
-            </p>
-
-            <div className="relative mt-5 flex items-center gap-2 text-[10.5px] text-amber-500/90">
-              <span className={"h-1.5 w-1.5 rounded-full bg-amber-500 " + (reduced ? "" : "animate-pulse")} />
-              {t("intro.testPhaseNotice")}
-            </div>
-          </div>
-        </SlideShell>
-      ),
-    },
-    {
-      key: "f1",
-      kicker: t("intro.featureTitle1"),
-      node: <FeatureSlide num="01" icon={<BarChart3 className="h-6 w-6" />} title={t("intro.featureTitle1")} desc={t("intro.featureDesc1")} tint="sky" />,
-    },
-    {
-      key: "f2",
-      kicker: t("intro.featureTitle2"),
-      node: <FeatureSlide num="02" icon={<ScanLine className="h-6 w-6" />} title={t("intro.featureTitle2")} desc={t("intro.featureDesc2")} tint="emerald" />,
-    },
-    {
-      key: "f3",
-      kicker: t("intro.featureTitle3"),
-      node: <FeatureSlide num="03" icon={<Trophy className="h-6 w-6" />} title={t("intro.featureTitle3")} desc={t("intro.featureDesc3")} tint="amber" />,
-    },
-    {
-      key: "f4",
-      kicker: t("intro.featureTitle4"),
-      node: <FeatureSlide num="04" icon={<Calendar className="h-6 w-6" />} title={t("intro.featureTitle4")} desc={t("intro.featureDesc4")} tint="violet" />,
-    },
-    {
-      key: "f5",
-      kicker: t("intro.featureTitle5"),
-      node: <FeatureSlide num="05" icon={<Users className="h-6 w-6" />} title={t("intro.featureTitle5")} desc={t("intro.featureDesc5")} tint="pink" />,
-    },
-    {
-      key: "pricing",
-      kicker: t("intro.pricingTitle"),
-      node: (
-        <SlideShell>
-          <div className="relative" style={{ contain: "paint" }}>
-            {!reduced && (
-              <div className="pointer-events-none absolute -top-10 right-0 h-28 w-28 rounded-full bg-primary/15 blur-2xl transform-gpu" />
-            )}
-            <span className="inline-flex rounded-full border border-border/60 bg-background/80 px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-              Pricing
-            </span>
-            <h2 className="mt-3 text-[1.5rem] font-bold leading-tight tracking-[-0.02em]">{t("intro.pricingTitle")}</h2>
-            <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">{t("intro.pricingDesc")}</p>
-            <p className="mt-1 text-[10px] text-amber-500/90">{t("intro.pricingTestNotice")}</p>
-
-            <div className="mt-4 space-y-2">
-              <MiniPlan
-                reduced={reduced}
-                icon={<Sparkles className="h-3.5 w-3.5 text-muted-foreground" />}
-                name={t("intro.priceFreeName")}
-                price={language === "en" ? "$0" : language === "ja" ? "¥0" : "₩0"}
-                period={t("intro.priceFreePeriod")}
-                bullets={[t("intro.priceFreeFeature1"), t("intro.priceFreeFeature4")]}
-              />
-              <MiniPlan
-                reduced={reduced}
-                icon={<Crown className="h-3.5 w-3.5 text-amber-500" />}
-                name={t("intro.priceProName")}
-                price={proPrice}
-                period={t("intro.priceProPeriod")}
-                bullets={[t("intro.priceProFeature2"), t("intro.priceProFeature3")]}
-                highlight
-              />
-              <MiniPlan
-                reduced={reduced}
-                icon={<Coins className="h-3.5 w-3.5 text-emerald-500" />}
-                name={t("intro.priceCreditName")}
-                price={creditPrice}
-                period={t("intro.priceCreditPeriod")}
-                bullets={[t("intro.priceCreditFeature1")]}
-              />
-            </div>
-          </div>
-        </SlideShell>
-      ),
-    },
-    {
-      key: "cta",
-      kicker: t("intro.bottomCtaTitle"),
-      node: (
-        <SlideShell>
-          <div className="relative flex flex-col items-center text-center" style={{ contain: "paint" }}>
-            {!reduced && (
-              <div className="pointer-events-none absolute inset-x-0 -top-4 mx-auto h-28 w-28 rounded-full bg-gradient-to-br from-primary/30 to-amber-500/20 blur-2xl transform-gpu" />
-            )}
-            <span className="relative grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-primary to-amber-500 text-primary-foreground shadow-lg shadow-primary/30 ring-1 ring-white/10">
-              <Sparkles className="h-6 w-6" />
-            </span>
-            <h2 className="relative mt-4 text-[1.5rem] font-bold leading-tight tracking-[-0.02em]">
-              {t("intro.bottomCtaTitle")}
-            </h2>
-            <p className="relative mt-2 text-[13px] leading-relaxed text-muted-foreground">{t("intro.bottomCtaDesc")}</p>
-            <button
-              type="button"
-              onClick={onShowLogin}
-              className="relative mt-5 inline-flex w-full items-center justify-center gap-1.5 rounded-2xl bg-gradient-to-br from-primary to-primary/90 px-5 py-3 text-[13px] font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:shadow-primary/40"
-            >
-              {t("intro.ctaFreeStart")}
-              <ChevronRight className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={onShowLogin}
-              className="relative mt-2.5 text-[11px] text-muted-foreground transition hover:text-foreground"
-            >
-              {t("common.login")} →
-            </button>
-          </div>
-        </SlideShell>
-      ),
-    },
+  const features = [
+    { icon: <BarChart3 className="h-4 w-4" />, title: t("intro.featureTitle1"), tint: "text-sky-500 bg-sky-500/10" },
+    { icon: <ScanLine className="h-4 w-4" />, title: t("intro.featureTitle2"), tint: "text-emerald-500 bg-emerald-500/10" },
+    { icon: <Trophy className="h-4 w-4" />, title: t("intro.featureTitle3"), tint: "text-amber-500 bg-amber-500/10" },
+    { icon: <Calendar className="h-4 w-4" />, title: t("intro.featureTitle4"), tint: "text-violet-500 bg-violet-500/10" },
+    { icon: <Users className="h-4 w-4" />, title: t("intro.featureTitle5"), tint: "text-pink-500 bg-pink-500/10" },
   ];
-
-  const pausedUntilRef = useRef<number>(0);
-
-  useEffect(() => {
-    const el = scrollerRef.current;
-    if (!el) return;
-    const dismissHint = () => {
-      if (hintDismissedRef.current) return;
-      hintDismissedRef.current = true;
-      setHintVisible(false);
-      if (typeof window !== "undefined") localStorage.setItem("duelnight.intro.hint", "1");
-    };
-    const onScroll = () => {
-      dismissHint();
-      const w = el.clientWidth;
-      if (w === 0) return;
-      const i = Math.round(el.scrollLeft / w);
-      setIndex(Math.max(0, Math.min(slides.length - 1, i)));
-    };
-    const pause = () => {
-      dismissHint();
-      pausedUntilRef.current = Date.now() + 6000;
-    };
-    el.addEventListener("scroll", onScroll, { passive: true });
-    el.addEventListener("pointerdown", pause, { passive: true });
-    el.addEventListener("touchstart", pause, { passive: true });
-    return () => {
-      el.removeEventListener("scroll", onScroll);
-      el.removeEventListener("pointerdown", pause);
-      el.removeEventListener("touchstart", pause);
-    };
-  }, [slides.length]);
-
-  // 자동 슬라이드 (4.5초 간격, 사용자 인터랙션 시 일시 정지, 모션 감소 설정 존중)
-  useEffect(() => {
-    if (reduced) return;
-
-    const timer = window.setInterval(() => {
-      if (Date.now() < pausedUntilRef.current) return;
-      const el = scrollerRef.current;
-      if (!el) return;
-      if (document.hidden) return;
-      const w = el.clientWidth;
-      if (w === 0) return;
-      const current = Math.round(el.scrollLeft / w);
-      const next = (current + 1) % slides.length;
-      el.scrollTo({ left: next * w, behavior: "smooth" });
-    }, 4500);
-
-    return () => window.clearInterval(timer);
-  }, [slides.length, reduced]);
-
-  const goTo = (i: number) => {
-    pausedUntilRef.current = Date.now() + 6000;
-    const el = scrollerRef.current;
-    if (!el) return;
-    el.scrollTo({ left: i * el.clientWidth, behavior: reduced ? "auto" : "smooth" });
-  };
-
-  const progress = ((index + 1) / slides.length) * 100;
 
   return (
     <div className="md:hidden">
-      {/* 상단 진행 바 + 카운터 */}
-      <div className="sticky top-14 z-20 border-b border-border/40 bg-background/95 px-5 py-2.5">
-        <div className="flex items-center justify-between text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          <span
-            key={`kicker-${index}`}
-            className={reduced ? "truncate text-foreground/80" : "truncate text-foreground/80 animate-fade-in"}
-          >
-            {slides[index]?.kicker}
+      <div className="px-5 pb-28 pt-8">
+        <div className="text-center">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/40 px-2.5 py-1 text-[10px] font-medium text-muted-foreground">
+            <Sparkles className="h-3 w-3 text-primary" />
+            {t("intro.gameIntegrated")}
           </span>
-          <span className="tabular-nums">
-            <span className="text-foreground">{String(index + 1).padStart(2, "0")}</span>
-            <span className="mx-1 opacity-40">/</span>
-            <span>{String(slides.length).padStart(2, "0")}</span>
-          </span>
+          <h1 className="mt-4 text-[1.875rem] font-bold leading-[1.15] tracking-[-0.02em]">
+            {t("intro.heroTitle1")}
+            <br />
+            <span className="bg-gradient-to-br from-primary to-amber-500 bg-clip-text text-transparent">
+              {t("intro.heroTitle2")}
+            </span>
+          </h1>
+          <p className="mx-auto mt-3 max-w-[18rem] text-[13px] leading-relaxed text-muted-foreground">
+            {t("intro.description")}
+          </p>
         </div>
-        <div className="mt-2 h-[2px] w-full overflow-hidden rounded-full bg-muted">
-          <div
-            className={
-              "h-full rounded-full bg-gradient-to-r from-primary to-amber-500 " +
-              (reduced ? "" : "transition-[width] duration-700 ease-out")
-            }
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
 
-      <div className="relative pb-10">
-        <div
-          ref={scrollerRef}
-          className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-          style={{ scrollSnapType: "x mandatory" }}
+        <button
+          type="button"
+          onClick={onShowLogin}
+          className="mt-7 inline-flex w-full items-center justify-center gap-1.5 rounded-2xl bg-gradient-to-br from-primary to-primary/90 px-5 py-3.5 text-[14px] font-semibold text-primary-foreground shadow-lg shadow-primary/20"
         >
-          {slides.map((s, i) => (
-            <section
-              key={s.key}
-              className={
-                "min-w-full shrink-0 snap-center px-4 py-4 " +
-                (reduced ? "" : "transition-all duration-500 ease-out")
-              }
-              style={{
-                opacity: i === index ? 1 : 0.35,
-                transform: i === index ? "scale(1)" : "scale(0.96)",
-              }}
-            >
-              {s.node}
-            </section>
-          ))}
-        </div>
+          {t("intro.nowStartFree")}
+          <ChevronRight className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={onShowLogin}
+          className="mt-2 block w-full text-center text-[12px] text-muted-foreground"
+        >
+          {t("common.login")} →
+        </button>
 
-        {index === 0 && hintVisible && (
-          <div className="absolute inset-x-0 bottom-9 z-10 flex justify-center pointer-events-none">
-            <div className={"inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background/95 px-3 py-1.5 shadow-sm " + (reduced ? "" : "animate-pulse")}>
-              <MoveHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-[11px] text-muted-foreground">
-                {language === "en" ? "Swipe to explore" : language === "ja" ? "スワイプして見る" : "좌우로 넘기세요"}
+        <ul className="mt-8 divide-y divide-border/50 overflow-hidden rounded-2xl border border-border/60 bg-card/60">
+          {features.map((f) => (
+            <li key={f.title} className="flex items-center gap-3 px-4 py-3">
+              <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${f.tint}`}>
+                {f.icon}
               </span>
-            </div>
-          </div>
-        )}
-
-        <div className="absolute inset-x-0 bottom-3 flex justify-center gap-1.5">
-          {slides.map((s, i) => (
-            <button
-              key={s.key}
-              type="button"
-              aria-label={`슬라이드 ${i + 1}`}
-              onClick={() => goTo(i)}
-              className={
-                "h-1 rounded-full " +
-                (reduced ? "" : "transition-all duration-300 ") +
-                (i === index ? "w-5 bg-foreground" : "w-1 bg-foreground/25")
-              }
-            />
+              <span className="flex-1 text-[13.5px] font-medium leading-tight">{f.title}</span>
+              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+            </li>
           ))}
-        </div>
-      </div>
+        </ul>
 
-      {/* 하단 고정 CTA */}
-      <div className="sticky bottom-0 z-30 border-t border-border/60 bg-background/95 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={onShowLogin}
-            className={
-              "inline-flex flex-1 items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-primary to-primary/90 px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 " +
-              (reduced ? "" : "transition active:scale-[0.98]")
-            }
-          >
-            {t("intro.nowStartFree")}
-            <ChevronRight className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={onShowLogin}
-            className={
-              "inline-flex items-center justify-center rounded-2xl border border-border/70 bg-background px-4 py-3 text-sm font-medium hover:bg-accent " +
-              (reduced ? "" : "transition")
-            }
-          >
-            {t("common.login")}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SlideShell({ children }: { children: React.ReactNode }) {
-  return <div className="mx-auto w-full max-w-sm py-2">{children}</div>;
-}
-
-const TINTS: Record<string, { glow: string; ring: string; iconBg: string; iconText: string }> = {
-  sky:     { glow: "from-sky-500/20",     ring: "ring-sky-500/20",     iconBg: "bg-sky-500/10",     iconText: "text-sky-500" },
-  emerald: { glow: "from-emerald-500/20", ring: "ring-emerald-500/20", iconBg: "bg-emerald-500/10", iconText: "text-emerald-500" },
-  amber:   { glow: "from-amber-500/20",   ring: "ring-amber-500/20",   iconBg: "bg-amber-500/10",   iconText: "text-amber-500" },
-  violet:  { glow: "from-violet-500/20",  ring: "ring-violet-500/20",  iconBg: "bg-violet-500/10",  iconText: "text-violet-500" },
-  pink:    { glow: "from-pink-500/20",    ring: "ring-pink-500/20",    iconBg: "bg-pink-500/10",    iconText: "text-pink-500" },
-};
-
-function FeatureSlide({
-  num, icon, title, desc, tint,
-}: {
-  num: string; icon: React.ReactNode; title: string; desc: string; tint: keyof typeof TINTS;
-}) {
-  const c = TINTS[tint];
-  return (
-    <SlideShell>
-      <div className={`relative overflow-hidden rounded-3xl border border-border/60 bg-card/80 p-5 ring-1 ${c.ring}`} style={{ contain: "paint" }}>
-        <div className={`pointer-events-none absolute -top-12 -right-6 h-28 w-28 rounded-full bg-gradient-to-br ${c.glow} to-transparent blur-2xl transform-gpu`} />
-
-        <div className="relative flex items-start justify-between">
-          <div className={`grid h-11 w-11 place-items-center rounded-xl ${c.iconBg} ${c.iconText} ring-1 ${c.ring}`}>
-            {icon}
-          </div>
-          <span className="font-mono text-[10px] font-medium tracking-[0.15em] text-muted-foreground/70">
-            {num}
-          </span>
-        </div>
-
-        <h2 className="relative mt-5 text-[1.375rem] font-bold leading-[1.2] tracking-[-0.02em]">
-          {title}
-        </h2>
-        <p className="relative mt-2 text-[12.5px] leading-relaxed text-muted-foreground">
-          {desc}
+        <p className="mt-5 text-center text-[11px] leading-relaxed text-muted-foreground/80">
+          {t("intro.testPhaseNotice")}
         </p>
-
-        <div className="relative mt-4 h-px w-10 bg-gradient-to-r from-foreground/40 to-transparent" />
       </div>
-    </SlideShell>
-  );
-}
 
-function MiniPlan({
-  icon, name, price, period, bullets, highlight, reduced,
-}: {
-  icon: React.ReactNode; name: string; price: string; period: string;
-  bullets: string[]; highlight?: boolean; reduced?: boolean;
-}) {
-  return (
-    <div
-      className={
-        "relative overflow-hidden rounded-2xl border p-3.5 " +
-        (reduced ? "" : "transition ") +
-        (highlight
-          ? "border-primary/60 bg-gradient-to-br from-primary/[0.08] to-transparent ring-1 ring-primary/20"
-          : "border-border/60 bg-card/80")
-      }
-    >
-      {highlight && (
-        <span className="absolute right-3 top-3 rounded-full bg-primary px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-primary-foreground">
-          Best
-        </span>
-      )}
-      <div className="flex items-center justify-between pr-12">
-        <div className="flex items-center gap-1.5">
-          {icon}
-          <span className="text-[13px] font-semibold">{name}</span>
-        </div>
-        <div className="flex items-baseline gap-0.5">
-          <span className="text-[15px] font-bold tabular-nums">{price}</span>
-          <span className="text-[10px] text-muted-foreground">{period}</span>
-        </div>
+      <div className="sticky bottom-0 z-30 border-t border-border/60 bg-background/95 px-4 py-3">
+        <button
+          type="button"
+          onClick={onShowLogin}
+          className="inline-flex w-full items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-primary to-primary/90 px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition active:scale-[0.98]"
+        >
+          {t("intro.nowStartFree")}
+          <ChevronRight className="h-4 w-4" />
+        </button>
       </div>
-      <ul className="mt-2 space-y-1 text-[11.5px] text-muted-foreground">
-        {bullets.map((b) => (
-          <li key={b} className="flex gap-1.5">
-            <span className={"mt-1.5 inline-block h-0.5 w-2 shrink-0 rounded-full " + (highlight ? "bg-primary" : "bg-foreground/30")} />
-            <span className="leading-snug">{b}</span>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
+
 
 function Feature({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
   return (
