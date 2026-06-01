@@ -51,13 +51,21 @@ export function LoginModal({
     setBusy(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: { emailRedirectTo: `${window.location.origin}/` },
         });
         if (error) throw error;
         toast.success(t("auth.signupSuccess"));
+        // 이메일 인증이 비활성화된 경우 signUp 즉시 세션이 발급됨 → 자동 이동
+        if (data.session) {
+          navigate({ to: "/matches" });
+        } else {
+          // 세션이 없으면 password로 즉시 로그인 시도 (자동 로그인 보장)
+          const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+          if (!signInErr) navigate({ to: "/matches" });
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
