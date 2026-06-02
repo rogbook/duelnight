@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import type { Session, User } from "@supabase/supabase-js";
+import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 interface AuthCtx {
@@ -10,21 +10,56 @@ interface AuthCtx {
 
 const Ctx = createContext<AuthCtx>({ user: null, session: null, loading: true });
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({
+  children,
+  onAuthChange,
+}: {
+  children: React.ReactNode;
+  onAuthChange?: (event: AuthChangeEvent, session: Session | null) => void;
+}) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+    let alive = true;
+    let initialSessionLoaded = false;
+
+    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
+      if (!alive) return;
+
+      // INITIAL_SESSION can fire before persisted storage is fully restored during HMR.
+      // Let getSession() own the first paint so the app doesn't briefly treat users as logged out.
+      if (event === "INITIAL_SESSION" && !initialSessionLoaded) return;
+
       setSession(s);
       setLoading(false);
+
+      if (event !== "INITIAL_SESSION" && onAuthChange) {
+        window.setTimeout(() => {
+          if (alive) onAuthChange(event, s);
+        }, 0);
+      }
     });
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
+
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (!alive) return;
+      initialSessionLoaded = true;
+      const restoredSession = error ? null : data.session;
+      setSession(restoredSession);
       setLoading(false);
+
+      if (restoredSession && onAuthChange) {
+        window.setTimeout(() => {
+          if (alive) onAuthChange("INITIAL_SESSION", restoredSession);
+        }, 0);
+      }
     });
-    return () => sub.subscription.unsubscribe();
-  }, []);
+
+    return () => {
+      alive = false;
+      sub.subscription.unsubscribe();
+    };
+  }, [onAuthChange]);
 
   return (
     <Ctx.Provider value={{ session, user: session?.user ?? null, loading }}>

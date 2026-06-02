@@ -18,7 +18,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { NotificationBell } from "@/components/notification-bell";
 import { EnvBanner } from "@/components/env-banner";
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { LanguageProvider, useI18n } from "@/i18n/language-context";
 import { LanguageSelector } from "@/components/language-selector";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -178,9 +178,10 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isBare = pathname === "/intro" || pathname === "/login";
-  
+
   // SSR 하이드레이션 불일치 에러를 방어하기 위해 mounted 상태 관리
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -189,10 +190,14 @@ function RootComponent() {
 
   const isMobile = useIsMobile();
   const renderMobile = mounted && isMobile;
+  const handleAuthChange = useCallback(() => {
+    router.invalidate();
+    queryClient.invalidateQueries();
+  }, [queryClient, router]);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
+      <AuthProvider onAuthChange={handleAuthChange}>
         <LanguageProvider>
           {isBare ? (
             <>
