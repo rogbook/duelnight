@@ -49,6 +49,10 @@
 2. 콘솔/네트워크 에러 0건
 3. DB 마이그레이션이 포함된 변경이면 → **마이그레이션 사전 검증**(아래) 완료
 4. 외부 결제·연동 키 변경이 있으면 → Secrets에서 LIVE 키 적용 확인
+5. **Lovable 관리 파일 무결성** → `src/integrations/supabase/*`, `routeTree.gen.ts`, lock 파일이 수동 수정되지 않았는지 확인 (`docs/COLLABORATION_GUIDE.md` §4)
+6. **서버 Secrets 확인** → `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`가 Lovable Secrets에 설정됨 (미설정 시 서버 함수 런타임 throw, `COLLABORATION_GUIDE.md` §7)
+7. **퍼블리싱 불변식 보존** → `start.ts`의 `functionMiddleware: [attachSupabaseAuth]`, `__root.tsx`의 `onAuthChange` 무효화 로직이 유지됨 (`COLLABORATION_GUIDE.md` §4-1)
+8. **로그인 회귀 점검** → 로그인 후 `/stores` 이동·새로고침 시 로그인 상태가 풀리지 않는지 확인 (2026-06-02 핫픽스 회귀 방지)
 
 ### 마이그레이션 사전 검증
 1. Antigravity에서 로컬 Supabase 인스턴스 기동
