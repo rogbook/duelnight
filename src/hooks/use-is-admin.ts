@@ -10,7 +10,7 @@ export function useIsAdmin() {
   const { user, loading } = useAuth();
   const q = useQuery({
     queryKey: ["is-admin", user?.id],
-    enabled: !!user,
+    enabled: !loading && !!user,
     queryFn: async () => {
       const { data } = await supabase
         .from("user_roles")
