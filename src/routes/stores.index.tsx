@@ -268,18 +268,40 @@ function StoresPage() {
           </SelectContent>
         </Select>
 
-        {/* 지역 필터 — DB 기준 동적 목록 */}
+        {/* 지역 필터 — KR_REGIONS 그룹 + DB에만 있는 추가 항목 */}
         <Select value={region} onValueChange={setRegion}>
           <SelectTrigger className="w-[160px]">
             <SelectValue placeholder={t("stores.allRegions")} />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="max-h-72">
             <SelectItem value="all">{t("stores.allRegions")}</SelectItem>
-            {regions.map((r) => (
-              <SelectItem key={r} value={r}>
-                {r}
-              </SelectItem>
+            {KR_REGIONS.map((grp) => (
+              <SelectGroup key={grp.group}>
+                <SelectLabel className="text-xs text-muted-foreground">
+                  {grp.group}
+                </SelectLabel>
+                {grp.cities.map((city) => (
+                  <SelectItem key={city} value={city}>
+                    {city}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
             ))}
+            {(() => {
+              const known = new Set(KR_REGIONS.flatMap((g) => g.cities));
+              const extras = regions.filter((r) => !known.has(r));
+              if (extras.length === 0) return null;
+              return (
+                <SelectGroup>
+                  <SelectLabel className="text-xs text-muted-foreground">기타</SelectLabel>
+                  {extras.map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {r}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              );
+            })()}
           </SelectContent>
         </Select>
 
