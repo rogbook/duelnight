@@ -24,8 +24,12 @@ import { LanguageSelector } from "@/components/language-selector";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 function AuthHeaderButton() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { t } = useI18n();
+  // 세션 복원 전에는 아무것도 렌더링하지 않아 "로그인 풀림" 플래시를 방지
+  if (loading) {
+    return <div className="h-6 w-16" aria-hidden />;
+  }
   if (user) {
     return (
       <div className="flex items-center gap-1.5 sm:gap-2">
