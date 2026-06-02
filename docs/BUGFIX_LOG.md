@@ -38,6 +38,40 @@
 
 ---
 
+## 2026-06-03 | 🟠 High — 퍼블리싱 가드/문서 불일치 점검 및 협업 문서 갱신
+
+**수정자**: Claude Cowork
+**관련 파일**:
+- `docs/COLLABORATION_GUIDE.md`
+- `docs/DEPLOY_PROCESS.md`
+- `docs/BUGFIX_LOG.md`
+
+### 문제
+Lovable Publish 시 자동 생성 파일이 수동 수정/덮어쓰기되며 배포가 깨질 위험이 있었음. 문서와 실제 코드/가드 설정이 불일치 상태였음.
+
+### 원인
+- `src/integrations/supabase/`에 자동 생성 파일 3종(`client.server.ts`, `auth-attacher.ts`, `auth-middleware.ts`)이 추가됐으나 `COLLABORATION_GUIDE.md` §4 수정 금지 목록에 미반영.
+- `guard-lovable-files.yml` 정규식이 실제 lock 파일명 `bun.lock`이 아닌 `bun.lockb`를 검사 → 실제 lock 파일 미보호. `client.server.ts`/`auth-*`/`routeTree.gen.ts`도 가드 정규식에서 누락.
+- `start.ts`의 `functionMiddleware: [attachSupabaseAuth]`, `__root.tsx`의 `onAuthChange` 무효화 등 퍼블리싱 필수 불변식이 문서화되지 않아 리팩토링 중 제거될 위험.
+- 서버 admin 클라이언트가 요구하는 `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_URL` Secrets 요건이 문서에 누락.
+
+### 수정 내용
+- `COLLABORATION_GUIDE.md` §4 수정 금지 목록을 실제 자동 생성 파일 기준으로 확장하고 `src/integrations/supabase/` 전체를 Lovable 전용으로 명시.
+- guard 워크플로우 정규식 누락분을 문서에 경고로 기록하고 갱신용 정규식 제안 추가(워크플로우 자체 수정은 승인 대기).
+- §4-1 "퍼블리싱 필수 불변식" 표 신설(start.ts / __root.tsx / use-auth / 인증 의존 쿼리).
+- §7에 서버 Secrets(`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`) 필수 요건 추가.
+- `DEPLOY_PROCESS.md` Publish 전 체크리스트에 항목 5~8(관리 파일 무결성·서버 Secrets·불변식 보존·로그인 회귀) 추가.
+
+⚙️ ENV 필요
+| 변수명 | 값 예시 | 설명 |
+|--------|---------|------|
+| SUPABASE_URL | https://xxxx.supabase.co | 서버 admin 클라이언트 |
+| SUPABASE_SERVICE_ROLE_KEY | (service-role 키) | RLS 우회 서버 작업 전용, 클라이언트 노출 금지 |
+
+> 후속 권장: `guard-lovable-files.yml` 정규식을 §4 제안대로 갱신(별도 승인 필요).
+
+---
+
 ## 2026-06-02 | 🟠 High — 코드 수정/HMR 및 매장 이동 직후 로그인 상태 흔들림
 
 **수정자**: Lovable
