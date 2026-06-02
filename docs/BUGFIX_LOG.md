@@ -38,6 +38,30 @@
 
 ---
 
+## 2026-06-02 | 🟠 High — 코드 수정/HMR 및 매장 이동 직후 로그인 상태 흔들림
+
+**수정자**: Lovable
+**관련 파일**:
+- `src/hooks/use-auth.tsx`
+- `src/routes/__root.tsx`
+- `src/hooks/use-is-admin.ts`
+- `src/routes/stores.index.tsx`
+- `src/routes/stores.$id.tsx`
+
+### 문제
+로그인 직후 매장찾기(`/stores`)로 이동하거나, Lovable에서 코드를 수정해 HMR/리로드가 발생한 뒤 로그인 UI가 풀린 것처럼 보이고 인증 의존 쿼리가 불안정하게 실행됨.
+
+### 원인
+인증 훅이 `onAuthStateChange`의 초기 이벤트와 `getSession()` 복원 결과를 동시에 처리하면서, 세션 저장소 복원 전 `null` 세션을 먼저 반영할 수 있었음. 또한 즐겨찾기/관리자/알림 등 사용자 의존 쿼리가 세션 복원 완료 전 실행될 여지가 있었고, 인증 변경 후 라우터/쿼리 캐시 무효화가 루트에서 일관되게 처리되지 않았음.
+
+### 수정 내용
+- `AuthProvider`가 `getSession()` 복원 결과를 첫 인증 상태의 기준으로 삼도록 변경해 HMR 직후 로그아웃 플래시를 완화
+- 인증 변경 시 루트에서 `router.invalidate()`와 `queryClient.invalidateQueries()`를 실행해 로그인/로그아웃/토큰 갱신 이후 화면 상태 동기화
+- `useIsAdmin`, 매장 목록/상세 즐겨찾기 쿼리를 `authLoading`이 끝난 뒤 실행하도록 제한
+- 매장 상세의 `notFoundComponent`를 정식 컴포넌트로 분리해 Hooks 규칙 위반을 제거
+
+---
+
 ## 2026-05-22 | 🟠 High — RecipeEditor "편집 완료 및 저장" 실제 저장 안 됨
 
 **수정자**: Claude Cowork
