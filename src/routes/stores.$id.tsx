@@ -104,14 +104,14 @@ export const Route = createFileRoute("/stores/$id")({
 
 function StoreDetailPage() {
   const { store } = Route.useLoaderData();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const qc = useQueryClient();
   const { t } = useI18n();
   const [mapProvider, setMapProvider] = useMapProvider();
 
   const { data: isFav = false } = useQuery({
     queryKey: ["store-fav", store.id, user?.id],
-    enabled: !!user,
+    enabled: !authLoading && !!user,
     queryFn: async () => {
       const { data } = await supabase
         .from("store_favorites")
