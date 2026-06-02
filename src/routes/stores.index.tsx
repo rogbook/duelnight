@@ -102,7 +102,7 @@ export const MAP_PROVIDER_LABELS: Record<MapProvider, string> = {
   google: "구글맵",
 };
 
-function buildMapUrl(
+export function buildMapUrl(
   s: { name: string; address: string | null; region: string | null },
   provider: MapProvider
 ): string {
@@ -112,7 +112,7 @@ function buildMapUrl(
   return `https://www.google.com/maps/search/?api=1&query=${q}`;
 }
 
-function useMapProvider(): [MapProvider, (p: MapProvider) => void] {
+export function useMapProvider(): [MapProvider, (p: MapProvider) => void] {
   const [provider, setProviderState] = useState<MapProvider>(() => {
     if (typeof window === "undefined") return "kakao";
     return (localStorage.getItem("duelnight.map.provider") as MapProvider) ?? "kakao";
