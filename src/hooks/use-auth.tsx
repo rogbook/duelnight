@@ -44,8 +44,15 @@ export function AuthProvider({
     supabase.auth.getSession().then(({ data, error }) => {
       if (!alive) return;
       initialSessionLoaded = true;
-      setSession(error ? null : data.session);
+      const restoredSession = error ? null : data.session;
+      setSession(restoredSession);
       setLoading(false);
+
+      if (restoredSession && onAuthChange) {
+        window.setTimeout(() => {
+          if (alive) onAuthChange("INITIAL_SESSION", restoredSession);
+        }, 0);
+      }
     });
 
     return () => {
