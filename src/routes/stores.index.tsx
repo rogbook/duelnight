@@ -96,7 +96,7 @@ export const KR_REGIONS: { group: string; cities: string[] }[] = [
 /* ── 지도 앱 ── */
 export type MapProvider = "kakao" | "naver" | "google";
 
-const MAP_PROVIDER_LABELS: Record<MapProvider, string> = {
+export const MAP_PROVIDER_LABELS: Record<MapProvider, string> = {
   kakao: "카카오맵",
   naver: "네이버지도",
   google: "구글맵",
