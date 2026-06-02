@@ -181,7 +181,7 @@ function RootComponent() {
   const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isBare = pathname === "/intro" || pathname === "/login";
-  
+
   // SSR 하이드레이션 불일치 에러를 방어하기 위해 mounted 상태 관리
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
