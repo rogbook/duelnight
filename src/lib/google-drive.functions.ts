@@ -134,13 +134,22 @@ export const importDriveFilesFn = createServerFn({ method: "POST" })
         if (!metaRes.ok) continue;
         const meta = await metaRes.json();
 
+        // 이미지 파일만 허용 (버킷 오용·임의 파일 적재 방지)
+        if (!meta?.mimeType || !String(meta.mimeType).startsWith("image/")) continue;
+
         const contentRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!contentRes.ok) continue;
         const buffer = await contentRes.arrayBuffer();
 
-        const fileName = `${userId}/${Date.now()}-${meta.name}`;
+        // 파일명을 단일 세그먼트로 정규화: 경로 구분자 제거로 경로 조작/타인 파일 덮어쓰기 차단.
+        // 스토리지 키는 항상 `${userId}/` 프리픽스 아래로 고정된다.
+        const safeName = String(meta.name ?? "file")
+          .replace(/[/\\]/g, "_")
+          .replace(/\s+/g, "_")
+          .slice(0, 200);
+        const fileName = `${userId}/${Date.now()}-${safeName}`;
         const { error: uploadError } = await supabaseAdmin.storage
           .from("card-images")
           .upload(fileName, buffer, {
