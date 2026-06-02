@@ -248,10 +248,16 @@ export const verifyStripePayment = createServerFn({ method: "POST" })
 export const verifyPortOnePayment = createServerFn({ method: "POST" })
   .inputValidator((d: { imp_uid: string; merchant_uid: string; amount: number; packId: string }) => d)
   .handler(async ({ data }) => {
-    const { imp_uid, merchant_uid, amount, packId } = data;
+    const { imp_uid, merchant_uid, packId } = data;
     const userId = await getAuthenticatedUserId();
 
     try {
+      // 0. packId를 신뢰하지 않고 서버에서 기준 가격을 산출한다.
+      //    (클라이언트가 보낸 amount는 검증에 사용하지 않는다 — 위변조 가능)
+      const pack = CREDIT_PACKS[packId];
+      if (!pack) throw new Error("유효하지 않은 충전 패키지입니다.");
+      const expectedAmount = pack.amount; // PortOne(국내)은 KRW 기준가 = pack.amount
+
       // 1. PortOne 토큰 발급
       const tokenRes = await fetch("https://api.iamport.kr/users/getToken", {
         method: "POST",
@@ -273,20 +279,26 @@ export const verifyPortOnePayment = createServerFn({ method: "POST" })
       if (!paymentRes.ok) throw new Error("결제 내역 조회 실패");
       const payment = paymentData.response;
 
-      // 3. 금액 위변조 검증
-      if (payment.amount !== amount) {
-        throw new Error("결제 금액 위변조가 감지되었습니다.");
+      // 3. 주문 번호 일치 검증 (다른 결제의 imp_uid 재사용 차단)
+      if (payment.merchant_uid !== merchant_uid) {
+        throw new Error("주문 번호가 결제 내역과 일치하지 않습니다.");
+      }
+
+      // 4. 금액 위변조 검증 — 실제 결제액을 "패키지 기준가"와 비교한다.
+      //    클라이언트가 보낸 amount가 아니라 packId로 산출한 expectedAmount를 기준으로 한다.
+      if (payment.amount !== expectedAmount) {
+        throw new Error("결제 금액이 상품 가격과 일치하지 않습니다.");
       }
 
       if (payment.status !== "paid") {
         throw new Error("결제 상태가 완료(paid)가 아닙니다.");
       }
 
-      // 4. 공용 비즈니스 로직을 통한 안전 가산 처리
+      // 5. 공용 비즈니스 로직을 통한 안전 가산 처리
       await recordSuccessfulPayment({
         userId,
         orderId: merchant_uid,
-        amount,
+        amount: expectedAmount,
         currency: "krw",
         packId,
         paymentIntentId: imp_uid,

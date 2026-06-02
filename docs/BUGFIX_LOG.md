@@ -38,6 +38,52 @@
 
 ---
 
+## 2026-06-03 | 🔴 Critical — PortOne 결제 검증에서 packId 위변조로 크레딧 과다 적립
+
+**수정자**: Claude Cowork
+**관련 파일**:
+- `src/lib/payment.functions.ts` (`verifyPortOnePayment`)
+
+### 문제
+국내(PortOne) 결제 시, 사용자가 소액 패키지(`credits-small`, ₩10,000 → 1,000 크레딧)를 실제로 결제한 뒤, 서버 검증 호출의 `packId`만 `credits-large`(10,000 크레딧)로 바꿔 보내면 검증을 통과하고 **10배 크레딧이 적립**되는 결제 사기 취약점.
+
+### 원인
+`verifyPortOnePayment`가 클라이언트가 보낸 `amount`와 `packId`를 서로 교차 검증하지 않았음.
+- 금액 검증이 `payment.amount !== amount`(실제 결제액 vs 클라이언트가 보낸 금액)만 확인 → 공격자가 실제 결제액과 동일한 `amount`를 보내면 통과.
+- 적립 크레딧은 클라이언트가 보낸 `packId`(`CREDIT_PACKS[packId].credits`)로 결정 → 금액과 무관하게 더 비싼 팩의 크레딧 적립 가능.
+- (Stripe 경로는 `packId`를 서버가 세션 메타데이터로 주입하므로 안전 — 동일 패턴 아님.)
+
+### 수정 내용
+- 클라이언트 `amount`를 **신뢰하지 않고**, `packId`로 서버에서 기준 가격(`CREDIT_PACKS[packId].amount`)을 산출.
+- 실제 PortOne 결제액(`payment.amount`)을 **기준 가격과 비교**하도록 변경.
+- `payment.merchant_uid === merchant_uid` 일치 검증 추가(타 결제의 `imp_uid` 재사용 차단).
+- `recordSuccessfulPayment`에 클라이언트 `amount` 대신 서버 산출 `expectedAmount` 전달.
+- 입력 시그니처는 하위호환 유지(`amount`는 받되 검증/적립에 사용하지 않음).
+
+### 후속 권장
+- PortOne `payment.custom_data.user_id`와 로그인 사용자 일치 검증 추가(심층 방어).
+- Antigravity에서 sandbox 모드로 결제 왕복 회귀 테스트 후 Lovable Publish.
+
+---
+
+## 2026-06-03 | 🟡 Medium — Google Drive 가져오기에서 파일명 경로 조작 및 비이미지 적재
+
+**수정자**: Claude Cowork
+**관련 파일**:
+- `src/lib/google-drive.functions.ts` (`importDriveFilesFn`)
+
+### 문제
+Drive 이미지 가져오기 시, 스토리지 저장 경로에 Drive 파일명(`meta.name`)을 그대로 사용했음. `upsert: true` + service-role(RLS 우회)와 결합되어, `../{타인ID}/...` 형태의 파일명으로 **다른 사용자 영역 파일을 덮어쓸 수 있는 경로 조작** 여지가 있었음. 또한 `importDriveFilesFn`은 이미지 타입을 강제하지 않아 임의 파일을 `card-images` 버킷에 적재 가능했음.
+
+### 원인
+`const fileName = \`${userId}/${Date.now()}-${meta.name}\`` — 외부에서 제어되는 `meta.name`에 경로 구분자(`/`, `\`)가 포함될 수 있으나 정규화하지 않음. 콘텐츠 MIME 검사도 없었음.
+
+### 수정 내용
+- 가져오기 전 `meta.mimeType`이 `image/`로 시작하는지 검사해 비이미지 파일 건너뜀.
+- 파일명을 단일 세그먼트로 정규화(`/`,`\` 및 공백 치환, 200자 제한)하여 `${userId}/` 프리픽스 밖으로 벗어나지 못하게 고정.
+
+---
+
 ## 2026-06-03 | 🟠 High — 퍼블리싱 가드/문서 불일치 점검 및 협업 문서 갱신
 
 **수정자**: Claude Cowork
