@@ -14,6 +14,21 @@ type Store = Database["public"]["Tables"]["stores"]["Row"];
 
 const SITE = "https://duelnight.app";
 
+function StoreNotFoundComponent() {
+  const { t } = useI18n();
+  return (
+    <div className="mx-auto max-w-3xl px-6 py-16 text-center">
+      <h1 className="text-2xl font-semibold">{t("storeDetail.notFoundTitle")}</h1>
+      <Link
+        to="/stores"
+        className="mt-4 inline-flex items-center gap-1 text-sm text-primary hover:underline"
+      >
+        <ArrowLeft className="h-4 w-4" /> {t("storeDetail.backToList")}
+      </Link>
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/stores/$id")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
@@ -86,20 +101,7 @@ export const Route = createFileRoute("/stores/$id")({
     };
   },
   component: StoreDetailPage,
-  notFoundComponent: () => {
-    const { t } = useI18n();
-    return (
-      <div className="mx-auto max-w-3xl px-6 py-16 text-center">
-        <h1 className="text-2xl font-semibold">{t("storeDetail.notFoundTitle")}</h1>
-        <Link
-          to="/stores"
-          className="mt-4 inline-flex items-center gap-1 text-sm text-primary hover:underline"
-        >
-          <ArrowLeft className="h-4 w-4" /> {t("storeDetail.backToList")}
-        </Link>
-      </div>
-    );
-  },
+  notFoundComponent: StoreNotFoundComponent,
 });
 
 function StoreDetailPage() {
