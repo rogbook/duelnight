@@ -38,6 +38,37 @@
 
 ---
 
+## 2026-06-03 | 🟠 High — Google Drive 연동 OAuth/토큰 처리 버그 3건
+
+**수정자**: Claude Cowork
+**관련 파일**:
+- `src/lib/google-drive.server.ts` (`REDIRECT_URI`, `getValidAccessToken`)
+- `src/lib/google-drive.functions.ts` (`disconnectDriveFn`)
+
+### 문제
+1. **콜백 경로 불일치(연동 전체 실패)**: OAuth `redirect_uri`가 `/api/drive/callback`을 가리켰으나 실제 콜백 라우트는 `/auth/google-drive/callback`뿐이고 `/api/drive/callback` 라우트는 존재하지 않음 → Google이 리다이렉트한 경로가 404가 되어 Drive 연결 자체가 실패.
+2. **refresh_token 빈 값/회전 미처리**: 콜백에서 `refresh_token`을 `|| ""`로 저장(재동의 시 미발급될 수 있음). 만료 임박 시 빈 문자열로 갱신을 시도해 throw → 재연결 안내 없이 Drive 기능이 침묵 실패. 또한 Google이 토큰을 회전해 새 `refresh_token`을 내려줘도 저장하지 않아 이후 갱신 불가.
+3. **revoke 시 토큰을 URL 쿼리로 전송**: `disconnectDriveFn`이 access_token을 `revoke?token=...` URL에 넣어 호출 → 프록시/액세스 로그에 토큰 평문 노출.
+
+### 원인
+Lovable이 생성한 초기 OAuth 스캐폴드에서 콜백 경로 상수와 실제 라우트 파일명이 불일치했고, 토큰 갱신/폐기 경로의 엣지 케이스(빈 refresh_token, 토큰 회전, 로그 노출)를 다루지 않음.
+
+### 수정 내용
+- `REDIRECT_URI`를 실제 라우트 `/auth/google-drive/callback`에 맞춤.
+- `getValidAccessToken`: `refresh_token`이 비어 있으면 갱신 시도 없이 `null` 반환(재연결 유도). 갱신 응답에 `refresh_token`이 오면 함께 저장(회전 반영).
+- `disconnectDriveFn`: revoke 호출을 POST 본문(`application/x-www-form-urlencoded`)으로 변경해 토큰의 URL 노출 제거.
+
+### 후속 권장(미적용 — 결정 필요)
+- `card-images` 버킷은 RLS상 admin 업로드 전용이나 `importDriveFilesFn`이 service-role로 우회 업로드 → 일반 사용자도 공개 버킷에 적재 가능. 별도 사용자 버킷 분리 또는 admin 게이트 검토.
+- 결제 크레딧 적립의 read-modify-write 동시성(원자성) 문제: 원격 DB의 `process_successful_payment(p_credits)` 오버로드 본문 검증 후 RPC 경유로 전환 권장.
+
+⚙️ ENV 필요
+| 변수명 | 값 예시 | 설명 |
+|--------|---------|------|
+| APP_URL | https://your-domain | OAuth redirect 기준 도메인. Google Cloud 콘솔의 승인된 리디렉션 URI에 `${APP_URL}/auth/google-drive/callback`를 등록해야 함 |
+
+---
+
 ## 2026-06-03 | 🔴 Critical — PortOne 결제 검증에서 packId 위변조로 크레딧 과다 적립
 
 **수정자**: Claude Cowork
