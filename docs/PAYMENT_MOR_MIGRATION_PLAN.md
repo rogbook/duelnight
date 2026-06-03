@@ -231,7 +231,29 @@ CREATE TABLE IF NOT EXISTS public.payment_webhook_events (
 
 ---
 
-### 다음 액션 (구현 착수 시)
-1. `src/lib/payments/` 디렉터리로 provider 추상화 리팩터링 (인터페이스 §4.1).
-2. Lemon Squeezy 가입·상품 등록 후 웹훅 엔드포인트 + 검증 구현 (§6.1).
+### 구현 현황
+- ✅ **(2026-06-03) provider 추상화 리팩터링 완료** — `src/lib/payments/`로 분리. 동작 무변경(기존 Stripe/PortOne 그대로). 실제 생성된 구조는 아래.
+- ⬜ Lemon Squeezy 연동(Phase 1) — 스켈레톤만 존재(`providers/lemonsqueezy.server.ts`).
+- ⬜ `payment_webhook_events` 마이그레이션(§5.2).
+
+```
+src/lib/payments/
+  types.ts                      # PaymentProvider, CreditPack, VerifiedPayment, PaymentVerifier, ...
+  credit-packs.ts               # CREDIT_PACKS, getPack(), getPriceAndCurrency()  (순수/공유)
+  auth.server.ts                # getAuthenticatedUserId()
+  grant-credits.server.ts       # grantCredits(VerifiedPayment)  ← 단일 멱등 적립 (구 recordSuccessfulPayment)
+  index.ts                      # 순수/공유 모듈 재노출
+  providers/
+    stripe.server.ts            # createCheckoutSession(), verifyPayment()
+    portone.server.ts           # verifyPayment()
+    lemonsqueezy.server.ts      # 🚧 Phase 1 MoR 스켈레톤 (PaymentVerifier 구현 예정)
+src/lib/payment.functions.ts    # createServerFn 얇은 facade (인증 후 provider 위임). 클라이언트 import 경로 유지.
+```
+
+> **새 provider 추가 방법**: ① `providers/<name>.server.ts`에 검증/적립 로직 작성(또는 `PaymentVerifier` 구현) → ② 결제 결과를 `VerifiedPayment`로 정규화 → ③ `grantCredits()` 호출. 웹훅 기반(LS/Apple/Google)은 라우트(`src/routes/api/payments.<name>.ts`)에서 처리, 직접 PG는 `payment.functions.ts`에 서버 함수 래퍼 추가.
+
+### 다음 액션 (Phase 1 착수 시)
+1. Lemon Squeezy 가입·상품(variant) 등록 후 `LEMONSQUEEZY_*` 환경변수 설정.
+2. 웹훅 라우트 + 서명 검증 + `lemonSqueezyVerifier.verify()` 구현 (§6.1).
 3. `payment_webhook_events` 마이그레이션 추가 (§5.2).
+4. 클라이언트: 웹 환경에서 LS Checkout 분기(현재 KR=PortOne / 그 외=Stripe → LS 추가).
