@@ -2,7 +2,9 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const CLIENT_ID = process.env.GOOGLE_DRIVE_CLIENT_ID;
 const CLIENT_SECRET = process.env.GOOGLE_DRIVE_CLIENT_SECRET;
-const REDIRECT_URI = `${process.env.APP_URL || "http://localhost:3000"}/api/drive/callback`;
+// 실제 콜백 라우트(src/routes/auth.google-drive.callback.ts)와 정확히 일치해야 한다.
+// 이전 값 `/api/drive/callback`은 존재하지 않는 경로라 콜백이 404로 깨졌다.
+const REDIRECT_URI = `${process.env.APP_URL || "http://localhost:3000"}/auth/google-drive/callback`;
 
 export async function getGoogleAuthUrl(userId: string) {
   const scopes = ["https://www.googleapis.com/auth/drive.readonly", "https://www.googleapis.com/auth/userinfo.email"];
@@ -103,6 +105,9 @@ export async function getValidAccessToken(userId: string) {
 
   // Buffer of 5 minutes
   if (expiresAt.getTime() - now.getTime() < 5 * 60 * 1000) {
+    // refresh_token이 비어 있으면(최초 동의 외 재동의 등으로 미발급) 갱신 불가 → 재연결 유도.
+    if (!tokenData.refresh_token) return null;
+
     const newTokens = await refreshAccessToken(tokenData.refresh_token);
     const expires_at = new Date(Date.now() + newTokens.expires_in * 1000).toISOString();
 
@@ -110,6 +115,8 @@ export async function getValidAccessToken(userId: string) {
       .from("user_drive_tokens")
       .update({
         access_token: newTokens.access_token,
+        // Google이 refresh_token을 회전(rotate)해 새로 내려주면 함께 갱신, 아니면 기존 유지.
+        ...(newTokens.refresh_token ? { refresh_token: newTokens.refresh_token } : {}),
         expires_at,
         updated_at: new Date().toISOString(),
       })

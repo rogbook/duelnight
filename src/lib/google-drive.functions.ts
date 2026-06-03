@@ -86,8 +86,13 @@ export const disconnectDriveFn = createServerFn({ method: "POST" })
       .eq("user_id", userId)
       .single();
 
-    if (tokenData) {
-      await fetch(`https://oauth2.googleapis.com/revoke?token=${tokenData.access_token}`, { method: "POST" });
+    if (tokenData?.access_token) {
+      // 토큰을 URL 쿼리에 노출하면 프록시/액세스 로그에 그대로 남는다 → POST 본문으로 전송.
+      await fetch("https://oauth2.googleapis.com/revoke", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ token: tokenData.access_token }),
+      });
     }
 
     await supabaseAdmin
