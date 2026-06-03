@@ -2,6 +2,8 @@
 
 이 문서는 DuelNight의 결제 시스템을 실제 운영 환경에 맞게 최종 설정하는 방법을 설명합니다.
 
+> 📌 **결제 전략(사업자등록 없이 시작 → 추후 직접 PG 전환)은 [`PAYMENT_MOR_MIGRATION_PLAN.md`](./PAYMENT_MOR_MIGRATION_PLAN.md)를 먼저 참고하세요.** 본 가이드(PortOne/Stripe 직접 연동)는 사업자등록 후 단계(Phase 3)에 해당합니다.
+
 ---
 
 ## 1. 구현 요약
