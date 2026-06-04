@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Upload, Download, Trash2, Plus, Image as ImageIcon, FileSpreadsheet, Pencil, X, Wand2, ShieldCheck, AlertTriangle, Save, Sparkles, ScanLine, Crop, ArrowUp, Star, Keyboard } from "lucide-react";
+import { Upload, Download, Trash2, Plus, Image as ImageIcon, FileSpreadsheet, Pencil, X, Wand2, ShieldCheck, AlertTriangle, Save, Sparkles, ScanLine, Crop, ArrowUp, Star, Keyboard, Link2 } from "lucide-react";
 import { ImageEditDialog } from "./image-edit-dialog";
 import { ImageUploadDialog } from "./image-upload-dialog";
 import { toast } from "sonner";
@@ -292,6 +292,11 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
   const [bulkPatch, setBulkPatch] = useState<Partial<CardRow>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [editIdx, setEditIdx] = useState<number | null>(null);
+
+  // URL 가져오기 (공식 카드 페이지 → 폼 자동 채우기)
+  const [importUrl, setImportUrl] = useState("");
+  const [importGame, setImportGame] = useState<Game>("dtcg");
+  const [importing, setImporting] = useState(false);
 
   // Google Drive 연동 상태
   const [driveConnected, setDriveConnected] = useState(false);
@@ -742,15 +747,97 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
     }
   };
 
+  /** 공식 카드 페이지 URL → 서버 추출 → 표에 행 추가 (검수 후 등록) */
+  const importFromUrl = async () => {
+    const url = importUrl.trim();
+    if (!url) { toast.error("URL을 입력하세요"); return; }
+    setImporting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) { toast.error("로그인이 필요합니다"); return; }
+      const res = await fetch("/api/card-import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ url, game_hint: importGame }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || `가져오기 실패 (${res.status})`);
+      const cards: any[] = Array.isArray(json.cards) ? json.cards : [];
+      if (cards.length === 0) { toast.info("가져온 카드가 없습니다"); return; }
+      const newRows: CardRow[] = cards.map((c) => {
+        const row = emptyRow();
+        row.game = importGame;
+        if (c.code) row.code = String(c.code).toUpperCase();
+        if (c.set_code) row.set_code = String(c.set_code).toUpperCase();
+        if (c.name) row.name = String(c.name);
+        if (c.type && VALID_TYPES.includes(c.type as CardType)) row.type = c.type as CardType;
+        if (Array.isArray(c.colors)) row.colors = (c.colors as unknown[]).map(String);
+        if (c.cost != null) row.cost = Number(c.cost);
+        if (c.power != null) row.power = Number(c.power);
+        if (c.counter != null) row.counter = Number(c.counter);
+        if (c.attribute) row.attribute = String(c.attribute);
+        if (c.rarity) row.rarity = String(c.rarity).toUpperCase();
+        if (c.effect) row.effect = String(c.effect);
+        if (c.image_url) row.image_url = normalizeImageUrl(String(c.image_url));
+        return row;
+      });
+      setRows((prev) => [...prev, ...newRows]);
+      setDupChecked(false);
+      setImportUrl("");
+      toast.success(`${newRows.length}건 가져옴 — 아래 표에서 검수 후 등록하세요. (출처 표기 필요)`);
+    } catch (e) {
+      toast.error("가져오기 실패: " + (e as Error).message);
+    } finally {
+      setImporting(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <Tabs defaultValue="single">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3 md:grid-cols-5">
           <TabsTrigger value="single"><Plus className="mr-1 h-4 w-4" />한 장씩 입력</TabsTrigger>
+          <TabsTrigger value="url"><Link2 className="mr-1 h-4 w-4" />URL 가져오기</TabsTrigger>
           <TabsTrigger value="excel"><FileSpreadsheet className="mr-1 h-4 w-4" />엑셀/CSV</TabsTrigger>
           <TabsTrigger value="images"><ImageIcon className="mr-1 h-4 w-4" />파일 업로드</TabsTrigger>
           <TabsTrigger value="drive"><ImageIcon className="mr-1 h-4 w-4" />Google Drive</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="url">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">URL로 카드 가져오기</CardTitle>
+              <CardDescription>
+                공식 카드 페이지 주소를 넣으면 카드 정보를 자동 추출해 아래 표에 채웁니다.
+                지원: 디지몬(digimoncard.co.kr) 등. <b>개별 카드 상세 페이지</b> URL이 가장 정확합니다.
+                이미지는 원본 링크를 그대로 참조(핫링크)하며 재호스팅하지 않습니다 — <b>출처 표기가 필요</b>합니다.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Select value={importGame} onValueChange={(v) => setImportGame(v as Game)}>
+                  <SelectTrigger className="w-full sm:w-32"><SelectValue /></SelectTrigger>
+                  <SelectContent>{VALID_GAMES.map((g) => <SelectItem key={g} value={g}>{GAME_LABEL[g]}</SelectItem>)}</SelectContent>
+                </Select>
+                <Input
+                  placeholder="https://digimoncard.co.kr/index.php?mid=cardlist&..."
+                  value={importUrl}
+                  onChange={(e) => setImportUrl(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") importFromUrl(); }}
+                  disabled={importing}
+                />
+                <Button onClick={importFromUrl} disabled={importing || !importUrl.trim()}>
+                  {importing ? "가져오는 중…" : "가져오기"}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                ⚠️ 동적(JS)으로 로딩되는 목록 페이지는 자동 추출이 어려울 수 있어요. 그럴 땐 개별 카드 상세 페이지 URL을 사용하세요.
+                추출 결과는 AI 기반이라 부정확할 수 있으니 등록 전 반드시 검수하세요.
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="single">
           <Card>
