@@ -188,12 +188,22 @@ function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            minLength={6}
+            minLength={mode === "signup" ? 8 : 6}
+            aria-describedby={mode === "signup" ? "pw-rules" : undefined}
           />
+          {mode === "signup" && (
+            <ul id="pw-rules" className="mt-1 flex flex-col gap-1 text-xs" aria-label={t("auth.passwordHint")}>
+              <PwRule ok={pwRules.length}>{t("auth.pwRuleLength")}</PwRule>
+              <PwRule ok={pwRules.letter}>{t("auth.pwRuleLetter")}</PwRule>
+              <PwRule ok={pwRules.number}>{t("auth.pwRuleNumber")}</PwRule>
+              <PwRule ok={pwRules.notCommon}>{t("auth.pwRuleCommon")}</PwRule>
+            </ul>
+          )}
         </div>
-        <Button type="submit" disabled={busy} className="mt-2">
+        <Button type="submit" disabled={busy || signupBlocked} className="mt-2">
           {busy ? t("auth.processing") : mode === "signin" ? t("auth.loginTitle") : t("auth.signupTitle")}
         </Button>
+
       </form>
       <div className="mt-4 flex items-center justify-between gap-2 text-xs">
         <button
