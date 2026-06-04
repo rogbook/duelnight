@@ -751,8 +751,28 @@ function RecentList({
                     {t(`matches.event${m.event.charAt(0).toUpperCase() + m.event.slice(1)}` as any)}
                   </td>
                   <td className="px-3 py-2">{m.my_deck}</td>
-                  <td className="px-3 py-2 text-muted-foreground">
-                    {m.opp_leader || m.opp_deck || "—"}
+                  <td className="px-3 py-2 text-muted-foreground" onClick={(e) => e.stopPropagation()}>
+                    {(() => {
+                      const nick = oppNick(m);
+                      const deck = m.opp_leader || m.opp_deck;
+                      if (!nick && !deck) return "—";
+                      return (
+                        <div className="flex flex-col">
+                          {nick && (
+                            <button
+                              type="button"
+                              onClick={() => openOpp(m)}
+                              className="truncate text-left text-foreground font-medium hover:underline"
+                            >
+                              {nick}
+                            </button>
+                          )}
+                          {deck && (
+                            <span className="truncate text-xs text-muted-foreground">{deck}</span>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </td>
                   <td className="px-3 py-2">{m.went_first ? t("matches.first") : t("matches.second")}</td>
                   <td className="px-3 py-2">
