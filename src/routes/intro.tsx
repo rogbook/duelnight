@@ -218,7 +218,7 @@ function IntroPage() {
 /* ============================================================
  *  MOBILE 전용 인트로
  * ============================================================ */
-function MobileIntro({ onShowLogin }: { proPrice: string; creditPrice: string; onShowLogin: () => void }) {
+function MobileIntro(_props: { proPrice: string; creditPrice: string; onShowLogin: () => void }) {
   const { t } = useI18n();
   const [expanded, setExpanded] = useState<number | null>(null);
 
