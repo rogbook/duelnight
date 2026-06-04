@@ -907,11 +907,15 @@ function RecentList({
 
 function ViewMatchDialog({
   match,
+  oppNick,
+  onOpenOpponent,
   onOpenChange,
   onEdit,
   onDelete,
 }: {
   match: Match | null;
+  oppNick?: string | null;
+  onOpenOpponent?: (m: Match) => void;
   onOpenChange: (open: boolean) => void;
   onEdit: (m: Match) => void;
   onDelete: (id: string) => void;
@@ -935,16 +939,28 @@ function ViewMatchDialog({
               <Row label={t("matches.game")} value={t(`matches.${match.game}` as any)} />
               <Row label={t("matches.event")} value={t(`matches.event${match.event.charAt(0).toUpperCase() + match.event.slice(1)}` as any)} />
               <Row label={t("matches.myDeck")} value={match.my_deck} />
-              <Row
-                label={t("matches.opponent")}
-                value={
-                  match.opp_leader || match.opp_deck
-                    ? `${match.opp_leader ?? ""}${
+              <div>
+                <dt className="text-xs text-muted-foreground">{t("matches.opponent")}</dt>
+                <dd className="mt-0.5 text-sm">
+                  {oppNick ? (
+                    <button
+                      type="button"
+                      onClick={() => onOpenOpponent?.(match)}
+                      className="font-medium hover:underline"
+                    >
+                      {oppNick}
+                    </button>
+                  ) : null}
+                  {(match.opp_leader || match.opp_deck) && (
+                    <div className={oppNick ? "text-xs text-muted-foreground" : ""}>
+                      {`${match.opp_leader ?? ""}${
                         match.opp_leader && match.opp_deck ? " · " : ""
-                      }${match.opp_deck ?? ""}`
-                    : "—"
-                }
-              />
+                      }${match.opp_deck ?? ""}`}
+                    </div>
+                  )}
+                  {!oppNick && !match.opp_leader && !match.opp_deck && "—"}
+                </dd>
+              </div>
               <Row label={t("matches.turn")} value={match.went_first ? t("matches.first") : t("matches.second")} />
               {match.notes && (
                 <div className="col-span-3">
