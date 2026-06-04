@@ -634,7 +634,14 @@ function DeckDetailPage() {
               </div>
             )}
           </div>
+        ) : (
+          <DeckMatchesTab
+            matches={deckMatches}
+            period={matchPeriod}
+            onPeriodChange={setMatchPeriod}
+          />
         )}
+
       </div>
     </div>
   );
