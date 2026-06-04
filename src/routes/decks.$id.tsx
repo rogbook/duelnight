@@ -573,7 +573,8 @@ function DeckDetailPage() {
               </div>
             )}
           </div>
-        ) : (
+        ) : tab === "recipe" ? (
+
           <div className="space-y-6">
             {isOwner && (
               <div className="mb-4">
