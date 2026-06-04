@@ -11,6 +11,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import type { Database } from "@/integrations/supabase/types";
 import { useI18n } from "@/i18n/language-context";
 import { colorLabel } from "@/lib/deck-colors";
@@ -127,6 +128,7 @@ function CardDetailPage() {
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [zoomOpen, setZoomOpen] = useState(false);
   const { isAdmin } = useIsAdmin();
   const navigate = useNavigate();
 
@@ -213,19 +215,25 @@ function CardDetailPage() {
       </div>
       <div className="mt-4 grid gap-6 sm:grid-cols-[260px_1fr]">
         <div>
-          <div className="aspect-[5/7] w-full overflow-hidden rounded-lg border border-border bg-muted">
+          <button
+            type="button"
+            onClick={() => displayUrl && setZoomOpen(true)}
+            disabled={!displayUrl}
+            aria-label="이미지 크게 보기"
+            className="block aspect-[5/7] w-full overflow-hidden rounded-lg border border-border bg-muted transition hover:opacity-90 disabled:cursor-default disabled:hover:opacity-100"
+          >
             {displayUrl ? (
               <img
                 src={displayUrl}
                 alt={card.name}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover cursor-zoom-in"
               />
             ) : (
               <div className="flex h-full items-center justify-center text-muted-foreground">
                 <ImageOff className="h-10 w-10" />
               </div>
             )}
-          </div>
+          </button>
           {gallery.length > 1 && (
             <div className="mt-2 flex flex-wrap gap-1.5">
               {gallery.map((g) => (
@@ -313,7 +321,21 @@ function CardDetailPage() {
         />
       )}
 
+      <Dialog open={zoomOpen} onOpenChange={setZoomOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl p-2 bg-background/95 border-border">
+          <DialogTitle className="sr-only">{card.name}</DialogTitle>
+          {displayUrl && (
+            <img
+              src={displayUrl}
+              alt={card.name}
+              className="mx-auto max-h-[85vh] w-auto rounded-md object-contain"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog open={confirmDelete} onOpenChange={(o) => { if (!o && !deleting) setConfirmDelete(false); }}>
+
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("cards.deleteConfirmTitle")}</AlertDialogTitle>

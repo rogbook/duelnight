@@ -215,6 +215,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          game: string
           id: string
           name: string
           updated_at: string
@@ -222,6 +223,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          game?: string
           id?: string
           name: string
           updated_at?: string
@@ -229,6 +231,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          game?: string
           id?: string
           name?: string
           updated_at?: string
@@ -407,6 +410,7 @@ export type Database = {
       }
       events: {
         Row: {
+          banner_url: string | null
           created_at: string
           early_release_at: string | null
           ends_at: string | null
@@ -424,6 +428,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          banner_url?: string | null
           created_at?: string
           early_release_at?: string | null
           ends_at?: string | null
@@ -441,6 +446,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          banner_url?: string | null
           created_at?: string
           early_release_at?: string | null
           ends_at?: string | null
@@ -490,6 +496,39 @@ export type Database = {
           id?: string
           requester_id?: string
           status?: Database["public"]["Enums"]["friendship_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      games: {
+        Row: {
+          code: string
+          created_at: string
+          is_builtin: boolean
+          label_en: string
+          label_ja: string
+          label_ko: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          is_builtin?: boolean
+          label_en: string
+          label_ja: string
+          label_ko: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          is_builtin?: boolean
+          label_en?: string
+          label_ja?: string
+          label_ko?: string
+          sort_order?: number
           updated_at?: string
         }
         Relationships: []

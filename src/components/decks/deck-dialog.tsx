@@ -26,7 +26,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { GAME_LABEL } from "@/lib/match-stats";
+
 import { normalizeDeckName } from "@/lib/normalize-deck";
 import {
   COLORS_BY_GAME,
@@ -37,6 +37,8 @@ import {
   type Game,
 } from "@/lib/deck-colors";
 import type { Tables } from "@/integrations/supabase/types";
+import { useI18n } from "@/i18n/language-context";
+
 
 type Deck = Tables<"decks">;
 
@@ -145,8 +147,10 @@ interface DeckDialogProps {
 
 export function DeckDialog({ mode, deck, onSaved, trigger }: DeckDialogProps) {
   const qc = useQueryClient();
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+
 
   const [game, setGame] = useState<Game>("optcg");
   const [name, setName] = useState("");
@@ -255,10 +259,11 @@ export function DeckDialog({ mode, deck, onSaved, trigger }: DeckDialogProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="optcg">One Piece TCG</SelectItem>
-                <SelectItem value="dtcg">Digimon TCG</SelectItem>
-                <SelectItem value="ptcg">Pokemon TCG</SelectItem>
+                <SelectItem value="optcg">{t("matches.optcg")}</SelectItem>
+                <SelectItem value="dtcg">{t("matches.dtcg")}</SelectItem>
+                <SelectItem value="ptcg">{t("matches.ptcg")}</SelectItem>
               </SelectContent>
+
             </Select>
           </div>
 

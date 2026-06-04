@@ -1,15 +1,36 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Sparkles, Trophy, Users, ScanLine, BarChart3, Calendar, Crown, Coins, ChevronRight, ChevronDown } from "lucide-react";
+import { Sparkles, Trophy, Users, ScanLine, BarChart3, Calendar, Crown, Coins, ChevronRight, ChevronDown, Flame } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useI18n } from "@/i18n/language-context";
 import { LanguageSelector } from "@/components/language-selector";
 import { LoginModal } from "@/components/login-modal";
+import { supabase } from "@/integrations/supabase/client";
 import { GameRankingList } from "@/components/leaderboard/game-ranking-list";
 import { SeasonReportTeaser } from "@/components/season-report/season-report-teaser";
+import type { Database } from "@/integrations/supabase/types";
 
 const BRAND = {
   name: "DuelNight",
 };
+
+type TcgGame = Database["public"]["Enums"]["tcg_game"];
+
+const GAME_THEME: Record<TcgGame, { label: string; from: string; to: string; accent: string }> = {
+  optcg: { label: "ONE PIECE", from: "from-rose-600/80", to: "to-amber-500/70", accent: "text-amber-300" },
+  ptcg: { label: "Pokémon", from: "from-yellow-500/80", to: "to-sky-500/70", accent: "text-yellow-300" },
+  dtcg: { label: "Digimon", from: "from-indigo-600/80", to: "to-fuchsia-500/70", accent: "text-fuchsia-300" },
+};
+
+interface ReleaseRow {
+  id: string;
+  game: TcgGame;
+  title: string;
+  starts_at: string;
+  early_release_at: string | null;
+  product_url: string | null;
+  banner_url: string | null;
+}
 
 export const Route = createFileRoute("/intro")({
   head: () => {
@@ -78,6 +99,9 @@ function IntroPage() {
           </div>
         </div>
       </header>
+
+      {/* ===== 신규 발매 스크롤 배너 (공통) ===== */}
+      <ReleaseTicker />
 
       {/* ===== MOBILE: 스와이프 슬라이드 인트로 ===== */}
       <MobileIntro proPrice={proPrice} creditPrice={creditPrice} onShowLogin={() => setLoginOpen(true)} />
@@ -408,5 +432,104 @@ function PriceCard({
         {cta}
       </button>
     </div>
+  );
+}
+
+/* ============================================================
+ *  신규 발매 스크롤 배너
+ * ============================================================ */
+function ReleaseTicker() {
+  const { language } = useI18n();
+  const { data: releases = [] } = useQuery({
+    queryKey: ["intro-releases"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("events")
+        .select("id, game, title, starts_at, early_release_at, product_url, banner_url")
+        .eq("kind", "release")
+        .gte("starts_at", new Date(Date.now() - 7 * 86400000).toISOString())
+        .order("starts_at", { ascending: true })
+        .limit(12);
+      if (error) throw error;
+      return (data ?? []) as ReleaseRow[];
+    },
+    staleTime: 5 * 60_000,
+  });
+
+  if (releases.length === 0) return null;
+
+  // 무한 스크롤 효과를 위해 2배 복제
+  const loop = [...releases, ...releases];
+  const dateLocale = language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US";
+
+  const releaseLabel = language === "ja" ? "発売" : language === "en" ? "Release" : "발매";
+  const headerLabel =
+    language === "ja" ? "新規発売スケジュール" : language === "en" ? "New Release Schedule" : "신규 발매 일정";
+
+  return (
+    <section className="border-b border-border/50 bg-gradient-to-b from-background to-background/50 py-3">
+      <div className="mx-auto w-full max-w-6xl px-3 sm:px-6">
+        <div className="flex items-center gap-2 mb-2">
+          <Flame className="h-3.5 w-3.5 text-orange-500" />
+          <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+            {headerLabel}
+          </span>
+        </div>
+      </div>
+      <div className="group relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
+        <div className="flex w-max gap-3 animate-[ticker_45s_linear_infinite] group-hover:[animation-play-state:paused] px-3 sm:px-6">
+          {loop.map((r, idx) => {
+            const theme = GAME_THEME[r.game] ?? GAME_THEME.optcg;
+            const d = new Date(r.early_release_at ?? r.starts_at);
+            const dateStr = d.toLocaleDateString(dateLocale, {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            });
+            const inner = (
+              <div
+                className={`relative h-[88px] w-[320px] sm:w-[400px] shrink-0 overflow-hidden rounded-xl border border-border/60 bg-gradient-to-r ${theme.from} ${theme.to} shadow-lg`}
+              >
+                {r.banner_url && (
+                  <img
+                    src={r.banner_url}
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-cover opacity-80"
+                    loading="lazy"
+                  />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
+                <div className="relative z-10 flex h-full flex-col justify-between p-3">
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-md bg-black/70 px-2 py-0.5 text-[10px] font-bold text-white tracking-wider">
+                      {theme.label}
+                    </span>
+                    <span className={`text-[10px] font-semibold ${theme.accent}`}>{releaseLabel}</span>
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-medium text-white/90">{dateStr}</div>
+                    <div className="line-clamp-1 text-[13px] font-bold text-white">{r.title}</div>
+                  </div>
+                </div>
+              </div>
+            );
+            return r.product_url ? (
+              <a
+                key={`${r.id}-${idx}`}
+                href={r.product_url}
+                target="_blank"
+                rel="noreferrer"
+                className="block"
+              >
+                {inner}
+              </a>
+            ) : (
+              <div key={`${r.id}-${idx}`}>{inner}</div>
+            );
+          })}
+        </div>
+      </div>
+      <style>{`@keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }`}</style>
+    </section>
   );
 }
