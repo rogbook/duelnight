@@ -100,11 +100,11 @@ export function LoginModal({
         toast.success(t("auth.signupSuccess"));
         // 이메일 인증이 비활성화된 경우 signUp 즉시 세션이 발급됨 → 자동 이동
         if (data.session) {
-          navigate({ to: "/matches" });
+          navigate({ to: "/" });
         } else {
           // 세션이 없으면 password로 즉시 로그인 시도 (자동 로그인 보장)
           const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
-          if (!signInErr) navigate({ to: "/matches" });
+          if (!signInErr) navigate({ to: "/" });
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -112,7 +112,7 @@ export function LoginModal({
           password,
         });
         if (error) throw error;
-        navigate({ to: "/matches" });
+        navigate({ to: "/" });
       }
     } catch (err) {
       toast.error((err as Error).message);
@@ -125,11 +125,11 @@ export function LoginModal({
     setBusy(true);
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}/matches`,
+        redirect_uri: `${window.location.origin}/`,
       });
       if (result.error) throw result.error;
       if (result.redirected) return;
-      navigate({ to: "/matches" });
+      navigate({ to: "/" });
     } catch (err) {
       toast.error((err as Error).message);
     } finally {

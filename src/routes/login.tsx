@@ -100,10 +100,10 @@ function LoginPage() {
         if (error) throw error;
         toast.success(t("auth.signupSuccess"));
         if (data.session) {
-          navigate({ to: "/matches" });
+          navigate({ to: "/" });
         } else {
           const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
-          if (!signInErr) navigate({ to: "/matches" });
+          if (!signInErr) navigate({ to: "/" });
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -111,7 +111,7 @@ function LoginPage() {
           password,
         });
         if (error) throw error;
-        navigate({ to: "/matches" });
+        navigate({ to: "/" });
       }
     } catch (err) {
       toast.error((err as Error).message);
@@ -124,11 +124,11 @@ function LoginPage() {
     setBusy(true);
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}/matches`,
+        redirect_uri: `${window.location.origin}/`,
       });
       if (result.error) throw result.error;
       if (result.redirected) return;
-      navigate({ to: "/matches" });
+      navigate({ to: "/" });
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
