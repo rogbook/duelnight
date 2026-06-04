@@ -410,6 +410,7 @@ export type Database = {
       }
       events: {
         Row: {
+          banner_url: string | null
           created_at: string
           early_release_at: string | null
           ends_at: string | null
@@ -427,6 +428,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          banner_url?: string | null
           created_at?: string
           early_release_at?: string | null
           ends_at?: string | null
@@ -444,6 +446,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          banner_url?: string | null
           created_at?: string
           early_release_at?: string | null
           ends_at?: string | null
