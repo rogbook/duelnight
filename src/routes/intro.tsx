@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Sparkles,
   Trophy,
@@ -398,10 +398,11 @@ function PriceCard({
 }
 
 /* ============================================================
- *  신규 발매 스크롤 배너
+ *  신규 발매 슬라이드 배너 (풀폭 대형 캐러셀)
  * ============================================================ */
 function ReleaseTicker() {
   const { language } = useI18n();
+  const [idx, setIdx] = useState(0);
   const { data: releases = [] } = useQuery({
     queryKey: ["intro-releases"],
     queryFn: async () => {
@@ -418,80 +419,102 @@ function ReleaseTicker() {
     staleTime: 5 * 60_000,
   });
 
+  // 자동 슬라이드
+  useEffect(() => {
+    if (releases.length <= 1) return;
+    const id = setInterval(() => setIdx((i) => (i + 1) % releases.length), 5000);
+    return () => clearInterval(id);
+  }, [releases.length]);
+
   if (releases.length === 0) return null;
 
-  // 무한 스크롤 효과를 위해 2배 복제
-  const loop = [...releases, ...releases];
   const dateLocale = language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US";
-
   const releaseLabel = language === "ja" ? "発売" : language === "en" ? "Release" : "발매";
   const headerLabel =
     language === "ja" ? "新規発売スケジュール" : language === "en" ? "New Release Schedule" : "신규 발매 일정";
+  const detailLabel = language === "ja" ? "詳細を見る" : language === "en" ? "View details" : "자세히 보기";
+  const current = Math.min(idx, releases.length - 1);
 
   return (
-    <section className="border-b border-white/5 py-3">
-      <div className="mx-auto w-full max-w-6xl px-3 sm:px-6">
-        <div className="flex items-center gap-2 mb-2">
-          <Flame className="h-3.5 w-3.5 text-orange-500" />
-          <span className="text-[11px] font-semibold tracking-wider text-foreground/50 uppercase">
-            {headerLabel}
-          </span>
-        </div>
-      </div>
-      <div className="group relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
-        <div className="flex w-max gap-3 animate-[ticker_45s_linear_infinite] group-hover:[animation-play-state:paused] px-3 sm:px-6">
-          {loop.map((r, idx) => {
-            const theme = GAME_THEME[r.game] ?? GAME_THEME.optcg;
-            const d = new Date(r.early_release_at ?? r.starts_at);
-            const dateStr = d.toLocaleDateString(dateLocale, {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-            });
-            const inner = (
-              <div
-                className={`relative h-[88px] w-[320px] sm:w-[400px] shrink-0 overflow-hidden rounded-xl border border-white/10 bg-gradient-to-r ${theme.from} ${theme.to} shadow-lg`}
-              >
-                {r.banner_url && (
-                  <img
-                    src={r.banner_url}
-                    alt=""
-                    className="absolute inset-0 h-full w-full object-cover opacity-80"
-                    loading="lazy"
-                  />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
-                <div className="relative z-10 flex h-full flex-col justify-between p-3">
-                  <div className="flex items-center gap-2">
-                    <span className="rounded-md bg-black/70 px-2 py-0.5 text-[10px] font-bold text-white tracking-wider">
-                      {theme.label}
-                    </span>
-                    <span className={`text-[10px] font-semibold ${theme.accent}`}>{releaseLabel}</span>
-                  </div>
-                  <div>
-                    <div className="text-[11px] font-medium text-white/90">{dateStr}</div>
-                    <div className="line-clamp-1 text-[13px] font-bold text-white">{r.title}</div>
-                  </div>
+    <section className="relative w-full border-b border-white/5">
+      <div className="relative h-[260px] w-full overflow-hidden sm:h-[360px] lg:h-[420px]">
+        {releases.map((r, i) => {
+          const theme = GAME_THEME[r.game] ?? GAME_THEME.optcg;
+          const d = new Date(r.early_release_at ?? r.starts_at);
+          const dateStr = d.toLocaleDateString(dateLocale, { year: "numeric", month: "2-digit", day: "2-digit" });
+          return (
+            <div
+              key={r.id}
+              className={
+                "absolute inset-0 transition-opacity duration-700 ease-in-out " +
+                (i === current ? "opacity-100" : "pointer-events-none opacity-0")
+              }
+              aria-hidden={i !== current}
+            >
+              {/* 배경 */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${theme.from} ${theme.to}`} />
+              {r.banner_url && (
+                <img
+                  src={r.banner_url}
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover"
+                  loading={i === 0 ? "eager" : "lazy"}
+                />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/20" />
+
+              {/* 내용 */}
+              <div className="relative mx-auto flex h-full max-w-6xl flex-col justify-center px-5 sm:px-8">
+                <div className="flex items-center gap-2">
+                  <span className="rounded-md bg-black/70 px-2.5 py-1 text-[11px] font-bold tracking-wider text-white">
+                    {theme.label}
+                  </span>
+                  <span className={`text-xs font-semibold ${theme.accent}`}>{releaseLabel}</span>
                 </div>
+                <p className="mt-3 text-sm font-medium text-white/80">{dateStr}</p>
+                <h2 className="mt-1 max-w-3xl text-2xl font-extrabold leading-tight text-white line-clamp-2 sm:text-4xl lg:text-5xl">
+                  {r.title}
+                </h2>
+                {r.product_url && (
+                  <a
+                    href={r.product_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-5 inline-flex w-fit items-center gap-1.5 rounded-lg bg-white/15 px-4 py-2 text-xs font-semibold text-white backdrop-blur transition-colors hover:bg-white/25 sm:text-sm"
+                  >
+                    {detailLabel}
+                    <ChevronRight className="h-4 w-4" />
+                  </a>
+                )}
               </div>
-            );
-            return r.product_url ? (
-              <a
-                key={`${r.id}-${idx}`}
-                href={r.product_url}
-                target="_blank"
-                rel="noreferrer"
-                className="block"
-              >
-                {inner}
-              </a>
-            ) : (
-              <div key={`${r.id}-${idx}`}>{inner}</div>
-            );
-          })}
+            </div>
+          );
+        })}
+
+        {/* 상단 라벨 */}
+        <div className="pointer-events-none absolute left-5 top-4 z-10 flex items-center gap-2 sm:left-8">
+          <Flame className="h-4 w-4 text-orange-400" />
+          <span className="text-xs font-semibold uppercase tracking-wider text-white/80">{headerLabel}</span>
         </div>
+
+        {/* 인디케이터 */}
+        {releases.length > 1 && (
+          <div className="absolute bottom-5 left-1/2 z-10 flex -translate-x-1/2 gap-2">
+            {releases.map((r, i) => (
+              <button
+                key={r.id}
+                type="button"
+                aria-label={`slide ${i + 1}`}
+                onClick={() => setIdx(i)}
+                className={
+                  "h-1.5 rounded-full transition-all " +
+                  (i === current ? "w-6 bg-white" : "w-1.5 bg-white/40 hover:bg-white/70")
+                }
+              />
+            ))}
+          </div>
+        )}
       </div>
-      <style>{`@keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }`}</style>
     </section>
   );
 }
