@@ -782,6 +782,8 @@ export const ko = {
     mostDecks: "모스트 덱",
     opponentMeta: "상대 메타",
     viewAllMatches: "내 전적 전체 보기",
+    teaserCaption: "가입하면 나도 이런 시즌 성적표가 생겨요",
+    teaserCta: "무료로 내 성적표 만들기",
   },
   gameRanking: {
     title: "게임별 랭킹",

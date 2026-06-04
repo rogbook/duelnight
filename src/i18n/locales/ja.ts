@@ -782,6 +782,8 @@ export const ja = {
     mostDecks: "モストデッキ",
     opponentMeta: "対戦メタ",
     viewAllMatches: "自分の戦績をすべて見る",
+    teaserCaption: "登録すれば自分もこんなシーズン成績表が作れます",
+    teaserCta: "無料で成績表を作る",
   },
   gameRanking: {
     title: "ゲーム別ランキング",

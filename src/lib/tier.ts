@@ -2,7 +2,9 @@
  * 게이미피케이션 티어 — rating(정수) → 티어/색상 매핑 + 백분위 헬퍼.
  *
  * (docs/INTRO_HOME_REDESIGN.md §4)
- * ⚠️ 구간 임계값은 초기값. user_ratings 실제 분포 확인 후 재조정 필요.
+ * 구간 보정 근거: user_ratings ELO는 기본값 1000, K=32, /400 스케일
+ * (migration 20260513005043). 신규 플레이어(1000)가 중간 티어(실버)에 오도록 1000 기준 보정.
+ * ⚠️ 실데이터 분포가 쌓이면(특히 상위권) 재조정 권장.
  */
 
 export type TierKey = "challenger" | "diamond" | "platinum" | "gold" | "silver" | "bronze";
@@ -23,7 +25,7 @@ export interface Tier {
 const TIERS: Tier[] = [
   {
     key: "challenger",
-    minRating: 1600,
+    minRating: 1450,
     labelKey: "tier.challenger",
     text: "text-amber-400",
     bg: "bg-amber-400/10",
@@ -31,7 +33,7 @@ const TIERS: Tier[] = [
   },
   {
     key: "diamond",
-    minRating: 1400,
+    minRating: 1300,
     labelKey: "tier.diamond",
     text: "text-sky-400",
     bg: "bg-sky-400/10",
@@ -39,7 +41,7 @@ const TIERS: Tier[] = [
   },
   {
     key: "platinum",
-    minRating: 1250,
+    minRating: 1180,
     labelKey: "tier.platinum",
     text: "text-teal-400",
     bg: "bg-teal-400/10",
@@ -47,7 +49,7 @@ const TIERS: Tier[] = [
   },
   {
     key: "gold",
-    minRating: 1100,
+    minRating: 1080,
     labelKey: "tier.gold",
     text: "text-yellow-500",
     bg: "bg-yellow-500/10",
@@ -55,7 +57,7 @@ const TIERS: Tier[] = [
   },
   {
     key: "silver",
-    minRating: 950,
+    minRating: 980,
     labelKey: "tier.silver",
     text: "text-slate-300",
     bg: "bg-slate-300/10",
