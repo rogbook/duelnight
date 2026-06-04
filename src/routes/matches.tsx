@@ -632,6 +632,7 @@ function RecentList({
   const { t, language } = useI18n();
   const [editing, setEditing] = useState<Match | null>(null);
   const [viewing, setViewing] = useState<Match | null>(null);
+  const [oppSelected, setOppSelected] = useState<{ name: string; userId?: string | null; game: Game } | null>(null);
   const [page, setPage] = useState(1);
   const PAGE = 30;
   const totalPages = Math.max(1, Math.ceil(rows.length / PAGE));
@@ -640,6 +641,51 @@ function RecentList({
   useEffect(() => {
     setPage(1);
   }, [rows.length]);
+
+  // 상대 닉네임 일괄 조회
+  const oppUserIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          rows.map((m) => m.opponent_user_id).filter((x): x is string => !!x),
+        ),
+      ),
+    [rows],
+  );
+  const { data: oppProfiles } = useQuery({
+    queryKey: ["opp-profiles-bulk", oppUserIds],
+    enabled: oppUserIds.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id,display_name,username")
+        .in("id", oppUserIds);
+      return data ?? [];
+    },
+  });
+  const nickById = useMemo(() => {
+    const map = new Map<string, string>();
+    (oppProfiles ?? []).forEach((p) => {
+      const n = p.display_name || p.username;
+      if (n) map.set(p.id, n);
+    });
+    return map;
+  }, [oppProfiles]);
+  const oppNick = (m: Match): string | null =>
+    m.opponent_user_id ? nickById.get(m.opponent_user_id) ?? null : null;
+  const openOpp = (m: Match) => {
+    const nick = oppNick(m);
+    const name = nick || m.opp_leader || m.opp_deck || "—";
+    setOppSelected({ name, userId: m.opponent_user_id ?? null, game: m.game });
+  };
+  const oppDialogMatches = useMemo(() => {
+    if (!oppSelected) return [];
+    return rows.filter((m) =>
+      oppSelected.userId
+        ? m.opponent_user_id === oppSelected.userId
+        : (m.opp_leader || m.opp_deck || "") === oppSelected.name,
+    );
+  }, [oppSelected, rows]);
 
   if (rows.length === 0) {
     return (
