@@ -259,10 +259,11 @@ export function DeckDialog({ mode, deck, onSaved, trigger }: DeckDialogProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="optcg">One Piece TCG</SelectItem>
-                <SelectItem value="dtcg">Digimon TCG</SelectItem>
-                <SelectItem value="ptcg">Pokemon TCG</SelectItem>
+                <SelectItem value="optcg">{t("matches.optcg")}</SelectItem>
+                <SelectItem value="dtcg">{t("matches.dtcg")}</SelectItem>
+                <SelectItem value="ptcg">{t("matches.ptcg")}</SelectItem>
               </SelectContent>
+
             </Select>
           </div>
 
