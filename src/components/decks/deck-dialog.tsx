@@ -26,7 +26,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { GAME_LABEL } from "@/lib/match-stats";
+
 import { normalizeDeckName } from "@/lib/normalize-deck";
 import {
   COLORS_BY_GAME,
