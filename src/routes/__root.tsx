@@ -21,7 +21,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCallback, useState, useEffect } from "react";
 import { LanguageProvider, useI18n } from "@/i18n/language-context";
 import { LanguageSelector } from "@/components/language-selector";
+import { ThemeProvider } from "@/hooks/use-theme";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useIsMobile } from "@/hooks/use-mobile";
+
+// 하이드레이션 전에 테마 클래스를 적용해 깜빡임(FOUC) 방지
+const THEME_INIT = `(function(){try{var t=localStorage.getItem('duelnight.theme')||'system';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d);}catch(e){}})();`;
 
 function AuthHeaderButton() {
   const { user, loading } = useAuth();
@@ -167,6 +172,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
     <html lang="en">
       <head>
         <HeadContent />
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
       </head>
       <body>
         {children}
@@ -198,6 +204,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider onAuthChange={handleAuthChange}>
+        <ThemeProvider>
         <LanguageProvider>
           {isBare ? (
             <>
@@ -215,6 +222,7 @@ function RootComponent() {
                 style={{ paddingTop: "env(safe-area-inset-top)" }}
               >
                 <div className="flex-1" />
+                <ThemeToggle />
                 <LanguageSelector />
                 <NotificationBell />
                 <AuthHeaderButton />
@@ -240,6 +248,7 @@ function RootComponent() {
                   >
                     <SidebarTrigger />
                     <div className="flex-1" />
+                    <ThemeToggle />
                     <LanguageSelector />
                     <NotificationBell />
                     <AuthHeaderButton />
@@ -253,6 +262,7 @@ function RootComponent() {
             </SidebarProvider>
           )}
         </LanguageProvider>
+        </ThemeProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useAuth } from "@/hooks/use-auth";
 import { useState, useEffect } from "react";
 import {
   Sparkles,
@@ -76,7 +77,14 @@ export const Route = createFileRoute("/intro")({
 function IntroPage() {
   const { t, language } = useI18n();
   const [loginOpen, setLoginOpen] = useState(false);
-  const show = () => setLoginOpen(true);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  // 로그인 상태면 "솔루션 들어가기" → 대시보드, 비로그인이면 로그인 모달
+  const enter = () => {
+    if (user) navigate({ to: "/" });
+    else setLoginOpen(true);
+  };
+  const enterLabel = language === "en" ? "Enter Dashboard" : language === "ja" ? "ダッシュボードへ" : "솔루션 들어가기";
 
   const proPrice = language === "en" ? "$4.99" : language === "ja" ? "¥500" : "₩4,900";
   const creditPrice = language === "en" ? "$0.99~" : language === "ja" ? "¥100~" : "₩1,000~";
@@ -116,20 +124,32 @@ function IntroPage() {
             </Link>
             <div className="flex items-center gap-1.5 sm:gap-2">
               <LanguageSelector />
-              <button
-                type="button"
-                onClick={show}
-                className="rounded-md border border-white/10 px-2.5 py-1.5 text-xs text-foreground/80 hover:bg-white/5 sm:px-3 sm:text-sm"
-              >
-                {t("common.login")}
-              </button>
-              <button
-                type="button"
-                onClick={show}
-                className="inline-flex rounded-md bg-gradient-to-r from-rose-500 to-amber-500 px-3 py-1.5 text-xs font-semibold text-white shadow-lg shadow-rose-500/20 hover:opacity-90 sm:text-sm"
-              >
-                {t("intro.freeStart")}
-              </button>
+              {user ? (
+                <button
+                  type="button"
+                  onClick={() => navigate({ to: "/" })}
+                  className="inline-flex rounded-md bg-gradient-to-r from-rose-500 to-amber-500 px-3 py-1.5 text-xs font-semibold text-white shadow-lg shadow-rose-500/20 hover:opacity-90 sm:text-sm"
+                >
+                  {enterLabel}
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={enter}
+                    className="rounded-md border border-white/10 px-2.5 py-1.5 text-xs text-foreground/80 hover:bg-white/5 sm:px-3 sm:text-sm"
+                  >
+                    {t("common.login")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={enter}
+                    className="inline-flex rounded-md bg-gradient-to-r from-rose-500 to-amber-500 px-3 py-1.5 text-xs font-semibold text-white shadow-lg shadow-rose-500/20 hover:opacity-90 sm:text-sm"
+                  >
+                    {t("intro.freeStart")}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </header>
@@ -157,10 +177,10 @@ function IntroPage() {
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <button
               type="button"
-              onClick={show}
+              onClick={enter}
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-500 to-amber-500 px-6 py-3.5 text-sm font-semibold text-white shadow-xl shadow-rose-500/25 transition-transform hover:scale-[1.02] sm:w-auto"
             >
-              {t("intro.nowStartFree")}
+              {user ? enterLabel : t("intro.nowStartFree")}
               <ChevronRight className="h-4 w-4" />
             </button>
             <a
@@ -194,7 +214,7 @@ function IntroPage() {
 
         {/* 1위 성적표 티저 */}
         <div className="pb-20">
-          <SeasonReportTeaser onSignup={show} />
+          <SeasonReportTeaser onSignup={enter} />
         </div>
 
         {/* FEATURES */}
@@ -232,7 +252,7 @@ function IntroPage() {
                   t("intro.priceFreeFeature5"),
                 ]}
                 cta={t("intro.ctaFreeStart")}
-                onCtaClick={show}
+                onCtaClick={enter}
               />
               <PriceCard
                 name={t("intro.priceProName")}
@@ -248,7 +268,7 @@ function IntroPage() {
                   t("intro.priceProFeature5"),
                 ]}
                 cta={t("intro.ctaProStart")}
-                onCtaClick={show}
+                onCtaClick={enter}
               />
               <PriceCard
                 name={t("intro.priceCreditName")}
@@ -263,7 +283,7 @@ function IntroPage() {
                   t("intro.priceCreditFeature5"),
                 ]}
                 cta={t("intro.ctaCreditCharge")}
-                onCtaClick={show}
+                onCtaClick={enter}
               />
             </div>
           </div>
@@ -277,10 +297,10 @@ function IntroPage() {
             <p className="relative mt-3 text-foreground/60">{t("intro.bottomCtaDesc")}</p>
             <button
               type="button"
-              onClick={show}
+              onClick={enter}
               className="relative mt-7 inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-500 to-amber-500 px-7 py-3.5 text-sm font-semibold text-white shadow-xl shadow-rose-500/25 transition-transform hover:scale-[1.02]"
             >
-              {t("intro.ctaFreeStart")}
+              {user ? enterLabel : t("intro.ctaFreeStart")}
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
