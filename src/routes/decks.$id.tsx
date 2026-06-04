@@ -11,7 +11,9 @@ import {
   Info,
   List,
   X,
+  Swords,
 } from "lucide-react";
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { RecipeEditor } from "@/components/decks/recipe-editor";
 import { DeckDialog } from "@/components/decks/deck-dialog";
