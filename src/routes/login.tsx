@@ -84,10 +84,15 @@ function LoginPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (mode === "signup" && !pwRules.valid) {
+      toast.error(t("auth.passwordHint"));
+      return;
+    }
     setBusy(true);
     try {
       if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({
+
           email,
           password,
           options: { emailRedirectTo: `${window.location.origin}/` },
