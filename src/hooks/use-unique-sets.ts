@@ -3,20 +3,21 @@ import { supabase } from "@/integrations/supabase/client";
 
 /**
  * card_sets 테이블에서 세트 목록을 불러옵니다.
- * (과거에는 cards.set_code distinct로 추출했으나, 빈 세트도 관리하기 위해
- *  독립 테이블로 분리됨. DUMMY 카드 더 이상 필요 없음.)
+ * game 필터를 지정하면 해당 게임에 속한 세트만 반환합니다.
  */
-export function useUniqueSets() {
+export function useUniqueSets(game?: string | null) {
   const [sets, setSets] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
   const refreshSets = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("card_sets")
-        .select("name")
+        .select("name, game")
         .order("name", { ascending: true });
+      if (game) query = query.eq("game", game);
+      const { data, error } = await query;
       if (error) throw error;
       setSets((data ?? []).map((r) => r.name));
     } catch (e) {
@@ -28,7 +29,8 @@ export function useUniqueSets() {
 
   useEffect(() => {
     refreshSets();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game]);
 
   return { sets, loading, refreshSets };
 }
