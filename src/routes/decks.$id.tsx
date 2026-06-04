@@ -19,7 +19,7 @@ import { RecipeEditor } from "@/components/decks/recipe-editor";
 import { DeckDialog } from "@/components/decks/deck-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { GAME_LABEL } from "@/lib/match-stats";
+
 import { colorHex, colorLabel, type Game } from "@/lib/deck-colors";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
