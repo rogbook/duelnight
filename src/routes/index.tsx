@@ -62,7 +62,7 @@ function useSeasonMatches(userId: string, game: string | null | undefined) {
         .from("matches")
         .select("*")
         .eq("user_id", userId)
-        .eq("game", game!)
+        .eq("game", game as "dtcg" | "optcg" | "ptcg")
         .gte("played_at", getSeasonStartISO());
       if (error) throw error;
       return data ?? [];
