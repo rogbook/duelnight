@@ -233,59 +233,7 @@ function MobileIntro({ onShowLogin }: { proPrice: string; creditPrice: string; o
 
   return (
     <div className="md:hidden flex flex-col">
-      {/* ── Hero ── */}
-      <section className="px-5 pt-12 pb-8 text-center">
-        {/* 상단 얇은 그라데이션 강조선 */}
-        <div className="pointer-events-none absolute top-14 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
-
-        {/* 게임 배지 */}
-        <div className="flex items-center justify-center gap-1.5 mb-6">
-          {["ONE PIECE", "Pokémon", "Digimon"].map((g) => (
-            <span
-              key={g}
-              className="rounded-full border border-border bg-muted/40 px-2.5 py-0.5 text-[10px] text-muted-foreground"
-            >
-              {g}
-            </span>
-          ))}
-        </div>
-
-        {/* 헤드라인 */}
-        <h1 className="text-[1.875rem] font-bold leading-[1.15] tracking-[-0.02em]">
-          {t("intro.heroTitle1")}
-          <br />
-          <span className="bg-gradient-to-r from-primary to-amber-500 bg-clip-text text-transparent">
-            {t("intro.heroTitle2")}
-          </span>
-        </h1>
-
-        <p className="mx-auto mt-3 max-w-[16rem] text-[13px] leading-relaxed text-muted-foreground">
-          {t("intro.description")}
-        </p>
-
-        {/* CTA */}
-        <button
-          type="button"
-          onClick={onShowLogin}
-          className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3.5 text-[14px] font-semibold text-primary-foreground active:opacity-80 transition-opacity"
-        >
-          {t("intro.nowStartFree")}
-          <ChevronRight className="h-4 w-4" />
-        </button>
-
-        <button
-          type="button"
-          onClick={onShowLogin}
-          className="mt-3 text-[12px] text-muted-foreground active:text-foreground transition-colors"
-        >
-          {t("common.login")} →
-        </button>
-      </section>
-
-      {/* ── 구분선 ── */}
-      <div className="mx-5 h-px bg-border" />
-
-      {/* ── 기능 아코디언 ── */}
+      {/* ── 기능 아코디언 (히어로는 GamingHero에서 처리) ── */}
       <section className="px-4 pt-6 pb-10">
         <div className="divide-y divide-border rounded-xl border border-border overflow-hidden">
           {features.map((f, i) => {
