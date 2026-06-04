@@ -477,9 +477,22 @@ function DeckDetailPage() {
           >
             <List className="h-4 w-4" /> {t("decks.tabRecipe").replace("{count}", String(deckCards.length))}
           </button>
+          {isOwner && (
+            <button
+              onClick={() => setTab("matches")}
+              className={`flex items-center gap-2 px-6 py-3 text-sm font-bold transition-all border-b-2 ${
+                tab === "matches"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Swords className="h-4 w-4" /> {t("decks.tabMatches").replace("{count}", String(deckMatches.length))}
+            </button>
+          )}
         </div>
 
         {tab === "info" ? (
+
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
