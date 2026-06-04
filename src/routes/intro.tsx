@@ -1,6 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Sparkles, Trophy, Users, ScanLine, BarChart3, Calendar, Crown, Coins, ChevronRight, ChevronDown, Flame } from "lucide-react";
+import {
+  Sparkles,
+  Trophy,
+  Users,
+  ScanLine,
+  BarChart3,
+  Calendar,
+  Crown,
+  Coins,
+  ChevronRight,
+  Flame,
+  Check,
+  Swords,
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useI18n } from "@/i18n/language-context";
 import { LanguageSelector } from "@/components/language-selector";
@@ -35,16 +48,18 @@ interface ReleaseRow {
 export const Route = createFileRoute("/intro")({
   head: () => {
     const saved = typeof window !== "undefined" ? localStorage.getItem("duelnight.i18n.locale") : "ko";
-    const tagline = saved === "ja" 
-      ? "ワンピース・ポケモン・デジモンTCGプレイヤーのためのオールインワンハブ" 
-      : saved === "en" 
-        ? "All-in-One Hub for One Piece, Pokémon, and Digimon TCG Players" 
-        : "원피스·포켓몬·디지몬 TCG 플레이어를 위한 올인원 허브";
-    const desc = saved === "ja"
-      ? "戦績記録、AIカードOCR、デッキビルダー、大会・発売日程、店舗LFGまで。TCGのワークフローを1箇所で完結。"
-      : saved === "en"
-        ? "Match records, AI card OCR, deck builder, tournament/release schedule, and store LFG. Your TCG workflow completed in one place."
-        : "전적 기록, AI 카드 OCR, 덱 빌더, 대회·발매 일정, 매장 LFG까지. 한 곳에서 끝내는 TCG 워크플로우.";
+    const tagline =
+      saved === "ja"
+        ? "ワンピース・ポケモン・デジモンTCGプレイヤーのためのオールインワンハブ"
+        : saved === "en"
+          ? "All-in-One Hub for One Piece, Pokémon, and Digimon TCG Players"
+          : "원피스·포켓몬·디지몬 TCG 플레이어를 위한 올인원 허브";
+    const desc =
+      saved === "ja"
+        ? "戦績記録、AIカードOCR、デッキビルダー、大会・発売日程、店舗LFGまで。TCGのワークフローを1箇所で完結。"
+        : saved === "en"
+          ? "Match records, AI card OCR, deck builder, tournament/release schedule, and store LFG. Your TCG workflow completed in one place."
+          : "전적 기록, AI 카드 OCR, 덱 빌더, 대회·발매 일정, 매장 LFG까지. 한 곳에서 끝내는 TCG 워크플로우.";
     return {
       meta: [
         { title: `${BRAND.name} — ${tagline}` },
@@ -61,118 +76,146 @@ export const Route = createFileRoute("/intro")({
 function IntroPage() {
   const { t, language } = useI18n();
   const [loginOpen, setLoginOpen] = useState(false);
+  const show = () => setLoginOpen(true);
 
-  // 화폐 및 가격 동적 표시
   const proPrice = language === "en" ? "$4.99" : language === "ja" ? "¥500" : "₩4,900";
   const creditPrice = language === "en" ? "$0.99~" : language === "ja" ? "¥100~" : "₩1,000~";
+  const rankingLabel =
+    language === "en" ? "View Rankings" : language === "ja" ? "ランキングを見る" : "랭킹 보기";
+
+  const features = [
+    { icon: BarChart3, title: t("intro.featureTitle1"), desc: t("intro.featureDesc1"), color: "text-amber-300", glow: "bg-amber-500/15" },
+    { icon: ScanLine, title: t("intro.featureTitle2"), desc: t("intro.featureDesc2"), color: "text-sky-300", glow: "bg-sky-500/15" },
+    { icon: Trophy, title: t("intro.featureTitle3"), desc: t("intro.featureDesc3"), color: "text-fuchsia-300", glow: "bg-fuchsia-500/15" },
+    { icon: Calendar, title: t("intro.featureTitle4"), desc: t("intro.featureDesc4"), color: "text-emerald-300", glow: "bg-emerald-500/15" },
+    { icon: Users, title: t("intro.featureTitle5"), desc: t("intro.featureDesc5"), color: "text-rose-300", glow: "bg-rose-500/15" },
+    { icon: Sparkles, title: t("intro.featureTitle6"), desc: t("intro.featureDesc6"), color: "text-violet-300", glow: "bg-violet-500/15" },
+  ];
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Top bar */}
-      <header className="sticky top-0 z-30 border-b border-border/50 bg-background/80 backdrop-blur">
-        <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-3 sm:px-6">
-          <Link to="/intro" className="flex items-center gap-2 font-bold tracking-tight">
-            <span className="grid h-7 w-7 place-items-center rounded-md bg-primary text-primary-foreground">
-              <Sparkles className="h-4 w-4" />
-            </span>
-            <span className="text-sm sm:text-base">{BRAND.name}</span>
-            <span className="hidden sm:inline ml-1 rounded-full border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-[10px] font-medium text-amber-500">
-              {t("intro.testing")}
-            </span>
-          </Link>
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <LanguageSelector />
-            <button
-              type="button"
-              onClick={() => setLoginOpen(true)}
-              className="rounded-md border border-border px-2.5 py-1.5 text-xs hover:bg-accent sm:px-3 sm:text-sm"
-            >
-              {t("common.login")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setLoginOpen(true)}
-              className="hidden sm:inline-flex rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 sm:text-sm"
-            >
-              {t("intro.freeStart")}
-            </button>
-          </div>
-        </div>
-      </header>
+    <div className="dark relative min-h-screen overflow-x-hidden bg-background text-foreground">
+      {/* 앰비언트 글로우 (게임 컬러) */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -left-32 -top-32 h-[28rem] w-[28rem] rounded-full bg-rose-600/20 blur-[120px]" />
+        <div className="absolute -right-24 top-10 h-[26rem] w-[26rem] rounded-full bg-indigo-600/20 blur-[120px]" />
+        <div className="absolute left-1/2 top-[34rem] h-[22rem] w-[22rem] -translate-x-1/2 rounded-full bg-fuchsia-600/10 blur-[120px]" />
+      </div>
 
-      {/* ===== 신규 발매 스크롤 배너 (공통) ===== */}
-      <ReleaseTicker />
-
-      {/* ===== MOBILE: 스와이프 슬라이드 인트로 ===== */}
-      <MobileIntro proPrice={proPrice} creditPrice={creditPrice} onShowLogin={() => setLoginOpen(true)} />
-
-      {/* ===== DESKTOP: 기존 풀 레이아웃 ===== */}
-      <div className="hidden md:block">
-        {/* Hero */}
-        <section className="mx-auto w-full max-w-6xl px-4 pt-16 pb-20 sm:px-6 sm:pt-24">
-          <div className="mx-auto max-w-3xl text-center">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs text-muted-foreground">
-              <Sparkles className="h-3.5 w-3.5" />
-              {t("intro.gameIntegrated")}
-            </span>
-            <h1 className="mt-5 text-4xl font-bold leading-tight tracking-tight sm:text-5xl md:text-6xl">
-              {t("intro.heroTitle1")}
-              <br />
-              <span className="bg-gradient-to-r from-primary to-amber-500 bg-clip-text text-transparent">
-                {t("intro.heroTitle2")}
+      <div className="relative">
+        {/* Top bar */}
+        <header className="sticky top-0 z-30 border-b border-white/5 bg-background/70 backdrop-blur-xl">
+          <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-3 sm:px-6">
+            <Link to="/intro" className="flex items-center gap-2 font-bold tracking-tight">
+              <span className="grid h-7 w-7 place-items-center rounded-md bg-gradient-to-br from-rose-500 to-amber-500 text-white shadow-lg shadow-rose-500/30">
+                <Swords className="h-4 w-4" />
               </span>
-            </h1>
-            <p className="mt-5 text-base text-muted-foreground sm:text-lg">{t("intro.description")}</p>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+              <span className="text-sm sm:text-base">{BRAND.name}</span>
+              <span className="hidden sm:inline ml-1 rounded-full border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-[10px] font-medium text-amber-400">
+                {t("intro.testing")}
+              </span>
+            </Link>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <LanguageSelector />
               <button
                 type="button"
-                onClick={() => setLoginOpen(true)}
-                className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
+                onClick={show}
+                className="rounded-md border border-white/10 px-2.5 py-1.5 text-xs text-foreground/80 hover:bg-white/5 sm:px-3 sm:text-sm"
               >
-                {t("intro.nowStartFree")}
+                {t("common.login")}
               </button>
-              <a
-                href="#pricing"
-                className="rounded-lg border border-border px-5 py-2.5 text-sm font-semibold hover:bg-accent"
+              <button
+                type="button"
+                onClick={show}
+                className="inline-flex rounded-md bg-gradient-to-r from-rose-500 to-amber-500 px-3 py-1.5 text-xs font-semibold text-white shadow-lg shadow-rose-500/20 hover:opacity-90 sm:text-sm"
               >
-                {t("intro.viewPricing")}
-              </a>
+                {t("intro.freeStart")}
+              </button>
             </div>
-            <p className="mt-3 text-xs text-muted-foreground">
-              {t("intro.testPhaseNotice")}
-            </p>
           </div>
+        </header>
+
+        {/* 신규 발매 스크롤 배너 */}
+        <ReleaseTicker />
+
+        {/* HERO */}
+        <section className="mx-auto w-full max-w-5xl px-4 pt-16 pb-14 text-center sm:px-6 sm:pt-24">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-foreground/70 backdrop-blur">
+            <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+            {t("intro.gameIntegrated")}
+          </span>
+          <h1 className="mt-6 text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-6xl">
+            {t("intro.heroTitle1")}
+            <br />
+            <span className="bg-gradient-to-r from-rose-400 via-amber-300 to-fuchsia-400 bg-clip-text text-transparent">
+              {t("intro.heroTitle2")}
+            </span>
+          </h1>
+          <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-foreground/60 sm:text-lg">
+            {t("intro.description")}
+          </p>
+
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={show}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-500 to-amber-500 px-6 py-3.5 text-sm font-semibold text-white shadow-xl shadow-rose-500/25 transition-transform hover:scale-[1.02] sm:w-auto"
+            >
+              {t("intro.nowStartFree")}
+              <ChevronRight className="h-4 w-4" />
+            </button>
+            <a
+              href="#ranking"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-6 py-3.5 text-sm font-semibold text-foreground/90 backdrop-blur hover:bg-white/10 sm:w-auto"
+            >
+              <Trophy className="h-4 w-4 text-amber-400" />
+              {rankingLabel}
+            </a>
+          </div>
+
+          {/* 게임 칩 */}
+          <div className="mt-9 flex flex-wrap items-center justify-center gap-2.5">
+            {(Object.keys(GAME_THEME) as TcgGame[]).map((g) => (
+              <span
+                key={g}
+                className={`rounded-full bg-gradient-to-r ${GAME_THEME[g].from} ${GAME_THEME[g].to} px-3.5 py-1.5 text-xs font-bold text-white shadow-lg`}
+              >
+                {GAME_THEME[g].label}
+              </span>
+            ))}
+          </div>
+
+          <p className="mt-6 text-xs text-foreground/40">{t("intro.testPhaseNotice")}</p>
         </section>
 
-        {/* 게임별 랭킹 (비로그인 메인) */}
-        <div className="pb-12">
+        {/* 게임별 랭킹 */}
+        <section id="ranking" className="scroll-mt-20 pb-16 pt-2">
           <GameRankingList />
-        </div>
+        </section>
 
-        {/* 1위 성적표 티저 (가입 유도) */}
+        {/* 1위 성적표 티저 */}
         <div className="pb-20">
-          <SeasonReportTeaser onSignup={() => setLoginOpen(true)} />
+          <SeasonReportTeaser onSignup={show} />
         </div>
 
-        {/* Features */}
+        {/* FEATURES */}
         <section className="mx-auto w-full max-w-6xl px-4 pb-20 sm:px-6">
+          <div className="mb-8 text-center">
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{t("intro.gameIntegrated")}</h2>
+          </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Feature icon={<BarChart3 className="h-5 w-5" />} title={t("intro.featureTitle1")} desc={t("intro.featureDesc1")} />
-            <Feature icon={<ScanLine className="h-5 w-5" />} title={t("intro.featureTitle2")} desc={t("intro.featureDesc2")} />
-            <Feature icon={<Trophy className="h-5 w-5" />} title={t("intro.featureTitle3")} desc={t("intro.featureDesc3")} />
-            <Feature icon={<Calendar className="h-5 w-5" />} title={t("intro.featureTitle4")} desc={t("intro.featureDesc4")} />
-            <Feature icon={<Users className="h-5 w-5" />} title={t("intro.featureTitle5")} desc={t("intro.featureDesc5")} />
-            <Feature icon={<Sparkles className="h-5 w-5" />} title={t("intro.featureTitle6")} desc={t("intro.featureDesc6")} />
+            {features.map((f) => (
+              <FeatureTile key={f.title} icon={f.icon} title={f.title} desc={f.desc} color={f.color} glow={f.glow} />
+            ))}
           </div>
         </section>
 
-        {/* Pricing */}
-        <section id="pricing" className="border-t border-border bg-muted/20">
+        {/* PRICING */}
+        <section id="pricing" className="scroll-mt-20 border-t border-white/5 bg-white/[0.02]">
           <div className="mx-auto w-full max-w-6xl px-4 py-20 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">{t("intro.pricingTitle")}</h2>
-              <p className="mt-3 text-muted-foreground">{t("intro.pricingDesc")}</p>
-              <p className="mt-1 text-xs text-amber-500">{t("intro.pricingTestNotice")}</p>
+              <p className="mt-3 text-foreground/60">{t("intro.pricingDesc")}</p>
+              <p className="mt-1 text-xs text-amber-400">{t("intro.pricingTestNotice")}</p>
             </div>
 
             <div className="mt-10 grid gap-4 md:grid-cols-3">
@@ -180,226 +223,145 @@ function IntroPage() {
                 name={t("intro.priceFreeName")}
                 price={language === "en" ? "$0" : language === "ja" ? "¥0" : "₩0"}
                 period={t("intro.priceFreePeriod")}
-                icon={<Sparkles className="h-5 w-5 text-muted-foreground" />}
+                icon={<Sparkles className="h-5 w-5 text-foreground/50" />}
                 features={[
-                  t("intro.priceFreeFeature1"), t("intro.priceFreeFeature2"), t("intro.priceFreeFeature3"),
-                  t("intro.priceFreeFeature4"), t("intro.priceFreeFeature5"),
+                  t("intro.priceFreeFeature1"),
+                  t("intro.priceFreeFeature2"),
+                  t("intro.priceFreeFeature3"),
+                  t("intro.priceFreeFeature4"),
+                  t("intro.priceFreeFeature5"),
                 ]}
                 cta={t("intro.ctaFreeStart")}
-                onCtaClick={() => setLoginOpen(true)}
+                onCtaClick={show}
               />
               <PriceCard
                 name={t("intro.priceProName")}
                 price={proPrice}
                 period={t("intro.priceProPeriod")}
                 highlight
-                icon={<Crown className="h-5 w-5 text-amber-500" />}
+                icon={<Crown className="h-5 w-5 text-amber-400" />}
                 features={[
-                  t("intro.priceProFeature1"), t("intro.priceProFeature2"), t("intro.priceProFeature3"),
-                  t("intro.priceProFeature4"), t("intro.priceProFeature5"),
+                  t("intro.priceProFeature1"),
+                  t("intro.priceProFeature2"),
+                  t("intro.priceProFeature3"),
+                  t("intro.priceProFeature4"),
+                  t("intro.priceProFeature5"),
                 ]}
                 cta={t("intro.ctaProStart")}
-                onCtaClick={() => setLoginOpen(true)}
+                onCtaClick={show}
               />
               <PriceCard
                 name={t("intro.priceCreditName")}
                 price={creditPrice}
                 period={t("intro.priceCreditPeriod")}
-                icon={<Coins className="h-5 w-5 text-emerald-500" />}
+                icon={<Coins className="h-5 w-5 text-emerald-400" />}
                 features={[
-                  t("intro.priceCreditFeature1"), t("intro.priceCreditFeature2"), t("intro.priceCreditFeature3"),
-                  t("intro.priceCreditFeature4"), t("intro.priceCreditFeature5"),
+                  t("intro.priceCreditFeature1"),
+                  t("intro.priceCreditFeature2"),
+                  t("intro.priceCreditFeature3"),
+                  t("intro.priceCreditFeature4"),
+                  t("intro.priceCreditFeature5"),
                 ]}
                 cta={t("intro.ctaCreditCharge")}
-                onCtaClick={() => setLoginOpen(true)}
+                onCtaClick={show}
               />
             </div>
           </div>
         </section>
 
-        {/* CTA */}
-        <section className="mx-auto w-full max-w-6xl px-4 py-20 text-center sm:px-6">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">{t("intro.bottomCtaTitle")}</h2>
-          <p className="mt-3 text-muted-foreground">{t("intro.bottomCtaDesc")}</p>
-          <div className="mt-6">
+        {/* BOTTOM CTA */}
+        <section className="mx-auto w-full max-w-6xl px-4 py-20 sm:px-6">
+          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-rose-600/20 via-fuchsia-600/10 to-indigo-600/20 px-6 py-14 text-center">
+            <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-amber-500/20 blur-3xl" />
+            <h2 className="relative text-3xl font-bold tracking-tight sm:text-4xl">{t("intro.bottomCtaTitle")}</h2>
+            <p className="relative mt-3 text-foreground/60">{t("intro.bottomCtaDesc")}</p>
             <button
               type="button"
-              onClick={() => setLoginOpen(true)}
-              className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:opacity-90"
+              onClick={show}
+              className="relative mt-7 inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-500 to-amber-500 px-7 py-3.5 text-sm font-semibold text-white shadow-xl shadow-rose-500/25 transition-transform hover:scale-[1.02]"
             >
               {t("intro.ctaFreeStart")}
+              <ChevronRight className="h-4 w-4" />
             </button>
           </div>
         </section>
 
-        <footer className="border-t border-border">
-          <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-3 px-4 py-6 text-xs text-muted-foreground sm:flex-row sm:px-6">
+        <footer className="border-t border-white/5">
+          <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-3 px-4 py-6 text-xs text-foreground/40 sm:flex-row sm:px-6">
             <div>{t("intro.footerCopyright").replace("{year}", String(new Date().getFullYear()))}</div>
             <div className="flex items-center gap-3">
-              <Link to="/login" className="hover:underline">{t("common.login")}</Link>
-              <a href="#pricing" className="hover:underline">{t("intro.footerPricing")}</a>
+              <Link to="/login" className="hover:text-foreground/70">
+                {t("common.login")}
+              </Link>
+              <a href="#pricing" className="hover:text-foreground/70">
+                {t("intro.footerPricing")}
+              </a>
             </div>
           </div>
         </footer>
       </div>
+
       <LoginModal open={loginOpen} onOpenChange={setLoginOpen} />
     </div>
   );
 }
 
-/* ============================================================
- *  MOBILE 전용 인트로
- * ============================================================ */
-function MobileIntro({ onShowLogin }: { proPrice: string; creditPrice: string; onShowLogin: () => void }) {
-  const { t } = useI18n();
-  const [expanded, setExpanded] = useState<number | null>(null);
-
-  const features = [
-    { icon: <BarChart3 className="h-4.5 w-4.5" />, title: t("intro.featureTitle1"), desc: t("intro.featureDesc1") },
-    { icon: <ScanLine className="h-4.5 w-4.5" />,  title: t("intro.featureTitle2"), desc: t("intro.featureDesc2") },
-    { icon: <Trophy className="h-4.5 w-4.5" />,    title: t("intro.featureTitle3"), desc: t("intro.featureDesc3") },
-    { icon: <Calendar className="h-4.5 w-4.5" />,  title: t("intro.featureTitle4"), desc: t("intro.featureDesc4") },
-    { icon: <Users className="h-4.5 w-4.5" />,     title: t("intro.featureTitle5"), desc: t("intro.featureDesc5") },
-    { icon: <Sparkles className="h-4.5 w-4.5" />,  title: t("intro.featureTitle6"), desc: t("intro.featureDesc6") },
-  ];
-
+function FeatureTile({
+  icon: Icon,
+  title,
+  desc,
+  color,
+  glow,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  desc: string;
+  color: string;
+  glow: string;
+}) {
   return (
-    <div className="md:hidden flex flex-col">
-      {/* ── Hero ── */}
-      <section className="px-5 pt-12 pb-8 text-center">
-        {/* 상단 얇은 그라데이션 강조선 */}
-        <div className="pointer-events-none absolute top-14 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
-
-        {/* 게임 배지 */}
-        <div className="flex items-center justify-center gap-1.5 mb-6">
-          {["ONE PIECE", "Pokémon", "Digimon"].map((g) => (
-            <span
-              key={g}
-              className="rounded-full border border-border bg-muted/40 px-2.5 py-0.5 text-[10px] text-muted-foreground"
-            >
-              {g}
-            </span>
-          ))}
-        </div>
-
-        {/* 헤드라인 */}
-        <h1 className="text-[1.875rem] font-bold leading-[1.15] tracking-[-0.02em]">
-          {t("intro.heroTitle1")}
-          <br />
-          <span className="bg-gradient-to-r from-primary to-amber-500 bg-clip-text text-transparent">
-            {t("intro.heroTitle2")}
-          </span>
-        </h1>
-
-        <p className="mx-auto mt-3 max-w-[16rem] text-[13px] leading-relaxed text-muted-foreground">
-          {t("intro.description")}
-        </p>
-
-        {/* CTA */}
-        <button
-          type="button"
-          onClick={onShowLogin}
-          className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3.5 text-[14px] font-semibold text-primary-foreground active:opacity-80 transition-opacity"
-        >
-          {t("intro.nowStartFree")}
-          <ChevronRight className="h-4 w-4" />
-        </button>
-
-        <button
-          type="button"
-          onClick={onShowLogin}
-          className="mt-3 text-[12px] text-muted-foreground active:text-foreground transition-colors"
-        >
-          {t("common.login")} →
-        </button>
-      </section>
-
-      {/* ── 구분선 ── */}
-      <div className="mx-5 h-px bg-border" />
-
-      {/* ── 게임별 랭킹 ── */}
-      <section className="pt-6">
-        <GameRankingList />
-      </section>
-
-      {/* ── 1위 성적표 티저 ── */}
-      <section className="pt-8">
-        <SeasonReportTeaser onSignup={onShowLogin} />
-      </section>
-
-      {/* ── 구분선 ── */}
-      <div className="mx-5 mt-6 h-px bg-border" />
-
-      {/* ── 기능 아코디언 ── */}
-      <section className="px-4 pt-6 pb-10">
-        <div className="divide-y divide-border rounded-xl border border-border overflow-hidden">
-          {features.map((f, i) => {
-            const isOpen = expanded === i;
-            return (
-              <button
-                key={f.title}
-                type="button"
-                onClick={() => setExpanded(isOpen ? null : i)}
-                className="w-full bg-card text-left active:bg-muted/50 transition-colors"
-              >
-                <div className="flex items-center gap-3 px-4 py-3.5">
-                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/8 text-primary">
-                    {f.icon}
-                  </span>
-                  <span className="flex-1 text-[13.5px] font-medium">
-                    {f.title}
-                  </span>
-                  <ChevronDown
-                    className={`h-4 w-4 text-muted-foreground/50 transition-transform duration-200 ${
-                      isOpen ? "rotate-180" : ""
-                    }`}
-                  />
-                </div>
-                {isOpen && (
-                  <p className="px-4 pb-4 text-[12.5px] leading-relaxed text-muted-foreground border-t border-border/50 pt-3">
-                    {f.desc}
-                  </p>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        <p className="mt-6 text-center text-[11px] text-muted-foreground/50">
-          {t("intro.testPhaseNotice")}
-        </p>
-      </section>
-    </div>
-  );
-}
-
-
-function Feature({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
-  return (
-    <div className="rounded-xl border border-border bg-card p-5">
-      <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary">{icon}</div>
-      <h3 className="mt-3 text-base font-semibold">{title}</h3>
-      <p className="mt-1 text-sm text-muted-foreground">{desc}</p>
+    <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition-colors hover:border-white/20 hover:bg-white/[0.05]">
+      <div className={`pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full ${glow} blur-2xl`} />
+      <div className={`relative grid h-10 w-10 place-items-center rounded-xl bg-white/5 ${color}`}>
+        <Icon className="h-5 w-5" />
+      </div>
+      <h3 className="relative mt-4 text-base font-semibold">{title}</h3>
+      <p className="relative mt-1.5 text-sm leading-relaxed text-foreground/55">{desc}</p>
     </div>
   );
 }
 
 function PriceCard({
-  name, price, period, features, cta, highlight, icon, onCtaClick,
+  name,
+  price,
+  period,
+  features,
+  cta,
+  highlight,
+  icon,
+  onCtaClick,
 }: {
-  name: string; price: string; period: string; features: string[]; cta: string;
-  highlight?: boolean; icon: React.ReactNode; onCtaClick?: () => void;
+  name: string;
+  price: string;
+  period: string;
+  features: string[];
+  cta: string;
+  highlight?: boolean;
+  icon: React.ReactNode;
+  onCtaClick?: () => void;
 }) {
   const { t } = useI18n();
   return (
     <div
       className={
-        "relative rounded-2xl border bg-card p-6 " +
-        (highlight ? "border-primary shadow-lg shadow-primary/10" : "border-border")
+        "relative rounded-2xl border p-6 backdrop-blur " +
+        (highlight
+          ? "border-rose-500/40 bg-gradient-to-b from-rose-500/10 to-transparent shadow-xl shadow-rose-500/10"
+          : "border-white/10 bg-white/[0.03]")
       }
     >
       {highlight && (
-        <span className="absolute -top-2.5 left-6 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
+        <span className="absolute -top-2.5 left-6 rounded-full bg-gradient-to-r from-rose-500 to-amber-500 px-2.5 py-0.5 text-[10px] font-semibold text-white">
           {t("intro.priceProHighlight")}
         </span>
       )}
@@ -409,13 +371,13 @@ function PriceCard({
       </div>
       <div className="mt-3 flex items-baseline gap-1">
         <span className="text-3xl font-bold tracking-tight">{price}</span>
-        <span className="text-xs text-muted-foreground">{period}</span>
+        <span className="text-xs text-foreground/50">{period}</span>
       </div>
-      <ul className="mt-5 space-y-2 text-sm">
+      <ul className="mt-5 space-y-2.5 text-sm">
         {features.map((f) => (
           <li key={f} className="flex gap-2">
-            <span className="mt-1 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-            <span>{f}</span>
+            <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+            <span className="text-foreground/80">{f}</span>
           </li>
         ))}
       </ul>
@@ -423,10 +385,10 @@ function PriceCard({
         type="button"
         onClick={onCtaClick}
         className={
-          "mt-6 inline-flex w-full items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold " +
+          "mt-6 inline-flex w-full items-center justify-center rounded-lg px-4 py-2.5 text-sm font-semibold " +
           (highlight
-            ? "bg-primary text-primary-foreground hover:opacity-90"
-            : "border border-border hover:bg-accent")
+            ? "bg-gradient-to-r from-rose-500 to-amber-500 text-white shadow-lg shadow-rose-500/20 hover:opacity-90"
+            : "border border-white/15 text-foreground/90 hover:bg-white/5")
         }
       >
         {cta}
@@ -467,11 +429,11 @@ function ReleaseTicker() {
     language === "ja" ? "新規発売スケジュール" : language === "en" ? "New Release Schedule" : "신규 발매 일정";
 
   return (
-    <section className="border-b border-border/50 bg-gradient-to-b from-background to-background/50 py-3">
+    <section className="border-b border-white/5 py-3">
       <div className="mx-auto w-full max-w-6xl px-3 sm:px-6">
         <div className="flex items-center gap-2 mb-2">
           <Flame className="h-3.5 w-3.5 text-orange-500" />
-          <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+          <span className="text-[11px] font-semibold tracking-wider text-foreground/50 uppercase">
             {headerLabel}
           </span>
         </div>
@@ -488,7 +450,7 @@ function ReleaseTicker() {
             });
             const inner = (
               <div
-                className={`relative h-[88px] w-[320px] sm:w-[400px] shrink-0 overflow-hidden rounded-xl border border-border/60 bg-gradient-to-r ${theme.from} ${theme.to} shadow-lg`}
+                className={`relative h-[88px] w-[320px] sm:w-[400px] shrink-0 overflow-hidden rounded-xl border border-white/10 bg-gradient-to-r ${theme.from} ${theme.to} shadow-lg`}
               >
                 {r.banner_url && (
                   <img

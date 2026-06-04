@@ -16,6 +16,36 @@ import { useI18n, type TranslationKey } from "@/i18n/language-context";
 const GAMES = ["optcg", "ptcg", "dtcg"] as const;
 type Game = (typeof GAMES)[number];
 
+const GAME_ACCENT: Record<Game, string> = {
+  optcg: "bg-rose-500",
+  ptcg: "bg-yellow-500",
+  dtcg: "bg-indigo-500",
+};
+
+/** 데이터가 없을 때도 "집계 중"처럼 보이는 의도된 빈 상태. */
+function EmptyRanking({ label }: { label: string }) {
+  return (
+    <div className="py-2">
+      <div className="mb-3 flex flex-col items-center gap-1.5 text-center">
+        <Medal className="h-7 w-7 text-amber-500/60" />
+        <p className="text-xs text-muted-foreground">{label}</p>
+      </div>
+      <ul className="space-y-1.5 opacity-40">
+        {[1, 2, 3].map((n) => (
+          <li key={n} className="flex items-center gap-2.5 rounded-lg px-1 py-1.5">
+            <span className="grid h-6 w-6 place-items-center text-xs font-semibold tabular-nums text-muted-foreground">
+              {n}
+            </span>
+            <span className="h-7 w-7 rounded-full bg-muted" />
+            <span className="h-2.5 flex-1 rounded bg-muted" />
+            <span className="h-2.5 w-8 rounded bg-muted" />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 interface LbRow {
   user_id: string;
   display_name: string | null;
@@ -60,9 +90,12 @@ function GameRankingColumn({ game, limit = 5 }: { game: Game; limit?: number }) 
   });
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-4">
+    <div className="rounded-2xl border border-border bg-card/60 p-4 backdrop-blur">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold">{t(`matches.${game}` as TranslationKey)}</h3>
+        <h3 className="flex items-center gap-2 text-sm font-semibold">
+          <span className={`h-2 w-2 rounded-full ${GAME_ACCENT[game]}`} />
+          {t(`matches.${game}` as TranslationKey)}
+        </h3>
         <Link to="/leaderboard" className="text-[11px] text-primary hover:underline">
           {t("gameRanking.viewAll")}
         </Link>
@@ -71,7 +104,7 @@ function GameRankingColumn({ game, limit = 5 }: { game: Game; limit?: number }) 
       {isLoading ? (
         <p className="py-6 text-center text-xs text-muted-foreground">{t("common.loading")}</p>
       ) : data.length === 0 ? (
-        <p className="py-6 text-center text-xs text-muted-foreground">{t("gameRanking.empty")}</p>
+        <EmptyRanking label={t("gameRanking.empty")} />
       ) : (
         <ol className="space-y-1.5">
           {data.map((r, i) => {
