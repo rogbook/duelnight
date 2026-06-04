@@ -59,6 +59,10 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const pwRules = checkPasswordRules(password);
+  const signupBlocked = mode === "signup" && !pwRules.valid;
+
+
   const forgotPassword = async () => {
     const target = email.trim();
     if (!target) {
