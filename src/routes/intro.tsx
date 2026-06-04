@@ -5,6 +5,7 @@ import { useI18n } from "@/i18n/language-context";
 import { LanguageSelector } from "@/components/language-selector";
 import { LoginModal } from "@/components/login-modal";
 import { GameRankingList } from "@/components/leaderboard/game-ranking-list";
+import { SeasonReportTeaser } from "@/components/season-report/season-report-teaser";
 
 const BRAND = {
   name: "DuelNight",
@@ -120,8 +121,13 @@ function IntroPage() {
         </section>
 
         {/* 게임별 랭킹 (비로그인 메인) */}
-        <div className="pb-20">
+        <div className="pb-12">
           <GameRankingList />
+        </div>
+
+        {/* 1위 성적표 티저 (가입 유도) */}
+        <div className="pb-20">
+          <SeasonReportTeaser onSignup={() => setLoginOpen(true)} />
         </div>
 
         {/* Features */}
@@ -290,6 +296,11 @@ function MobileIntro({ onShowLogin }: { proPrice: string; creditPrice: string; o
       {/* ── 게임별 랭킹 ── */}
       <section className="pt-6">
         <GameRankingList />
+      </section>
+
+      {/* ── 1위 성적표 티저 ── */}
+      <section className="pt-8">
+        <SeasonReportTeaser onSignup={onShowLogin} />
       </section>
 
       {/* ── 구분선 ── */}

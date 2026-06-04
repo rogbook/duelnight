@@ -782,6 +782,8 @@ export const en = {
     mostDecks: "Most Decks",
     opponentMeta: "Opponent Meta",
     viewAllMatches: "View all my matches",
+    teaserCaption: "Sign up and get your own season report like this",
+    teaserCta: "Create my report for free",
   },
   gameRanking: {
     title: "Rankings by Game",
