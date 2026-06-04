@@ -1,4 +1,3 @@
-import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,7 +53,6 @@ export function LoginModal({
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
-  const navigate = useNavigate();
   const { t } = useI18n();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
@@ -100,11 +98,11 @@ export function LoginModal({
         toast.success(t("auth.signupSuccess"));
         // 이메일 인증이 비활성화된 경우 signUp 즉시 세션이 발급됨 → 자동 이동
         if (data.session) {
-          navigate({ to: "/" });
+          onOpenChange(false);
         } else {
           // 세션이 없으면 password로 즉시 로그인 시도 (자동 로그인 보장)
           const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
-          if (!signInErr) navigate({ to: "/" });
+          if (!signInErr) onOpenChange(false);
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -112,7 +110,7 @@ export function LoginModal({
           password,
         });
         if (error) throw error;
-        navigate({ to: "/" });
+        onOpenChange(false);
       }
     } catch (err) {
       toast.error((err as Error).message);
@@ -125,11 +123,11 @@ export function LoginModal({
     setBusy(true);
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}/`,
+        redirect_uri: `${window.location.origin}/intro`,
       });
       if (result.error) throw result.error;
       if (result.redirected) return;
-      navigate({ to: "/" });
+      onOpenChange(false);
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
