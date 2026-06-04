@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,30 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useI18n } from "@/i18n/language-context";
+
+const COMMON_PASSWORDS = new Set([
+  "password","password1","12345678","123456789","1234567890",
+  "qwerty123","qwertyuiop","11111111","00000000","abcdefgh",
+  "iloveyou","admin123","letmein1",
+]);
+
+function checkPasswordRules(password: string) {
+  const length = password.length >= 8;
+  const letter = /[a-zA-Z]/.test(password);
+  const number = /\d/.test(password);
+  const notCommon = password.length > 0 && !COMMON_PASSWORDS.has(password.toLowerCase());
+  return { length, letter, number, notCommon, valid: length && letter && number && notCommon };
+}
+
+function PwRule({ ok, children }: { ok: boolean; children: React.ReactNode }) {
+  return (
+    <li className={ok ? "flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400" : "flex items-center gap-1.5 text-muted-foreground"}>
+      {ok ? <Check className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> : <X className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />}
+      <span>{children}</span>
+    </li>
+  );
+}
+
 
 export const Route = createFileRoute("/login")({
   head: () => {
