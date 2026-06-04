@@ -632,6 +632,7 @@ function RecentList({
   const { t, language } = useI18n();
   const [editing, setEditing] = useState<Match | null>(null);
   const [viewing, setViewing] = useState<Match | null>(null);
+  const [oppSelected, setOppSelected] = useState<{ name: string; userId?: string | null; game: Game } | null>(null);
   const [page, setPage] = useState(1);
   const PAGE = 30;
   const totalPages = Math.max(1, Math.ceil(rows.length / PAGE));
@@ -640,6 +641,51 @@ function RecentList({
   useEffect(() => {
     setPage(1);
   }, [rows.length]);
+
+  // 상대 닉네임 일괄 조회
+  const oppUserIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          rows.map((m) => m.opponent_user_id).filter((x): x is string => !!x),
+        ),
+      ),
+    [rows],
+  );
+  const { data: oppProfiles } = useQuery({
+    queryKey: ["opp-profiles-bulk", oppUserIds],
+    enabled: oppUserIds.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id,display_name,username")
+        .in("id", oppUserIds);
+      return data ?? [];
+    },
+  });
+  const nickById = useMemo(() => {
+    const map = new Map<string, string>();
+    (oppProfiles ?? []).forEach((p) => {
+      const n = p.display_name || p.username;
+      if (n) map.set(p.id, n);
+    });
+    return map;
+  }, [oppProfiles]);
+  const oppNick = (m: Match): string | null =>
+    m.opponent_user_id ? nickById.get(m.opponent_user_id) ?? null : null;
+  const openOpp = (m: Match) => {
+    const nick = oppNick(m);
+    const name = nick || m.opp_leader || m.opp_deck || "—";
+    setOppSelected({ name, userId: m.opponent_user_id ?? null, game: m.game });
+  };
+  const oppDialogMatches = useMemo(() => {
+    if (!oppSelected) return [];
+    return rows.filter((m) =>
+      oppSelected.userId
+        ? m.opponent_user_id === oppSelected.userId
+        : (m.opp_leader || m.opp_deck || "") === oppSelected.name,
+    );
+  }, [oppSelected, rows]);
 
   if (rows.length === 0) {
     return (
@@ -670,6 +716,8 @@ function RecentList({
       {isMobile ? (
         <MobileRecentCards
           rows={pageRows}
+          oppNick={oppNick}
+          onOpponentClick={(m) => openOpp(m)}
           onView={(m) => setViewing(m)}
           onEdit={(m) => setEditing(m)}
           onDelete={(id) => onDelete(id)}
@@ -705,8 +753,28 @@ function RecentList({
                     {t(`matches.event${m.event.charAt(0).toUpperCase() + m.event.slice(1)}` as any)}
                   </td>
                   <td className="px-3 py-2">{m.my_deck}</td>
-                  <td className="px-3 py-2 text-muted-foreground">
-                    {m.opp_leader || m.opp_deck || "—"}
+                  <td className="px-3 py-2 text-muted-foreground" onClick={(e) => e.stopPropagation()}>
+                    {(() => {
+                      const nick = oppNick(m);
+                      const deck = m.opp_leader || m.opp_deck;
+                      if (!nick && !deck) return "—";
+                      return (
+                        <div className="flex flex-col">
+                          {nick && (
+                            <button
+                              type="button"
+                              onClick={() => openOpp(m)}
+                              className="truncate text-left text-foreground font-medium hover:underline"
+                            >
+                              {nick}
+                            </button>
+                          )}
+                          {deck && (
+                            <span className="truncate text-xs text-muted-foreground">{deck}</span>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </td>
                   <td className="px-3 py-2">{m.went_first ? t("matches.first") : t("matches.second")}</td>
                   <td className="px-3 py-2">
@@ -792,6 +860,11 @@ function RecentList({
       )}
       <ViewMatchDialog
         match={viewing}
+        oppNick={viewing ? oppNick(viewing) : null}
+        onOpenOpponent={(m) => {
+          openOpp(m);
+          setViewing(null);
+        }}
         onOpenChange={(o) => !o && setViewing(null)}
         onEdit={(m) => {
           setViewing(null);
@@ -810,17 +883,39 @@ function RecentList({
           onDeleted();
         }}
       />
+      <OpponentDetailDialog
+        open={!!oppSelected}
+        onOpenChange={(o) => !o && setOppSelected(null)}
+        opponent={oppSelected ? { name: oppSelected.name, userId: oppSelected.userId } : null}
+        game={oppSelected?.game ?? "optcg"}
+        myMatches={oppDialogMatches.map((m) => ({
+          id: m.id,
+          played_at: m.played_at,
+          game: m.game,
+          my_deck: m.my_deck,
+          opp_leader: m.opp_leader,
+          opp_deck: m.opp_deck,
+          result: m.result as "win" | "loss" | "draw",
+          went_first: m.went_first,
+          points_delta: m.points_delta,
+          opponent_user_id: m.opponent_user_id,
+        }))}
+      />
     </section>
   );
 }
 
 function ViewMatchDialog({
   match,
+  oppNick,
+  onOpenOpponent,
   onOpenChange,
   onEdit,
   onDelete,
 }: {
   match: Match | null;
+  oppNick?: string | null;
+  onOpenOpponent?: (m: Match) => void;
   onOpenChange: (open: boolean) => void;
   onEdit: (m: Match) => void;
   onDelete: (id: string) => void;
@@ -844,16 +939,28 @@ function ViewMatchDialog({
               <Row label={t("matches.game")} value={t(`matches.${match.game}` as any)} />
               <Row label={t("matches.event")} value={t(`matches.event${match.event.charAt(0).toUpperCase() + match.event.slice(1)}` as any)} />
               <Row label={t("matches.myDeck")} value={match.my_deck} />
-              <Row
-                label={t("matches.opponent")}
-                value={
-                  match.opp_leader || match.opp_deck
-                    ? `${match.opp_leader ?? ""}${
+              <div>
+                <dt className="text-xs text-muted-foreground">{t("matches.opponent")}</dt>
+                <dd className="mt-0.5 text-sm">
+                  {oppNick ? (
+                    <button
+                      type="button"
+                      onClick={() => onOpenOpponent?.(match)}
+                      className="font-medium hover:underline"
+                    >
+                      {oppNick}
+                    </button>
+                  ) : null}
+                  {(match.opp_leader || match.opp_deck) && (
+                    <div className={oppNick ? "text-xs text-muted-foreground" : ""}>
+                      {`${match.opp_leader ?? ""}${
                         match.opp_leader && match.opp_deck ? " · " : ""
-                      }${match.opp_deck ?? ""}`
-                    : "—"
-                }
-              />
+                      }${match.opp_deck ?? ""}`}
+                    </div>
+                  )}
+                  {!oppNick && !match.opp_leader && !match.opp_deck && "—"}
+                </dd>
+              </div>
               <Row label={t("matches.turn")} value={match.went_first ? t("matches.first") : t("matches.second")} />
               {match.notes && (
                 <div className="col-span-3">
