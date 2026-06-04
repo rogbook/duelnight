@@ -1,5 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,38 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+// 자주 노출되는 흔한 비밀번호 — Supabase 누출 비밀번호 보호와 별개로 클라이언트에서 선차단
+const COMMON_PASSWORDS = new Set([
+  "password",
+  "password1",
+  "12345678",
+  "123456789",
+  "1234567890",
+  "qwerty123",
+  "qwertyuiop",
+  "11111111",
+  "00000000",
+  "abcdefgh",
+  "iloveyou",
+  "admin123",
+  "letmein1",
+]);
+
+function checkPasswordRules(password: string) {
+  const length = password.length >= 8;
+  const letter = /[a-zA-Z]/.test(password);
+  const number = /\d/.test(password);
+  const notCommon =
+    password.length > 0 && !COMMON_PASSWORDS.has(password.toLowerCase());
+  return {
+    length,
+    letter,
+    number,
+    notCommon,
+    valid: length && letter && number && notCommon,
+  };
+}
+
 export function LoginModal({
   open,
   onOpenChange,
@@ -27,6 +60,9 @@ export function LoginModal({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+
+  const pwRules = checkPasswordRules(password);
+  const signupBlocked = mode === "signup" && !pwRules.valid;
 
   const forgotPassword = async () => {
     const target = email.trim();
@@ -48,6 +84,10 @@ export function LoginModal({
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (mode === "signup" && !pwRules.valid) {
+      toast.error(t("auth.passwordHint"));
+      return;
+    }
     setBusy(true);
     try {
       if (mode === "signup") {
@@ -153,10 +193,27 @@ export function LoginModal({
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={mode === "signup" ? 8 : 6}
+                aria-describedby={mode === "signup" ? "pw-rules" : undefined}
               />
+              {mode === "signup" && (
+                <ul
+                  id="pw-rules"
+                  className="mt-1 flex flex-col gap-1 text-xs"
+                  aria-label={t("auth.passwordHint")}
+                >
+                  <PwRule ok={pwRules.length}>{t("auth.pwRuleLength")}</PwRule>
+                  <PwRule ok={pwRules.letter}>{t("auth.pwRuleLetter")}</PwRule>
+                  <PwRule ok={pwRules.number}>{t("auth.pwRuleNumber")}</PwRule>
+                  <PwRule ok={pwRules.notCommon}>{t("auth.pwRuleCommon")}</PwRule>
+                </ul>
+              )}
             </div>
-            <Button type="submit" disabled={busy} className="mt-1">
+            <Button
+              type="submit"
+              disabled={busy || signupBlocked}
+              className="mt-1"
+            >
               {busy
                 ? t("auth.processing")
                 : mode === "signin"
@@ -199,5 +256,24 @@ export function LoginModal({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function PwRule({ ok, children }: { ok: boolean; children: React.ReactNode }) {
+  return (
+    <li
+      className={
+        ok
+          ? "flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400"
+          : "flex items-center gap-1.5 text-muted-foreground"
+      }
+    >
+      {ok ? (
+        <Check className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+      ) : (
+        <X className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+      )}
+      <span>{children}</span>
+    </li>
   );
 }

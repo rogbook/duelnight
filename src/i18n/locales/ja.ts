@@ -727,6 +727,11 @@ export const ja = {
     passwordMismatchError: "パスワードの確認が一致しません。",
     resetPasswordSuccess: "パスワードが変更されました。再度ログインしてください。",
     resetPasswordBtn: "パスワードを変更",
+    passwordHint: "パスワードの条件",
+    pwRuleLength: "8文字以上",
+    pwRuleLetter: "英字を含む",
+    pwRuleNumber: "数字を含む",
+    pwRuleCommon: "ありがちなパスワード（例: password, 12345678）は使用できません",
   },
   notifications: {
     title: "通知",

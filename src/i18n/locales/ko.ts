@@ -727,6 +727,11 @@ export const ko = {
     passwordMismatchError: "비밀번호 확인이 일치하지 않습니다.",
     resetPasswordSuccess: "비밀번호가 변경되었습니다. 다시 로그인해 주세요.",
     resetPasswordBtn: "비밀번호 변경",
+    passwordHint: "비밀번호 조건",
+    pwRuleLength: "8자 이상",
+    pwRuleLetter: "영문자 포함",
+    pwRuleNumber: "숫자 포함",
+    pwRuleCommon: "흔한 비밀번호(예: password, 12345678)는 사용할 수 없어요",
   },
   notifications: {
     title: "알림",
