@@ -128,6 +128,7 @@ function CardDetailPage() {
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [zoomOpen, setZoomOpen] = useState(false);
   const { isAdmin } = useIsAdmin();
   const navigate = useNavigate();
 
