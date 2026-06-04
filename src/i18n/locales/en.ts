@@ -727,6 +727,11 @@ export const en = {
     passwordMismatchError: "Passwords do not match.",
     resetPasswordSuccess: "Password updated. Please log in again.",
     resetPasswordBtn: "Change Password",
+    passwordHint: "Password requirements",
+    pwRuleLength: "At least 8 characters",
+    pwRuleLetter: "Contains a letter",
+    pwRuleNumber: "Contains a number",
+    pwRuleCommon: "Common passwords (e.g. password, 12345678) aren't allowed",
   },
   notifications: {
     title: "Notifications",
