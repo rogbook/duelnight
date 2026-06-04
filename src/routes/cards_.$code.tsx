@@ -321,7 +321,21 @@ function CardDetailPage() {
         />
       )}
 
+      <Dialog open={zoomOpen} onOpenChange={setZoomOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl p-2 bg-background/95 border-border">
+          <DialogTitle className="sr-only">{card.name}</DialogTitle>
+          {displayUrl && (
+            <img
+              src={displayUrl}
+              alt={card.name}
+              className="mx-auto max-h-[85vh] w-auto rounded-md object-contain"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog open={confirmDelete} onOpenChange={(o) => { if (!o && !deleting) setConfirmDelete(false); }}>
+
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("cards.deleteConfirmTitle")}</AlertDialogTitle>
