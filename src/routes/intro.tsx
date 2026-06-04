@@ -1,13 +1,47 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Sparkles, Trophy, Users, ScanLine, BarChart3, Calendar, Crown, Coins, ChevronRight, ChevronDown } from "lucide-react";
+import { Sparkles, Trophy, Users, ScanLine, BarChart3, Calendar, Crown, Coins, ChevronRight, ChevronDown, Flame, Medal, Swords } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useI18n } from "@/i18n/language-context";
 import { LanguageSelector } from "@/components/language-selector";
 import { LoginModal } from "@/components/login-modal";
+import { supabase } from "@/integrations/supabase/client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import type { Database } from "@/integrations/supabase/types";
+
+type TcgGame = Database["public"]["Enums"]["tcg_game"];
 
 const BRAND = {
   name: "DuelNight",
 };
+
+const GAME_THEME: Record<TcgGame, { label: string; from: string; to: string; accent: string }> = {
+  optcg: { label: "ONE PIECE", from: "from-rose-600/80", to: "to-amber-500/70", accent: "text-amber-300" },
+  ptcg:  { label: "Pokémon",   from: "from-yellow-500/80", to: "to-sky-500/70",  accent: "text-yellow-300" },
+  dtcg:  { label: "Digimon",   from: "from-indigo-600/80", to: "to-fuchsia-500/70", accent: "text-fuchsia-300" },
+};
+
+interface ReleaseRow {
+  id: string;
+  game: TcgGame;
+  title: string;
+  starts_at: string;
+  early_release_at: string | null;
+  product_url: string | null;
+  banner_url: string | null;
+}
+
+interface LeaderRow {
+  user_id: string;
+  display_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
+  rating: number;
+  total: number;
+  wins: number;
+  losses: number;
+  win_rate: number;
+}
 
 export const Route = createFileRoute("/intro")({
   head: () => {
