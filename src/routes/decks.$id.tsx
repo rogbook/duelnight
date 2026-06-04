@@ -96,7 +96,9 @@ function DeckDetailPage() {
   const currentUserId = user?.id ?? null;
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"info" | "recipe">("info");
+  const [tab, setTab] = useState<"info" | "recipe" | "matches">("info");
+  const [matchPeriod, setMatchPeriod] = useState<"all" | "30d" | "7d">("all");
+
   const [zoomCard, setZoomCard] = useState<{ url: string; name: string } | null>(null);
   const { t, language } = useI18n();
 
