@@ -27,7 +27,7 @@ type GameRow = Database["public"]["Tables"]["games"]["Row"];
 const BUILTIN_GAME_CODES = new Set(["optcg", "ptcg", "dtcg"]);
 
 export function SetConfigView() {
-  const { language } = useLanguage();
+  const { language } = useI18n();
   const [games, setGames] = useState<GameRow[]>([]);
   const [gamesLoading, setGamesLoading] = useState(false);
   const [activeGame, setActiveGame] = useState<string>("");
