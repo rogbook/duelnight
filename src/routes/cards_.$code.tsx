@@ -215,19 +215,25 @@ function CardDetailPage() {
       </div>
       <div className="mt-4 grid gap-6 sm:grid-cols-[260px_1fr]">
         <div>
-          <div className="aspect-[5/7] w-full overflow-hidden rounded-lg border border-border bg-muted">
+          <button
+            type="button"
+            onClick={() => displayUrl && setZoomOpen(true)}
+            disabled={!displayUrl}
+            aria-label={t("cards.zoomImage") ?? "이미지 크게 보기"}
+            className="block aspect-[5/7] w-full overflow-hidden rounded-lg border border-border bg-muted transition hover:opacity-90 disabled:cursor-default disabled:hover:opacity-100"
+          >
             {displayUrl ? (
               <img
                 src={displayUrl}
                 alt={card.name}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover cursor-zoom-in"
               />
             ) : (
               <div className="flex h-full items-center justify-center text-muted-foreground">
                 <ImageOff className="h-10 w-10" />
               </div>
             )}
-          </div>
+          </button>
           {gallery.length > 1 && (
             <div className="mt-2 flex flex-wrap gap-1.5">
               {gallery.map((g) => (
