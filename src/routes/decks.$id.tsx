@@ -29,6 +29,8 @@ type Deck = Tables<"decks">;
 type Profile = Tables<"profiles">;
 type CardRow = Tables<"cards">;
 type DeckCard = Tables<"deck_cards">;
+type MatchRow = Tables<"matches">;
+
 
 export const Route = createFileRoute("/decks/$id")({
   head: () => {
