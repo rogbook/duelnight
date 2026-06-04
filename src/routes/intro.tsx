@@ -4,6 +4,7 @@ import { Sparkles, Trophy, Users, ScanLine, BarChart3, Calendar, Crown, Coins, C
 import { useI18n } from "@/i18n/language-context";
 import { LanguageSelector } from "@/components/language-selector";
 import { LoginModal } from "@/components/login-modal";
+import { GameRankingList } from "@/components/leaderboard/game-ranking-list";
 
 const BRAND = {
   name: "DuelNight",
@@ -117,6 +118,11 @@ function IntroPage() {
             </p>
           </div>
         </section>
+
+        {/* 게임별 랭킹 (비로그인 메인) */}
+        <div className="pb-20">
+          <GameRankingList />
+        </div>
 
         {/* Features */}
         <section className="mx-auto w-full max-w-6xl px-4 pb-20 sm:px-6">
@@ -280,6 +286,14 @@ function MobileIntro({ onShowLogin }: { proPrice: string; creditPrice: string; o
 
       {/* ── 구분선 ── */}
       <div className="mx-5 h-px bg-border" />
+
+      {/* ── 게임별 랭킹 ── */}
+      <section className="pt-6">
+        <GameRankingList />
+      </section>
+
+      {/* ── 구분선 ── */}
+      <div className="mx-5 mt-6 h-px bg-border" />
 
       {/* ── 기능 아코디언 ── */}
       <section className="px-4 pt-6 pb-10">

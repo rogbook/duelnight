@@ -163,6 +163,19 @@ index.tsx → <SeasonReport mode="me" game={primaryGame} .../>
 
 ---
 
+## 6-1. 구현 현황 (2026-06-04)
+
+- ✅ `src/lib/season.ts` — 2개월 달력 시즌 유틸 (`getSeasonStart/ISO/Label/End`, `getDaysLeftInSeason`).
+- ✅ `src/lib/tier.ts` — rating→티어/색상 매핑 + `getTopPercentile`.
+- ✅ `src/components/season-report/season-report.tsx` — 데이터 주입형 성적표(요약/모스트덱/매치업).
+- ✅ `src/components/leaderboard/game-ranking-list.tsx` — 게임별 랭킹(모바일 탭/데스크탑 3열).
+- ✅ `index.tsx` — 90일 롤링 → `getSeasonStart()`, 최다 플레이 게임 자동선택 + 내 성적표 + KPI 미니.
+- ✅ `intro.tsx` — 게임별 랭킹 섹션 삽입(히어로 아래).
+- ✅ i18n(ko/en/ja) — `tier.*`(6), `seasonReport.*`, `gameRanking.*` 키 추가.
+- ⬜ 미적용(후속): ReleaseTicker(발매 배너) 컴포넌트 신규, "상위 X%" 정확 백분위 RPC, GameFilter↔홈 성적표 연동, 티어 임계값 실데이터 보정.
+
+> 검증: 의존성 설치가 샌드박스로 막혀(npm 403) 전체 `tsc/eslint`는 미실행. 신규/변경 파일은 bun 트랜스파일 구문검증 통과. 동적 i18n 키는 `as TranslationKey` 캐스트 처리.
+
 ## 7. 구현 단계 (승인 후)
 
 1. `src/lib/season.ts`(2개월 시즌), `src/lib/tier.ts`(티어) 추가.

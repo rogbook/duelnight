@@ -14,8 +14,10 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { GameFilter } from "@/components/game-filter";
+import { SeasonReport } from "@/components/season-report/season-report";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { getSeasonStartISO } from "@/lib/season";
 import { useI18n } from "@/i18n/language-context";
 
 export const Route = createFileRoute("/")({
@@ -33,28 +35,61 @@ export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
-/** 이번 시즌: 최근 90일 */
-const SEASON_START = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
-
-function useDashboardStats(userId: string) {
-  const { t } = useI18n();
-
-  // 이번 시즌 승률 (최근 90일)
-  const { data: matchData } = useQuery({
-    queryKey: ["dashboard-matches", userId],
+/** 내가 가장 많이 플레이한 게임(시즌 성적표 기본 대상). */
+function usePrimaryGame(userId: string) {
+  return useQuery({
+    queryKey: ["home-primary-game", userId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("matches")
-        .select("result")
+        .from("user_ratings")
+        .select("game, rating, matches_count")
         .eq("user_id", userId)
-        .gte("played_at", SEASON_START);
+        .order("matches_count", { ascending: false })
+        .limit(1);
       if (error) throw error;
-      return data ?? [];
+      return data?.[0] ?? null;
     },
     enabled: !!userId,
   });
+}
 
-  // 보유 카드 종류 수 (user_collection row 수)
+/** 이번 시즌(2개월) 내 전적 — 기본 게임 기준. */
+function useSeasonMatches(userId: string, game: string | null | undefined) {
+  return useQuery({
+    queryKey: ["home-season-matches", userId, game],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("matches")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("game", game!)
+        .gte("played_at", getSeasonStartISO());
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!userId && !!game,
+  });
+}
+
+function useProfile(userId: string) {
+  return useQuery({
+    queryKey: ["home-profile", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("display_name, username, avatar_url")
+        .eq("id", userId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userId,
+  });
+}
+
+function useKpi(userId: string) {
+  const { t } = useI18n();
+
   const { data: collectionCount } = useQuery({
     queryKey: ["dashboard-collection", userId],
     queryFn: async () => {
@@ -68,7 +103,6 @@ function useDashboardStats(userId: string) {
     enabled: !!userId,
   });
 
-  // 저장된 덱 수
   const { data: deckCount } = useQuery({
     queryKey: ["dashboard-decks", userId],
     queryFn: async () => {
@@ -82,45 +116,7 @@ function useDashboardStats(userId: string) {
     enabled: !!userId,
   });
 
-  // 최고 레이팅 순위 (전 게임 중 가장 높은 rating의 순위 반환)
-  const { data: rankData } = useQuery({
-    queryKey: ["dashboard-rating", userId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("user_ratings")
-        .select("rating, game, matches_count")
-        .eq("user_id", userId)
-        .order("rating", { ascending: false })
-        .limit(1);
-      if (error) throw error;
-      return data?.[0] ?? null;
-    },
-    enabled: !!userId,
-  });
-
-  // 승률 계산
-  const wins = matchData?.filter((m) => m.result === "win").length ?? 0;
-  const losses = matchData?.filter((m) => m.result === "loss").length ?? 0;
-  const decided = wins + losses;
-  const winRateStr =
-    decided === 0 ? "—%" : `${Math.round((wins / decided) * 100)}%`;
-  const winRateHint =
-    decided === 0
-      ? t("dashboard.winRateHintEmpty")
-      : t("dashboard.winRateHint")
-          .replace("{wins}", String(wins))
-          .replace("{losses}", String(losses));
-
-  // 랭킹 텍스트
-  const ratingStr = rankData ? `${rankData.rating}${t("matches.points", "점")}` : "—";
-  const ratingHint = rankData
-    ? t("dashboard.ratingHint")
-        .replace("{game}", rankData.game.toUpperCase())
-        .replace("{count}", String(rankData.matches_count))
-    : t("dashboard.ratingHintEmpty");
-
   return [
-    { label: t("dashboard.winRate"), value: winRateStr, hint: winRateHint },
     {
       label: t("dashboard.cards"),
       value: collectionCount?.toLocaleString() ?? "0",
@@ -131,7 +127,6 @@ function useDashboardStats(userId: string) {
       value: deckCount?.toLocaleString() ?? "0",
       hint: deckCount ? t("dashboard.decksHint") : t("dashboard.decksHintEmpty"),
     },
-    { label: t("dashboard.rating"), value: ratingStr, hint: ratingHint },
   ];
 }
 
@@ -139,7 +134,13 @@ function Dashboard() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { t } = useI18n();
-  const stats = useDashboardStats(user?.id ?? "");
+
+  const userId = user?.id ?? "";
+  const { data: primary } = usePrimaryGame(userId);
+  const game = primary?.game ?? null;
+  const { data: matches } = useSeasonMatches(userId, game);
+  const { data: profile } = useProfile(userId);
+  const kpi = useKpi(userId);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -150,6 +151,10 @@ function Dashboard() {
   if (loading || !user) {
     return null;
   }
+
+  const hasSeasonData = !!game && !!matches && matches.length > 0;
+  const displayName =
+    profile?.display_name || profile?.username || user.email?.split("@")[0] || "Player";
 
   const localizedShortcuts = [
     {
@@ -179,23 +184,43 @@ function Dashboard() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
-      <PageHeader
-        title={t("dashboard.title")}
-        description={t("dashboard.desc")}
-      >
+      <PageHeader title={t("dashboard.title")} description={t("dashboard.desc")}>
         <GameFilter />
       </PageHeader>
 
-      <section className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-        {stats.map((s) => (
-          <div
-            key={s.label}
-            className="rounded-lg border border-border bg-card p-4"
-          >
+      {/* 내 시즌 성적표 (가장 많이 한 게임 기준) */}
+      <section className="mt-6">
+        {hasSeasonData ? (
+          <SeasonReport
+            mode="me"
+            game={game!}
+            matches={matches!}
+            rating={primary?.rating ?? null}
+            displayName={displayName}
+            username={profile?.username}
+            avatarUrl={profile?.avatar_url}
+          />
+        ) : (
+          <div className="rounded-2xl border border-border bg-card p-8 text-center">
+            <Swords className="mx-auto h-8 w-8 text-muted-foreground" />
+            <p className="mt-3 text-sm font-medium">{t("seasonReport.emptyTitle")}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{t("seasonReport.emptyDesc")}</p>
+            <Link
+              to="/matches"
+              className="mt-4 inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
+            >
+              {t("seasonReport.recordFirst")}
+            </Link>
+          </div>
+        )}
+      </section>
+
+      {/* KPI 미니 */}
+      <section className="mt-4 grid grid-cols-2 gap-3">
+        {kpi.map((s) => (
+          <div key={s.label} className="rounded-lg border border-border bg-card p-4">
             <p className="text-xs text-muted-foreground">{s.label}</p>
-            <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
-              {s.value}
-            </p>
+            <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">{s.value}</p>
             <p className="mt-1 text-[11px] text-muted-foreground">{s.hint}</p>
           </div>
         ))}
