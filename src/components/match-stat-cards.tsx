@@ -437,9 +437,29 @@ export function MobileRecentCards({
 
           {/* Opponent / turn / ELO */}
           <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
-            {(m.opp_leader || m.opp_deck) && (
-              <span>vs {m.opp_leader || m.opp_deck}</span>
-            )}
+            {(() => {
+              const nick = oppNick?.(m) ?? null;
+              const deck = m.opp_leader || m.opp_deck;
+              if (!nick && !deck) return null;
+              return (
+                <span className="flex items-center gap-1">
+                  <span>vs</span>
+                  {nick && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpponentClick?.(m);
+                      }}
+                      className="font-medium text-foreground hover:underline"
+                    >
+                      {nick}
+                    </button>
+                  )}
+                  {deck && <span>{nick ? `· ${deck}` : deck}</span>}
+                </span>
+              );
+            })()}
             <span>{m.went_first ? t("matches.first") : t("matches.second")}</span>
             {m.points_delta != null && (
               <span
