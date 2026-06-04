@@ -393,11 +393,15 @@ export function MobileOpponentCards({
 
 export function MobileRecentCards({
   rows,
+  oppNick,
+  onOpponentClick,
   onView,
   onEdit,
   onDelete,
 }: {
   rows: Match[];
+  oppNick?: (m: Match) => string | null;
+  onOpponentClick?: (m: Match) => void;
   onView: (m: Match) => void;
   onEdit: (m: Match) => void;
   onDelete: (id: string) => void;
