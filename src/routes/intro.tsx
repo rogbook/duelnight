@@ -111,12 +111,18 @@ function IntroPage() {
         </div>
       </header>
 
+      {/* ===== 신규 발매 스크롤 배너 (공통) ===== */}
+      <ReleaseTicker />
+
+      {/* ===== 게이밍 히어로 + 리더보드 상위 (공통) ===== */}
+      <GamingHero onShowLogin={() => setLoginOpen(true)} />
+
       {/* ===== MOBILE: 스와이프 슬라이드 인트로 ===== */}
       <MobileIntro proPrice={proPrice} creditPrice={creditPrice} onShowLogin={() => setLoginOpen(true)} />
 
       {/* ===== DESKTOP: 기존 풀 레이아웃 ===== */}
       <div className="hidden md:block">
-        {/* Hero */}
+        {/* Hero (간략 버전 - 게이밍 히어로가 메인) */}
         <section className="mx-auto w-full max-w-6xl px-4 pt-16 pb-20 sm:px-6 sm:pt-24">
           <div className="mx-auto max-w-3xl text-center">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs text-muted-foreground">
