@@ -11,13 +11,15 @@ import {
   Info,
   List,
   X,
+  Swords,
 } from "lucide-react";
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { RecipeEditor } from "@/components/decks/recipe-editor";
 import { DeckDialog } from "@/components/decks/deck-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { GAME_LABEL } from "@/lib/match-stats";
+
 import { colorHex, colorLabel, type Game } from "@/lib/deck-colors";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
@@ -27,6 +29,8 @@ type Deck = Tables<"decks">;
 type Profile = Tables<"profiles">;
 type CardRow = Tables<"cards">;
 type DeckCard = Tables<"deck_cards">;
+type MatchRow = Tables<"matches">;
+
 
 export const Route = createFileRoute("/decks/$id")({
   head: () => {
@@ -92,7 +96,9 @@ function DeckDetailPage() {
   const currentUserId = user?.id ?? null;
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"info" | "recipe">("info");
+  const [tab, setTab] = useState<"info" | "recipe" | "matches">("info");
+  const [matchPeriod, setMatchPeriod] = useState<"all" | "30d" | "7d">("all");
+
   const [zoomCard, setZoomCard] = useState<{ url: string; name: string } | null>(null);
   const { t, language } = useI18n();
 
@@ -177,8 +183,25 @@ function DeckDetailPage() {
     },
   });
 
+  // 6. 내 전적 (이 덱으로 기록한 매치)
+  const { data: deckMatches = [] } = useQuery<MatchRow[]>({
+    queryKey: ["deck-matches", deck?.id, currentUserId],
+    enabled: !!deck?.id && !!currentUserId && currentUserId === deck?.user_id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("matches")
+        .select("*")
+        .eq("user_id", currentUserId!)
+        .eq("deck_id", deck!.id)
+        .order("played_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as MatchRow[];
+    },
+  });
+
   // ===== 여기서부터 조건부 return =====
   if (deckLoading || authLoading) {
+
     return (
       <div className="mx-auto max-w-3xl px-6 py-16 text-center text-sm text-muted-foreground">
         {t("decks.loading")}
@@ -454,9 +477,22 @@ function DeckDetailPage() {
           >
             <List className="h-4 w-4" /> {t("decks.tabRecipe").replace("{count}", String(deckCards.length))}
           </button>
+          {isOwner && (
+            <button
+              onClick={() => setTab("matches")}
+              className={`flex items-center gap-2 px-6 py-3 text-sm font-bold transition-all border-b-2 ${
+                tab === "matches"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Swords className="h-4 w-4" /> {t("decks.tabMatches").replace("{count}", String(deckMatches.length))}
+            </button>
+          )}
         </div>
 
         {tab === "info" ? (
+
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
@@ -537,7 +573,8 @@ function DeckDetailPage() {
               </div>
             )}
           </div>
-        ) : (
+        ) : tab === "recipe" ? (
+
           <div className="space-y-6">
             {isOwner && (
               <div className="mb-4">
@@ -597,8 +634,252 @@ function DeckDetailPage() {
               </div>
             )}
           </div>
+        ) : (
+          <DeckMatchesTab
+            matches={deckMatches}
+            period={matchPeriod}
+            onPeriodChange={setMatchPeriod}
+          />
         )}
+
       </div>
     </div>
   );
 }
+
+// ============================================================
+// 덱 전적 탭 컴포넌트
+// ============================================================
+function DeckMatchesTab({
+  matches,
+  period,
+  onPeriodChange,
+}: {
+  matches: MatchRow[];
+  period: "all" | "30d" | "7d";
+  onPeriodChange: (p: "all" | "30d" | "7d") => void;
+}) {
+  const { t, language } = useI18n();
+
+  const filtered = useMemo(() => {
+    if (period === "all") return matches;
+    const days = period === "7d" ? 7 : 30;
+    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+    return matches.filter((m) => new Date(m.played_at).getTime() >= cutoff);
+  }, [matches, period]);
+
+  const stats = useMemo(() => {
+    const wins = filtered.filter((m) => m.result === "win").length;
+    const losses = filtered.filter((m) => m.result === "loss").length;
+    const draws = filtered.filter((m) => m.result === "draw").length;
+    const decisive = wins + losses;
+    const winRate = decisive === 0 ? 0 : Math.round((wins / decisive) * 1000) / 10;
+    return { wins, losses, draws, total: filtered.length, winRate };
+  }, [filtered]);
+
+  const matchups = useMemo(() => {
+    const map = new Map<string, { wins: number; losses: number; draws: number; total: number }>();
+    for (const m of filtered) {
+      const key = (m.opp_deck?.trim() || m.opp_leader?.trim() || "__unknown__");
+      const cur = map.get(key) ?? { wins: 0, losses: 0, draws: 0, total: 0 };
+      cur.total += 1;
+      if (m.result === "win") cur.wins += 1;
+      else if (m.result === "loss") cur.losses += 1;
+      else cur.draws += 1;
+      map.set(key, cur);
+    }
+    const arr = Array.from(map.entries())
+      .filter(([k, v]) => k !== "__unknown__" && v.total >= 2)
+      .map(([name, v]) => {
+        const decisive = v.wins + v.losses;
+        const winRate = decisive === 0 ? 0 : Math.round((v.wins / decisive) * 1000) / 10;
+        return { name, ...v, winRate };
+      });
+    const strong = [...arr].sort((a, b) => b.winRate - a.winRate || b.total - a.total).slice(0, 5);
+    const weak = [...arr].sort((a, b) => a.winRate - b.winRate || b.total - a.total).slice(0, 5);
+    return { strong, weak };
+  }, [filtered]);
+
+  const periods: { id: "all" | "30d" | "7d"; label: string }[] = [
+    { id: "all", label: t("decks.matchesPeriodAll") },
+    { id: "30d", label: t("decks.matchesPeriod30d") },
+    { id: "7d", label: t("decks.matchesPeriod7d") },
+  ];
+
+  const locale = language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US";
+
+  return (
+    <div className="space-y-6">
+      {/* 기간 필터 */}
+      <div className="inline-flex items-center gap-1 rounded-lg border border-border bg-card p-1">
+        {periods.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            onClick={() => onPeriodChange(p.id)}
+            className={
+              "rounded-md px-3 py-1.5 text-xs font-medium transition-colors " +
+              (period === p.id
+                ? "bg-foreground text-background"
+                : "text-muted-foreground hover:text-foreground")
+            }
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+
+      {/* 통계 요약 */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <StatCard
+          label={t("decks.matchesTotal").replace("{count}", String(stats.total))}
+          value={stats.total}
+        />
+        <StatCard label={t("decks.matchesWinRate")} value={`${stats.winRate}%`} accent />
+        <StatCard
+          label={`${t("decks.matchesWins")} / ${t("decks.matchesLosses")} / ${t("decks.matchesDraws")}`}
+          value={`${stats.wins} / ${stats.losses} / ${stats.draws}`}
+        />
+        <StatCard label={t("decks.matchesPeriodAll")} value={periods.find((p) => p.id === period)?.label ?? ""} />
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="py-20 text-center rounded-2xl border-2 border-dashed border-border bg-muted/10">
+          <Swords className="mx-auto h-12 w-12 text-muted-foreground opacity-20" />
+          <p className="mt-4 text-sm text-muted-foreground">{t("decks.matchesEmpty")}</p>
+        </div>
+      ) : (
+        <>
+          {/* 강/약 매치업 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <MatchupList
+              title={t("decks.strongMatchups")}
+              items={matchups.strong}
+              tone="strong"
+              gamesLabel={t("decks.matchupGames")}
+              winRateLabel={t("decks.matchesWinRate")}
+            />
+            <MatchupList
+              title={t("decks.weakMatchups")}
+              items={matchups.weak}
+              tone="weak"
+              gamesLabel={t("decks.matchupGames")}
+              winRateLabel={t("decks.matchesWinRate")}
+            />
+          </div>
+
+          {/* 최근 전적 리스트 */}
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <h3 className="text-sm font-black mb-4 flex items-center gap-2">
+              <Swords className="h-4 w-4 text-primary" /> {t("decks.recentMatchesTitle")}
+            </h3>
+            <ul className="divide-y divide-border/50">
+              {filtered.slice(0, 15).map((m) => (
+                <li key={m.id} className="flex items-center justify-between py-2.5 text-sm">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <ResultBadge result={m.result} />
+                    <span className="truncate font-medium">
+                      {m.opp_deck?.trim() ||
+                        m.opp_leader?.trim() ||
+                        t("decks.matchupUnknown")}
+                    </span>
+                  </div>
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {new Date(m.played_at).toLocaleDateString(locale)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-4 text-right">
+              <Link
+                to="/matches"
+                className="text-xs font-medium text-primary hover:underline"
+              >
+                {t("decks.viewAllMatches")} →
+              </Link>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string | number;
+  accent?: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+        {label}
+      </p>
+      <p className={`mt-1 text-2xl font-black ${accent ? "text-primary" : "text-foreground"}`}>
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function MatchupList({
+  title,
+  items,
+  tone,
+  gamesLabel,
+  winRateLabel,
+}: {
+  title: string;
+  items: { name: string; total: number; wins: number; losses: number; draws: number; winRate: number }[];
+  tone: "strong" | "weak";
+  gamesLabel: string;
+  winRateLabel: string;
+}) {
+  const dotClass = tone === "strong" ? "bg-emerald-500" : "bg-rose-500";
+  return (
+    <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+      <h3 className="text-sm font-black mb-4 flex items-center gap-2">
+        <span className={`h-2 w-2 rounded-full ${dotClass}`} />
+        {title}
+      </h3>
+      {items.length === 0 ? (
+        <p className="text-xs text-muted-foreground">—</p>
+      ) : (
+        <ul className="space-y-2">
+          {items.map((it) => (
+            <li key={it.name} className="flex items-center justify-between gap-2">
+              <span className="min-w-0 truncate text-sm font-medium">{it.name}</span>
+              <span className="flex items-center gap-2 text-xs text-muted-foreground whitespace-nowrap">
+                <span>{gamesLabel.replace("{count}", String(it.total))}</span>
+                <span className="font-bold text-foreground">
+                  {winRateLabel} {it.winRate}%
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function ResultBadge({ result }: { result: MatchRow["result"] }) {
+  const map = {
+    win: { label: "W", cls: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" },
+    loss: { label: "L", cls: "bg-rose-500/15 text-rose-600 dark:text-rose-400" },
+    draw: { label: "D", cls: "bg-muted text-muted-foreground" },
+  } as const;
+  const v = map[result as keyof typeof map] ?? map.draw;
+  return (
+    <span
+      className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-black ${v.cls}`}
+    >
+      {v.label}
+    </span>
+  );
+}
+
