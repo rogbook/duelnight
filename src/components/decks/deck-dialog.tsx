@@ -37,6 +37,8 @@ import {
   type Game,
 } from "@/lib/deck-colors";
 import type { Tables } from "@/integrations/supabase/types";
+import { useI18n } from "@/i18n/language-context";
+
 
 type Deck = Tables<"decks">;
 
