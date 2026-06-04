@@ -122,43 +122,7 @@ function IntroPage() {
 
       {/* ===== DESKTOP: 기존 풀 레이아웃 ===== */}
       <div className="hidden md:block">
-        {/* Hero (간략 버전 - 게이밍 히어로가 메인) */}
-        <section className="mx-auto w-full max-w-6xl px-4 pt-16 pb-20 sm:px-6 sm:pt-24">
-          <div className="mx-auto max-w-3xl text-center">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs text-muted-foreground">
-              <Sparkles className="h-3.5 w-3.5" />
-              {t("intro.gameIntegrated")}
-            </span>
-            <h1 className="mt-5 text-4xl font-bold leading-tight tracking-tight sm:text-5xl md:text-6xl">
-              {t("intro.heroTitle1")}
-              <br />
-              <span className="bg-gradient-to-r from-primary to-amber-500 bg-clip-text text-transparent">
-                {t("intro.heroTitle2")}
-              </span>
-            </h1>
-            <p className="mt-5 text-base text-muted-foreground sm:text-lg">{t("intro.description")}</p>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={() => setLoginOpen(true)}
-                className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
-              >
-                {t("intro.nowStartFree")}
-              </button>
-              <a
-                href="#pricing"
-                className="rounded-lg border border-border px-5 py-2.5 text-sm font-semibold hover:bg-accent"
-              >
-                {t("intro.viewPricing")}
-              </a>
-            </div>
-            <p className="mt-3 text-xs text-muted-foreground">
-              {t("intro.testPhaseNotice")}
-            </p>
-          </div>
-        </section>
-
-        {/* Features */}
+        {/* Features (게이밍 히어로 다음으로 바로) */}
         <section className="mx-auto w-full max-w-6xl px-4 pb-20 sm:px-6">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Feature icon={<BarChart3 className="h-5 w-5" />} title={t("intro.featureTitle1")} desc={t("intro.featureDesc1")} />
