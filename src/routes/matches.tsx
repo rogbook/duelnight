@@ -860,6 +860,11 @@ function RecentList({
       )}
       <ViewMatchDialog
         match={viewing}
+        oppNick={viewing ? oppNick(viewing) : null}
+        onOpenOpponent={(m) => {
+          openOpp(m);
+          setViewing(null);
+        }}
         onOpenChange={(o) => !o && setViewing(null)}
         onEdit={(m) => {
           setViewing(null);
@@ -877,6 +882,24 @@ function RecentList({
           setEditing(null);
           onDeleted();
         }}
+      />
+      <OpponentDetailDialog
+        open={!!oppSelected}
+        onOpenChange={(o) => !o && setOppSelected(null)}
+        opponent={oppSelected ? { name: oppSelected.name, userId: oppSelected.userId } : null}
+        game={oppSelected?.game ?? "optcg"}
+        myMatches={oppDialogMatches.map((m) => ({
+          id: m.id,
+          played_at: m.played_at,
+          game: m.game,
+          my_deck: m.my_deck,
+          opp_leader: m.opp_leader,
+          opp_deck: m.opp_deck,
+          result: m.result as "win" | "loss" | "draw",
+          went_first: m.went_first,
+          points_delta: m.points_delta,
+          opponent_user_id: m.opponent_user_id,
+        }))}
       />
     </section>
   );
