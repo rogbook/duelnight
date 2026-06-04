@@ -716,6 +716,8 @@ function RecentList({
       {isMobile ? (
         <MobileRecentCards
           rows={pageRows}
+          oppNick={oppNick}
+          onOpponentClick={(m) => openOpp(m)}
           onView={(m) => setViewing(m)}
           onEdit={(m) => setEditing(m)}
           onDelete={(id) => onDelete(id)}
