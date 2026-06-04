@@ -147,8 +147,10 @@ interface DeckDialogProps {
 
 export function DeckDialog({ mode, deck, onSaved, trigger }: DeckDialogProps) {
   const qc = useQueryClient();
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+
 
   const [game, setGame] = useState<Game>("optcg");
   const [name, setName] = useState("");
