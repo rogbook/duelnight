@@ -183,8 +183,25 @@ function DeckDetailPage() {
     },
   });
 
+  // 6. 내 전적 (이 덱으로 기록한 매치)
+  const { data: deckMatches = [] } = useQuery<MatchRow[]>({
+    queryKey: ["deck-matches", deck?.id, currentUserId],
+    enabled: !!deck?.id && !!currentUserId && currentUserId === deck?.user_id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("matches")
+        .select("*")
+        .eq("user_id", currentUserId!)
+        .eq("deck_id", deck!.id)
+        .order("played_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as MatchRow[];
+    },
+  });
+
   // ===== 여기서부터 조건부 return =====
   if (deckLoading || authLoading) {
+
     return (
       <div className="mx-auto max-w-3xl px-6 py-16 text-center text-sm text-muted-foreground">
         {t("decks.loading")}
