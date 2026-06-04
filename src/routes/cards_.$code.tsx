@@ -219,7 +219,7 @@ function CardDetailPage() {
             type="button"
             onClick={() => displayUrl && setZoomOpen(true)}
             disabled={!displayUrl}
-            aria-label={t("cards.zoomImage") ?? "이미지 크게 보기"}
+            aria-label="이미지 크게 보기"
             className="block aspect-[5/7] w-full overflow-hidden rounded-lg border border-border bg-muted transition hover:opacity-90 disabled:cursor-default disabled:hover:opacity-100"
           >
             {displayUrl ? (
