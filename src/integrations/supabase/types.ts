@@ -247,6 +247,7 @@ export type Database = {
           counter: number | null
           created_at: string
           effect: string | null
+          extra: Json | null
           game: Database["public"]["Enums"]["tcg_game"]
           id: string
           image_url: string | null
@@ -271,6 +272,7 @@ export type Database = {
           counter?: number | null
           created_at?: string
           effect?: string | null
+          extra?: Json | null
           game?: Database["public"]["Enums"]["tcg_game"]
           id?: string
           image_url?: string | null
@@ -295,6 +297,7 @@ export type Database = {
           counter?: number | null
           created_at?: string
           effect?: string | null
+          extra?: Json | null
           game?: Database["public"]["Enums"]["tcg_game"]
           id?: string
           image_url?: string | null
