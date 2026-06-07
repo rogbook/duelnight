@@ -205,6 +205,7 @@ function UserMatchesDialog({
   dateLocale: string;
 }) {
   const { t } = useI18n();
+  const { labelOf } = useGames();
 
   const { data: matches = [], isLoading } = useQuery({
     queryKey: ["user-recent", user?.user_id, game],
