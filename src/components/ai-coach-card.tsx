@@ -5,7 +5,7 @@ import type { Match, MatchStats, RatePack } from "@/lib/match-stats";
 import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/use-auth";
 
-type Game = Database["public"]["Enums"]["tcg_game"];
+type Game = string;
 type Period = "7" | "30" | "90" | "all";
 
 type Confidence = "높음" | "중간" | "낮음";

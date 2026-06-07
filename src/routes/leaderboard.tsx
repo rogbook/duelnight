@@ -23,7 +23,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { GAME_LABEL } from "@/lib/match-stats";
 import { useI18n } from "@/i18n/language-context";
 
-type Game = Database["public"]["Enums"]["tcg_game"];
+type Game = string;
 
 interface Row {
   user_id: string;
