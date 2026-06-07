@@ -132,6 +132,10 @@ function CardDetailPage() {
   const { isAdmin } = useIsAdmin();
   const navigate = useNavigate();
 
+  // 디지몬 전용 표시 (확장 필드)
+  const isDtcg = card.game === "dtcg";
+  const ex = (card.extra ?? {}) as Record<string, string | undefined>;
+
   const getCardTypeLabel = (type: string) => {
     if (type === "leader") return t("cards.typeLeader");
     if (type === "character") return t("cards.typeCharacter");
@@ -279,22 +283,33 @@ function CardDetailPage() {
             </p>
           )}
           <div className="mt-3 flex flex-wrap gap-1.5">
-            <Tag>{getCardTypeLabel(card.type)}</Tag>
+            <Tag>{isDtcg && ex.category ? ex.category : getCardTypeLabel(card.type)}</Tag>
+            {isDtcg && ex.form && <Tag>{ex.form}</Tag>}
             {card.colors.map((c: string) => (
               <Tag key={c}>{colorLabel(card.game as Game, c, language)}</Tag>
             ))}
             {card.rarity && <Tag>{card.rarity}</Tag>}
             <Tag>{card.set_code}</Tag>
           </div>
-          <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-            <Stat label={card.type === "leader" ? t("cards.life") : t("cards.cost")} value={card.cost} />
-            <Stat label={t("cards.power")} value={card.power?.toLocaleString()} />
-            <Stat label={t("cards.counter")} value={card.counter?.toLocaleString()} />
-            <Stat label={t("cards.attribute")} value={card.attribute} />
-          </dl>
+          {isDtcg ? (
+            <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+              <Stat label="DP" value={card.power?.toLocaleString()} />
+              <Stat label="등장 코스트" value={card.cost} />
+              <Stat label="진화 코스트 1" value={ex.evo_cost_1} />
+              <Stat label="진화 코스트 2" value={ex.evo_cost_2} />
+              <Stat label={t("cards.attribute")} value={card.attribute} />
+            </dl>
+          ) : (
+            <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+              <Stat label={card.type === "leader" ? t("cards.life") : t("cards.cost")} value={card.cost} />
+              <Stat label={t("cards.power")} value={card.power?.toLocaleString()} />
+              <Stat label={t("cards.counter")} value={card.counter?.toLocaleString()} />
+              <Stat label={t("cards.attribute")} value={card.attribute} />
+            </dl>
+          )}
           {card.traits && card.traits.length > 0 && (
             <div className="mt-4">
-              <p className="text-xs font-semibold text-muted-foreground">{t("cards.traits")}</p>
+              <p className="text-xs font-semibold text-muted-foreground">{isDtcg ? "유형" : t("cards.traits")}</p>
               <div className="mt-1 flex flex-wrap gap-1">
                 {card.traits.map((t: string) => (
                   <Tag key={t}>{t}</Tag>
@@ -302,14 +317,29 @@ function CardDetailPage() {
               </div>
             </div>
           )}
-          {card.effect && (
+          {isDtcg && (ex.text_top || ex.text_bottom) ? (
+            <div className="mt-4 space-y-3">
+              {ex.text_top && (
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground">상단 텍스트</p>
+                  <p className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-3 text-sm leading-relaxed">{ex.text_top}</p>
+                </div>
+              )}
+              {ex.text_bottom && (
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground">하단 텍스트</p>
+                  <p className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-3 text-sm leading-relaxed">{ex.text_bottom}</p>
+                </div>
+              )}
+            </div>
+          ) : card.effect ? (
             <div className="mt-4">
               <p className="text-xs font-semibold text-muted-foreground">{t("cards.effect")}</p>
               <p className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-3 text-sm leading-relaxed">
                 {card.effect}
               </p>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 
