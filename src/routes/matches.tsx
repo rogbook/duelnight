@@ -49,6 +49,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { useGames } from "@/hooks/use-games";
 import {
   computeStats,
   computeStreak,
@@ -330,11 +331,10 @@ function GameTabs({
   onChange: (v: Game | "all") => void;
 }) {
   const { t } = useI18n();
+  const { games, labelOf } = useGames();
   const items: { id: Game | "all"; label: string }[] = [
     { id: "all", label: t("matches.all") },
-    { id: "optcg", label: t("matches.optcg") },
-    { id: "ptcg", label: t("matches.ptcg") },
-    { id: "dtcg", label: t("matches.dtcg") },
+    ...games.map((g) => ({ id: g.code as Game | "all", label: labelOf(g.code) })),
   ];
   return (
     <div className="inline-flex items-center gap-1 rounded-lg border border-border bg-card p-1">
