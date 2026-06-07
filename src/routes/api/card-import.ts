@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import "@tanstack/react-start";
 import { z } from "zod";
+import { createClient } from "@supabase/supabase-js";
+
 
 /**
  * 카드 자동 등록 — 공식 카드리스트 URL 가져오기 (Phase 1)
