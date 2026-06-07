@@ -248,7 +248,7 @@ export type Database = {
           created_at: string
           effect: string | null
           extra: Json | null
-          game: Database["public"]["Enums"]["tcg_game"]
+          game: string
           id: string
           image_url: string | null
           name: string
@@ -273,7 +273,7 @@ export type Database = {
           created_at?: string
           effect?: string | null
           extra?: Json | null
-          game?: Database["public"]["Enums"]["tcg_game"]
+          game?: string
           id?: string
           image_url?: string | null
           name: string
@@ -298,7 +298,7 @@ export type Database = {
           created_at?: string
           effect?: string | null
           extra?: Json | null
-          game?: Database["public"]["Enums"]["tcg_game"]
+          game?: string
           id?: string
           image_url?: string | null
           name?: string
@@ -356,7 +356,7 @@ export type Database = {
           archetype: string | null
           colors: string[]
           created_at: string
-          game: Database["public"]["Enums"]["tcg_game"]
+          game: string
           id: string
           is_public: boolean
           leader: string | null
@@ -369,7 +369,7 @@ export type Database = {
           archetype?: string | null
           colors?: string[]
           created_at?: string
-          game: Database["public"]["Enums"]["tcg_game"]
+          game: string
           id?: string
           is_public?: boolean
           leader?: string | null
@@ -382,7 +382,7 @@ export type Database = {
           archetype?: string | null
           colors?: string[]
           created_at?: string
-          game?: Database["public"]["Enums"]["tcg_game"]
+          game?: string
           id?: string
           is_public?: boolean
           leader?: string | null
@@ -417,7 +417,7 @@ export type Database = {
           created_at: string
           early_release_at: string | null
           ends_at: string | null
-          game: Database["public"]["Enums"]["tcg_game"]
+          game: string
           id: string
           kind: Database["public"]["Enums"]["event_kind"]
           location: string | null
@@ -435,7 +435,7 @@ export type Database = {
           created_at?: string
           early_release_at?: string | null
           ends_at?: string | null
-          game: Database["public"]["Enums"]["tcg_game"]
+          game: string
           id?: string
           kind?: Database["public"]["Enums"]["event_kind"]
           location?: string | null
@@ -453,7 +453,7 @@ export type Database = {
           created_at?: string
           early_release_at?: string | null
           ends_at?: string | null
-          game?: Database["public"]["Enums"]["tcg_game"]
+          game?: string
           id?: string
           kind?: Database["public"]["Enums"]["event_kind"]
           location?: string | null
@@ -704,7 +704,7 @@ export type Database = {
           contact: string | null
           created_at: string
           duration_minutes: number | null
-          game: Database["public"]["Enums"]["tcg_game"]
+          game: string
           games_count: number | null
           id: string
           kakao_link: string | null
@@ -723,7 +723,7 @@ export type Database = {
           contact?: string | null
           created_at?: string
           duration_minutes?: number | null
-          game: Database["public"]["Enums"]["tcg_game"]
+          game: string
           games_count?: number | null
           id?: string
           kakao_link?: string | null
@@ -742,7 +742,7 @@ export type Database = {
           contact?: string | null
           created_at?: string
           duration_minutes?: number | null
-          game?: Database["public"]["Enums"]["tcg_game"]
+          game?: string
           games_count?: number | null
           id?: string
           kakao_link?: string | null
@@ -762,7 +762,7 @@ export type Database = {
           created_at: string
           deck_id: string | null
           event: Database["public"]["Enums"]["match_event"]
-          game: Database["public"]["Enums"]["tcg_game"]
+          game: string
           id: string
           my_deck: string
           notes: string | null
@@ -784,7 +784,7 @@ export type Database = {
           created_at?: string
           deck_id?: string | null
           event?: Database["public"]["Enums"]["match_event"]
-          game: Database["public"]["Enums"]["tcg_game"]
+          game: string
           id?: string
           my_deck: string
           notes?: string | null
@@ -806,7 +806,7 @@ export type Database = {
           created_at?: string
           deck_id?: string | null
           event?: Database["public"]["Enums"]["match_event"]
-          game?: Database["public"]["Enums"]["tcg_game"]
+          game?: string
           id?: string
           my_deck?: string
           notes?: string | null
@@ -947,7 +947,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
-          primary_game: Database["public"]["Enums"]["tcg_game"] | null
+          primary_game: string | null
           updated_at: string
           username: string | null
         }
@@ -958,7 +958,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id: string
-          primary_game?: Database["public"]["Enums"]["tcg_game"] | null
+          primary_game?: string | null
           updated_at?: string
           username?: string | null
         }
@@ -969,7 +969,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
-          primary_game?: Database["public"]["Enums"]["tcg_game"] | null
+          primary_game?: string | null
           updated_at?: string
           username?: string | null
         }
@@ -997,7 +997,7 @@ export type Database = {
         Row: {
           address: string | null
           created_at: string
-          games: Database["public"]["Enums"]["tcg_game"][]
+          games: string[]
           id: string
           name: string
           notes: string | null
@@ -1010,7 +1010,7 @@ export type Database = {
         Insert: {
           address?: string | null
           created_at?: string
-          games?: Database["public"]["Enums"]["tcg_game"][]
+          games?: string[]
           id?: string
           name: string
           notes?: string | null
@@ -1023,7 +1023,7 @@ export type Database = {
         Update: {
           address?: string | null
           created_at?: string
-          games?: Database["public"]["Enums"]["tcg_game"][]
+          games?: string[]
           id?: string
           name?: string
           notes?: string | null
@@ -1095,7 +1095,7 @@ export type Database = {
       tier_lists: {
         Row: {
           created_at: string
-          game: Database["public"]["Enums"]["tcg_game"]
+          game: string
           id: string
           is_public: boolean
           placements: Json
@@ -1105,7 +1105,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          game?: Database["public"]["Enums"]["tcg_game"]
+          game?: string
           id?: string
           is_public?: boolean
           placements?: Json
@@ -1115,7 +1115,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          game?: Database["public"]["Enums"]["tcg_game"]
+          game?: string
           id?: string
           is_public?: boolean
           placements?: Json
@@ -1208,21 +1208,21 @@ export type Database = {
       }
       user_ratings: {
         Row: {
-          game: Database["public"]["Enums"]["tcg_game"]
+          game: string
           matches_count: number
           rating: number
           updated_at: string
           user_id: string
         }
         Insert: {
-          game: Database["public"]["Enums"]["tcg_game"]
+          game: string
           matches_count?: number
           rating?: number
           updated_at?: string
           user_id: string
         }
         Update: {
-          game?: Database["public"]["Enums"]["tcg_game"]
+          game?: string
           matches_count?: number
           rating?: number
           updated_at?: string
@@ -1271,11 +1271,7 @@ export type Database = {
         Returns: Json
       }
       get_leaderboard: {
-        Args: {
-          p_game: Database["public"]["Enums"]["tcg_game"]
-          p_limit?: number
-          p_min_total?: number
-        }
+        Args: { p_game: string; p_limit?: number; p_min_total?: number }
         Returns: {
           avatar_url: string
           display_name: string
@@ -1297,14 +1293,10 @@ export type Database = {
         }[]
       }
       get_user_recent_matches: {
-        Args: {
-          p_game: Database["public"]["Enums"]["tcg_game"]
-          p_limit?: number
-          p_user_id: string
-        }
+        Args: { p_game: string; p_limit?: number; p_user_id: string }
         Returns: {
           event: Database["public"]["Enums"]["match_event"]
-          game: Database["public"]["Enums"]["tcg_game"]
+          game: string
           id: string
           my_deck: string
           opp_deck: string
@@ -1382,7 +1374,7 @@ export type Database = {
           display_name: string
           friendship_status: string
           id: string
-          primary_game: Database["public"]["Enums"]["tcg_game"]
+          primary_game: string
           username: string
         }[]
       }
@@ -1407,7 +1399,6 @@ export type Database = {
       match_event: "friendly" | "shop" | "official"
       match_result: "win" | "loss" | "draw"
       subscription_status: "active" | "canceled" | "expired" | "trialing"
-      tcg_game: "optcg" | "ptcg" | "dtcg"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1545,7 +1536,6 @@ export const Constants = {
       match_event: ["friendly", "shop", "official"],
       match_result: ["win", "loss", "draw"],
       subscription_status: ["active", "canceled", "expired", "trialing"],
-      tcg_game: ["optcg", "ptcg", "dtcg"],
     },
   },
 } as const
