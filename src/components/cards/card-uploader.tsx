@@ -296,6 +296,7 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
   // URL 가져오기 (공식 카드 페이지 → 폼 자동 채우기)
   const [importUrl, setImportUrl] = useState("");
   const [importGame, setImportGame] = useState<Game>("dtcg");
+  const [importPages, setImportPages] = useState(1);
   const [importing, setImporting] = useState(false);
 
   // Google Drive 연동 상태
@@ -748,44 +749,85 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
   };
 
   /** 공식 카드 페이지 URL → 서버 추출 → 표에 행 추가 (검수 후 등록) */
+  const importCardToRow = (c: any): CardRow => {
+    const row = emptyRow();
+    row.game = importGame;
+    if (c.code) row.code = String(c.code).toUpperCase();
+    if (c.set_code) row.set_code = String(c.set_code).toUpperCase();
+    if (c.name) row.name = String(c.name);
+    if (c.type && VALID_TYPES.includes(c.type as CardType)) row.type = c.type as CardType;
+    if (Array.isArray(c.colors)) row.colors = (c.colors as unknown[]).map(String);
+    if (c.cost != null) row.cost = Number(c.cost);
+    if (c.power != null) row.power = Number(c.power);
+    if (c.counter != null) row.counter = Number(c.counter);
+    if (c.attribute) row.attribute = String(c.attribute);
+    if (c.rarity) row.rarity = String(c.rarity).toUpperCase();
+    if (c.effect) row.effect = String(c.effect);
+    if (c.image_url) row.image_url = normalizeImageUrl(String(c.image_url));
+    return row;
+  };
+
+  /** URL → 서버 추출 → 표에 행 추가. pages>1이면 page 파라미터로 목록 페이지를 순회(대량 가져오기). */
   const importFromUrl = async () => {
-    const url = importUrl.trim();
-    if (!url) { toast.error("URL을 입력하세요"); return; }
+    const baseUrl = importUrl.trim();
+    if (!baseUrl) { toast.error("URL을 입력하세요"); return; }
+    const pages = Math.max(1, Math.min(50, Number(importPages) || 1));
     setImporting(true);
+    setProgress({ done: 0, total: pages });
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       if (!token) { toast.error("로그인이 필요합니다"); return; }
-      const res = await fetch("/api/card-import", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ url, game_hint: importGame }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || `가져오기 실패 (${res.status})`);
-      const cards: any[] = Array.isArray(json.cards) ? json.cards : [];
-      if (cards.length === 0) { toast.info("가져온 카드가 없습니다"); return; }
-      const newRows: CardRow[] = cards.map((c) => {
-        const row = emptyRow();
-        row.game = importGame;
-        if (c.code) row.code = String(c.code).toUpperCase();
-        if (c.set_code) row.set_code = String(c.set_code).toUpperCase();
-        if (c.name) row.name = String(c.name);
-        if (c.type && VALID_TYPES.includes(c.type as CardType)) row.type = c.type as CardType;
-        if (Array.isArray(c.colors)) row.colors = (c.colors as unknown[]).map(String);
-        if (c.cost != null) row.cost = Number(c.cost);
-        if (c.power != null) row.power = Number(c.power);
-        if (c.counter != null) row.counter = Number(c.counter);
-        if (c.attribute) row.attribute = String(c.attribute);
-        if (c.rarity) row.rarity = String(c.rarity).toUpperCase();
-        if (c.effect) row.effect = String(c.effect);
-        if (c.image_url) row.image_url = normalizeImageUrl(String(c.image_url));
-        return row;
-      });
-      setRows((prev) => [...prev, ...newRows]);
+
+      const collected: CardRow[] = [];
+      const seen = new Set<string>();
+      let lastPage = 0;
+      for (let p = 1; p <= pages; p++) {
+        // XE/Rhymix 등 목록은 page 파라미터를 사용 (단일이면 원본 URL 그대로)
+        let pageUrl = baseUrl;
+        if (pages > 1) {
+          try {
+            const u = new URL(baseUrl);
+            u.searchParams.set("page", String(p));
+            pageUrl = u.toString();
+          } catch { /* keep base */ }
+        }
+        let json: any;
+        try {
+          const res = await fetch("/api/card-import", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ url: pageUrl, game_hint: importGame }),
+          });
+          json = await res.json();
+          if (!res.ok) {
+            if (p === 1) throw new Error(json.error || `가져오기 실패 (${res.status})`);
+            break; // 이후 페이지 오류면 거기서 중단
+          }
+        } catch (e) {
+          if (p === 1) throw e;
+          break;
+        }
+        const cards: any[] = Array.isArray(json.cards) ? json.cards : [];
+        if (cards.length === 0) { lastPage = p; break; }
+        let added = 0;
+        for (const c of cards) {
+          const code = c.code ? String(c.code).toUpperCase() : "";
+          if (code && seen.has(code)) continue; // 페이지 간 중복 제거
+          if (code) seen.add(code);
+          collected.push(importCardToRow(c));
+          added++;
+        }
+        lastPage = p;
+        setProgress({ done: p, total: pages });
+        if (added === 0) break; // 새 카드 없음 → 마지막 페이지로 간주
+      }
+
+      if (collected.length === 0) { toast.info("가져온 카드가 없습니다"); return; }
+      setRows((prev) => [...prev, ...collected]);
       setDupChecked(false);
       setImportUrl("");
-      toast.success(`${newRows.length}건 가져옴 — 아래 표에서 검수 후 등록하세요. (출처 표기 필요)`);
+      toast.success(`${collected.length}건 가져옴 (${lastPage}페이지) — 아래 표에서 검수 후 등록하세요. (출처 표기 필요)`);
     } catch (e) {
       toast.error("가져오기 실패: " + (e as Error).message);
     } finally {
@@ -828,12 +870,29 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
                   onKeyDown={(e) => { if (e.key === "Enter") importFromUrl(); }}
                   disabled={importing}
                 />
+                <div className="flex items-center gap-1.5">
+                  <Label htmlFor="import-pages" className="whitespace-nowrap text-xs text-muted-foreground">페이지</Label>
+                  <Input
+                    id="import-pages"
+                    type="number"
+                    min={1}
+                    max={50}
+                    value={importPages}
+                    onChange={(e) => setImportPages(Math.max(1, Math.min(50, Number(e.target.value) || 1)))}
+                    disabled={importing}
+                    className="w-16"
+                  />
+                </div>
                 <Button onClick={importFromUrl} disabled={importing || !importUrl.trim()}>
-                  {importing ? "가져오는 중…" : "가져오기"}
+                  {importing ? `가져오는 중… (${progress.done}/${progress.total})` : "가져오기"}
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                ⚠️ 동적(JS)으로 로딩되는 목록 페이지는 자동 추출이 어려울 수 있어요. 그럴 땐 개별 카드 상세 페이지 URL을 사용하세요.
+                <b>목록 페이지</b>를 여러 장 한 번에 가져오려면 "페이지"를 2 이상으로 설정하세요(목록 URL에 page 파라미터를 붙여 순회, 중복 코드 자동 제거).
+                개별 카드 상세 URL이면 1로 두세요.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                ⚠️ 동적(JS)으로 로딩되는 페이지는 자동 추출이 어려울 수 있고, 봇 차단(403)·핫링크 차단 사이트도 있습니다.
                 추출 결과는 AI 기반이라 부정확할 수 있으니 등록 전 반드시 검수하세요.
               </p>
             </CardContent>
