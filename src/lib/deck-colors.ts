@@ -42,6 +42,21 @@ export const COLORS_BY_GAME: Record<Game, ColorOption[]> = {
   ],
 };
 
+// 등록되지 않은 게임용 기본 색상 팔레트
+export const DEFAULT_COLORS: ColorOption[] = [
+  { id: "red", label: "적", hex: "#dc2626" },
+  { id: "blue", label: "청", hex: "#2563eb" },
+  { id: "yellow", label: "황", hex: "#eab308" },
+  { id: "green", label: "녹", hex: "#16a34a" },
+  { id: "black", label: "흑", hex: "#1f2937" },
+  { id: "purple", label: "자", hex: "#7c3aed" },
+  { id: "white", label: "백", hex: "#f3f4f6" },
+];
+
+export function colorsOf(game: Game): ColorOption[] {
+  return COLORS_BY_GAME[game] ?? DEFAULT_COLORS;
+}
+
 const COLOR_TRANSLATIONS: Record<string, Record<string, string>> = {
   red: { ko: "적", en: "Red", ja: "赤" },
   blue: { ko: "청", en: "Blue", ja: "青" },
@@ -63,28 +78,36 @@ const COLOR_TRANSLATIONS: Record<string, Record<string, string>> = {
   normal: { ko: "노멀", en: "Normal", ja: "ノーマル" },
 };
 
-// Games that support a "리더" concept
+// Games that support a "리더" concept (등록 외 게임은 false)
 export const HAS_LEADER: Record<Game, boolean> = {
   optcg: true,
   ptcg: false,
   dtcg: false,
 };
 
-// Games requiring at least 2 colors selected
+// Games requiring at least 2 colors selected (등록 외 게임은 false)
 export const REQUIRES_MULTI_COLOR: Record<Game, boolean> = {
   optcg: false,
   ptcg: false,
   dtcg: false,
 };
 
+export function hasLeader(game: Game): boolean {
+  return HAS_LEADER[game] ?? false;
+}
+
+export function requiresMultiColor(game: Game): boolean {
+  return REQUIRES_MULTI_COLOR[game] ?? false;
+}
+
 export function colorLabel(game: Game, id: string, lang: string = "ko"): string {
   const trans = COLOR_TRANSLATIONS[id];
   if (trans) {
     return trans[lang] || trans["ko"] || id;
   }
-  return COLORS_BY_GAME[game].find((c) => c.id === id)?.label ?? id;
+  return colorsOf(game).find((c) => c.id === id)?.label ?? id;
 }
 
 export function colorHex(game: Game, id: string): string {
-  return COLORS_BY_GAME[game].find((c) => c.id === id)?.hex ?? "#9ca3af";
+  return colorsOf(game).find((c) => c.id === id)?.hex ?? "#9ca3af";
 }
