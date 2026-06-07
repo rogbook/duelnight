@@ -1,6 +1,6 @@
 import type { Database } from "@/integrations/supabase/types";
 
-export type Game = Database["public"]["Enums"]["tcg_game"];
+export type Game = string;
 
 export type CardTypeOption = { id: string; label: string };
 

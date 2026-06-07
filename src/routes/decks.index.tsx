@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { DeckDialog } from "@/components/decks/deck-dialog";
 import { colorHex, colorLabel, type Game } from "@/lib/deck-colors";
 import type { Tables } from "@/integrations/supabase/types";
-import { useI18n } from "@/i18n/language-context";
+import { useI18n, type TranslationKey } from "@/i18n/language-context";
 
 type Deck = Tables<"decks">;
 
@@ -146,7 +146,7 @@ function DecksPage() {
                     {d.name}
                   </Link>
                   <p className="mt-1 text-[11px] text-muted-foreground">
-                    {t(`matches.${d.game}`)}
+                    {t(`matches.${d.game}` as TranslationKey)}
                     {d.leader ? ` · ${d.leader}` : ""}
                   </p>
                   {d.colors && d.colors.length > 0 && (

@@ -75,7 +75,7 @@ import {
 import type { Database } from "@/integrations/supabase/types";
 import { useI18n } from "@/i18n/language-context";
 
-type Game = Database["public"]["Enums"]["tcg_game"];
+type Game = string;
 type EventT = Database["public"]["Enums"]["match_event"];
 type Result = Database["public"]["Enums"]["match_result"];
 type Period = "7" | "30" | "90" | "all";

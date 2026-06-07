@@ -21,7 +21,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { useI18n, type TranslationKey } from "@/i18n/language-context";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"];
-type Game = Database["public"]["Enums"]["tcg_game"];
+type Game = string;
 
 const GAMES: { id: Game; labelKey: TranslationKey }[] = [
   { id: "optcg", labelKey: "matches.optcg" },

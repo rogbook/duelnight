@@ -303,6 +303,7 @@ function EditCardDialog({
   card, onClose, onSaved,
 }: { card: CardRow; onClose: () => void; onSaved: () => void }) {
   const { sets } = useUniqueSets();
+  const { games, labelOf } = useGames();
   const [isManualSet, setIsManualSet] = useState(false);
   const displaySets = Array.from(new Set([card.set_code, ...sets])).filter(Boolean).sort((a, b) => a.localeCompare(b));
 

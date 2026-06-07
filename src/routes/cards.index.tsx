@@ -42,7 +42,7 @@ type Illustration = Database["public"]["Tables"]["card_illustrations"]["Row"];
 
 const PAGE_SIZE = 24;
 
-type Game = Database["public"]["Enums"]["tcg_game"];
+type Game = string;
 
 export const Route = createFileRoute("/cards/")({
   head: () => {
