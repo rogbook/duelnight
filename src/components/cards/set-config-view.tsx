@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, Save, FolderOpen, ImageOff, ArrowRight, Trash2, Plus, Gamepad2 } from "lucide-react";
+import { Loader2, Save, FolderOpen, ImageOff, ArrowRight, Trash2, Plus, Gamepad2, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,6 +42,9 @@ export function SetConfigView() {
   const [newSetName, setNewSetName] = useState("");
   const [addingSet, setAddingSet] = useState(false);
   const [deletingSet, setDeletingSet] = useState(false);
+  const [renaming, setRenaming] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
+  const [savingRename, setSavingRename] = useState(false);
 
   // 게임 추가 다이얼로그 상태
   const [gameDialogOpen, setGameDialogOpen] = useState(false);
@@ -131,6 +134,52 @@ export function SetConfigView() {
       toast.error("세트 추가 실패: " + (e as Error).message);
     } finally {
       setAddingSet(false);
+    }
+  };
+
+  // 세트 이름 수정
+  const handleRenameSet = async () => {
+    const newName = renameValue.trim();
+    if (!activeSet || activeSet === "미분류") {
+      toast.error("수정할 수 없는 세트입니다.");
+      return;
+    }
+    if (!newName) {
+      toast.error("세트 이름을 입력해 주세요.");
+      return;
+    }
+    if (newName === activeSet) {
+      setRenaming(false);
+      return;
+    }
+    if (sets.some((s) => s.toLowerCase() === newName.toLowerCase())) {
+      toast.error("이 게임에 이미 존재하는 세트 이름입니다.");
+      return;
+    }
+    setSavingRename(true);
+    try {
+      // 1) card_sets 이름 변경
+      const { error: setErr } = await supabase
+        .from("card_sets")
+        .update({ name: newName })
+        .eq("name", activeSet)
+        .eq("game", activeGame);
+      if (setErr) throw setErr;
+      // 2) 소속 카드들의 set_code를 새 이름으로 갱신
+      const { error: cardErr } = await supabase
+        .from("cards")
+        .update({ set_code: newName })
+        .eq("set_code", activeSet);
+      if (cardErr) throw cardErr;
+
+      toast.success(`세트 이름이 [${newName}](으)로 변경되었습니다.`);
+      setRenaming(false);
+      await refreshSets();
+      setActiveSet(newName);
+    } catch (e) {
+      toast.error("세트 이름 변경 실패: " + (e as Error).message);
+    } finally {
+      setSavingRename(false);
     }
   };
 
@@ -428,27 +477,80 @@ export function SetConfigView() {
           <CardHeader className="pb-3 border-b border-border/60 flex flex-row flex-wrap items-center justify-between gap-2">
             <div>
               <CardTitle className="text-base font-bold text-foreground/90 flex items-center gap-2">
-                <Badge
-                  variant="outline"
-                  className="px-2 py-0.5 text-xs bg-primary/10 text-primary border-primary/20 font-bold"
-                >
-                  {activeSet || "선택된 세트 없음"}
-                </Badge>
-                {activeSet && activeSet !== "미분류" && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleDeleteSet}
-                    disabled={deletingSet}
-                    className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10 hover:text-destructive rounded-full shrink-0"
-                    title="세트 삭제"
-                  >
-                    {deletingSet ? (
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-4 w-4" />
+                {renaming ? (
+                  <span className="flex items-center gap-1">
+                    <Input
+                      value={renameValue}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleRenameSet();
+                        if (e.key === "Escape") setRenaming(false);
+                      }}
+                      autoFocus
+                      disabled={savingRename}
+                      placeholder="세트명"
+                      className="h-7 w-64 text-xs"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRenameSet}
+                      disabled={savingRename}
+                      className="h-7 w-7 p-0 text-primary hover:bg-primary/10 rounded-full shrink-0"
+                      title="저장"
+                    >
+                      {savingRename ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-4 w-4" />}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setRenaming(false)}
+                      disabled={savingRename}
+                      className="h-7 w-7 p-0 text-muted-foreground hover:bg-accent rounded-full shrink-0"
+                      title="취소"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </span>
+                ) : (
+                  <>
+                    <Badge
+                      variant="outline"
+                      className="px-2 py-0.5 text-xs bg-primary/10 text-primary border-primary/20 font-bold"
+                    >
+                      {activeSet || "선택된 세트 없음"}
+                    </Badge>
+                    {activeSet && activeSet !== "미분류" && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setRenameValue(activeSet);
+                            setRenaming(true);
+                          }}
+                          className="h-7 w-7 p-0 text-muted-foreground hover:bg-accent hover:text-foreground rounded-full shrink-0"
+                          title="세트 이름 수정"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleDeleteSet}
+                          disabled={deletingSet}
+                          className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10 hover:text-destructive rounded-full shrink-0"
+                          title="세트 삭제"
+                        >
+                          {deletingSet ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </>
                     )}
-                  </Button>
+                  </>
                 )}
                 <span className="text-xs font-semibold text-muted-foreground/80">
                   소속 카드 ({cards.length}장)
