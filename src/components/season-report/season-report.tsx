@@ -11,6 +11,7 @@ import { computeStats, computeStreak, fmtPct, type Match } from "@/lib/match-sta
 import { getTier, getTopPercentile } from "@/lib/tier";
 import { getSeasonLabel } from "@/lib/season";
 import { useI18n, type TranslationKey } from "@/i18n/language-context";
+import { useGames } from "@/hooks/use-games";
 
 export interface SeasonReportProps {
   game: string;
@@ -48,6 +49,7 @@ export function SeasonReport({
   mode = "me",
 }: SeasonReportProps) {
   const { t } = useI18n();
+  const { labelOf } = useGames();
   const stats = computeStats(matches);
   const streak = computeStreak(matches);
   const tier = getTier(rating);
@@ -105,7 +107,7 @@ export function SeasonReport({
             {username && <span className="text-xs text-muted-foreground">@{username}</span>}
           </div>
           <p className="text-xs text-muted-foreground">
-            {t(`matches.${game}` as TranslationKey)} · {getSeasonLabel()}
+            {labelOf(game)} · {getSeasonLabel()}
           </p>
         </div>
         <div className="text-right">

@@ -7,7 +7,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { GAME_LABEL, fmtPctVal } from "@/lib/match-stats";
+import { fmtPctVal } from "@/lib/match-stats";
+import { useGames } from "@/hooks/use-games";
 
 type Game = string;
 
@@ -35,6 +36,7 @@ export function OpponentDetailDialog({
     opponent_user_id: string | null;
   }>;
 }) {
+  const { labelOf } = useGames();
   // Profile if userId provided
   const { data: profile } = useQuery({
     queryKey: ["opp-profile", opponent?.userId],
@@ -129,7 +131,7 @@ export function OpponentDetailDialog({
                       className="rounded-md border border-border bg-card p-2 text-center"
                     >
                       <p className="text-[10px] text-muted-foreground">
-                        {GAME_LABEL[r.game]}
+                        {labelOf(r.game)}
                       </p>
                       <p className="text-lg font-semibold tabular-nums">{r.rating}</p>
                       <p className="text-[10px] text-muted-foreground">
@@ -161,7 +163,7 @@ export function OpponentDetailDialog({
                         )}
                       </span>
                       <span className="text-[10px] text-muted-foreground">
-                        {GAME_LABEL[d.game]}
+                        {labelOf(d.game)}
                       </span>
                     </li>
                   ))}
@@ -192,7 +194,7 @@ export function OpponentDetailDialog({
                         </p>
                         <p className="text-[10px] text-muted-foreground">
                           {new Date(m.played_at).toLocaleDateString("ko-KR")} ·{" "}
-                          {m.went_first ? "선공" : "후공"} · {GAME_LABEL[m.game]}
+                          {m.went_first ? "선공" : "후공"} · {labelOf(m.game)}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">

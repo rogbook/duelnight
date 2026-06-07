@@ -630,6 +630,7 @@ function RecentList({
   isMobile?: boolean;
 }) {
   const { t, language } = useI18n();
+  const { labelOf } = useGames();
   const [editing, setEditing] = useState<Match | null>(null);
   const [viewing, setViewing] = useState<Match | null>(null);
   const [oppSelected, setOppSelected] = useState<{ name: string; userId?: string | null; game: Game } | null>(null);
@@ -748,7 +749,7 @@ function RecentList({
                   <td className="px-3 py-2 text-muted-foreground">
                     {new Date(m.played_at).toLocaleDateString(localeStr)}
                   </td>
-                  <td className="px-3 py-2">{t(`matches.${m.game}` as any)}</td>
+                  <td className="px-3 py-2">{labelOf(m.game)}</td>
                   <td className="px-3 py-2 text-muted-foreground">
                     {t(`matches.event${m.event.charAt(0).toUpperCase() + m.event.slice(1)}` as any)}
                   </td>
@@ -921,6 +922,7 @@ function ViewMatchDialog({
   onDelete: (id: string) => void;
 }) {
   const { t, language } = useI18n();
+  const { labelOf } = useGames();
   const localeStr = language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US";
 
   return (
@@ -936,7 +938,7 @@ function ViewMatchDialog({
             </DialogHeader>
             <dl className="grid grid-cols-3 gap-x-3 gap-y-3 text-sm">
               <Row label={t("matches.datetime")} value={new Date(match.played_at).toLocaleString(localeStr)} />
-              <Row label={t("matches.game")} value={t(`matches.${match.game}` as any)} />
+              <Row label={t("matches.game")} value={labelOf(match.game)} />
               <Row label={t("matches.event")} value={t(`matches.event${match.event.charAt(0).toUpperCase() + match.event.slice(1)}` as any)} />
               <Row label={t("matches.myDeck")} value={match.my_deck} />
               <div>
@@ -2431,6 +2433,7 @@ function TaggedAsOpponentSection({ onSaved }: { onSaved: () => void }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { t, language } = useI18n();
+  const { labelOf } = useGames();
 
   const { data: rows = [], refetch } = useQuery({
     queryKey: ["matches-as-opponent", user?.id],
@@ -2489,7 +2492,7 @@ function TaggedAsOpponentSection({ onSaved }: { onSaved: () => void }) {
                 <td className="px-3 py-2 text-muted-foreground">
                   {new Date(m.played_at).toLocaleDateString(language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US")}
                 </td>
-                <td className="px-3 py-2">{t(`matches.${m.game}` as any)}</td>
+                <td className="px-3 py-2">{labelOf(m.game)}</td>
                 <td className="px-3 py-2">{m.my_deck}</td>
                 <td className="px-3 py-2 text-muted-foreground">
                   {m.opp_leader || m.opp_deck || (

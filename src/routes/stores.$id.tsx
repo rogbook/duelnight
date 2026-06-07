@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { GAME_LABEL } from "@/lib/match-stats";
+import { useGames } from "@/hooks/use-games";
 import type { Database } from "@/integrations/supabase/types";
 import { useI18n } from "@/i18n/language-context";
 import { buildMapUrl, useMapProvider, MAP_PROVIDER_LABELS, type MapProvider } from "./stores.index";
@@ -105,6 +105,7 @@ export const Route = createFileRoute("/stores/$id")({
 });
 
 function StoreDetailPage() {
+  const { labelOf } = useGames();
   const { store } = Route.useLoaderData();
   const { user, loading: authLoading } = useAuth();
   const qc = useQueryClient();
@@ -192,7 +193,7 @@ function StoreDetailPage() {
                   key={g}
                   className="rounded bg-muted px-2 py-0.5 text-xs font-medium text-foreground/80"
                 >
-                  {GAME_LABEL[g]}
+                  {labelOf(g)}
                 </span>
               ))
             )}

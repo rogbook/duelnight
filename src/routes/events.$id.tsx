@@ -9,6 +9,7 @@ import { GAME_LABEL } from "@/lib/match-stats";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 import { useI18n } from "@/i18n/language-context";
+import { useGames } from "@/hooks/use-games";
 
 type Event = Database["public"]["Tables"]["events"]["Row"];
 
@@ -114,6 +115,7 @@ export const Route = createFileRoute("/events/$id")({
 });
 
 function EventDetailPage() {
+  const { labelOf } = useGames();
   const { event } = Route.useLoaderData() as { event: Event };
   const { user } = useAuth();
   const { t, language } = useI18n();
@@ -174,7 +176,7 @@ function EventDetailPage() {
       <div className="mt-4 rounded-lg border border-border bg-card p-6">
         <div className="flex items-center gap-2">
           <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-            {GAME_LABEL[event.game]}
+            {labelOf(event.game)}
           </span>
           <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-secondary-foreground">
             {kindLabels[event.kind] || event.kind}

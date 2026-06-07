@@ -24,6 +24,7 @@ import { colorHex, colorLabel, type Game } from "@/lib/deck-colors";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 import { useI18n, type TranslationKey } from "@/i18n/language-context";
+import { useGames } from "@/hooks/use-games";
 
 type Deck = Tables<"decks">;
 type Profile = Tables<"profiles">;
@@ -101,6 +102,7 @@ function DeckDetailPage() {
 
   const [zoomCard, setZoomCard] = useState<{ url: string; name: string } | null>(null);
   const { t, language } = useI18n();
+  const { labelOf } = useGames();
 
   // ⚠️ 모든 훅은 조건부 return 이전에 호출되어야 함 (React Hooks rule).
 
@@ -363,7 +365,7 @@ function DeckDetailPage() {
               <div className="flex h-64 w-44 flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-background/50 text-muted-foreground">
                 <Layers className="h-10 w-10 opacity-20" />
                 <p className="mt-2 text-[10px] uppercase tracking-widest font-bold">
-                  {t(`matches.${deck.game}` as TranslationKey)}
+                  {labelOf(deck.game)}
                 </p>
               </div>
             )}
@@ -374,7 +376,7 @@ function DeckDetailPage() {
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-1">
                 <p className="text-xs font-bold text-primary uppercase tracking-tighter">
-                  {t(`matches.${deck.game}` as TranslationKey)}
+                  {labelOf(deck.game)}
                 </p>
                 <h1 className="text-2xl md:text-3xl font-black tracking-tight">{deck.name}</h1>
                 <div className="mt-3 flex flex-wrap gap-1.5">
@@ -517,7 +519,7 @@ function DeckDetailPage() {
                 </h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {t("decks.summaryDesc")
-                    .replace("{game}", t(`matches.${deck.game}` as TranslationKey))
+                    .replace("{game}", labelOf(deck.game))
                     .replace("{total}", String(totalCards))
                     .replace("{status}", deck.is_public ? t("decks.public") : t("decks.private"))}
                 </p>

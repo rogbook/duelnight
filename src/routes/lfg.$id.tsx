@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { GAME_LABEL } from "@/lib/match-stats";
 import type { Database } from "@/integrations/supabase/types";
 import { useI18n } from "@/i18n/language-context";
+import { useGames } from "@/hooks/use-games";
 
 type Post = Database["public"]["Tables"]["lfg_posts"]["Row"];
 type Profile = { display_name: string | null; username: string | null };
@@ -117,6 +118,7 @@ export const Route = createFileRoute("/lfg/$id")({
 });
 
 function LfgDetailPage() {
+  const { labelOf } = useGames();
   const { post: initialPost, profile } = Route.useLoaderData();
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -230,7 +232,7 @@ function LfgDetailPage() {
       <div className="mt-4 rounded-lg border border-border bg-card p-6">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-            {GAME_LABEL[post.game]}
+            {labelOf(post.game)}
           </span>
           <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
             {categoryLabels[post.category] ?? post.category}
