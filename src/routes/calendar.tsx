@@ -340,6 +340,7 @@ function CalendarPage() {
 function NewEventDialog({ onCreated }: { onCreated: () => void }) {
   const { user } = useAuth();
   const { t } = useI18n();
+  const { games, labelOf } = useGames();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
@@ -439,9 +440,9 @@ function NewEventDialog({ onCreated }: { onCreated: () => void }) {
               >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="optcg">{t("matches.optcg")}</SelectItem>
-                  <SelectItem value="ptcg">{t("matches.ptcg")}</SelectItem>
-                  <SelectItem value="dtcg">{t("matches.dtcg")}</SelectItem>
+                  {games.map((g) => (
+                    <SelectItem key={g.code} value={g.code}>{labelOf(g.code)}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

@@ -1222,6 +1222,7 @@ function NewMatchDialog({
 }) {
   const { user } = useAuth();
   const { t } = useI18n();
+  const { games, labelOf } = useGames();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [keepRaw, setKeepRaw] = useState(false);
@@ -1411,9 +1412,9 @@ function NewMatchDialog({
               <Select value={form.game} onValueChange={(v) => setForm({ ...form, game: v as Game, deck_id: "", opponent_deck_id: "" })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="optcg">{t("matches.optcg")}</SelectItem>
-                  <SelectItem value="ptcg">{t("matches.ptcg")}</SelectItem>
-                  <SelectItem value="dtcg">{t("matches.dtcg")}</SelectItem>
+                  {games.map((g) => (
+                    <SelectItem key={g.code} value={g.code}>{labelOf(g.code)}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

@@ -38,6 +38,7 @@ import {
 } from "@/lib/deck-colors";
 import type { Tables } from "@/integrations/supabase/types";
 import { useI18n } from "@/i18n/language-context";
+import { useGames } from "@/hooks/use-games";
 
 
 type Deck = Tables<"decks">;
@@ -146,6 +147,7 @@ interface DeckDialogProps {
 }
 
 export function DeckDialog({ mode, deck, onSaved, trigger }: DeckDialogProps) {
+  const { games: gameOptions, labelOf } = useGames();
   const qc = useQueryClient();
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
@@ -259,9 +261,9 @@ export function DeckDialog({ mode, deck, onSaved, trigger }: DeckDialogProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="optcg">{t("matches.optcg")}</SelectItem>
-                <SelectItem value="dtcg">{t("matches.dtcg")}</SelectItem>
-                <SelectItem value="ptcg">{t("matches.ptcg")}</SelectItem>
+                {gameOptions.map((g) => (
+                  <SelectItem key={g.code} value={g.code}>{labelOf(g.code)}</SelectItem>
+                ))}
               </SelectContent>
 
             </Select>

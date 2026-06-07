@@ -20,6 +20,7 @@ import {
 import { toast } from "sonner";
 import type { Tables, Database } from "@/integrations/supabase/types";
 import { useI18n } from "@/i18n/language-context";
+import { useGames } from "@/hooks/use-games";
 
 type Game = string;
 type Profile = Tables<"profiles">;
@@ -51,6 +52,7 @@ export const Route = createFileRoute("/profile")({
 });
 
 function ProfilePage() {
+  const { games: gameOptions, labelOf } = useGames();
   const { user, loading } = useAuth();
   const qc = useQueryClient();
   const { t } = useI18n();
@@ -203,9 +205,9 @@ function ProfilePage() {
             <SelectTrigger id="primary_game"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="none">{t("profile.noPrimaryGame")}</SelectItem>
-              <SelectItem value="optcg">{t("matches.optcg")}</SelectItem>
-              <SelectItem value="ptcg">{t("matches.ptcg")}</SelectItem>
-              <SelectItem value="dtcg">{t("matches.dtcg")}</SelectItem>
+              {gameOptions.map((g) => (
+                <SelectItem key={g.code} value={g.code}>{labelOf(g.code)}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
