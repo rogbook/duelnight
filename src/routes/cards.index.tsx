@@ -455,6 +455,10 @@ function CardDetailDialog({
     return type;
   };
 
+  // 디지몬 전용 표시 (확장 필드)
+  const isDtcg = card?.game === "dtcg";
+  const ex = (card?.extra ?? {}) as Record<string, string>;
+
   const handleDelete = async () => {
     if (!card) return;
     setDeleting(true);
@@ -629,20 +633,34 @@ function CardDetailDialog({
               </div>
               <div className="space-y-2 text-sm">
                 <div className="flex flex-wrap gap-1">
-                  <Badge>{getCardTypeLabel(card.type)}</Badge>
+                  <Badge>{isDtcg && ex.category ? ex.category : getCardTypeLabel(card.type)}</Badge>
+                  {isDtcg && ex.form && <Badge>{ex.form}</Badge>}
                   {card.colors.map((c) => (
                     <Badge key={c}>{colorLabel(card.game as Game, c, language)}</Badge>
                   ))}
                   {card.rarity && <Badge>{card.rarity}</Badge>}
                 </div>
-                <Stat label={card.type === "leader" ? t("cards.life") : t("cards.cost")} value={card.cost} />
-                <Stat label={t("cards.power")} value={card.power?.toLocaleString()} />
-                <Stat label={t("cards.counter")} value={card.counter?.toLocaleString()} />
-                <Stat label={t("cards.attribute")} value={card.attribute} />
-                <Stat label={t("cards.set")} value={card.set_code} />
+                {isDtcg ? (
+                  <>
+                    <Stat label="DP" value={card.power?.toLocaleString()} />
+                    <Stat label="등장 코스트" value={card.cost} />
+                    <Stat label="진화 코스트 1" value={ex.evo_cost_1} />
+                    <Stat label="진화 코스트 2" value={ex.evo_cost_2} />
+                    <Stat label={t("cards.attribute")} value={card.attribute} />
+                    <Stat label={t("cards.set")} value={card.set_code} />
+                  </>
+                ) : (
+                  <>
+                    <Stat label={card.type === "leader" ? t("cards.life") : t("cards.cost")} value={card.cost} />
+                    <Stat label={t("cards.power")} value={card.power?.toLocaleString()} />
+                    <Stat label={t("cards.counter")} value={card.counter?.toLocaleString()} />
+                    <Stat label={t("cards.attribute")} value={card.attribute} />
+                    <Stat label={t("cards.set")} value={card.set_code} />
+                  </>
+                )}
                 {card.traits && card.traits.length > 0 && (
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground">{t("cards.traits")}</p>
+                    <p className="text-xs font-semibold text-muted-foreground">{isDtcg ? "유형" : t("cards.traits")}</p>
                     <div className="mt-1 flex flex-wrap gap-1">
                       {card.traits.map((t) => (
                         <Badge key={t}>{t}</Badge>
@@ -650,7 +668,22 @@ function CardDetailDialog({
                     </div>
                   </div>
                 )}
-                {card.effect && (
+                {isDtcg && (ex.text_top || ex.text_bottom) ? (
+                  <>
+                    {ex.text_top && (
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground">상단 텍스트</p>
+                        <p className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-2 text-sm leading-relaxed">{ex.text_top}</p>
+                      </div>
+                    )}
+                    {ex.text_bottom && (
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground">하단 텍스트</p>
+                        <p className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-2 text-sm leading-relaxed">{ex.text_bottom}</p>
+                      </div>
+                    )}
+                  </>
+                ) : card.effect ? (
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground">
                       {t("cards.effect")}
@@ -659,7 +692,7 @@ function CardDetailDialog({
                       {card.effect}
                     </p>
                   </div>
-                )}
+                ) : null}
               </div>
             </div>
 
