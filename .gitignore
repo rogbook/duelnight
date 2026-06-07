@@ -33,3 +33,7 @@ dist-ssr
 
 # Local Backups
 backups/
+
+# Claude configs
+.claude/
+
