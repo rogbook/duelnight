@@ -1199,6 +1199,7 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
                     <th className="px-2 py-2 w-20">파워</th>
                     <th className="px-2 py-2 w-20">카운터</th>
                     <th className="px-2 py-2">레어도</th>
+                    <th className="px-2 py-2">디지몬</th>
                     <th className="px-2 py-2 w-10"></th>
                   </tr>
                 </thead>
@@ -1279,6 +1280,13 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
                       <td className="px-1 py-1"><Input value={r.power ?? ""} onChange={e => updateRow(i, { power: num(e.target.value) })} className="h-7 text-xs" /></td>
                       <td className="px-1 py-1"><Input value={r.counter ?? ""} onChange={e => updateRow(i, { counter: num(e.target.value) })} className="h-7 text-xs" /></td>
                       <td className="px-1 py-1"><Input value={r.rarity ?? ""} onChange={e => updateRow(i, { rarity: e.target.value || null })} className={`h-7 text-xs w-16 ${fieldErr("rarity") ? errCls : ""}`} /></td>
+                      <td className="px-1 py-1 text-[10px] text-muted-foreground">
+                        {r.game === "dtcg" && r.extra ? (() => {
+                          const e = r.extra as Record<string, string>;
+                          const parts = [e.category, e.form, e.evo_cost_1 && `진화1:${e.evo_cost_1}`, e.evo_cost_2 && `진화2:${e.evo_cost_2}`].filter(Boolean) as string[];
+                          return parts.length ? <span title={parts.join(" · ")} className="line-clamp-2 max-w-[120px]">{parts.join(" · ")}</span> : <span>—</span>;
+                        })() : ""}
+                      </td>
                       <td className="px-1 py-1">
                         <div className="flex gap-0.5">
                           <Button

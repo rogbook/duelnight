@@ -29,6 +29,13 @@ const TYPE_LABEL: Record<CardType, string> = {
 const TYPES: CardType[] = ["leader", "character", "event", "stage", "don"];
 const GAMES: Game[] = ["optcg", "ptcg", "dtcg"];
 
+// 디지몬 전용
+const DIGIMON_CATEGORIES = ["디지타마", "디지몬", "옵션", "테이머", "듀얼"];
+const DIGIMON_FORMS = ["유년기", "성장기", "성숙기", "완전체", "궁극체"];
+const DIGIMON_CATEGORY_TYPE: Record<string, CardType> = {
+  디지타마: "stage", 디지몬: "character", 옵션: "event", 테이머: "character", 듀얼: "character",
+};
+
 export function EditCardDialog({
   card, onClose, onSaved,
 }: { card: CardRow; onClose: () => void; onSaved: () => void }) {
@@ -36,6 +43,7 @@ export function EditCardDialog({
   const [isManualSet, setIsManualSet] = useState(false);
   const displaySets = Array.from(new Set([card.set_code, ...sets])).filter(Boolean).sort((a, b) => a.localeCompare(b));
 
+  const ex0 = (card.extra ?? {}) as Record<string, string>;
   const [form, setForm] = useState({
     code: card.code,
     name: card.name,
@@ -51,6 +59,13 @@ export function EditCardDialog({
     effect: card.effect ?? "",
     image_url: card.image_url ?? "",
     traits: (card.traits ?? []).join(", "),
+    // 디지몬 전용
+    category: ex0.category ?? "",
+    formStage: ex0.form ?? "",
+    evo_cost_1: ex0.evo_cost_1 ?? "",
+    evo_cost_2: ex0.evo_cost_2 ?? "",
+    text_top: ex0.text_top ?? "",
+    text_bottom: ex0.text_bottom ?? "",
   });
   const [extraImages, setExtraImages] = useState<string[]>([]);
   const [initialAltImages, setInitialAltImages] = useState<string[]>([]);
@@ -107,23 +122,48 @@ export function EditCardDialog({
       }
 
 
+      // 디지몬 규칙: 종류→type 매핑, 상단/하단→effect 결합, extra 저장, 카운터 제거
+      const isDtcg = form.game === "dtcg";
+      let typeToSave = form.type;
+      let effectToSave = form.effect.trim() || null;
+      let counterToSave = num(form.counter);
+      let extraPayload: Record<string, string> | null = null;
+      if (isDtcg) {
+        const clean: Record<string, string> = {};
+        const entries: Record<string, string> = {
+          category: form.category, form: form.formStage,
+          evo_cost_1: form.evo_cost_1, evo_cost_2: form.evo_cost_2,
+          text_top: form.text_top, text_bottom: form.text_bottom,
+        };
+        for (const [k, v] of Object.entries(entries)) {
+          if (v && v.trim()) clean[k] = v.trim();
+        }
+        extraPayload = Object.keys(clean).length ? clean : null;
+        if (form.category && DIGIMON_CATEGORY_TYPE[form.category]) typeToSave = DIGIMON_CATEGORY_TYPE[form.category];
+        const top = form.text_top.trim();
+        const bottom = form.text_bottom.trim();
+        effectToSave = [top, bottom].filter(Boolean).join("\n\n") || null;
+        counterToSave = null;
+      }
+
       const { error } = await supabase
         .from("cards")
         .update({
           code: newCode,
           name: form.name.trim(),
           game: form.game,
-          type: form.type,
+          type: typeToSave,
           set_code: form.set_code.trim(),
           colors,
           cost: num(form.cost),
           power: num(form.power),
-          counter: num(form.counter),
+          counter: counterToSave,
           attribute: form.attribute.trim() || null,
           rarity: form.rarity.trim() || null,
-          effect: form.effect.trim() || null,
+          effect: effectToSave,
           image_url: normalizeImageUrl(form.image_url.trim()) || null,
           traits: Array.from(new Set(form.traits.split(/[|,;/]/).map((s) => s.trim()).filter(Boolean))),
+          ...(isDtcg ? { extra: extraPayload } : {}),
         })
         .eq("id", card.id);
       if (error) throw error;
@@ -211,15 +251,34 @@ export function EditCardDialog({
               </SelectContent>
             </Select>
           </div>
-          <div>
-            <Label className="text-xs">종류</Label>
-            <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v as CardType })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {TYPES.map((t) => <SelectItem key={t} value={t}>{TYPE_LABEL[t]}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+          {form.game === "dtcg" ? (
+            <>
+              <div>
+                <Label className="text-xs">종류</Label>
+                <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+                  <SelectTrigger><SelectValue placeholder="종류 선택" /></SelectTrigger>
+                  <SelectContent>{DIGIMON_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">형태</Label>
+                <Select value={form.formStage} onValueChange={(v) => setForm({ ...form, formStage: v })}>
+                  <SelectTrigger><SelectValue placeholder="형태 선택" /></SelectTrigger>
+                  <SelectContent>{DIGIMON_FORMS.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </>
+          ) : (
+            <div>
+              <Label className="text-xs">종류</Label>
+              <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v as CardType })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {TYPES.map((t) => <SelectItem key={t} value={t}>{TYPE_LABEL[t]}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div>
             <Label className="text-xs">카드 코드 *</Label>
             <Input
@@ -286,22 +345,49 @@ export function EditCardDialog({
             <Label className="text-xs">색상 (쉼표 구분)</Label>
             <Input value={form.colors} onChange={(e) => setForm({ ...form, colors: e.target.value })} placeholder="red, blue" />
           </div>
-          <div>
-            <Label className="text-xs">비용</Label>
-            <Input type="number" value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} />
-          </div>
-          <div>
-            <Label className="text-xs">파워</Label>
-            <Input type="number" value={form.power} onChange={(e) => setForm({ ...form, power: e.target.value })} />
-          </div>
-          <div>
-            <Label className="text-xs">카운터</Label>
-            <Input type="number" value={form.counter} onChange={(e) => setForm({ ...form, counter: e.target.value })} />
-          </div>
-          <div>
-            <Label className="text-xs">속성</Label>
-            <Input value={form.attribute} onChange={(e) => setForm({ ...form, attribute: e.target.value })} />
-          </div>
+          {form.game === "dtcg" ? (
+            <>
+              <div>
+                <Label className="text-xs">DP</Label>
+                <Input type="number" value={form.power} onChange={(e) => setForm({ ...form, power: e.target.value })} />
+              </div>
+              <div>
+                <Label className="text-xs">등장 코스트</Label>
+                <Input type="number" value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} />
+              </div>
+              <div>
+                <Label className="text-xs">진화 코스트 1</Label>
+                <Input value={form.evo_cost_1} onChange={(e) => setForm({ ...form, evo_cost_1: e.target.value })} placeholder="예: Lv.3" />
+              </div>
+              <div>
+                <Label className="text-xs">진화 코스트 2</Label>
+                <Input value={form.evo_cost_2} onChange={(e) => setForm({ ...form, evo_cost_2: e.target.value })} placeholder="예: Lv.4 / -" />
+              </div>
+              <div>
+                <Label className="text-xs">속성</Label>
+                <Input value={form.attribute} onChange={(e) => setForm({ ...form, attribute: e.target.value })} placeholder="백신종/데이터종/바이러스종" />
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <Label className="text-xs">비용</Label>
+                <Input type="number" value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} />
+              </div>
+              <div>
+                <Label className="text-xs">파워</Label>
+                <Input type="number" value={form.power} onChange={(e) => setForm({ ...form, power: e.target.value })} />
+              </div>
+              <div>
+                <Label className="text-xs">카운터</Label>
+                <Input type="number" value={form.counter} onChange={(e) => setForm({ ...form, counter: e.target.value })} />
+              </div>
+              <div>
+                <Label className="text-xs">속성</Label>
+                <Input value={form.attribute} onChange={(e) => setForm({ ...form, attribute: e.target.value })} />
+              </div>
+            </>
+          )}
           <div>
             <Label className="text-xs">레어도</Label>
             <Input value={form.rarity} onChange={(e) => setForm({ ...form, rarity: e.target.value })} />
@@ -392,21 +478,34 @@ export function EditCardDialog({
             />
           </div>
           <div className="sm:col-span-2">
-            <Label className="text-xs">특징 (쉼표 또는 | 로 구분)</Label>
+            <Label className="text-xs">{form.game === "dtcg" ? "유형 (쉼표 또는 | 로 구분)" : "특징 (쉼표 또는 | 로 구분)"}</Label>
             <Input
               value={form.traits}
               onChange={(e) => setForm({ ...form, traits: e.target.value })}
-              placeholder="밀짚모자 해적단, 초신성"
+              placeholder={form.game === "dtcg" ? "리버레이터, 파충류형" : "밀짚모자 해적단, 초신성"}
             />
           </div>
-          <div className="sm:col-span-2">
-            <Label className="text-xs">효과</Label>
-            <Textarea
-              value={form.effect}
-              onChange={(e) => setForm({ ...form, effect: e.target.value })}
-              rows={4}
-            />
-          </div>
+          {form.game === "dtcg" ? (
+            <>
+              <div className="sm:col-span-2">
+                <Label className="text-xs">상단 텍스트</Label>
+                <Textarea value={form.text_top} onChange={(e) => setForm({ ...form, text_top: e.target.value })} rows={3} placeholder="[등장 시] ..." />
+              </div>
+              <div className="sm:col-span-2">
+                <Label className="text-xs">하단 텍스트</Label>
+                <Textarea value={form.text_bottom} onChange={(e) => setForm({ ...form, text_bottom: e.target.value })} rows={3} placeholder="[자신의 턴] ..." />
+              </div>
+            </>
+          ) : (
+            <div className="sm:col-span-2">
+              <Label className="text-xs">효과</Label>
+              <Textarea
+                value={form.effect}
+                onChange={(e) => setForm({ ...form, effect: e.target.value })}
+                rows={4}
+              />
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={saving}>취소</Button>
