@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { GAME_LABEL } from "@/lib/match-stats";
+import { useGames } from "@/hooks/use-games";
 import type { Database } from "@/integrations/supabase/types";
 import { useI18n } from "@/i18n/language-context";
 
@@ -63,6 +63,7 @@ export const Route = createFileRoute("/calendar")({
 function CalendarPage() {
   const { user } = useAuth();
   const { t, language } = useI18n();
+  const { games, labelOf } = useGames();
   const [game, setGame] = useState<Game | "all">("all");
   const [kind, setKind] = useState<EventKind | "all">("all");
   const [scope, setScope] = useState<"upcoming" | "past">("upcoming");
@@ -178,9 +179,9 @@ function CalendarPage() {
           <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t("matches.all")}</SelectItem>
-            <SelectItem value="optcg">{t("matches.optcg")}</SelectItem>
-            <SelectItem value="ptcg">{t("matches.ptcg")}</SelectItem>
-            <SelectItem value="dtcg">{t("matches.dtcg")}</SelectItem>
+            {games.map((g) => (
+              <SelectItem key={g.code} value={g.code}>{labelOf(g.code)}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Select value={scope} onValueChange={(v) => setScope(v as "upcoming" | "past")}>
@@ -211,7 +212,7 @@ function CalendarPage() {
       {primaryGame && (
         <p className="mt-3 text-xs text-muted-foreground">
           {t("calendar.myPrimaryGame")}{" "}
-          <span className="font-medium text-foreground">{GAME_LABEL[primaryGame]}</span>{" "}
+          <span className="font-medium text-foreground">{labelOf(primaryGame)}</span>{" "}
           {t("calendar.primaryPriorityDesc")}
         </p>
       )}
@@ -242,7 +243,7 @@ function CalendarPage() {
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
                             <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                              {GAME_LABEL[ev.game]}
+                              {labelOf(ev.game)}
                             </span>
                             <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-secondary-foreground">
                               {KIND_LABEL[ev.kind]}

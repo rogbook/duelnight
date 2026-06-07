@@ -12,6 +12,7 @@ import { DeckDialog } from "@/components/decks/deck-dialog";
 import { colorHex, colorLabel, type Game } from "@/lib/deck-colors";
 import type { Tables } from "@/integrations/supabase/types";
 import { useI18n, type TranslationKey } from "@/i18n/language-context";
+import { useGames } from "@/hooks/use-games";
 
 type Deck = Tables<"decks">;
 
@@ -46,6 +47,7 @@ function DecksPage() {
   const qc = useQueryClient();
   const [game, setGame] = useState<Game | "all">("all");
   const { t, language } = useI18n();
+  const { labelOf } = useGames();
 
   const { data: decks = [] } = useQuery({
     queryKey: ["decks", user?.id, game],
@@ -146,7 +148,7 @@ function DecksPage() {
                     {d.name}
                   </Link>
                   <p className="mt-1 text-[11px] text-muted-foreground">
-                    {t(`matches.${d.game}` as TranslationKey)}
+                    {labelOf(d.game)}
                     {d.leader ? ` · ${d.leader}` : ""}
                   </p>
                   {d.colors && d.colors.length > 0 && (
@@ -219,11 +221,10 @@ function DeckGameTabs({
   counts: Map<string, number>;
 }) {
   const { t } = useI18n();
+  const { games, labelOf } = useGames();
   const items: { id: Game | "all"; label: string }[] = [
     { id: "all", label: t("decks.all") },
-    { id: "optcg", label: t("matches.optcg") },
-    { id: "ptcg", label: t("matches.ptcg") },
-    { id: "dtcg", label: t("matches.dtcg") },
+    ...games.map((g) => ({ id: g.code as Game | "all", label: labelOf(g.code) })),
   ];
   return (
     <div className="inline-flex items-center gap-1 rounded-lg border border-border bg-card p-1">

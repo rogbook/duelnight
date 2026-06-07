@@ -5,7 +5,7 @@ import { z } from "zod";
 const InputSchema = z.object({
   image_url: z.string().url().max(2000).optional(),
   image_b64: z.string().max(12_000_000).optional(),
-  game_hint: z.enum(["optcg", "ptcg", "dtcg"]).optional(),
+  game_hint: z.string().max(32).optional(),
 }).refine((d) => d.image_url || d.image_b64, { message: "이미지가 필요합니다" });
 
 const corsHeaders = { "Content-Type": "application/json" };

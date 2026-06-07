@@ -16,7 +16,7 @@ import { z } from "zod";
 
 const InputSchema = z.object({
   url: z.string().url().max(2000),
-  game_hint: z.enum(["optcg", "ptcg", "dtcg"]).optional(),
+  game_hint: z.string().max(32).optional(),
 });
 
 const corsHeaders = { "Content-Type": "application/json" };
