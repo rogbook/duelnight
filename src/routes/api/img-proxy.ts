@@ -17,11 +17,17 @@ function hostBlocked(host: string): boolean {
   const h = host.toLowerCase().replace(/^\[|\]$/g, "");
   if (h === "localhost" || h.endsWith(".local") || h.endsWith(".internal")) return true;
   if (h === "metadata.google.internal" || h === "169.254.169.254") return true;
-  if (h === "0.0.0.0" || h === "::1") return true;
+  if (h === "0.0.0.0" || h === "::1" || h === "::") return true;
+  // IPv4 사설/루프백/링크로컬 + CGNAT(100.64.0.0/10)
   if (/^127\./.test(h) || /^10\./.test(h) || /^192\.168\./.test(h) || /^169\.254\./.test(h)) return true;
   if (/^172\.(1[6-9]|2\d|3[01])\./.test(h)) return true;
+  if (/^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./.test(h)) return true;
+  // IPv6 ULA(fc00::/7) / 링크로컬(fe80::/10)
+  if (/^f[cd][0-9a-f]*:/.test(h) || /^fe[89ab][0-9a-f]*:/.test(h)) return true;
   return false;
 }
+
+const MAX_BYTES = 12 * 1024 * 1024; // 12MB 상한 (대역폭/메모리 보호)
 
 export const Route = createFileRoute("/api/img-proxy")({
   server: {
@@ -64,6 +70,11 @@ export const Route = createFileRoute("/api/img-proxy")({
             // 오픈 프록시 악용 방지 — 이미지만 통과
             return new Response("not an image", { status: 415 });
           }
+          // 과대 파일 차단 (Content-Length 제공 시)
+          const len = Number(res.headers.get("content-length") || 0);
+          if (len && len > MAX_BYTES) {
+            return new Response("too large", { status: 413 });
+          }
 
           return new Response(res.body, {
             status: 200,
@@ -71,6 +82,7 @@ export const Route = createFileRoute("/api/img-proxy")({
               "Content-Type": contentType,
               "Cache-Control": "public, max-age=86400, s-maxage=604800",
               "Content-Disposition": "inline",
+              "X-Content-Type-Options": "nosniff",
             },
           });
         } catch (e) {
