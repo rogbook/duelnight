@@ -810,8 +810,9 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
               <CardTitle className="text-base">URL로 카드 가져오기</CardTitle>
               <CardDescription>
                 공식 카드 페이지 주소를 넣으면 카드 정보를 자동 추출해 아래 표에 채웁니다.
-                지원: 디지몬(digimoncard.co.kr) 등. <b>개별 카드 상세 페이지</b> URL이 가장 정확합니다.
+                지원: 디지몬(digimoncard.co.kr)·원피스 등 공식 카드 페이지. <b>개별 카드 상세 페이지</b> URL이 가장 정확합니다.
                 이미지는 원본 링크를 그대로 참조(핫링크)하며 재호스팅하지 않습니다 — <b>출처 표기가 필요</b>합니다.
+                일부 사이트는 봇 차단(403)이나 핫링크 차단으로 자동 수집/이미지 표시가 안 될 수 있습니다.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
