@@ -34,7 +34,7 @@ import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 import { useI18n } from "@/i18n/language-context";
 import { colorLabel, COLORS_BY_GAME } from "@/lib/deck-colors";
-import { GAME_LABEL } from "@/lib/match-stats";
+import { useGames } from "@/hooks/use-games";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"];
 type Review = Database["public"]["Tables"]["card_reviews"]["Row"];
@@ -75,6 +75,7 @@ export const Route = createFileRoute("/cards/")({
 
 function CardsPage() {
   const { t, language } = useI18n();
+  const { games, labelOf } = useGames();
   const { user } = useAuth();
 
   const getCardTypeLabel = (type: string) => {
@@ -172,24 +173,24 @@ function CardsPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
-      <PageHeader title={t("cards.title")} description={`${t(`matches.${game}` as any)} ${t("cards.desc")}`}>
+      <PageHeader title={t("cards.title")} description={`${labelOf(game)} ${t("cards.desc")}`}>
         <div className="inline-flex rounded-md border border-border bg-card p-0.5">
-          {(Object.keys(GAME_LABEL) as Game[]).map((g) => (
+          {games.map((g) => (
             <button
-              key={g}
+              key={g.code}
               type="button"
               onClick={() => {
-                setGame(g);
+                setGame(g.code);
                 setSetCode("all");
                 resetPage();
               }}
               className={`rounded px-3 py-1 text-xs font-medium transition ${
-                game === g
+                game === g.code
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              {t(`matches.${g}` as any)}
+              {labelOf(g.code)}
             </button>
           ))}
         </div>

@@ -1,14 +1,13 @@
 import { useState } from "react";
-
-const GAMES = [
-  { id: "optcg", label: "원피스" },
-  { id: "ptcg", label: "포켓몬" },
-  { id: "dtcg", label: "디지몬" },
-] as const;
+import { useGames } from "@/hooks/use-games";
+import { useI18n } from "@/i18n/language-context";
 
 export function GameFilter() {
+  const { games, labelOf } = useGames();
+  const { language } = useI18n();
   const [active, setActive] = useState<string>("all");
-  const items = [{ id: "all", label: "전체" }, ...GAMES];
+  const allLabel = language === "en" ? "All" : language === "ja" ? "全体" : "전체";
+  const items = [{ id: "all", label: allLabel }, ...games.map((g) => ({ id: g.code, label: labelOf(g.code) }))];
   return (
     <div className="inline-flex items-center gap-1 rounded-lg border border-border bg-card p-1">
       {items.map((g) => (

@@ -12,15 +12,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { getTier } from "@/lib/tier";
 import { useI18n, type TranslationKey } from "@/i18n/language-context";
+import { useGames } from "@/hooks/use-games";
 
-const GAMES = ["optcg", "ptcg", "dtcg"] as const;
-type Game = (typeof GAMES)[number];
+type Game = string;
 
-const GAME_ACCENT: Record<Game, string> = {
+const GAME_ACCENT: Record<string, string> = {
   optcg: "bg-rose-500",
   ptcg: "bg-yellow-500",
   dtcg: "bg-indigo-500",
 };
+const accentOf = (code: string) => GAME_ACCENT[code] ?? "bg-zinc-500";
 
 /** 데이터가 없을 때도 "집계 중"처럼 보이는 의도된 빈 상태. */
 function EmptyRanking({ label }: { label: string }) {
@@ -76,6 +77,7 @@ function RankNum({ rank }: { rank: number }) {
 
 function GameRankingColumn({ game, limit = 5 }: { game: Game; limit?: number }) {
   const { t } = useI18n();
+  const { labelOf } = useGames();
   const { data = [], isLoading } = useQuery({
     queryKey: ["intro-ranking", game, limit],
     queryFn: async () => {
@@ -93,8 +95,8 @@ function GameRankingColumn({ game, limit = 5 }: { game: Game; limit?: number }) 
     <div className="rounded-2xl border border-border bg-card/60 p-4 backdrop-blur">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="flex items-center gap-2 text-sm font-semibold">
-          <span className={`h-2 w-2 rounded-full ${GAME_ACCENT[game]}`} />
-          {t(`matches.${game}` as TranslationKey)}
+          <span className={`h-2 w-2 rounded-full ${accentOf(game)}`} />
+          {labelOf(game)}
         </h3>
         <Link to="/leaderboard" className="text-[11px] text-primary hover:underline">
           {t("gameRanking.viewAll")}
@@ -143,7 +145,9 @@ function GameRankingColumn({ game, limit = 5 }: { game: Game; limit?: number }) 
 
 export function GameRankingList() {
   const { t } = useI18n();
-  const [active, setActive] = useState<Game>("optcg");
+  const { games, labelOf } = useGames();
+  const [active, setActive] = useState<Game>("");
+  const activeGame = active || games[0]?.code || "optcg";
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 sm:px-6">
@@ -158,29 +162,29 @@ export function GameRankingList() {
       {/* 모바일: 게임 탭 */}
       <div className="md:hidden">
         <div className="mb-3 inline-flex w-full items-center gap-1 rounded-lg border border-border bg-card p-1">
-          {GAMES.map((g) => (
+          {games.map((g) => (
             <button
-              key={g}
+              key={g.code}
               type="button"
-              onClick={() => setActive(g)}
+              onClick={() => setActive(g.code)}
               className={
                 "flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors " +
-                (active === g
+                (activeGame === g.code
                   ? "bg-foreground text-background"
                   : "text-muted-foreground hover:text-foreground")
               }
             >
-              {t(`matches.${g}` as TranslationKey)}
+              {labelOf(g.code)}
             </button>
           ))}
         </div>
-        <GameRankingColumn game={active} />
+        <GameRankingColumn game={activeGame} />
       </div>
 
       {/* 데스크탑: 3열 스택 */}
-      <div className="hidden gap-4 md:grid md:grid-cols-3">
-        {GAMES.map((g) => (
-          <GameRankingColumn key={g} game={g} />
+      <div className="hidden gap-4 md:grid md:grid-cols-2 lg:grid-cols-3">
+        {games.map((g) => (
+          <GameRankingColumn key={g.code} game={g.code} />
         ))}
       </div>
     </section>

@@ -14,6 +14,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsAdmin } from "@/hooks/use-is-admin";
+import { useGames } from "@/hooks/use-games";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
@@ -38,7 +39,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { GAME_LABEL } from "@/lib/match-stats";
 import type { Database } from "@/integrations/supabase/types";
 import { useI18n } from "@/i18n/language-context";
 
@@ -153,8 +153,6 @@ type Store = {
   notes: string | null;
 };
 
-const ALL_GAMES: Game[] = ["optcg", "ptcg", "dtcg"];
-
 export const Route = createFileRoute("/stores/")({
   head: () => {
     let locale = "ko";
@@ -186,6 +184,7 @@ function StoresPage() {
   const { isAdmin } = useIsAdmin();
   const qc = useQueryClient();
   const { t } = useI18n();
+  const { games: allGameOptions, labelOf } = useGames();
   const [q, setQ] = useState("");
   const [game, setGame] = useState<Game | "all">("all");
   const [region, setRegion] = useState<string>("all");
@@ -276,9 +275,9 @@ function StoresPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t("stores.allGames")}</SelectItem>
-            {ALL_GAMES.map((g) => (
-              <SelectItem key={g} value={g}>
-                {GAME_LABEL[g]}
+            {allGameOptions.map((g) => (
+              <SelectItem key={g.code} value={g.code}>
+                {labelOf(g.code)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -416,7 +415,7 @@ function StoresPage() {
                       key={g}
                       className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
                     >
-                      {GAME_LABEL[g]}
+                      {labelOf(g)}
                     </span>
                   ))}
                 </div>
@@ -476,6 +475,7 @@ function StoresPage() {
 }
 
 function NewStoreDialog({ onCreated }: { onCreated: () => void }) {
+  const { games: allGameOptions, labelOf } = useGames();
   const { user } = useAuth();
   const { t } = useI18n();
   const qc = useQueryClient();
@@ -611,13 +611,13 @@ function NewStoreDialog({ onCreated }: { onCreated: () => void }) {
           <div className="flex flex-col gap-1.5">
             <Label>{t("stores.fieldGames")}</Label>
             <div className="flex flex-wrap gap-3">
-              {ALL_GAMES.map((g) => (
-                <label key={g} className="inline-flex items-center gap-2 text-sm">
+              {allGameOptions.map((g) => (
+                <label key={g.code} className="inline-flex items-center gap-2 text-sm">
                   <Checkbox
-                    checked={form.games.includes(g)}
-                    onCheckedChange={() => toggleGame(g)}
+                    checked={form.games.includes(g.code)}
+                    onCheckedChange={() => toggleGame(g.code)}
                   />
-                  {GAME_LABEL[g]}
+                  {labelOf(g.code)}
                 </label>
               ))}
             </div>
