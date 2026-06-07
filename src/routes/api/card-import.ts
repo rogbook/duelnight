@@ -90,15 +90,25 @@ const SYSTEM = `당신은 TCG 공식 카드 페이지의 텍스트에서 카드 
       "cost": number|null,      // 등장 코스트
       "power": number|null,     // 파워/DP
       "counter": number|null,
-      "attribute": string|null, // 속성 (백신종/타격 등) 한국어
+      "attribute": string|null, // 속성 (디지몬: 백신종/데이터종/바이러스종, 원피스: 타격/슬래시 등)
       "rarity": string|null,    // R/SR/C/UC/L/SEC/P 등
+      "traits": string[],       // 유형/특징 (디지몬 유형 예: ["리버레이터","파충류형"])
       "image_url": string|null, // 그 카드 바로 근처의 [IMG:URL] 토큰의 URL. 로고/배너/아이콘으로 보이면 제외하고 null
-      "effect": string|null     // 효과 텍스트 (상단+하단 결합)
+      "effect": string|null,    // 효과 텍스트 (상단+하단 결합)
+      "extra": {                // 디지몬 전용 확장 필드 (디지몬이 아니면 생략/빈 객체)
+        "category": string|null,    // 종류: 디지타마/디지몬/옵션/테이머/듀얼
+        "form": string|null,        // 형태: 유년기/성장기/성숙기/완전체/궁극체
+        "evo_cost_1": string|null,  // 진화 코스트 1 (예: "Lv.3")
+        "evo_cost_2": string|null,  // 진화 코스트 2
+        "text_top": string|null,    // 상단 텍스트
+        "text_bottom": string|null  // 하단 텍스트
+      }
     }
   ]
 }
 규칙:
 - 텍스트 중 [IMG:URL] 은 그 직전/직후 카드의 이미지입니다. 각 카드의 image_url에 가장 가까운 카드 이미지 URL을 넣으세요.
+- 디지몬 카드면 cost=등장 코스트, power=DP, attribute=속성, traits=유형, extra에 종류/형태/진화코스트/상단·하단 텍스트를 채우세요.
 - 페이지에 실제로 있는 값만 사용하고 모르면 null. 추측 금지.
 - 카드가 여러 장이면 모두 배열에 담으세요(목록 페이지).`;
 

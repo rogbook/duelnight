@@ -49,6 +49,20 @@ export type CardRow = {
   image_url: string | null;
   traits: string[];
   extra_images?: string[];
+  /** 게임별 확장 필드(디지몬: category/form/evo_cost_1/evo_cost_2/text_top/text_bottom 등) */
+  extra?: Record<string, unknown> | null;
+};
+
+// 디지몬 전용 등록 규칙
+const DIGIMON_CATEGORIES = ["디지타마", "디지몬", "옵션", "테이머", "듀얼"] as const;
+const DIGIMON_FORMS = ["유년기", "성장기", "성숙기", "완전체", "궁극체"] as const;
+// 디지몬 종류 → cards.type(enum) 매핑 (enum 제약 충족용, 실제 종류는 extra.category에 보존)
+const DIGIMON_CATEGORY_TYPE: Record<string, CardType> = {
+  디지타마: "stage",
+  디지몬: "character",
+  옵션: "event",
+  테이머: "character",
+  듀얼: "character",
 };
 
 const VALID_GAMES: Game[] = ["optcg", "ptcg", "dtcg"];
@@ -617,20 +631,33 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
           return {
             ...rest,
             image_url: normalizeImageUrl(r.image_url),
+            extra: r.extra ?? null, // 게임별 확장 필드(디지몬 등)
             ...(isAdmin
               ? { status: "approved" as const }
               : { status: "pending" as const, submitted_by: uid }),
           };
         });
+        // extra 컬럼이 아직 없을 수 있으므로(마이그레이션 미적용 환경) 오류 시 extra를 제거하고 재시도
+        const isExtraColErr = (msg?: string) => !!msg && /extra|schema cache|column .* does not exist/i.test(msg);
+        const stripExtra = (arr: typeof slice) => arr.map(({ extra: _drop, ...x }) => x);
         if (isAdmin) {
-          const { error } = await supabase.from("cards").upsert(slice, { onConflict: "code" });
+          let { error } = await supabase.from("cards").upsert(slice as never, { onConflict: "code" });
+          if (isExtraColErr(error?.message)) {
+            ({ error } = await supabase.from("cards").upsert(stripExtra(slice) as never, { onConflict: "code" }));
+          }
           if (error) throw error;
           inserted += slice.length;
         } else {
-          const { data, error } = await supabase
+          let { data, error } = await supabase
             .from("cards")
-            .upsert(slice, { onConflict: "code", ignoreDuplicates: true })
+            .upsert(slice as never, { onConflict: "code", ignoreDuplicates: true })
             .select("code");
+          if (isExtraColErr(error?.message)) {
+            ({ data, error } = await supabase
+              .from("cards")
+              .upsert(stripExtra(slice) as never, { onConflict: "code", ignoreDuplicates: true })
+              .select("code"));
+          }
           if (error) throw error;
           const added = data?.length ?? 0;
           inserted += added;
@@ -763,7 +790,18 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
     if (c.attribute) row.attribute = String(c.attribute);
     if (c.rarity) row.rarity = String(c.rarity).toUpperCase();
     if (c.effect) row.effect = String(c.effect);
+    if (Array.isArray(c.traits)) row.traits = (c.traits as unknown[]).map(String);
+    if (c.extra && typeof c.extra === "object") row.extra = c.extra as Record<string, unknown>;
     if (c.image_url) row.image_url = normalizeImageUrl(String(c.image_url));
+    // 디지몬 규칙 적용
+    if (importGame === "dtcg") {
+      const e = (row.extra ?? {}) as Record<string, string>;
+      if (e.category && DIGIMON_CATEGORY_TYPE[e.category]) row.type = DIGIMON_CATEGORY_TYPE[e.category];
+      const top = (e.text_top ?? "").trim();
+      const bottom = (e.text_bottom ?? "").trim();
+      if (top || bottom) row.effect = [top, bottom].filter(Boolean).join("\n\n");
+      row.counter = null;
+    }
     return row;
   };
 
@@ -1392,20 +1430,42 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
     }
   };
 
+  const ex = (r.extra ?? {}) as Record<string, string>;
+  const setExtra = (k: string, v: string) =>
+    setR(prev => ({ ...prev, extra: { ...((prev.extra as Record<string, unknown>) ?? {}), [k]: v } }));
+
   const submit = () => {
     if (!r.code || !r.set_code || !r.name) { toast.error("코드, 세트, 이름은 필수입니다"); return; }
-    
+
     // 최종 전송 시점에 비로소 파싱하여 어레이화
     const parsedColors = colorsInput.split(/[|,;]/).map(s => s.trim()).filter(Boolean);
     const parsedTraits = traitsInput.split(/[|,;/]/).map(s => s.trim()).filter(Boolean);
 
-    onAdd({
+    const out: CardRow = {
       ...r,
       colors: parsedColors,
       traits: parsedTraits,
       image_url: normalizeImageUrl(r.image_url),
       extra_images: (r.extra_images ?? []).map(u => normalizeImageUrl(u)).filter((u): u is string => !!u),
-    });
+    };
+
+    // 디지몬 규칙: 종류→type 매핑, 상단/하단 텍스트→effect 결합, 확장필드 정리
+    if (r.game === "dtcg") {
+      const e = (r.extra ?? {}) as Record<string, string>;
+      const top = (e.text_top ?? "").trim();
+      const bottom = (e.text_bottom ?? "").trim();
+      out.effect = [top, bottom].filter(Boolean).join("\n\n") || null;
+      out.counter = null;
+      if (e.category && DIGIMON_CATEGORY_TYPE[e.category]) out.type = DIGIMON_CATEGORY_TYPE[e.category];
+      const clean: Record<string, unknown> = {};
+      for (const k of ["category", "form", "evo_cost_1", "evo_cost_2", "text_top", "text_bottom"]) {
+        const v = (e[k] ?? "").trim?.() ?? e[k];
+        if (v != null && String(v).trim() !== "") clean[k] = String(v).trim();
+      }
+      out.extra = Object.keys(clean).length ? clean : null;
+    }
+
+    onAdd(out);
     setR(emptyRow());
     setColorsInput("");
     setTraitsInput("");
@@ -1478,53 +1538,113 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
           <SelectContent>{VALID_GAMES.map(g => <SelectItem key={g} value={g}>{GAME_LABEL[g]}</SelectItem>)}</SelectContent>
         </Select>
       </div>
-      <div className="space-y-1.5">
-        <Label>종류</Label>
-        <Select value={r.type} onValueChange={v => setR({ ...r, type: v as CardType })}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>{VALID_TYPES.map(t => <SelectItem key={t} value={t}>{TYPE_LABEL[t]}</SelectItem>)}</SelectContent>
-        </Select>
-      </div>
       <div className="md:col-span-2 space-y-1.5">
         <Label>카드 이름 *</Label>
-        <Input value={r.name} onChange={e => setR({ ...r, name: e.target.value })} placeholder="몽키 D 루피" />
+        <Input value={r.name} onChange={e => setR({ ...r, name: e.target.value })} placeholder={r.game === "dtcg" ? "엘리자몬" : "몽키 D 루피"} />
       </div>
-      <div className="space-y-1.5">
-        <Label>색상 (구분자: | , ;)</Label>
-        <Input value={colorsInput} onChange={e => setColorsInput(e.target.value)} placeholder="red|green" />
-      </div>
-      <div className="space-y-1.5">
-        <Label>레어도</Label>
-        <Input value={r.rarity ?? ""} onChange={e => setR({ ...r, rarity: e.target.value || null })} placeholder="SR" />
-      </div>
-      <div className="space-y-1.5">
-        <Label>비용</Label>
-        <Input type="number" value={r.cost ?? ""} onChange={e => setR({ ...r, cost: num(e.target.value) })} />
-      </div>
-      <div className="space-y-1.5">
-        <Label>파워</Label>
-        <Input type="number" value={r.power ?? ""} onChange={e => setR({ ...r, power: num(e.target.value) })} />
-      </div>
-      <div className="space-y-1.5">
-        <Label>카운터</Label>
-        <Input type="number" value={r.counter ?? ""} onChange={e => setR({ ...r, counter: num(e.target.value) })} />
-      </div>
-      <div className="space-y-1.5">
-        <Label>속성</Label>
-        <Input value={r.attribute ?? ""} onChange={e => setR({ ...r, attribute: e.target.value || null })} placeholder="타격/슬래시 등" />
-      </div>
-      <div className="md:col-span-2 space-y-1.5">
-        <Label>특징 <span className="text-xs text-muted-foreground">(쉼표 또는 | 로 구분, 예: 밀짚모자 해적단, 초신성)</span></Label>
-        <Input
-          value={traitsInput}
-          onChange={e => setTraitsInput(e.target.value)}
-          placeholder="밀짚모자 해적단, 초신성"
-        />
-      </div>
-      <div className="md:col-span-2 space-y-1.5">
-        <Label>효과</Label>
-        <Textarea value={r.effect ?? ""} onChange={e => setR({ ...r, effect: e.target.value || null })} rows={3} />
-      </div>
+
+      {r.game === "dtcg" ? (
+        <>
+          {/* ===== 디지몬 등록 규칙 ===== */}
+          <div className="space-y-1.5">
+            <Label>종류</Label>
+            <Select value={ex.category ?? ""} onValueChange={v => setExtra("category", v)}>
+              <SelectTrigger><SelectValue placeholder="종류 선택" /></SelectTrigger>
+              <SelectContent>{DIGIMON_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>형태</Label>
+            <Select value={ex.form ?? ""} onValueChange={v => setExtra("form", v)}>
+              <SelectTrigger><SelectValue placeholder="형태 선택" /></SelectTrigger>
+              <SelectContent>{DIGIMON_FORMS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>색상 (구분자: | , ;)</Label>
+            <Input value={colorsInput} onChange={e => setColorsInput(e.target.value)} placeholder="red|blue" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>레어도</Label>
+            <Input value={r.rarity ?? ""} onChange={e => setR({ ...r, rarity: e.target.value || null })} placeholder="R / SR / SEC" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>DP</Label>
+            <Input type="number" value={r.power ?? ""} onChange={e => setR({ ...r, power: num(e.target.value) })} placeholder="5000" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>등장 코스트</Label>
+            <Input type="number" value={r.cost ?? ""} onChange={e => setR({ ...r, cost: num(e.target.value) })} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>진화 코스트 1</Label>
+            <Input value={ex.evo_cost_1 ?? ""} onChange={e => setExtra("evo_cost_1", e.target.value)} placeholder="예: Lv.3" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>진화 코스트 2</Label>
+            <Input value={ex.evo_cost_2 ?? ""} onChange={e => setExtra("evo_cost_2", e.target.value)} placeholder="예: Lv.4 / -" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>속성</Label>
+            <Input value={r.attribute ?? ""} onChange={e => setR({ ...r, attribute: e.target.value || null })} placeholder="백신종 / 데이터종 / 바이러스종" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>유형 <span className="text-xs text-muted-foreground">(쉼표/| 구분)</span></Label>
+            <Input value={traitsInput} onChange={e => setTraitsInput(e.target.value)} placeholder="리버레이터, 파충류형" />
+          </div>
+          <div className="md:col-span-2 space-y-1.5">
+            <Label>상단 텍스트</Label>
+            <Textarea value={ex.text_top ?? ""} onChange={e => setExtra("text_top", e.target.value)} rows={2} placeholder="[등장 시] ..." />
+          </div>
+          <div className="md:col-span-2 space-y-1.5">
+            <Label>하단 텍스트</Label>
+            <Textarea value={ex.text_bottom ?? ""} onChange={e => setExtra("text_bottom", e.target.value)} rows={2} placeholder="[자신의 턴] ..." />
+          </div>
+        </>
+      ) : (
+        <>
+          {/* ===== 원피스/포켓몬 등 ===== */}
+          <div className="space-y-1.5">
+            <Label>종류</Label>
+            <Select value={r.type} onValueChange={v => setR({ ...r, type: v as CardType })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{VALID_TYPES.map(t => <SelectItem key={t} value={t}>{TYPE_LABEL[t]}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>색상 (구분자: | , ;)</Label>
+            <Input value={colorsInput} onChange={e => setColorsInput(e.target.value)} placeholder="red|green" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>레어도</Label>
+            <Input value={r.rarity ?? ""} onChange={e => setR({ ...r, rarity: e.target.value || null })} placeholder="SR" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>비용</Label>
+            <Input type="number" value={r.cost ?? ""} onChange={e => setR({ ...r, cost: num(e.target.value) })} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>파워</Label>
+            <Input type="number" value={r.power ?? ""} onChange={e => setR({ ...r, power: num(e.target.value) })} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>카운터</Label>
+            <Input type="number" value={r.counter ?? ""} onChange={e => setR({ ...r, counter: num(e.target.value) })} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>속성</Label>
+            <Input value={r.attribute ?? ""} onChange={e => setR({ ...r, attribute: e.target.value || null })} placeholder="타격/슬래시 등" />
+          </div>
+          <div className="md:col-span-2 space-y-1.5">
+            <Label>특징 <span className="text-xs text-muted-foreground">(쉼표 또는 | 로 구분, 예: 밀짚모자 해적단, 초신성)</span></Label>
+            <Input value={traitsInput} onChange={e => setTraitsInput(e.target.value)} placeholder="밀짚모자 해적단, 초신성" />
+          </div>
+          <div className="md:col-span-2 space-y-1.5">
+            <Label>효과</Label>
+            <Textarea value={r.effect ?? ""} onChange={e => setR({ ...r, effect: e.target.value || null })} rows={3} />
+          </div>
+        </>
+      )}
       <div className="md:col-span-2 space-y-2 rounded-md border border-dashed p-3">
         <div className="flex items-center justify-between">
           <Label>카드 이미지 (여러 장 가능)</Label>
