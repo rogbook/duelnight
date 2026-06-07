@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export function useUniqueSets(game?: string | null) {
   const [sets, setSets] = useState<string[]>([]);
+  const [rows, setRows] = useState<{ name: string; game: string }[]>([]);
   const [loading, setLoading] = useState(false);
 
   const refreshSets = async () => {
@@ -19,6 +20,7 @@ export function useUniqueSets(game?: string | null) {
       if (game) query = query.eq("game", game);
       const { data, error } = await query;
       if (error) throw error;
+      setRows((data ?? []).map((r) => ({ name: r.name, game: r.game as string })));
       setSets((data ?? []).map((r) => r.name));
     } catch (e) {
       console.error("[useUniqueSets] Error fetching sets:", e);
@@ -32,5 +34,5 @@ export function useUniqueSets(game?: string | null) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game]);
 
-  return { sets, loading, refreshSets };
+  return { sets, rows, loading, refreshSets };
 }

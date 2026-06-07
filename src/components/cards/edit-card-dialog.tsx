@@ -39,10 +39,7 @@ const DIGIMON_CATEGORY_TYPE: Record<string, CardType> = {
 export function EditCardDialog({
   card, onClose, onSaved,
 }: { card: CardRow; onClose: () => void; onSaved: () => void }) {
-  const { sets } = useUniqueSets();
   const [isManualSet, setIsManualSet] = useState(false);
-  const displaySets = Array.from(new Set([card.set_code, ...sets])).filter(Boolean).sort((a, b) => a.localeCompare(b));
-
   const ex0 = (card.extra ?? {}) as Record<string, string>;
   const [form, setForm] = useState({
     code: card.code,
@@ -67,6 +64,9 @@ export function EditCardDialog({
     text_top: ex0.text_top ?? "",
     text_bottom: ex0.text_bottom ?? "",
   });
+  // 선택된 게임의 세트만 표시
+  const { sets } = useUniqueSets(form.game);
+  const displaySets = Array.from(new Set([card.set_code, ...sets])).filter(Boolean).sort((a, b) => a.localeCompare(b));
   const [extraImages, setExtraImages] = useState<string[]>([]);
   const [initialAltImages, setInitialAltImages] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);

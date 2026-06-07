@@ -294,7 +294,7 @@ type Props = {
 };
 
 export function CardUploader({ isAdmin, onComplete }: Props) {
-  const { sets } = useUniqueSets();
+  const { rows: allSets } = useUniqueSets();
   const [rows, setRows] = useState<CardRow[]>([]);
   const [errors, setErrors] = useState<{ line: number; reason: string }[]>([]);
   const [busy, setBusy] = useState(false);
@@ -1256,7 +1256,7 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
                             <SelectValue placeholder="세트 선택" />
                           </SelectTrigger>
                           <SelectContent>
-                            {Array.from(new Set([r.set_code, ...sets])).filter(Boolean).sort((a, b) => a.localeCompare(b)).map(s => (
+                            {Array.from(new Set([r.set_code, ...allSets.filter(s => s.game === r.game).map(s => s.name)])).filter(Boolean).sort((a, b) => a.localeCompare(b)).map(s => (
                               <SelectItem key={s} value={s}>{s}</SelectItem>
                             ))}
                           </SelectContent>
@@ -1351,9 +1351,10 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
 }
 
 function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
-  const { sets } = useUniqueSets();
   const [isManualSet, setIsManualSet] = useState(false);
   const [r, setR] = useState<CardRow>(emptyRow());
+  // 선택된 게임의 세트만 표시
+  const { sets } = useUniqueSets(r.game);
   const displaySets = Array.from(new Set([r.set_code, ...sets])).filter(Boolean).sort((a, b) => a.localeCompare(b));
 
   const [imgUploading, setImgUploading] = useState(false);
