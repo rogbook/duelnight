@@ -1032,9 +1032,29 @@ export type Database = {
         }
         Relationships: []
       }
-      subscriptions: {
+      subscription_billing: {
         Row: {
           billing_key: string | null
+          created_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          billing_key?: string | null
+          created_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          billing_key?: string | null
+          created_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
           cancel_at_period_end: boolean
           created_at: string
           current_period_end: string
@@ -1046,7 +1066,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          billing_key?: string | null
           cancel_at_period_end?: boolean
           created_at?: string
           current_period_end: string
@@ -1058,7 +1077,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          billing_key?: string | null
           cancel_at_period_end?: boolean
           created_at?: string
           current_period_end?: string
