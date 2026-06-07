@@ -519,6 +519,7 @@ function CardDetailDialog({
   }, [card?.image_url, illusts, t]);
 
   const [activeUrl, setActiveUrl] = useState<string | null>(null);
+  const [zoomOpen, setZoomOpen] = useState(false);
   const displayUrl = activeUrl ?? normalizeImageUrl(card?.image_url) ?? null;
 
   useEffect(() => {
@@ -595,19 +596,26 @@ function CardDetailDialog({
             )}
             <div className="grid gap-4 sm:grid-cols-[200px_1fr]">
               <div>
-                <div className="aspect-[5/7] w-full overflow-hidden rounded-md bg-muted">
-                  {displayUrl ? (
+                {displayUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => setZoomOpen(true)}
+                    className="block aspect-[5/7] w-full overflow-hidden rounded-md bg-muted cursor-zoom-in"
+                    title="크게 보기"
+                  >
                     <img
                       src={displayUrl}
                       alt={card.name}
                       className="h-full w-full object-cover"
                     />
-                  ) : (
+                  </button>
+                ) : (
+                  <div className="aspect-[5/7] w-full overflow-hidden rounded-md bg-muted">
                     <div className="flex h-full items-center justify-center text-muted-foreground">
                       <ImageOff className="h-8 w-8" />
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
                 {gallery.length > 1 && (
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {gallery.map((g) => (
@@ -793,6 +801,19 @@ function CardDetailDialog({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={zoomOpen} onOpenChange={setZoomOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl p-2 bg-background/95">
+          <DialogTitle className="sr-only">{card?.name ?? "card"}</DialogTitle>
+          {displayUrl && (
+            <img
+              src={displayUrl}
+              alt={card?.name ?? ""}
+              className="max-h-[85vh] w-full rounded object-contain"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
