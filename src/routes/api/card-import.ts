@@ -3,14 +3,15 @@ import "@tanstack/react-start";
 import { z } from "zod";
 
 /**
- * 카드 자동 등록 — 공식 카드리스트 URL 가져오기 (Phase 1)
+ * 카드 자동 등록 — 공식 카드리스트 URL 가져오기 (Phase 1.5)
  *
- * 동작: 관리자가 입력한 카드 페이지 URL을 서버에서 fetch → HTML을 텍스트로 정리 →
- *       기존 Lovable AI 게이트웨이(Gemini)로 cards 스키마에 맞춰 구조화하여 반환.
+ * 동작: 관리자가 입력한 카드 페이지 URL을 서버에서 fetch → HTML을 텍스트로 정리
+ *       (카드 이미지는 [IMG:url] 토큰으로 보존) → Lovable AI 게이트웨이(Gemini)로
+ *       cards 스키마에 맞춰 구조화하여 반환.
  * 설계: docs/CARD_IMPORT_PROPOSAL.md
  *
- * 주의(저작권): 이미지는 재호스팅하지 않고 원본 URL을 그대로 참조(핫링크)한다. (이미지 처리 2번)
- *               텍스트/사실 데이터는 관리자 입력 보조용으로만 사용하며, 등록 전 검수를 거친다.
+ * 저작권: 이미지는 재호스팅하지 않고 원본 URL을 그대로 참조(핫링크, 이미지 처리 2번).
+ *         ⚠️ 원본 사이트가 referer 핫링크를 차단하면 이미지가 깨질 수 있음(별도 정책 결정 필요).
  */
 
 const InputSchema = z.object({
@@ -20,51 +21,59 @@ const InputSchema = z.object({
 
 const corsHeaders = { "Content-Type": "application/json" };
 
-// SSRF 방지: 알려진 공식 카드 사이트만 허용 (필요 시 확장)
-const ALLOWED_HOSTS = [
-  "digimoncard.co.kr",
-  "onepiece-cardgame.com",
-  "onepiece-cardgame.co.kr",
-  "pokemon-card.com",
-  "pokemoncard.co.kr",
-];
+// 브라우저처럼 보이게 해 공식 사이트의 봇 차단(403)을 줄임
+const BROWSER_UA =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-function hostAllowed(host: string): boolean {
-  const h = host.toLowerCase();
-  return ALLOWED_HOSTS.some((d) => h === d || h.endsWith("." + d));
+/** SSRF 방지: 사설/내부 주소만 차단하고 공개 http/https는 허용. */
+function hostBlocked(host: string): boolean {
+  const h = host.toLowerCase().replace(/^\[|\]$/g, "");
+  if (h === "localhost" || h.endsWith(".local") || h.endsWith(".internal")) return true;
+  if (h === "metadata.google.internal" || h === "169.254.169.254") return true;
+  if (h === "0.0.0.0" || h === "::1") return true;
+  if (/^127\./.test(h) || /^10\./.test(h) || /^192\.168\./.test(h) || /^169\.254\./.test(h)) return true;
+  if (/^172\.(1[6-9]|2\d|3[01])\./.test(h)) return true;
+  return false;
 }
 
-/** HTML → 분석용 평문. script/style 제거 후 태그 제거·공백 정리. */
-function htmlToText(html: string): string {
-  return html
+/** HTML → 분석용 평문. 카드 <img>는 [IMG:절대URL] 토큰으로 보존해 AI가 카드↔이미지를 매핑하게 함. */
+function htmlToText(html: string, baseUrl: string): string {
+  let s = html
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<!--[\s\S]*?-->/g, " ");
+  // 이미지: src 추출 → 절대경로 → [IMG:...] 토큰
+  s = s.replace(/<img\b[^>]*?\bsrc=["']([^"']+)["'][^>]*>/gi, (_m, src: string) => {
+    let abs = src;
+    try {
+      abs = new URL(src, baseUrl).toString();
+    } catch {
+      /* keep raw */
+    }
+    return ` [IMG:${abs}] `;
+  });
+  return s
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
-    .replace(/\s+/g, " ")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\s{2,}/g, " ")
     .trim();
 }
 
-/** og:image 또는 첫 카드 이미지 URL 추출 (절대경로화). */
-function extractPrimaryImage(html: string, baseUrl: string): string | null {
+/** og:image (단일 카드 폴백용). */
+function extractOgImage(html: string, baseUrl: string): string | null {
   const og =
     html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
     html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
-  let candidate = og?.[1] ?? null;
-  if (!candidate) {
-    const img = html.match(/<img[^>]+src=["']([^"']+\.(?:png|jpe?g|webp)[^"']*)["']/i);
-    candidate = img?.[1] ?? null;
-  }
-  if (!candidate) return null;
+  if (!og?.[1]) return null;
   try {
-    return new URL(candidate, baseUrl).toString();
+    return new URL(og[1], baseUrl).toString();
   } catch {
-    return candidate;
+    return og[1];
   }
 }
 
@@ -73,8 +82,8 @@ const SYSTEM = `당신은 TCG 공식 카드 페이지의 텍스트에서 카드 
 {
   "cards": [
     {
-      "code": string,           // 카드번호 (예: BT14-012, OP01-001)
-      "set_code": string,       // 세트/수록 코드 (예: BTK-21, OP01) — '입수 정보'의 코드 우선
+      "code": string,           // 카드번호 (예: BT14-012, OP01-001, ST1-001)
+      "set_code": string,       // 세트/수록 코드. 없으면 code의 접두를 사용 (BT14-012→BT14, OP01-001→OP01)
       "name": string,           // 카드 이름 (한국어 우선)
       "type": "leader"|"character"|"event"|"stage"|"don", // 디지몬:디지몬→character, 옵션→event, 테이머→character, 디지타마→stage
       "colors": string[],       // ["red","blue","green","purple","black","yellow","white"] 중
@@ -83,12 +92,15 @@ const SYSTEM = `당신은 TCG 공식 카드 페이지의 텍스트에서 카드 
       "counter": number|null,
       "attribute": string|null, // 속성 (백신종/타격 등) 한국어
       "rarity": string|null,    // R/SR/C/UC/L/SEC/P 등
+      "image_url": string|null, // 그 카드 바로 근처의 [IMG:URL] 토큰의 URL. 로고/배너/아이콘으로 보이면 제외하고 null
       "effect": string|null     // 효과 텍스트 (상단+하단 결합)
     }
   ]
 }
-규칙: 페이지에 실제로 있는 값만 사용하고 모르면 null. 추측 금지. 카드가 여러 장이면 모두 배열에 담되,
-목록 페이지에서 상세 정보가 없으면 code/name 등 보이는 값만 채우세요.`;
+규칙:
+- 텍스트 중 [IMG:URL] 은 그 직전/직후 카드의 이미지입니다. 각 카드의 image_url에 가장 가까운 카드 이미지 URL을 넣으세요.
+- 페이지에 실제로 있는 값만 사용하고 모르면 null. 추측 금지.
+- 카드가 여러 장이면 모두 배열에 담으세요(목록 페이지).`;
 
 export const Route = createFileRoute("/api/card-import")({
   server: {
@@ -99,7 +111,6 @@ export const Route = createFileRoute("/api/card-import")({
           return new Response(JSON.stringify({ error: "AI 게이트웨이 미설정" }), { status: 500, headers: corsHeaders });
         }
 
-        // 로그인 확인 (실제 등록은 클라이언트에서 RLS(관리자)로 보호됨)
         const authHeader = request.headers.get("authorization");
         if (!authHeader?.startsWith("Bearer ")) {
           return new Response(JSON.stringify({ error: "로그인이 필요합니다." }), { status: 401, headers: corsHeaders });
@@ -121,24 +132,29 @@ export const Route = createFileRoute("/api/card-import")({
         if (target.protocol !== "https:" && target.protocol !== "http:") {
           return new Response(JSON.stringify({ error: "http/https URL만 허용됩니다." }), { status: 400, headers: corsHeaders });
         }
-        if (!hostAllowed(target.hostname)) {
-          return new Response(
-            JSON.stringify({ error: `허용되지 않은 사이트입니다. 지원: ${ALLOWED_HOSTS.join(", ")}` }),
-            { status: 400, headers: corsHeaders },
-          );
+        if (hostBlocked(target.hostname)) {
+          return new Response(JSON.stringify({ error: "내부/사설 주소는 허용되지 않습니다." }), { status: 400, headers: corsHeaders });
         }
 
-        // 1) 대상 페이지 HTML fetch
+        // 1) 대상 페이지 HTML fetch (브라우저처럼)
         let html: string;
         try {
           const res = await fetch(target.toString(), {
             headers: {
-              "User-Agent": "DuelNightCardImporter/1.0 (+admin card registration helper)",
-              Accept: "text/html,application/xhtml+xml",
-              "Accept-Language": "ko,en;q=0.8,ja;q=0.6",
+              "User-Agent": BROWSER_UA,
+              Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+              "Accept-Language": "ko-KR,ko;q=0.9,en;q=0.8,ja;q=0.6",
+              Referer: target.origin + "/",
             },
-            signal: AbortSignal.timeout(12000),
+            redirect: "follow",
+            signal: AbortSignal.timeout(15000),
           });
+          if (res.status === 403 || res.status === 401) {
+            return new Response(
+              JSON.stringify({ error: `원본 사이트가 접근을 차단했습니다 (${res.status}). 봇 차단으로 자동 수집이 불가할 수 있습니다.` }),
+              { status: 502, headers: corsHeaders },
+            );
+          }
           if (!res.ok) {
             return new Response(JSON.stringify({ error: `페이지를 불러오지 못했습니다 (${res.status})` }), { status: 502, headers: corsHeaders });
           }
@@ -148,9 +164,9 @@ export const Route = createFileRoute("/api/card-import")({
           return new Response(JSON.stringify({ error: "페이지 요청 실패 (시간 초과 또는 네트워크 오류)" }), { status: 502, headers: corsHeaders });
         }
 
-        const primaryImage = extractPrimaryImage(html, target.toString());
-        const text = htmlToText(html).slice(0, 16000);
-        if (text.length < 40) {
+        const ogImage = extractOgImage(html, target.toString());
+        const text = htmlToText(html, target.toString()).slice(0, 20000);
+        if (text.replace(/\[IMG:[^\]]*\]/g, "").trim().length < 40) {
           return new Response(
             JSON.stringify({ error: "페이지에서 텍스트를 찾지 못했습니다. 동적(JS) 로딩 페이지일 수 있어 자동 추출이 어렵습니다." }),
             { status: 422, headers: corsHeaders },
@@ -168,7 +184,7 @@ export const Route = createFileRoute("/api/card-import")({
                 { role: "system", content: SYSTEM },
                 {
                   role: "user",
-                  content: `${payload.game_hint ? `게임: ${payload.game_hint}\n` : ""}아래는 카드 페이지 텍스트입니다. 카드 정보를 JSON으로 추출하세요.\n\n${text}`,
+                  content: `${payload.game_hint ? `게임: ${payload.game_hint}\n` : ""}아래는 카드 페이지 텍스트입니다([IMG:URL]은 카드 이미지). 카드 정보를 JSON으로 추출하세요.\n\n${text}`,
                 },
               ],
               response_format: { type: "json_object" },
@@ -193,20 +209,39 @@ export const Route = createFileRoute("/api/card-import")({
             if (m) parsed = JSON.parse(m[0]);
           }
 
-          const cards = Array.isArray(parsed.cards) ? parsed.cards : [];
-          // 단일 카드 상세 페이지면 대표 이미지(핫링크)를 연결
-          if (cards.length === 1 && primaryImage && typeof cards[0] === "object" && cards[0]) {
-            (cards[0] as Record<string, unknown>).image_url = primaryImage;
+          const cards = (Array.isArray(parsed.cards) ? parsed.cards : []).filter(
+            (c): c is Record<string, unknown> => typeof c === "object" && c !== null,
+          );
+
+          // 후처리: image_url 절대경로화 + 폴백
+          for (const c of cards) {
+            const img = c.image_url;
+            if (typeof img === "string" && img) {
+              try {
+                c.image_url = new URL(img, target.toString()).toString();
+              } catch {
+                /* keep */
+              }
+            }
+            // set_code 폴백: code 접두
+            if ((!c.set_code || c.set_code === "") && typeof c.code === "string") {
+              const m = c.code.match(/^([A-Za-z]+\d+)/);
+              if (m) c.set_code = m[1];
+            }
+          }
+          // 단일 카드인데 이미지가 비면 og:image 폴백
+          if (cards.length === 1 && !cards[0].image_url && ogImage) {
+            cards[0].image_url = ogImage;
           }
 
           if (cards.length === 0) {
             return new Response(
-              JSON.stringify({ error: "카드 정보를 찾지 못했습니다. 상세 카드 페이지 URL을 사용해 보세요." }),
+              JSON.stringify({ error: "카드 정보를 찾지 못했습니다. 개별 카드 상세 페이지 URL을 사용해 보세요." }),
               { status: 422, headers: corsHeaders },
             );
           }
 
-          return new Response(JSON.stringify({ cards, source_url: target.toString(), image_url: primaryImage }), { status: 200, headers: corsHeaders });
+          return new Response(JSON.stringify({ cards, source_url: target.toString() }), { status: 200, headers: corsHeaders });
         } catch (e) {
           console.error("card-import route error", e);
           return new Response(JSON.stringify({ error: "AI 서버 오류" }), { status: 500, headers: corsHeaders });
