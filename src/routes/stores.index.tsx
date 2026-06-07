@@ -93,6 +93,22 @@ export const KR_REGIONS: { group: string; cities: string[] }[] = [
   },
 ];
 
+/* ── 필터용 대분류 지역 (시/도 수준) ──
+ * 매장 데이터는 "서울 강남"처럼 세분화돼 있어도, 필터는 시/도 대분류로만 노출한다.
+ */
+const METRO_GROUP_NAMES = KR_REGIONS.filter((g) => g.group !== "기타").map((g) => g.group);
+const PROVINCE_NAMES = KR_REGIONS.find((g) => g.group === "기타")?.cities ?? [];
+export const MAJOR_REGIONS = [...METRO_GROUP_NAMES, ...PROVINCE_NAMES];
+
+/** 매장 region이 선택한 대분류에 속하는지 (예: "서울 강남" ∈ "서울") */
+export function regionMatchesMajor(storeRegion: string | null | undefined, major: string): boolean {
+  if (!storeRegion) return false;
+  if (METRO_GROUP_NAMES.includes(major)) {
+    return storeRegion === major || storeRegion.startsWith(major + " ");
+  }
+  return storeRegion === major;
+}
+
 /* ── 지도 앱 ── */
 export type MapProvider = "kakao" | "naver" | "google";
 
@@ -211,7 +227,7 @@ function StoresPage() {
   const filtered = stores.filter((s) => {
     if (favOnly && !favSet.has(s.id)) return false;
     if (game !== "all" && !s.games.includes(game)) return false;
-    if (region !== "all" && s.region !== region) return false;
+    if (region !== "all" && !regionMatchesMajor(s.region, region)) return false;
     if (q) {
       const hay = `${s.name} ${s.region ?? ""} ${s.address ?? ""}`.toLowerCase();
       if (!hay.includes(q.toLowerCase())) return false;
@@ -275,32 +291,20 @@ function StoresPage() {
           </SelectTrigger>
           <SelectContent className="max-h-72">
             <SelectItem value="all">{t("stores.allRegions")}</SelectItem>
-            {KR_REGIONS.map((grp) => (
-              <SelectGroup key={grp.group}>
-                <SelectLabel className="text-xs text-muted-foreground">
-                  {grp.group}
-                </SelectLabel>
-                {grp.cities.map((city) => (
-                  <SelectItem key={city} value={city}>
-                    {city}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
+            {MAJOR_REGIONS.map((rg) => (
+              <SelectItem key={rg} value={rg}>
+                {rg}
+              </SelectItem>
             ))}
             {(() => {
-              const known = new Set(KR_REGIONS.flatMap((g) => g.cities));
-              const extras = regions.filter((r) => !known.has(r));
+              // DB에만 있고 대분류로 안 잡히는 지역은 개별 노출
+              const extras = regions.filter((r) => !MAJOR_REGIONS.some((m) => regionMatchesMajor(r, m)));
               if (extras.length === 0) return null;
-              return (
-                <SelectGroup>
-                  <SelectLabel className="text-xs text-muted-foreground">기타</SelectLabel>
-                  {extras.map((r) => (
-                    <SelectItem key={r} value={r}>
-                      {r}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              );
+              return extras.map((r) => (
+                <SelectItem key={r} value={r}>
+                  {r}
+                </SelectItem>
+              ));
             })()}
           </SelectContent>
         </Select>
