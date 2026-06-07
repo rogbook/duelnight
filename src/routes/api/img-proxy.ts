@@ -51,17 +51,40 @@ export const Route = createFileRoute("/api/img-proxy")({
         }
 
         try {
-          const res = await fetch(target.toString(), {
-            headers: {
-              "User-Agent": BROWSER_UA,
-              Accept: "image/avif,image/webp,image/png,image/jpeg,image/*,*/*;q=0.8",
-              // 같은 출처에서 온 것처럼 보이게 해 referer 핫링크 차단을 우회
-              Referer: target.origin + "/",
-            },
-            redirect: "follow",
-            signal: AbortSignal.timeout(15000),
-          });
+          // 리다이렉트를 수동 추적하며 매 홉 호스트를 재검증(리다이렉트 SSRF 차단).
+          // CDN 서명 리다이렉트는 허용하되 내부/사설로의 우회는 막는다.
+          let current = target;
+          let res: Response | null = null;
+          for (let hop = 0; hop <= 3; hop++) {
+            res = await fetch(current.toString(), {
+              headers: {
+                "User-Agent": BROWSER_UA,
+                Accept: "image/avif,image/webp,image/png,image/jpeg,image/*,*/*;q=0.8",
+                // 같은 출처에서 온 것처럼 보이게 해 referer 핫링크 차단을 우회
+                Referer: current.origin + "/",
+              },
+              redirect: "manual",
+              signal: AbortSignal.timeout(15000),
+            });
+            if (res.status < 300 || res.status >= 400) break;
+            const loc = res.headers.get("location");
+            if (!loc) break;
+            let next: URL;
+            try {
+              next = new URL(loc, current);
+            } catch {
+              return new Response("bad redirect", { status: 502 });
+            }
+            if ((next.protocol !== "https:" && next.protocol !== "http:") || hostBlocked(next.hostname)) {
+              return new Response("blocked redirect", { status: 400 });
+            }
+            current = next;
+          }
 
+          if (!res) return new Response("fetch failed", { status: 502 });
+          if (res.status >= 300 && res.status < 400) {
+            return new Response("too many redirects", { status: 502 });
+          }
           if (!res.ok) {
             return new Response("upstream error", { status: 502 });
           }
