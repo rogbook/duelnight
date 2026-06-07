@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import type { Database } from "@/integrations/supabase/types";
 import { useI18n } from "@/i18n/language-context";
 import { colorLabel } from "@/lib/deck-colors";
+import { displayImageSrc } from "@/lib/image-proxy";
 import type { Game } from "@/lib/deck-colors";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"];
@@ -228,7 +229,7 @@ function CardDetailPage() {
           >
             {displayUrl ? (
               <img
-                src={displayUrl}
+                src={displayImageSrc(displayUrl)}
                 alt={card.name}
                 className="h-full w-full object-cover cursor-zoom-in"
               />
@@ -250,7 +251,7 @@ function CardDetailPage() {
                     displayUrl === g.url ? "border-primary ring-1 ring-primary" : "border-border"
                   }`}
                 >
-                  <img src={g.url} alt={g.label ?? ""} className="h-full w-full object-cover" />
+                  <img src={displayImageSrc(g.url)} alt={g.label ?? ""} className="h-full w-full object-cover" />
                   {g.label && (
                     <span className="absolute inset-x-0 bottom-0 truncate bg-background/80 px-1 text-[9px] leading-3">
                       {g.label}
@@ -356,7 +357,7 @@ function CardDetailPage() {
           <DialogTitle className="sr-only">{card.name}</DialogTitle>
           {displayUrl && (
             <img
-              src={displayUrl}
+              src={displayImageSrc(displayUrl)}
               alt={card.name}
               className="mx-auto max-h-[85vh] w-auto rounded-md object-contain"
             />
