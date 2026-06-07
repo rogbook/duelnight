@@ -17,17 +17,16 @@ import type { Database } from "@/integrations/supabase/types";
 import { normalizeImageUrl } from "@/components/cards/card-uploader";
 import { ImageUploadDialog } from "@/components/cards/image-upload-dialog";
 import { useUniqueSets } from "@/hooks/use-unique-sets";
+import { useGames } from "@/hooks/use-games";
 
 type CardRow = Database["public"]["Tables"]["cards"]["Row"];
-type Game = Database["public"]["Enums"]["tcg_game"];
+type Game = string;
 type CardType = Database["public"]["Enums"]["card_type"];
 
-const GAME_LABEL: Record<Game, string> = { optcg: "원피스", ptcg: "포켓몬", dtcg: "디지몬" };
 const TYPE_LABEL: Record<CardType, string> = {
   leader: "리더", character: "캐릭터", event: "이벤트", stage: "스테이지", don: "DON!!",
 };
 const TYPES: CardType[] = ["leader", "character", "event", "stage", "don"];
-const GAMES: Game[] = ["optcg", "ptcg", "dtcg"];
 
 // 디지몬 전용
 const DIGIMON_CATEGORIES = ["디지타마", "디지몬", "옵션", "테이머", "듀얼"];
@@ -66,6 +65,7 @@ export function EditCardDialog({
   });
   // 선택된 게임의 세트만 표시
   const { sets } = useUniqueSets(form.game);
+  const { games, labelOf } = useGames();
   const displaySets = Array.from(new Set([card.set_code, ...sets])).filter(Boolean).sort((a, b) => a.localeCompare(b));
   const [extraImages, setExtraImages] = useState<string[]>([]);
   const [initialAltImages, setInitialAltImages] = useState<string[]>([]);
@@ -247,7 +247,7 @@ export function EditCardDialog({
             <Select value={form.game} onValueChange={(v) => setForm({ ...form, game: v as Game })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {GAMES.map((g) => <SelectItem key={g} value={g}>{GAME_LABEL[g]}</SelectItem>)}
+                {games.map((g) => <SelectItem key={g.code} value={g.code}>{labelOf(g.code)}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>

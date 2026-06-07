@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { useUniqueSets } from "@/hooks/use-unique-sets";
+import { useGames } from "@/hooks/use-games";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,15 +30,13 @@ import type { Database } from "@/integrations/supabase/types";
 import { normalizeImageUrl } from "@/components/cards/card-uploader";
 
 type CardRow = Database["public"]["Tables"]["cards"]["Row"];
-type Game = Database["public"]["Enums"]["tcg_game"];
+type Game = string;
 type CardType = Database["public"]["Enums"]["card_type"];
 
-const GAME_LABEL: Record<Game, string> = { optcg: "원피스", ptcg: "포켓몬", dtcg: "디지몬" };
 const TYPE_LABEL: Record<CardType, string> = {
   leader: "리더", character: "캐릭터", event: "이벤트", stage: "스테이지", don: "DON!!",
 };
 const TYPES: CardType[] = ["leader", "character", "event", "stage", "don"];
-const GAMES: Game[] = ["optcg", "ptcg", "dtcg"];
 
 const PAGE_SIZE = 30;
 
@@ -88,6 +87,7 @@ function ManageCardsPage() {
 }
 
 function ManageInner() {
+  const { games, labelOf } = useGames();
   const [rows, setRows] = useState<CardRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState("");
@@ -184,8 +184,8 @@ function ManageInner() {
                 <SelectTrigger className="mt-1 w-[140px]"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">전체</SelectItem>
-                  {GAMES.map((g) => (
-                    <SelectItem key={g} value={g}>{GAME_LABEL[g]}</SelectItem>
+                  {games.map((g) => (
+                    <SelectItem key={g.code} value={g.code}>{labelOf(g.code)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -230,7 +230,7 @@ function ManageInner() {
               <div className="mt-0.5 flex flex-wrap items-center gap-1 text-[11px] text-muted-foreground">
                 <span>{c.code}</span>
                 <span>·</span>
-                <span>{GAME_LABEL[c.game as Game] ?? c.game}</span>
+                <span>{labelOf(c.game)}</span>
                 <span>·</span>
                 <span>{TYPE_LABEL[c.type as CardType] ?? c.type}</span>
                 {c.rarity && <Badge variant="outline" className="ml-1 h-4 px-1 text-[10px]">{c.rarity}</Badge>}
@@ -377,7 +377,7 @@ function EditCardDialog({
             <Select value={form.game} onValueChange={(v) => setForm({ ...form, game: v as Game })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {GAMES.map((g) => <SelectItem key={g} value={g}>{GAME_LABEL[g]}</SelectItem>)}
+                {games.map((g) => <SelectItem key={g.code} value={g.code}>{labelOf(g.code)}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
