@@ -21,7 +21,7 @@ import { toast } from "sonner";
 import type { Tables, Database } from "@/integrations/supabase/types";
 import { useI18n } from "@/i18n/language-context";
 
-type Game = Database["public"]["Enums"]["tcg_game"];
+type Game = string;
 type Profile = Tables<"profiles">;
 
 export const Route = createFileRoute("/profile")({

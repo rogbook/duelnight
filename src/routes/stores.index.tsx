@@ -140,7 +140,7 @@ export function useMapProvider(): [MapProvider, (p: MapProvider) => void] {
   return [provider, setProvider];
 }
 
-type Game = Database["public"]["Enums"]["tcg_game"];
+type Game = string;
 type Store = {
   id: string;
   user_id: string;

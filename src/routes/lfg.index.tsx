@@ -30,7 +30,7 @@ import { GAME_LABEL } from "@/lib/match-stats";
 import type { Database } from "@/integrations/supabase/types";
 import { useI18n } from "@/i18n/language-context";
 
-type Game = Database["public"]["Enums"]["tcg_game"];
+type Game = string;
 type Category = "friendly" | "tier" | "tournament_practice";
 type Post = {
   id: string;

@@ -3,7 +3,7 @@
 
 import type { Database } from "@/integrations/supabase/types";
 
-export type Game = Database["public"]["Enums"]["tcg_game"];
+export type Game = string;
 
 // Canonical display name -> list of aliases (case/space-insensitive match).
 // Aliases include Korean, English, romanizations, and common typos.

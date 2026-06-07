@@ -28,7 +28,7 @@ const BRAND = {
   name: "DuelNight",
 };
 
-type TcgGame = Database["public"]["Enums"]["tcg_game"];
+type TcgGame = string;
 
 const GAME_THEME: Record<TcgGame, { label: string; from: string; to: string; accent: string }> = {
   optcg: { label: "ONE PIECE", from: "from-rose-600/80", to: "to-amber-500/70", accent: "text-amber-300" },
