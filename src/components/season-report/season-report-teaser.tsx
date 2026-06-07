@@ -11,9 +11,9 @@ import { SeasonReport } from "./season-report";
 import { getSeasonStartISO } from "@/lib/season";
 import type { Match } from "@/lib/match-stats";
 import { useI18n } from "@/i18n/language-context";
+import { useGames } from "@/hooks/use-games";
 
-const GAMES = ["optcg", "ptcg", "dtcg"] as const;
-type Game = (typeof GAMES)[number];
+type Game = string;
 
 interface TopPlayer {
   game: Game;
@@ -26,12 +26,14 @@ interface TopPlayer {
 
 export function SeasonReportTeaser({ onSignup }: { onSignup?: () => void }) {
   const { t } = useI18n();
+  const { games } = useGames();
+  const codes = games.map((g) => g.code);
 
   const { data: top } = useQuery({
-    queryKey: ["intro-showcase-top"],
+    queryKey: ["intro-showcase-top", codes.join(",")],
     queryFn: async (): Promise<TopPlayer | null> => {
       const results = await Promise.all(
-        GAMES.map((g) =>
+        codes.map((g) =>
           supabase.rpc("get_leaderboard", { p_game: g, p_min_total: 1, p_limit: 1 }),
         ),
       );
@@ -40,7 +42,7 @@ export function SeasonReportTeaser({ onSignup }: { onSignup?: () => void }) {
         const row = res.data?.[0];
         if (row && (best === null || row.rating > best.rating)) {
           best = {
-            game: GAMES[i],
+            game: codes[i],
             user_id: row.user_id,
             display_name: row.display_name,
             username: row.username,
