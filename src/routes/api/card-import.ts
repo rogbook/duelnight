@@ -101,11 +101,35 @@ export const Route = createFileRoute("/api/card-import")({
           return new Response(JSON.stringify({ error: "AI 게이트웨이 미설정" }), { status: 500, headers: corsHeaders });
         }
 
-        // 로그인 확인 (실제 등록은 클라이언트에서 RLS(관리자)로 보호됨)
+        // 인증 + 관리자 권한 확인 (JWT 실검증)
         const authHeader = request.headers.get("authorization");
-        if (!authHeader?.startsWith("Bearer ")) {
+        const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+        if (!token) {
           return new Response(JSON.stringify({ error: "로그인이 필요합니다." }), { status: 401, headers: corsHeaders });
         }
+        const SUPABASE_URL = process.env.SUPABASE_URL;
+        const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+        if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+          return new Response(JSON.stringify({ error: "서버 설정 오류" }), { status: 500, headers: corsHeaders });
+        }
+        const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+          global: { headers: { Authorization: `Bearer ${token}` } },
+          auth: { persistSession: false, autoRefreshToken: false },
+        });
+        const { data: userData, error: userErr } = await supabase.auth.getUser(token);
+        if (userErr || !userData?.user) {
+          return new Response(JSON.stringify({ error: "유효하지 않은 인증" }), { status: 401, headers: corsHeaders });
+        }
+        const { data: roleRow } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userData.user.id)
+          .eq("role", "admin")
+          .maybeSingle();
+        if (!roleRow) {
+          return new Response(JSON.stringify({ error: "관리자 권한이 필요합니다." }), { status: 403, headers: corsHeaders });
+        }
+
 
         let payload: z.infer<typeof InputSchema>;
         try {
