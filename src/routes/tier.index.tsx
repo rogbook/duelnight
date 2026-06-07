@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import type { Database } from "@/integrations/supabase/types";
 import { useI18n } from "@/i18n/language-context";
+import { useGames } from "@/hooks/use-games";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"];
 type TierList = Database["public"]["Tables"]["tier_lists"]["Row"];
@@ -72,6 +73,7 @@ function TierPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { t, language } = useI18n();
+  const { games, labelOf } = useGames();
 
   const [title, setTitle] = useState(t("tier.placeholderTitle"));
   const [isPublic, setIsPublic] = useState(true);
@@ -84,11 +86,10 @@ function TierPage() {
 
   const dateLocale = language === "ja" ? "ja-JP" : language === "en" ? "en-US" : "ko-KR";
 
-  const gameOptions = useMemo(() => [
-    { value: "optcg" as Game, label: t("matches.optcg") },
-    { value: "ptcg" as Game, label: t("matches.ptcg") },
-    { value: "dtcg" as Game, label: t("matches.dtcg") },
-  ], [t]);
+  const gameOptions = useMemo(
+    () => games.map((g) => ({ value: g.code as Game, label: labelOf(g.code) })),
+    [games, labelOf],
+  );
 
   const { data: leaders = [] } = useQuery({
     queryKey: ["tier-leaders", game],

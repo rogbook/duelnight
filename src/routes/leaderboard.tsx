@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Database } from "@/integrations/supabase/types";
-import { GAME_LABEL } from "@/lib/match-stats";
+import { useGames } from "@/hooks/use-games";
 import { useI18n } from "@/i18n/language-context";
 
 type Game = string;
@@ -66,6 +66,7 @@ export const Route = createFileRoute("/leaderboard")({
 
 function LeaderboardPage() {
   const { t, language } = useI18n();
+  const { games, labelOf } = useGames();
   const [game, setGame] = useState<Game>("optcg");
   const [minTotal, setMinTotal] = useState(5);
   const [selected, setSelected] = useState<Row | null>(null);
@@ -91,9 +92,9 @@ function LeaderboardPage() {
         <Select value={game} onValueChange={(v) => setGame(v as Game)}>
           <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="optcg">{t("matches.optcg")}</SelectItem>
-            <SelectItem value="ptcg">{t("matches.ptcg")}</SelectItem>
-            <SelectItem value="dtcg">{t("matches.dtcg")}</SelectItem>
+            {games.map((g) => (
+              <SelectItem key={g.code} value={g.code}>{labelOf(g.code)}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Select
@@ -235,7 +236,7 @@ function UserMatchesDialog({
                 <div>
                   <p>{user.display_name || user.username || t("leaderboard.anonymous")}</p>
                   <p className="text-xs font-normal text-muted-foreground">
-                    {GAME_LABEL[game]} · ELO {user.rating} · {t("leaderboard.totalGames", { total: user.total })}
+                    {labelOf(game)} · ELO {user.rating} · {t("leaderboard.totalGames", { total: user.total })}
                   </p>
                 </div>
               </DialogTitle>
