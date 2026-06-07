@@ -18,16 +18,11 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
-import { useI18n, type TranslationKey } from "@/i18n/language-context";
+import { useI18n } from "@/i18n/language-context";
+import { useGames } from "@/hooks/use-games";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"];
 type Game = string;
-
-const GAMES: { id: Game; labelKey: TranslationKey }[] = [
-  { id: "optcg", labelKey: "matches.optcg" },
-  { id: "ptcg", labelKey: "matches.ptcg" },
-  { id: "dtcg", labelKey: "matches.dtcg" },
-];
 
 export const Route = createFileRoute("/collection")({
   head: () => {
@@ -59,6 +54,7 @@ function CollectionPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { t } = useI18n();
+  const { games, labelOf } = useGames();
   const [q, setQ] = useState("");
   const [game, setGame] = useState<Game>("optcg");
   const [setCode, setSetCode] = useState<string>("all");
@@ -187,22 +183,22 @@ function CollectionPage() {
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <div className="inline-flex items-center gap-1 rounded-lg border border-border bg-card p-1">
-          {GAMES.map((g) => (
+          {games.map((g) => (
             <button
-              key={g.id}
+              key={g.code}
               onClick={() => {
-                setGame(g.id);
+                setGame(g.code);
                 setSetCode("all");
                 setQ("");
               }}
               className={
                 "rounded-md px-3 py-1.5 text-xs font-medium transition-colors " +
-                (game === g.id
+                (game === g.code
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground")
               }
             >
-              {t(g.labelKey)}
+              {labelOf(g.code)}
             </button>
           ))}
         </div>

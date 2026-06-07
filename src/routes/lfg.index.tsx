@@ -26,9 +26,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { GAME_LABEL } from "@/lib/match-stats";
 import type { Database } from "@/integrations/supabase/types";
 import { useI18n } from "@/i18n/language-context";
+import { useGames } from "@/hooks/use-games";
 
 type Game = string;
 type Category = "friendly" | "tier" | "tournament_practice";
@@ -119,12 +119,9 @@ export const Route = createFileRoute("/lfg/")({
 function LfgPage() {
   const { user } = useAuth();
   const { t } = useI18n();
+  const { games, labelOf } = useGames();
 
-  const GAME_OPTIONS: MenuOption<Game>[] = [
-    { value: "optcg", label: t("matches.optcg") },
-    { value: "ptcg", label: t("matches.ptcg") },
-    { value: "dtcg", label: t("matches.dtcg") },
-  ];
+  const GAME_OPTIONS: MenuOption<Game>[] = games.map((g) => ({ value: g.code, label: labelOf(g.code) }));
   const CATEGORY_OPTIONS: MenuOption<Category>[] = [
     { value: "friendly", label: t("lfg.categoryFriendly") },
     { value: "tier", label: t("lfg.categoryTier") },
@@ -290,6 +287,7 @@ function PostCard({
   highlight?: boolean;
 }) {
   const { t } = useI18n();
+  const { labelOf } = useGames();
   const closed = p.status === "closed";
   const categoryLabels: Record<Category, string> = {
     friendly: t("lfg.categoryFriendly"),
@@ -307,7 +305,7 @@ function PostCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-              {GAME_LABEL[p.game]}
+              {labelOf(p.game)}
             </span>
             <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
               {categoryLabels[p.category]}
