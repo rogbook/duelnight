@@ -35,6 +35,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { useI18n } from "@/i18n/language-context";
 import { colorLabel, COLORS_BY_GAME } from "@/lib/deck-colors";
 import { useGames } from "@/hooks/use-games";
+import { displayImageSrc } from "@/lib/image-proxy";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"];
 type Review = Database["public"]["Tables"]["card_reviews"]["Row"];
@@ -358,7 +359,7 @@ function CardTile({
         <div className="relative aspect-[5/7] w-full bg-muted">
           {(() => { const u = normalizeImageUrl(card.image_url); return u ? (
             <img
-              src={u}
+              src={displayImageSrc(u)}
               alt={card.name}
               loading="lazy"
               className="h-full w-full object-cover"
@@ -605,7 +606,7 @@ function CardDetailDialog({
                     title="크게 보기"
                   >
                     <img
-                      src={displayUrl}
+                      src={displayImageSrc(displayUrl)}
                       alt={card.name}
                       className="h-full w-full object-cover"
                     />
@@ -631,7 +632,7 @@ function CardDetailDialog({
                             : "border-border"
                         }`}
                       >
-                        <img src={g.url} alt={g.label} className="h-full w-full object-cover" />
+                        <img src={displayImageSrc(g.url)} alt={g.label} className="h-full w-full object-cover" />
                         <span className="absolute inset-x-0 bottom-0 truncate bg-background/80 px-0.5 text-[8px] leading-3">
                           {g.label}
                         </span>
@@ -808,7 +809,7 @@ function CardDetailDialog({
           <DialogTitle className="sr-only">{card?.name ?? "card"}</DialogTitle>
           {displayUrl && (
             <img
-              src={displayUrl}
+              src={displayImageSrc(displayUrl)}
               alt={card?.name ?? ""}
               className="max-h-[85vh] w-full rounded object-contain"
             />
