@@ -29,9 +29,9 @@ import { toast } from "sonner";
 
 import { normalizeDeckName } from "@/lib/normalize-deck";
 import {
-  COLORS_BY_GAME,
-  HAS_LEADER,
-  REQUIRES_MULTI_COLOR,
+  colorsOf,
+  hasLeader,
+  requiresMultiColor,
   colorHex,
   colorLabel,
   type Game,
@@ -201,7 +201,7 @@ export function DeckDialog({ mode, deck, onSaved, trigger }: DeckDialogProps) {
       const payload = {
         name: name.trim(),
         game,
-        leader: HAS_LEADER[game] ? leader.trim() : null,
+        leader: hasLeader(game) ? leader.trim() : null,
         archetype: archetype.trim(),
         notes: notes.trim(),
         is_public: isPublic,
@@ -279,9 +279,9 @@ export function DeckDialog({ mode, deck, onSaved, trigger }: DeckDialogProps) {
           </div>
 
           <div className="col-span-2 space-y-2">
-            <Label>색상 선택 ({REQUIRES_MULTI_COLOR[game] ? "2개 이상" : "1개 이상"})</Label>
+            <Label>색상 선택 ({requiresMultiColor(game) ? "2개 이상" : "1개 이상"})</Label>
             <div className="flex flex-wrap gap-2">
-              {COLORS_BY_GAME[game].map((c) => (
+              {colorsOf(game).map((c) => (
                 <button
                   key={c.id}
                   type="button"
@@ -302,7 +302,7 @@ export function DeckDialog({ mode, deck, onSaved, trigger }: DeckDialogProps) {
             </div>
           </div>
 
-          {HAS_LEADER[game] && (
+          {hasLeader(game) && (
             <div className="col-span-2 space-y-2">
               <Label>리더</Label>
               <LeaderPicker game={game} value={leader} onChange={setLeader} />
