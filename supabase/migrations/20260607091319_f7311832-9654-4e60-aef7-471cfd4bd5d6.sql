@@ -1,0 +1,1 @@
+ALTER PUBLICATION supabase_realtime DROP TABLE public.lfg_comments;
