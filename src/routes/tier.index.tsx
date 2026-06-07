@@ -23,7 +23,7 @@ import { useI18n } from "@/i18n/language-context";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"];
 type TierList = Database["public"]["Tables"]["tier_lists"]["Row"];
-type Game = Database["public"]["Enums"]["tcg_game"];
+type Game = string;
 
 const TIERS = ["S", "A", "B", "C", "D"] as const;
 type Tier = (typeof TIERS)[number] | "pool";

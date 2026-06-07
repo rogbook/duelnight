@@ -9,7 +9,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { GAME_LABEL, fmtPctVal } from "@/lib/match-stats";
 
-type Game = "optcg" | "ptcg" | "dtcg";
+type Game = string;
 
 export function OpponentDetailDialog({
   open,

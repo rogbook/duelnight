@@ -23,7 +23,7 @@ import {
 import { OpponentDetailDialog } from "@/components/opponent-detail-dialog";
 import type { Database } from "@/integrations/supabase/types";
 
-type Game = Database["public"]["Enums"]["tcg_game"];
+type Game = string;
 
 // ── Internal helpers ───────────────────────────────────────────────────────────
 
