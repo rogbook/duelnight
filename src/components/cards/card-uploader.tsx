@@ -4,6 +4,7 @@ import { ImageEditDialog } from "./image-edit-dialog";
 import { ImageUploadDialog } from "./image-upload-dialog";
 import { toast } from "sonner";
 import { useUniqueSets } from "@/hooks/use-unique-sets";
+import { useGames } from "@/hooks/use-games";
 import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +31,7 @@ import {
   importDriveFilesFn
 } from "@/lib/google-drive.functions";
 
-type Game = Database["public"]["Enums"]["tcg_game"];
+type Game = string;
 type CardType = Database["public"]["Enums"]["card_type"];
 
 export type CardRow = {
@@ -65,10 +66,8 @@ const DIGIMON_CATEGORY_TYPE: Record<string, CardType> = {
   듀얼: "character",
 };
 
-const VALID_GAMES: Game[] = ["optcg", "ptcg", "dtcg"];
 const VALID_TYPES: CardType[] = ["leader", "character", "event", "stage", "don"];
 
-const GAME_LABEL: Record<Game, string> = { optcg: "원피스", ptcg: "포켓몬", dtcg: "디지몬" };
 const TYPE_LABEL: Record<CardType, string> = {
   leader: "리더",
   character: "캐릭터",
@@ -295,6 +294,7 @@ type Props = {
 
 export function CardUploader({ isAdmin, onComplete }: Props) {
   const { rows: allSets } = useUniqueSets();
+  const { games, labelOf } = useGames();
   const [rows, setRows] = useState<CardRow[]>([]);
   const [errors, setErrors] = useState<{ line: number; reason: string }[]>([]);
   const [busy, setBusy] = useState(false);
@@ -899,7 +899,7 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Select value={importGame} onValueChange={(v) => setImportGame(v as Game)}>
                   <SelectTrigger className="w-full sm:w-32"><SelectValue /></SelectTrigger>
-                  <SelectContent>{VALID_GAMES.map((g) => <SelectItem key={g} value={g}>{GAME_LABEL[g]}</SelectItem>)}</SelectContent>
+                  <SelectContent>{games.map((g) => <SelectItem key={g.code} value={g.code}>{labelOf(g.code)}</SelectItem>)}</SelectContent>
                 </Select>
                 <Input
                   placeholder="https://digimoncard.co.kr/index.php?mid=cardlist&..."
@@ -1155,7 +1155,7 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
                 <Input placeholder="세트 (예: OP01)" value={(bulkPatch.set_code as string) ?? ""} onChange={e => setBulkPatch(p => ({ ...p, set_code: e.target.value }))} />
                 <Select value={(bulkPatch.game as string) ?? ""} onValueChange={v => setBulkPatch(p => ({ ...p, game: v as Game }))}>
                   <SelectTrigger><SelectValue placeholder="게임" /></SelectTrigger>
-                  <SelectContent>{VALID_GAMES.map(g => <SelectItem key={g} value={g}>{GAME_LABEL[g]}</SelectItem>)}</SelectContent>
+                  <SelectContent>{games.map(g => <SelectItem key={g.code} value={g.code}>{labelOf(g.code)}</SelectItem>)}</SelectContent>
                 </Select>
                 <Select value={(bulkPatch.type as string) ?? ""} onValueChange={v => setBulkPatch(p => ({ ...p, type: v as CardType }))}>
                   <SelectTrigger><SelectValue placeholder="종류" /></SelectTrigger>
@@ -1265,7 +1265,7 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
                       <td className="px-1 py-1">
                         <Select value={r.game} onValueChange={v => updateRow(i, { game: v as Game })}>
                           <SelectTrigger className="h-7 text-xs w-24"><SelectValue /></SelectTrigger>
-                          <SelectContent>{VALID_GAMES.map(g => <SelectItem key={g} value={g}>{GAME_LABEL[g]}</SelectItem>)}</SelectContent>
+                          <SelectContent>{games.map(g => <SelectItem key={g.code} value={g.code}>{labelOf(g.code)}</SelectItem>)}</SelectContent>
                         </Select>
                       </td>
                       <td className="px-1 py-1"><Input value={r.name} onChange={e => updateRow(i, { name: e.target.value })} className={`h-7 text-xs min-w-[140px] ${fieldErr("name") ? errCls : ""}`} /></td>
@@ -1355,6 +1355,7 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
   const [r, setR] = useState<CardRow>(emptyRow());
   // 선택된 게임의 세트만 표시
   const { sets } = useUniqueSets(r.game);
+  const { games, labelOf } = useGames();
   const displaySets = Array.from(new Set([r.set_code, ...sets])).filter(Boolean).sort((a, b) => a.localeCompare(b));
 
   const [imgUploading, setImgUploading] = useState(false);
@@ -1544,7 +1545,7 @@ function SingleForm({ onAdd }: { onAdd: (r: CardRow) => void }) {
         <Label>게임</Label>
         <Select value={r.game} onValueChange={v => setR({ ...r, game: v as Game })}>
           <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>{VALID_GAMES.map(g => <SelectItem key={g} value={g}>{GAME_LABEL[g]}</SelectItem>)}</SelectContent>
+          <SelectContent>{games.map(g => <SelectItem key={g.code} value={g.code}>{labelOf(g.code)}</SelectItem>)}</SelectContent>
         </Select>
       </div>
       <div className="md:col-span-2 space-y-1.5">
