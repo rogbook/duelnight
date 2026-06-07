@@ -29,9 +29,9 @@ import { toast } from "sonner";
 
 import { normalizeDeckName } from "@/lib/normalize-deck";
 import {
-  COLORS_BY_GAME,
-  HAS_LEADER,
-  REQUIRES_MULTI_COLOR,
+  colorsOf,
+  hasLeader,
+  requiresMultiColor,
   colorHex,
   colorLabel,
   type Game,
