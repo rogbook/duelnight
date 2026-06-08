@@ -25,6 +25,7 @@ const STARTING_LIFE_FALLBACK = 5;
 export const CARD_METADATA_CACHE: Record<
   string,
   {
+    name: string;
     cost: number;
     power: number;
     counterValue: number;
@@ -38,15 +39,17 @@ export const CARD_METADATA_CACHE: Record<
 export function getCardMeta(code: string) {
   return (
     CARD_METADATA_CACHE[code] ?? {
+      name: code,
       cost: 3,
       power: 5000,
       counterValue: 1000,
-      type: "character",
+      type: "character" as const,
       colors: ["red"],
       effects: [],
     }
   );
 }
+
 
 const meta: EngineMeta = {
   gameCode: "optcg",
@@ -247,8 +250,9 @@ export const optcgEngine: ITcgEngine = {
       for (const attacker of myAttackers) {
         // 소환된 턴의 공격 제한 해제(Rush 키워드 검사)
         const meta = getCardMeta(attacker.code);
-        const hasRush = meta.effects?.some((e) => e.trigger === "on_play" && e.id === "rush") || attacker.counters.keyword_rush;
-        const isSummonSickness = attacker.iid.startsWith(`${player}-c`) && !hasRush && !attacker.canAttack;
+        const hasRush = meta.effects?.some((e: any) => e.trigger === "on_play" && e.id === "rush") || attacker.counters.keyword_rush;
+        const isSummonSickness = attacker.iid.startsWith(`${player}-c`) && !hasRush && attacker.counters.summon_sick === 1;
+
         
         if (!isSummonSickness) {
           for (const target of oppTargets) {
@@ -313,7 +317,7 @@ export const optcgEngine: ITcgEngine = {
       target.zones.secondary = target.zones.secondary.map(cleanAttachedDon);
 
       // 모든 아군 카드 활성 상태로 릴리즈
-      const refreshUnit = (u: CardInstance) => ({ ...u, rested: false, canAttack: true });
+      const refreshUnit = (u: CardInstance): CardInstance => ({ ...u, rested: false, counters: { ...u.counters, summon_sick: 0 } });
       target.zones.primary = target.zones.primary.map(refreshUnit);
       target.zones.secondary = target.zones.secondary.map(refreshUnit);
 
@@ -351,7 +355,8 @@ export const optcgEngine: ITcgEngine = {
 
       const nextHand = [...player.zones.hand];
       const [card] = nextHand.splice(idx, 1);
-      const nextSecondary = [...player.zones.secondary, { ...card, canAttack: false }]; // 소환턴은 기본 공격 불가
+      const nextSecondary: CardInstance[] = [...player.zones.secondary, { ...card, counters: { ...card.counters, summon_sick: 1 } }];
+
 
       const nextPlayers = { ...state.players };
       nextPlayers[me] = {
@@ -361,11 +366,12 @@ export const optcgEngine: ITcgEngine = {
         zones: { ...player.zones, hand: nextHand, secondary: nextSecondary },
       };
 
-      let nextState = {
+      let nextState: GameState = {
         ...state,
         players: nextPlayers,
         log: [...state.log, { turn: state.turn, player: me, type: "play_character", payload: { code: card.code } }],
       };
+
 
       // 등장시(on_play) 효과 발동 연산
       const meta = getCardMeta(card.code);
@@ -436,11 +442,12 @@ export const optcgEngine: ITcgEngine = {
 
       let attackerCard: CardInstance | null = null;
       // 1. 공격자 레스트 처리 및 인스턴스 획득
-      const updater = (u: CardInstance) => {
+      const updater = (u: CardInstance): CardInstance => {
         if (u.iid !== attackerIid) return u;
         attackerCard = u;
-        return { ...u, rested: true, hasAttackedThisTurn: true };
+        return { ...u, rested: true };
       };
+
       nextPlayers[me] = {
         ...player,
         zones: {
@@ -460,7 +467,7 @@ export const optcgEngine: ITcgEngine = {
 
       if (!defenderCard) return state;
 
-      const baseAttackPower = getBattlePower(attackerCard);
+      const baseAttackerPower = getBattlePower(attackerCard);
       const baseDefenderPower = getBattlePower(defenderCard);
 
       // 카운터 윈도우(Response) 세션 시작
@@ -471,8 +478,9 @@ export const optcgEngine: ITcgEngine = {
         defenderPlayer: oppId,
         baseAttackerPower,
         baseDefenderPower,
-        appliedModifiers: [],
+        appliedModifiers: [] as { source: string; delta: number }[],
       };
+
 
       return {
         ...state,
@@ -565,12 +573,13 @@ export const optcgEngine: ITcgEngine = {
       ];
 
       // 이벤트 카드 효과의 경우 DSL 해석 적용 가능
-      let nextState = {
+      let nextState: GameState = {
         ...state,
         players: nextPlayers,
         pendingResponse: nextResponse,
         log: [...state.log, { turn: state.turn, player: defenderPid, type: "play_counter", payload: { code: card.code } }],
       };
+
 
       if (meta.type === "event") {
         const counterEffect = meta.effects?.find((e) => e.trigger === "counter");
@@ -592,11 +601,12 @@ export const optcgEngine: ITcgEngine = {
       const totalCounterPower = response.appliedModifiers.reduce((acc, m) => acc + m.delta, 0);
       const totalDefenderPower = response.baseDefenderPower + totalCounterPower;
 
-      let nextState = {
+      let nextState: GameState = {
         ...state,
         pendingResponse: null,
-        phase: "main" as const,
+        phase: "main",
       };
+
 
       const defenderPid = response.defenderPlayer;
       const attackerPid: PlayerId = defenderPid === "p1" ? "p2" : "p1";
