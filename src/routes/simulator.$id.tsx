@@ -89,7 +89,7 @@ function SimulatorMatchRoomPage() {
         // Supabase에서 메타데이터 검색
         const { data: cardRows, error } = await supabase
           .from("cards")
-          .select("code, name, cost, power, counter, type, colors, effects")
+          .select("code, name, cost, power, counter, type, colors, effects, image_url")
           .in("code", allCodes);
 
         if (error) throw error;
@@ -104,6 +104,7 @@ function SimulatorMatchRoomPage() {
             type: row.type as any,
             colors: row.colors ?? [],
             effects: (row.effects as any) ?? [],
+            imageUrl: row.image_url ?? null,
           };
         }
 
@@ -326,18 +327,25 @@ function SimulatorMatchRoomPage() {
             <div className="border-t border-border/20 pt-3 flex items-center gap-2">
               <span className="text-[10px] font-bold text-muted-foreground">손패 ({p2State.zones.hand.length}):</span>
               <div className="flex gap-1.5 overflow-x-auto py-1">
-                {p2State.zones.hand.map((c, i) => (
-                  <div
-                    key={c.iid}
-                    className="w-10 h-14 rounded border border-border bg-card/60 flex flex-col items-center justify-center text-[7px] text-muted-foreground relative opacity-60 hover:opacity-100 transition-opacity"
-                    title={getCardMeta(c.code).name}
-                  >
-                    <span className="font-extrabold truncate w-full px-1 text-center">
-                      {getCardMeta(c.code).name}
-                    </span>
-                    <span className="absolute bottom-0.5 text-[6px] text-primary">{c.code}</span>
-                  </div>
-                ))}
+                {p2State.zones.hand.map((c) => {
+                  const m = getCardMeta(c.code);
+                  return (
+                    <div
+                      key={c.iid}
+                      className="relative w-10 h-14 rounded border border-border bg-card/60 overflow-hidden opacity-70 hover:opacity-100 transition-opacity"
+                      title={m.name}
+                    >
+                      {m.imageUrl ? (
+                        <img src={m.imageUrl} alt={m.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-[7px] font-extrabold text-muted-foreground text-center px-0.5">
+                          {m.name}
+                        </div>
+                      )}
+                      <span className="absolute bottom-0 left-0 right-0 text-[6px] text-white bg-black/70 text-center">{c.code}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -411,21 +419,24 @@ function SimulatorMatchRoomPage() {
                     return (
                       <div
                         key={c.iid}
-                        className="w-12 h-[68px] sm:w-16 sm:h-24 rounded-lg border border-border bg-card p-1 flex flex-col justify-between shrink-0 shadow-sm relative group cursor-pointer hover:border-primary/50"
+                        className="relative w-12 h-[68px] sm:w-16 sm:h-24 rounded-lg border border-border bg-card overflow-hidden shrink-0 shadow-sm cursor-pointer hover:border-primary/50 transition-colors"
                         title={meta.name}
                       >
-
-                        <div className="min-w-0">
-                          <span className="text-[8px] font-extrabold truncate block leading-tight">
+                        {meta.imageUrl ? (
+                          <img src={meta.imageUrl} alt={meta.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
+                        ) : null}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/40 pointer-events-none" />
+                        <div className="relative min-w-0 p-1">
+                          <span className="text-[8px] font-extrabold truncate block leading-tight text-white drop-shadow">
                             {meta.name}
                           </span>
-                          <span className="text-[7px] text-muted-foreground block leading-none mt-0.5">
+                          <span className="text-[7px] text-white/70 block leading-none mt-0.5">
                             {c.code}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between text-[7px] border-t border-border/30 pt-1 mt-auto">
-                          <span className="bg-muted px-1 rounded font-bold">Cost {meta.cost}</span>
-                          {meta.power > 0 && <span className="font-bold text-red-500">{meta.power}</span>}
+                        <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between text-[7px] px-1 pb-1">
+                          <span className="bg-black/70 text-white px-1 rounded font-bold">Cost {meta.cost}</span>
+                          {meta.power > 0 && <span className="font-bold text-white bg-red-600/90 px-1 rounded">{meta.power}</span>}
                         </div>
                       </div>
                     );
@@ -540,7 +551,7 @@ function BattleUnit({ unit }: { unit: CardInstance }) {
 
   return (
     <div
-      className={`relative w-16 h-24 sm:w-20 sm:h-28 rounded-lg border bg-card p-1.5 flex flex-col justify-between shrink-0 shadow transition-all ${
+      className={`relative w-16 h-24 sm:w-20 sm:h-28 rounded-lg border bg-card overflow-hidden flex flex-col justify-between shrink-0 shadow transition-all ${
         unit.rested ? "opacity-65 border-border scale-95" : "border-primary"
       }`}
       style={{
@@ -548,28 +559,40 @@ function BattleUnit({ unit }: { unit: CardInstance }) {
       }}
       title={meta.name}
     >
-      <div className="min-w-0 leading-none">
-        <span className="text-[9px] font-extrabold truncate block leading-tight">{meta.name}</span>
-        <span className="text-[7px] text-muted-foreground block mt-0.5">{unit.code}</span>
+      {/* 배경 이미지 */}
+      {meta.imageUrl ? (
+        <img
+          src={meta.imageUrl}
+          alt={meta.name}
+          loading="lazy"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      ) : null}
+      {/* 어둠 오버레이로 텍스트 가독성 확보 */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/40 pointer-events-none" />
+
+      <div className="relative min-w-0 leading-none p-1.5">
+        <span className="text-[9px] font-extrabold truncate block leading-tight text-white drop-shadow">{meta.name}</span>
+        <span className="text-[7px] text-white/70 block mt-0.5">{unit.code}</span>
       </div>
 
       {/* 부착된 DON!! 표시 */}
       {donAttached > 0 && (
-        <span className="absolute top-1.5 right-1.5 bg-yellow-500 text-white font-extrabold text-[8px] px-1 rounded-sm shadow flex items-center gap-0.5">
+        <span className="absolute top-1.5 right-1.5 bg-yellow-500 text-white font-extrabold text-[8px] px-1 rounded-sm shadow flex items-center gap-0.5 z-10">
           <FastForward className="h-2 w-2" /> D+{donAttached}
         </span>
       )}
 
       {/* 상태 배지 */}
       {unit.rested && (
-        <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/85 text-destructive font-black text-[9px] px-1.5 py-0.5 rounded shadow tracking-widest border border-destructive/20 select-none">
+        <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/85 text-destructive font-black text-[9px] px-1.5 py-0.5 rounded shadow tracking-widest border border-destructive/20 select-none z-10">
           RESTED
         </span>
       )}
 
-      <div className="flex items-center justify-between text-[8px] border-t border-border/30 pt-1 mt-auto leading-none">
-        <span className="bg-muted px-1 rounded font-bold">Cost {meta.cost}</span>
-        <span className="font-extrabold text-red-500">{power}</span>
+      <div className="relative flex items-center justify-between text-[8px] px-1.5 pb-1.5 leading-none">
+        <span className="bg-black/70 text-white px-1 rounded font-bold">Cost {meta.cost}</span>
+        <span className="font-extrabold text-white bg-red-600/90 px-1 rounded">{power}</span>
       </div>
     </div>
   );
