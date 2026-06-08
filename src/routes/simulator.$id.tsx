@@ -541,7 +541,7 @@ function BattleUnit({ unit }: { unit: CardInstance }) {
 
   return (
     <div
-      className={`relative w-16 h-24 sm:w-20 sm:h-28 rounded-lg border bg-card p-1.5 flex flex-col justify-between shrink-0 shadow transition-all ${
+      className={`relative w-16 h-24 sm:w-20 sm:h-28 rounded-lg border bg-card overflow-hidden flex flex-col justify-between shrink-0 shadow transition-all ${
         unit.rested ? "opacity-65 border-border scale-95" : "border-primary"
       }`}
       style={{
@@ -549,28 +549,40 @@ function BattleUnit({ unit }: { unit: CardInstance }) {
       }}
       title={meta.name}
     >
-      <div className="min-w-0 leading-none">
-        <span className="text-[9px] font-extrabold truncate block leading-tight">{meta.name}</span>
-        <span className="text-[7px] text-muted-foreground block mt-0.5">{unit.code}</span>
+      {/* 배경 이미지 */}
+      {meta.imageUrl ? (
+        <img
+          src={meta.imageUrl}
+          alt={meta.name}
+          loading="lazy"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      ) : null}
+      {/* 어둠 오버레이로 텍스트 가독성 확보 */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/40 pointer-events-none" />
+
+      <div className="relative min-w-0 leading-none p-1.5">
+        <span className="text-[9px] font-extrabold truncate block leading-tight text-white drop-shadow">{meta.name}</span>
+        <span className="text-[7px] text-white/70 block mt-0.5">{unit.code}</span>
       </div>
 
       {/* 부착된 DON!! 표시 */}
       {donAttached > 0 && (
-        <span className="absolute top-1.5 right-1.5 bg-yellow-500 text-white font-extrabold text-[8px] px-1 rounded-sm shadow flex items-center gap-0.5">
+        <span className="absolute top-1.5 right-1.5 bg-yellow-500 text-white font-extrabold text-[8px] px-1 rounded-sm shadow flex items-center gap-0.5 z-10">
           <FastForward className="h-2 w-2" /> D+{donAttached}
         </span>
       )}
 
       {/* 상태 배지 */}
       {unit.rested && (
-        <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/85 text-destructive font-black text-[9px] px-1.5 py-0.5 rounded shadow tracking-widest border border-destructive/20 select-none">
+        <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/85 text-destructive font-black text-[9px] px-1.5 py-0.5 rounded shadow tracking-widest border border-destructive/20 select-none z-10">
           RESTED
         </span>
       )}
 
-      <div className="flex items-center justify-between text-[8px] border-t border-border/30 pt-1 mt-auto leading-none">
-        <span className="bg-muted px-1 rounded font-bold">Cost {meta.cost}</span>
-        <span className="font-extrabold text-red-500">{power}</span>
+      <div className="relative flex items-center justify-between text-[8px] px-1.5 pb-1.5 leading-none">
+        <span className="bg-black/70 text-white px-1 rounded font-bold">Cost {meta.cost}</span>
+        <span className="font-extrabold text-white bg-red-600/90 px-1 rounded">{power}</span>
       </div>
     </div>
   );
