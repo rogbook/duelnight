@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { UserPlus, Check, X, Trash2, Users } from "lucide-react";
+import { UserPlus, Check, X, Trash2, Users, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { PageHeader } from "@/components/page-header";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { StartDmButton } from "@/components/start-dm-button";
 import { OpponentSearch, type FoundUser } from "@/components/opponent-search";
+import { useIsOnline } from "@/hooks/use-online-presence";
 import { toast } from "sonner";
 import { useI18n } from "@/i18n/language-context";
 
@@ -54,6 +55,46 @@ function FriendsPage() {
   const { t } = useI18n();
   const [picked, setPicked] = useState<FoundUser | null>(null);
 
+  // 즐겨찾기(비공개). 테이블 미적용 시 빈 배열로 방어.
+  const { data: favoriteIds = [], refetch: refetchFavorites } = useQuery({
+    queryKey: ["friend-favorites", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      try {
+        const { data, error } = await (supabase as any)
+          .from("friend_favorites")
+          .select("favorite_id");
+        if (error) throw error;
+        return ((data ?? []) as { favorite_id: string }[]).map((r) => r.favorite_id);
+      } catch {
+        return [] as string[];
+      }
+    },
+  });
+  const favoriteSet = new Set(favoriteIds);
+
+  const toggleFavorite = async (favoriteId: string, makeFav: boolean) => {
+    if (!user) return;
+    try {
+      if (makeFav) {
+        const { error } = await (supabase as any)
+          .from("friend_favorites")
+          .insert({ user_id: user.id, favorite_id: favoriteId });
+        if (error) throw error;
+      } else {
+        const { error } = await (supabase as any)
+          .from("friend_favorites")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("favorite_id", favoriteId);
+        if (error) throw error;
+      }
+      refetchFavorites();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    }
+  };
+
   const { data: rows = [], refetch } = useQuery({
     queryKey: ["friendships", user?.id],
     enabled: !!user,
@@ -94,6 +135,16 @@ function FriendsPage() {
   const friends = rows.filter((r) => r.status === "accepted");
   const incoming = rows.filter((r) => r.status === "pending" && r.addressee_id === user.id);
   const outgoing = rows.filter((r) => r.status === "pending" && r.requester_id === user.id);
+
+  // 즐겨찾기 우선, 그다음 이름순
+  const sortedFriends = [...friends].sort((a, b) => {
+    const fa = a.other?.id && favoriteSet.has(a.other.id) ? 0 : 1;
+    const fb = b.other?.id && favoriteSet.has(b.other.id) ? 0 : 1;
+    if (fa !== fb) return fa - fb;
+    const na = (a.other?.display_name ?? a.other?.username ?? "").toLowerCase();
+    const nb = (b.other?.display_name ?? b.other?.username ?? "").toLowerCase();
+    return na.localeCompare(nb);
+  });
 
   const sendRequest = async () => {
     if (!picked) return;
@@ -171,14 +222,22 @@ function FriendsPage() {
         {friends.length === 0 ? (
           <EmptyState icon={Users} title={t("friends.noFriendsTitle")} description={t("friends.noFriendsDesc")} />
         ) : (
-          friends.map((r) => (
-            <UserRow key={r.id} other={r.other} anonymous={t("friends.anonymous")}>
-              {r.other?.id && <StartDmButton userId={r.other.id} size="sm" variant="outline" />}
-              <Button size="sm" variant="ghost" onClick={() => remove(r.id)} className="text-destructive hover:text-destructive">
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            </UserRow>
-          ))
+          <>
+            <p className="mb-2 text-[11px] text-muted-foreground">{t("friends.favoritesNote")}</p>
+            {sortedFriends.map((r) => {
+              const fid = r.other?.id;
+              const fav = !!fid && favoriteSet.has(fid);
+              return (
+                <FriendRow
+                  key={r.id}
+                  other={r.other}
+                  isFavorite={fav}
+                  onToggleFavorite={() => fid && toggleFavorite(fid, !fav)}
+                  onRemove={() => remove(r.id)}
+                />
+              );
+            })}
+          </>
         )}
       </Section>
     </div>
@@ -196,6 +255,65 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function Empty({ text }: { text: string }) {
   return <p className="rounded-md border border-dashed border-border px-4 py-6 text-center text-xs text-muted-foreground">{text}</p>;
+}
+
+function FriendRow({
+  other,
+  isFavorite,
+  onToggleFavorite,
+  onRemove,
+}: {
+  other: Row["other"];
+  isFavorite: boolean;
+  onToggleFavorite: () => void;
+  onRemove: () => void;
+}) {
+  const { t } = useI18n();
+  const online = useIsOnline(other?.id);
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-card px-3 py-2">
+      <div className="flex min-w-0 items-center gap-2">
+        <div className="relative shrink-0">
+          <Avatar className="h-9 w-9">
+            <AvatarImage src={other?.avatar_url ?? undefined} />
+            <AvatarFallback>{(other?.display_name ?? other?.username ?? "?").slice(0, 1)}</AvatarFallback>
+          </Avatar>
+          {online && (
+            <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card bg-green-500" />
+          )}
+        </div>
+        <div className="min-w-0">
+          <div className="flex items-center gap-1">
+            {isFavorite && <Star className="h-3 w-3 shrink-0 fill-yellow-400 text-yellow-400" />}
+            <p className="truncate text-sm font-medium">
+              {other?.display_name ?? other?.username ?? t("friends.anonymous")}
+            </p>
+          </div>
+          <p className="truncate text-[11px]">
+            {online ? (
+              <span className="font-medium text-green-500">● {t("friends.online")}</span>
+            ) : (
+              <span className="text-muted-foreground">{other?.username ? `@${other.username}` : ""}</span>
+            )}
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center gap-1">
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={onToggleFavorite}
+          title={t(isFavorite ? "friends.unfavorite" : "friends.favorite")}
+        >
+          <Star className={`h-4 w-4 ${isFavorite ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />
+        </Button>
+        {other?.id && <StartDmButton userId={other.id} size="sm" variant="outline" />}
+        <Button size="icon" variant="ghost" onClick={onRemove} className="text-destructive hover:text-destructive">
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 function UserRow({ other, children, anonymous }: { other: Row["other"]; children: React.ReactNode; anonymous: string }) {

@@ -564,6 +564,11 @@ export const ko = {
     requestSent: "친구 요청을 보냈어요",
     accepted: "수락됨",
     anonymous: "익명",
+    online: "접속 중",
+    onlineCount: "접속 중 {count}",
+    favorite: "즐겨찾기",
+    unfavorite: "즐겨찾기 해제",
+    favoritesNote: "즐겨찾기한 친구는 목록 상단에 표시돼요 (상대는 알 수 없음).",
   },
   profile: {
     metaTitle: "프로필 — DuelNight",
