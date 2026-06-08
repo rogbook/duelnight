@@ -88,9 +88,15 @@ export const Route = createFileRoute("/api/img-proxy")({
           if (!res.ok) {
             return new Response("upstream error", { status: 502 });
           }
-          const contentType = res.headers.get("content-type") || "";
-          if (!contentType.toLowerCase().startsWith("image/")) {
-            // 오픈 프록시 악용 방지 — 이미지만 통과
+          const upstreamType = (res.headers.get("content-type") || "").toLowerCase();
+          // 명백한 비이미지(차단/에러 HTML, 텍스트, JSON 등)는 거부 — 오픈 프록시 악용 방지
+          if (
+            upstreamType.startsWith("text/") ||
+            upstreamType.includes("html") ||
+            upstreamType.includes("json") ||
+            upstreamType.includes("xml") ||
+            upstreamType.includes("javascript")
+          ) {
             return new Response("not an image", { status: 415 });
           }
           // 과대 파일 차단 (Content-Length 제공 시)
@@ -98,11 +104,15 @@ export const Route = createFileRoute("/api/img-proxy")({
           if (len && len > MAX_BYTES) {
             return new Response("too large", { status: 413 });
           }
+          // 응답 Content-Type 결정: image/*면 그대로, 아니면(octet-stream/누락) URL 확장자로 추정
+          const ext = current.pathname.toLowerCase().match(/\.(png|jpe?g|gif|webp|avif|bmp)(?:$|[?#])/);
+          const extType = ext ? (ext[1] === "jpg" ? "image/jpeg" : `image/${ext[1]}`) : null;
+          const outType = upstreamType.startsWith("image/") ? upstreamType : (extType ?? "image/jpeg");
 
           return new Response(res.body, {
             status: 200,
             headers: {
-              "Content-Type": contentType,
+              "Content-Type": outType,
               "Cache-Control": "public, max-age=86400, s-maxage=604800",
               "Content-Disposition": "inline",
               "X-Content-Type-Options": "nosniff",
