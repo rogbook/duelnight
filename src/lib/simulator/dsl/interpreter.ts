@@ -5,6 +5,7 @@
 
 import type { CardInstance, GameState, PlayerId } from "../types";
 import type { CardEffect, EffectAction, TargetRefType } from "./schema";
+import { nextInt } from "../rng";
 
 export interface EffectContext {
   state: GameState;
@@ -136,27 +137,31 @@ const handlers: Record<EffectAction["kind"], ActionHandler> = {
     const targetPid = action.who === "self" ? ctx.controller : (ctx.controller === "p1" ? "p2" : "p1");
     const player = ctx.state.players[targetPid];
     const hand = [...player.zones.hand];
+    const graveyard = [...player.zones.graveyard]; // 원본 불변(순수성): 복사본에 push
+    let rngSeed = ctx.state.rngSeed;
 
     if (action.choose === "random") {
-      // 임시 램덤 처리 (시드기반 RNG가 완비되면 rng 모듈 이용)
+      // 결정론적 시드 RNG 사용(리플레이/AI 재현 보장)
       for (let i = 0; i < Math.min(action.count, hand.length); i++) {
-        const idx = Math.floor(Math.random() * hand.length);
-        const [card] = hand.splice(idx, 1);
-        player.zones.graveyard.push(card);
+        const { value, nextSeed } = nextInt(rngSeed, hand.length);
+        rngSeed = nextSeed;
+        const [card] = hand.splice(value, 1);
+        graveyard.push(card);
       }
     } else {
       // 순차적 버리기 (앞에서부터)
       const discarded = hand.splice(0, action.count);
-      player.zones.graveyard.push(...discarded);
+      graveyard.push(...discarded);
     }
 
     return {
       ...ctx.state,
+      rngSeed,
       players: {
         ...ctx.state.players,
         [targetPid]: {
           ...player,
-          zones: { ...player.zones, hand },
+          zones: { ...player.zones, hand, graveyard },
         },
       },
     };
