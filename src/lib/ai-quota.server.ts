@@ -16,8 +16,35 @@ export const AI_COST = {
 export type AiFeature = keyof typeof AI_COST;
 
 export type QuotaResult =
-  | { ok: true; userId: string; source: "free_quota" | "pro" | "credits" }
+  | { ok: true; userId: string; source: "free_quota" | "pro" | "credits" | "unlimited" }
   | { ok: false; status: 401 | 402; error: string };
+
+/**
+ * 무제한 사용자 여부.
+ * - 관리자(app_role 'admin') 또는
+ * - 특별 지정 허용목록(ai_unlimited 테이블)에 등록된 사용자
+ * 둘 중 하나면 한도·크레딧 검사 없이 AI 무제한.
+ * (ai_unlimited 테이블이 아직 없으면 조용히 무시 → 관리자만 무제한)
+ */
+async function isUnlimitedUser(supabase: SupabaseClient, userId: string): Promise<boolean> {
+  try {
+    const { data: isAdmin } = await supabase.rpc("has_role", { _role: "admin", _user_id: userId });
+    if (isAdmin === true) return true;
+  } catch (e) {
+    console.error("has_role check failed", e);
+  }
+  try {
+    const { data } = await (supabase as any)
+      .from("ai_unlimited")
+      .select("user_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (data) return true;
+  } catch {
+    // 테이블 미생성 등 → 무제한 아님으로 처리
+  }
+  return false;
+}
 
 /**
  * AI 호출 전에 1회 호출.
@@ -34,6 +61,11 @@ export async function checkAiQuota(
     return { ok: false, status: 401, error: "로그인이 필요합니다." };
   }
   const userId = userData.user.id;
+
+  // 관리자 / 특별 지정 사용자는 한도·크레딧 없이 무제한
+  if (await isUnlimitedUser(supabase, userId)) {
+    return { ok: true, userId, source: "unlimited" };
+  }
 
   const { data: q, error: qErr } = await supabase.rpc("check_free_quota", {
     _user_id: userId,
@@ -79,7 +111,7 @@ export async function commitAiUsage(
   supabase: SupabaseClient,
   userId: string,
   feature: AiFeature,
-  source: "free_quota" | "pro" | "credits",
+  source: "free_quota" | "pro" | "credits" | "unlimited",
 ): Promise<void> {
   try {
     if (source === "credits") {

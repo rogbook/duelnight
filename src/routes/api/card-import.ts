@@ -126,6 +126,21 @@ export const Route = createFileRoute("/api/card-import")({
           return new Response(JSON.stringify({ error: "로그인이 필요합니다." }), { status: 401, headers: corsHeaders });
         }
 
+        // 카드 가져오기는 호출당 비용이 가장 큰 기능 → 관리자 전용으로 제한
+        const token = authHeader.replace("Bearer ", "");
+        const { createClient } = await import("@supabase/supabase-js");
+        const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
+          global: { headers: { Authorization: `Bearer ${token}` } },
+        });
+        const { data: userData } = await supabase.auth.getUser();
+        if (!userData?.user) {
+          return new Response(JSON.stringify({ error: "로그인이 필요합니다." }), { status: 401, headers: corsHeaders });
+        }
+        const { data: isAdmin } = await supabase.rpc("has_role", { _role: "admin", _user_id: userData.user.id });
+        if (isAdmin !== true) {
+          return new Response(JSON.stringify({ error: "관리자만 사용할 수 있습니다." }), { status: 403, headers: corsHeaders });
+        }
+
         let payload: z.infer<typeof InputSchema>;
         try {
           payload = InputSchema.parse(await request.json());
