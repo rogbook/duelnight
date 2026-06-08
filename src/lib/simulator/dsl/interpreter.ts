@@ -381,11 +381,6 @@ const handlers: Record<EffectAction["kind"], ActionHandler> = {
   },
 };
 
-// 인터프리터 액션 핸들러 일괄 등록
-for (const [kind, handler] of Object.entries(handlers)) {
-  registerActionHandler(kind as EffectAction["kind"], handler);
-}
-
 // ── 해석기 전용 액션 핸들러 동적 등록 ───────────────────
 const actionHandlers: Partial<Record<EffectAction["kind"], ActionHandler>> = {};
 
@@ -394,6 +389,11 @@ export function registerActionHandler<K extends EffectAction["kind"]>(
   handler: ActionHandler,
 ): void {
   actionHandlers[kind] = handler;
+}
+
+// 인터프리터 액션 핸들러 일괄 등록
+for (const [kind, handler] of Object.entries(handlers)) {
+  registerActionHandler(kind as EffectAction["kind"], handler);
 }
 
 export function applyEffect(ctx: EffectContext, effect: CardEffect): GameState {
