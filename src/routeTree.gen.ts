@@ -38,6 +38,7 @@ import { Route as EventsIdRouteImport } from './routes/events.$id'
 import { Route as DecksIdRouteImport } from './routes/decks.$id'
 import { Route as CardsCodeRouteImport } from './routes/cards_.$code'
 import { Route as CardsUploadRouteImport } from './routes/cards.upload'
+import { Route as ApiImgProxyRouteImport } from './routes/api/img-proxy'
 import { Route as ApiCoachRouteImport } from './routes/api/coach'
 import { Route as ApiCardOcrRouteImport } from './routes/api/card-ocr'
 import { Route as ApiCardImportRouteImport } from './routes/api/card-import'
@@ -193,6 +194,11 @@ const CardsUploadRoute = CardsUploadRouteImport.update({
   path: '/upload',
   getParentRoute: () => CardsRoute,
 } as any)
+const ApiImgProxyRoute = ApiImgProxyRouteImport.update({
+  id: '/api/img-proxy',
+  path: '/api/img-proxy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiCoachRoute = ApiCoachRouteImport.update({
   id: '/api/coach',
   path: '/api/coach',
@@ -260,6 +266,7 @@ export interface FileRoutesByFullPath {
   '/api/card-import': typeof ApiCardImportRoute
   '/api/card-ocr': typeof ApiCardOcrRoute
   '/api/coach': typeof ApiCoachRoute
+  '/api/img-proxy': typeof ApiImgProxyRoute
   '/cards/upload': typeof CardsUploadRoute
   '/cards/$code': typeof CardsCodeRoute
   '/decks/$id': typeof DecksIdRoute
@@ -299,6 +306,7 @@ export interface FileRoutesByTo {
   '/api/card-import': typeof ApiCardImportRoute
   '/api/card-ocr': typeof ApiCardOcrRoute
   '/api/coach': typeof ApiCoachRoute
+  '/api/img-proxy': typeof ApiImgProxyRoute
   '/cards/upload': typeof CardsUploadRoute
   '/cards/$code': typeof CardsCodeRoute
   '/decks/$id': typeof DecksIdRoute
@@ -340,6 +348,7 @@ export interface FileRoutesById {
   '/api/card-import': typeof ApiCardImportRoute
   '/api/card-ocr': typeof ApiCardOcrRoute
   '/api/coach': typeof ApiCoachRoute
+  '/api/img-proxy': typeof ApiImgProxyRoute
   '/cards/upload': typeof CardsUploadRoute
   '/cards_/$code': typeof CardsCodeRoute
   '/decks/$id': typeof DecksIdRoute
@@ -382,6 +391,7 @@ export interface FileRouteTypes {
     | '/api/card-import'
     | '/api/card-ocr'
     | '/api/coach'
+    | '/api/img-proxy'
     | '/cards/upload'
     | '/cards/$code'
     | '/decks/$id'
@@ -421,6 +431,7 @@ export interface FileRouteTypes {
     | '/api/card-import'
     | '/api/card-ocr'
     | '/api/coach'
+    | '/api/img-proxy'
     | '/cards/upload'
     | '/cards/$code'
     | '/decks/$id'
@@ -461,6 +472,7 @@ export interface FileRouteTypes {
     | '/api/card-import'
     | '/api/card-ocr'
     | '/api/coach'
+    | '/api/img-proxy'
     | '/cards/upload'
     | '/cards_/$code'
     | '/decks/$id'
@@ -502,6 +514,7 @@ export interface RootRouteChildren {
   ApiCardImportRoute: typeof ApiCardImportRoute
   ApiCardOcrRoute: typeof ApiCardOcrRoute
   ApiCoachRoute: typeof ApiCoachRoute
+  ApiImgProxyRoute: typeof ApiImgProxyRoute
   CardsCodeRoute: typeof CardsCodeRoute
   DecksIdRoute: typeof DecksIdRoute
   EventsIdRoute: typeof EventsIdRoute
@@ -723,6 +736,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CardsUploadRouteImport
       parentRoute: typeof CardsRoute
     }
+    '/api/img-proxy': {
+      id: '/api/img-proxy'
+      path: '/api/img-proxy'
+      fullPath: '/api/img-proxy'
+      preLoaderRoute: typeof ApiImgProxyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/coach': {
       id: '/api/coach'
       path: '/api/coach'
@@ -836,6 +856,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCardImportRoute: ApiCardImportRoute,
   ApiCardOcrRoute: ApiCardOcrRoute,
   ApiCoachRoute: ApiCoachRoute,
+  ApiImgProxyRoute: ApiImgProxyRoute,
   CardsCodeRoute: CardsCodeRoute,
   DecksIdRoute: DecksIdRoute,
   EventsIdRoute: EventsIdRoute,
@@ -854,3 +875,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
