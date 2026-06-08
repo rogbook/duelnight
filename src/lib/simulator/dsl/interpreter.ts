@@ -31,7 +31,7 @@ export function registerActionHandler<K extends EffectAction["kind"]>(
 export function applyEffect(ctx: EffectContext, effect: CardEffect): GameState {
   let state = ctx.state;
   for (const action of effect.actions) {
-    const handler = handlers[action.kind];
+    const handler = handlers[action.kind as EffectAction["kind"]];
     if (!handler) {
       // 미구현 액션은 로그만 남기고 스킵 (개발 중 안전한 폴백)
       state = {
