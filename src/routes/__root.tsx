@@ -22,6 +22,7 @@ import { useCallback, useState, useEffect } from "react";
 import { LanguageProvider, useI18n } from "@/i18n/language-context";
 import { LanguageSelector } from "@/components/language-selector";
 import { ThemeProvider } from "@/hooks/use-theme";
+import { OnlinePresenceProvider } from "@/hooks/use-online-presence";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -206,6 +207,7 @@ function RootComponent() {
       <AuthProvider onAuthChange={handleAuthChange}>
         <ThemeProvider>
         <LanguageProvider>
+        <OnlinePresenceProvider>
           {isBare ? (
             <>
               <EnvBanner />
@@ -261,6 +263,7 @@ function RootComponent() {
               <Toaster />
             </SidebarProvider>
           )}
+        </OnlinePresenceProvider>
         </LanguageProvider>
         </ThemeProvider>
       </AuthProvider>

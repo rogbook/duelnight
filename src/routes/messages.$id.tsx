@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { displayImageSrc } from "@/lib/image-proxy";
+import { useIsOnline } from "@/hooks/use-online-presence";
 import {
   fetchConversation,
   fetchMessages,
@@ -42,7 +43,6 @@ function ThreadPage() {
   const navigate = useNavigate();
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
-  const [online, setOnline] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
 
   const { data: conversation } = useQuery({
@@ -106,21 +106,8 @@ function ThreadPage() {
     };
   }, [id, user, qc]);
 
-  // 온라인(접속 중) 표시: 같은 대화 presence 채널
-  useEffect(() => {
-    if (!user || !otherId) return;
-    const ch = supabase.channel(`dm-presence-${id}`, { config: { presence: { key: user.id } } });
-    ch.on("presence", { event: "sync" }, () => {
-      const state = ch.presenceState();
-      setOnline(Object.keys(state).includes(otherId));
-    });
-    ch.subscribe((status: string) => {
-      if (status === "SUBSCRIBED") ch.track({ user_id: user.id });
-    });
-    return () => {
-      supabase.removeChannel(ch);
-    };
-  }, [id, user, otherId]);
+  // 온라인(접속 중) 표시: 전역 presence
+  const online = useIsOnline(otherId);
 
   const send = async () => {
     const body = draft.trim();

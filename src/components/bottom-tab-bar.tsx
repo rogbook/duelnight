@@ -18,11 +18,13 @@ import {
   User,
   Shield,
   Upload,
+  MessageCircle,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useI18n, TranslationKey } from "@/i18n/language-context";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsAdmin } from "@/hooks/use-is-admin";
+import { useUnreadDmCount } from "@/hooks/use-unread-dm";
 
 interface NavItem {
   labelKey: TranslationKey;
@@ -45,6 +47,7 @@ const moreItems: NavItem[] = [
   { labelKey: "nav.tier", url: "/tier", icon: ListOrdered },
   { labelKey: "nav.store", url: "/stores", icon: MapPin },
   { labelKey: "nav.lfg", url: "/lfg", icon: Users },
+  { labelKey: "nav.messages", url: "/messages", icon: MessageCircle },
   { labelKey: "nav.friends", url: "/friends", icon: UserPlus },
   { labelKey: "nav.announcements", url: "/announcements", icon: Megaphone },
   { labelKey: "nav.shop", url: "/store", icon: ShoppingCart },
@@ -74,6 +77,7 @@ export function BottomTabBar() {
   const { user } = useAuth();
   const { isAdmin } = useIsAdmin();
   const [moreOpen, setMoreOpen] = useState(false);
+  const unreadDm = useUnreadDmCount();
 
   const filteredMoreItems = moreItems.filter(
     (item) => !(item.url === "/store" && !user),
@@ -117,11 +121,14 @@ export function BottomTabBar() {
           })}
           <button
             onClick={() => setMoreOpen(true)}
-            className="flex flex-1 flex-col items-center justify-center gap-0.5"
+            className="relative flex flex-1 flex-col items-center justify-center gap-0.5"
           >
             <MoreHorizontal
               className={`h-5 w-5 transition-colors ${isMoreActive ? "text-foreground" : "text-muted-foreground"}`}
             />
+            {unreadDm > 0 && (
+              <span className="absolute right-[calc(50%-1rem)] top-1.5 h-2 w-2 rounded-full bg-primary" />
+            )}
             <span
               className={`text-[10px] transition-colors ${isMoreActive ? "font-medium text-foreground" : "text-muted-foreground"}`}
             >
@@ -146,13 +153,20 @@ export function BottomTabBar() {
                   key={item.url}
                   to={item.url}
                   onClick={() => setMoreOpen(false)}
-                  className={`flex flex-col items-center gap-1.5 rounded-xl p-3 text-[11px] transition-colors ${
+                  className={`relative flex flex-col items-center gap-1.5 rounded-xl p-3 text-[11px] transition-colors ${
                     active
                       ? "bg-accent font-medium text-foreground"
                       : "text-muted-foreground hover:bg-accent/50"
                   }`}
                 >
-                  <item.icon className="h-5 w-5" />
+                  <span className="relative">
+                    <item.icon className="h-5 w-5" />
+                    {item.url === "/messages" && unreadDm > 0 && (
+                      <span className="absolute -right-1.5 -top-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
+                        {unreadDm > 99 ? "99+" : unreadDm}
+                      </span>
+                    )}
+                  </span>
                   <span className="text-center leading-tight">{t(item.labelKey)}</span>
                 </Link>
               );
