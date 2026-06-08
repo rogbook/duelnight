@@ -155,23 +155,26 @@ function SimulatorMatchRoomPage() {
       return;
     }
 
-    const isP2Turn = gameState.activePlayer === "p2";
-    const isP2Countering = gameState.pendingResponse && gameState.pendingResponse.defenderPlayer === "p2";
-    const shouldAiPlay = isAutoPlaying || isP2Turn || isP2Countering;
+    // 지금 행동할 주체: 대응(카운터) 윈도우가 열려 있으면 '항상 수비자', 아니면 활성 플레이어.
+    const actor: PlayerId = gameState.pendingResponse
+      ? gameState.pendingResponse.defenderPlayer
+      : gameState.activePlayer;
 
-    if (shouldAiPlay) {
-      const activeAiPlayer = isP2Countering ? "p2" : isP2Turn ? "p2" : "p1";
+    // AI가 대신 둘지 여부: 자동재생이면 양쪽 모두, 수동이면 상대(p2)만. p1(나)은 사람이 조작.
+    const aiShouldAct = isAutoPlaying || actor === "p2";
 
+    if (aiShouldAct) {
       autoPlayTimerRef.current = setTimeout(() => {
-        const action = chooseAction(optcgEngine, gameState, activeAiPlayer);
+        const action = chooseAction(optcgEngine, gameState, actor);
         if (action) {
           setGameState(optcgEngine.applyAction(gameState, action));
         } else {
-          const passAction = optcgEngine
-            .getAvailableActions(gameState, activeAiPlayer)
-            .find((a) => a.type === "pass_counter" || a.type === "end_main");
-          if (passAction) {
-            setGameState(optcgEngine.applyAction(gameState, passAction));
+          // 안전 폴백: 진행 가능한 패스/턴종료/기권으로 교착 방지
+          const fallback = optcgEngine
+            .getAvailableActions(gameState, actor)
+            .find((a) => a.type === "pass_counter" || a.type === "end_main" || a.type === "concede");
+          if (fallback) {
+            setGameState(optcgEngine.applyAction(gameState, fallback));
           }
         }
       }, speedMs);
