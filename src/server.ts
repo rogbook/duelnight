@@ -66,12 +66,33 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
   return brandedErrorResponse();
 }
 
+// SSR이 만든 HTML이 브라우저/CDN에 캐시되어 "예전 인트로"가 새로고침 시 다시 뜨는 것을 방지.
+// 해시된 정적 자산(/assets/...)은 그대로 두고, HTML 내비게이션 응답에만 no-cache를 강제한다.
+function applyHtmlNoCache(request: Request, response: Response): Response {
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("text/html")) return response;
+
+  const url = new URL(request.url);
+  if (url.pathname.startsWith("/assets/")) return response;
+
+  const headers = new Headers(response.headers);
+  headers.set("cache-control", "no-cache, no-store, must-revalidate");
+  headers.set("pragma", "no-cache");
+  headers.set("expires", "0");
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      const normalized = await normalizeCatastrophicSsrResponse(response);
+      return applyHtmlNoCache(request, normalized);
     } catch (error) {
       console.error(error);
       return brandedErrorResponse();
