@@ -419,21 +419,24 @@ function SimulatorMatchRoomPage() {
                     return (
                       <div
                         key={c.iid}
-                        className="w-12 h-[68px] sm:w-16 sm:h-24 rounded-lg border border-border bg-card p-1 flex flex-col justify-between shrink-0 shadow-sm relative group cursor-pointer hover:border-primary/50"
+                        className="relative w-12 h-[68px] sm:w-16 sm:h-24 rounded-lg border border-border bg-card overflow-hidden shrink-0 shadow-sm cursor-pointer hover:border-primary/50 transition-colors"
                         title={meta.name}
                       >
-
-                        <div className="min-w-0">
-                          <span className="text-[8px] font-extrabold truncate block leading-tight">
+                        {meta.imageUrl ? (
+                          <img src={meta.imageUrl} alt={meta.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
+                        ) : null}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/40 pointer-events-none" />
+                        <div className="relative min-w-0 p-1">
+                          <span className="text-[8px] font-extrabold truncate block leading-tight text-white drop-shadow">
                             {meta.name}
                           </span>
-                          <span className="text-[7px] text-muted-foreground block leading-none mt-0.5">
+                          <span className="text-[7px] text-white/70 block leading-none mt-0.5">
                             {c.code}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between text-[7px] border-t border-border/30 pt-1 mt-auto">
-                          <span className="bg-muted px-1 rounded font-bold">Cost {meta.cost}</span>
-                          {meta.power > 0 && <span className="font-bold text-red-500">{meta.power}</span>}
+                        <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between text-[7px] px-1 pb-1">
+                          <span className="bg-black/70 text-white px-1 rounded font-bold">Cost {meta.cost}</span>
+                          {meta.power > 0 && <span className="font-bold text-white bg-red-600/90 px-1 rounded">{meta.power}</span>}
                         </div>
                       </div>
                     );
