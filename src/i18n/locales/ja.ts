@@ -564,6 +564,11 @@ export const ja = {
     requestSent: "フレンドリクエストを送りました",
     accepted: "承認しました",
     anonymous: "匿名",
+    online: "オンライン",
+    onlineCount: "オンライン {count}",
+    favorite: "お気に入り",
+    unfavorite: "お気に入り解除",
+    favoritesNote: "お気に入りのフレンドは上部に表示されます(相手には分かりません)。",
   },
   profile: {
     metaTitle: "プロフィール — DuelNight",

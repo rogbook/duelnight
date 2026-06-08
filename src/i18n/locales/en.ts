@@ -564,6 +564,11 @@ export const en = {
     requestSent: "Friend request sent!",
     accepted: "Accepted",
     anonymous: "Anonymous",
+    online: "Online",
+    onlineCount: "{count} online",
+    favorite: "Favorite",
+    unfavorite: "Unfavorite",
+    favoritesNote: "Favorited friends appear at the top (the other person can't see it).",
   },
   profile: {
     metaTitle: "Profile — DuelNight",
