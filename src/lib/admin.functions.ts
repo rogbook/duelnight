@@ -131,7 +131,7 @@ export const grantAiUnlimited = createServerFn({ method: "POST" })
     const { email } = data;
     const { supabase, userId } = await getAuthContext();
     await assertAdmin(supabase, userId);
-    const { data: targetId, error } = await (supabase as any).rpc(
+    const { data: targetId, error } = await supabase.rpc(
       "grant_ai_unlimited_by_email",
       { _email: email },
     );
@@ -146,7 +146,7 @@ export const revokeAiUnlimited = createServerFn({ method: "POST" })
     const { email } = data;
     const { supabase, userId } = await getAuthContext();
     await assertAdmin(supabase, userId);
-    const { data: targetId, error } = await (supabase as any).rpc(
+    const { data: targetId, error } = await supabase.rpc(
       "revoke_ai_unlimited_by_email",
       { _email: email },
     );
@@ -159,7 +159,7 @@ export const listAiUnlimited = createServerFn({ method: "POST" })
   .handler(async () => {
     const { supabase, userId } = await getAuthContext();
     await assertAdmin(supabase, userId);
-    const { data, error } = await (supabase as any).rpc("list_ai_unlimited");
+    const { data, error } = await supabase.rpc("list_ai_unlimited");
     if (error) throw new Response(error.message, { status: 403 });
     return {
       users: (data ?? []) as Array<{
