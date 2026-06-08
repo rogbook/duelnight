@@ -20,6 +20,8 @@ import {
   checkCanAdd,
   type Game,
 } from "@/lib/deck-rules";
+import { useAuth } from "@/hooks/use-auth";
+import { useI18n } from "@/i18n/language-context";
 import { COLORS_BY_GAME, colorHex } from "@/lib/deck-colors";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -29,6 +31,8 @@ type DeckCard = Tables<"deck_cards">;
 
 export function RecipeEditor({ deck }: { deck: Deck }) {
   const qc = useQueryClient();
+  const { user } = useAuth();
+  const { t } = useI18n();
   const game = deck.game as Game;
 
   /* ── Filter state ── */
@@ -38,7 +42,24 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
   const [filterSet, setFilterSet] = useState("all");
   const [filterRarity, setFilterRarity] = useState("all");
   const [filterLevel, setFilterLevel] = useState("all");
+  const [filterOwnedOnly, setFilterOwnedOnly] = useState((deck as any).is_simulator ?? false);
   const [zoomCard, setZoomCard] = useState<{ url: string; name: string } | null>(null);
+
+  /* ── User Collection ── */
+  const { data: owned = new Map<string, number>() } = useQuery({
+    queryKey: ["collection", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_collection")
+        .select("card_code, quantity")
+        .eq("user_id", user!.id);
+      if (error) throw error;
+      const m = new Map<string, number>();
+      for (const r of data ?? []) m.set(r.card_code, r.quantity);
+      return m;
+    },
+  });
 
   /* ── Deck cards ── */
   const { data: deckCards = [], refetch } = useQuery<DeckCard[]>({
@@ -116,11 +137,12 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
   const groupedResults = useMemo(() => {
     const groups = new Map<string, CardRow[]>();
     for (const card of searchResults) {
+      if (filterOwnedOnly && (owned.get(card.code) ?? 0) === 0) continue;
       const existing = groups.get(card.name) ?? [];
       groups.set(card.name, [...existing, card as CardRow]);
     }
     return Array.from(groups.values());
-  }, [searchResults]);
+  }, [searchResults, filterOwnedOnly, owned]);
 
   const totalCards = useMemo(() => deckCards.reduce((s, c) => s + c.quantity, 0), [deckCards]);
   const digitamaCount = useMemo(() => {
@@ -181,6 +203,14 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
     if (!check.ok) {
       toast.error(check.reason);
       return;
+    }
+
+    if ((deck as any).is_simulator && user) {
+      const ownedQty = owned.get(card.code) ?? 0;
+      if (getQty(card.code) >= ownedQty) {
+        toast.error(`보유 수량(${ownedQty}장)을 초과하여 추가할 수 없습니다. 팩 시뮬레이터에서 팩을 더 개봉해 보세요.`);
+        return;
+      }
     }
 
     const existing = deckCards.find((c) => c.card_code === card.code);
@@ -479,6 +509,19 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
               ))}
             </SelectContent>
           </Select>
+
+          <div className="flex items-center gap-1.5 ml-auto pl-2">
+            <input
+              type="checkbox"
+              id="filter-owned-only"
+              checked={filterOwnedOnly}
+              onChange={(e) => setFilterOwnedOnly(e.target.checked)}
+              className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+            />
+            <Label htmlFor="filter-owned-only" className="text-[11px] font-medium text-muted-foreground whitespace-nowrap cursor-pointer select-none">
+              {t("decks.ownedOnly") || "보유 카드만"}
+            </Label>
+          </div>
         </div>
       </div>
 
