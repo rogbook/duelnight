@@ -62,17 +62,9 @@ const TargetRef = z.object({
   iid: z.string().optional(),
 });
 
-// choose_one은 자기 재귀라 explicit any 한 곳에 격리.
+// choose_one은 자기 재귀라 explicit any로 한 곳에 격리.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const ActionSchema: z.ZodType<any> = z.lazy(() => ActionSchemaInner);
-
-const ActionSchemaInner = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("draw"), count: z.number().int().min(1).max(10) }),
-  filter: CardFilterSchema.optional(),
-  iid: z.string().optional(),     // self_active 등에 사용
-});
-
-export const ActionSchema = z.discriminatedUnion("kind", [
+export const ActionSchema: z.ZodType<any> = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("draw"), count: z.number().int().min(1).max(10) }),
   z.object({
     kind: z.literal("discard_hand"),
@@ -146,10 +138,35 @@ export const ActionSchema = z.discriminatedUnion("kind", [
   }),
   z.object({
     kind: z.literal("choose_one"),
-    options: z.array(z.lazy(() => z.array(ActionSchema).max(6))).min(2).max(4),
+    // 자기 재귀: 검증 시 ActionSchema로 재진입
+    options: z.array(z.array(z.lazy(() => ActionSchema)).max(6)).min(2).max(4),
   }),
 ]);
-export type EffectAction = z.infer<typeof ActionSchema>;
+
+// 인터프리터에서 사용할 액션 표현형. 스키마는 any로 격리했지만 사용처는 정확한 유니온으로 다룬다.
+export type EffectAction =
+  | { kind: "draw"; count: number }
+  | { kind: "discard_hand"; count: number; who: "self" | "opponent"; choose: "random" | "owner_choice" | "opponent_choice" }
+  | { kind: "look_deck"; count: number; then: { destination: "hand" | "deck_top" | "deck_bottom" | "graveyard" }[] }
+  | { kind: "search_deck"; filter: CardFilter; count: number; destination: "hand" | "deck_top" | "deck_bottom"; then_order: "any" | "shuffle" }
+  | { kind: "ko_target"; filter?: CardFilter; count: number; target: TargetRefType }
+  | { kind: "return_to_hand"; filter?: CardFilter; count: number; target: TargetRefType }
+  | { kind: "rest_target"; count: number; target: TargetRefType }
+  | { kind: "active_target"; count: number; target: TargetRefType }
+  | { kind: "power_modifier"; delta: number; duration: "this_battle" | "this_turn" | "permanent"; target: TargetRefType; scope: "single" | "all_matching" }
+  | { kind: "attach_don"; count: number; target: TargetRefType; state: "active" | "rested" }
+  | { kind: "return_don_to_deck"; count: number; state: "active" | "rested" | "any" }
+  | { kind: "gain_keyword"; keyword: "rush" | "blocker" | "double_attack" | "speed"; duration: "this_turn" | "permanent"; target: TargetRefType }
+  | { kind: "look_life"; count: number; then: { destination: "life_top" | "life_bottom" | "hand" }[] }
+  | { kind: "add_to_life"; from: "hand" | "character_area"; count: number }
+  | { kind: "modify_damage"; delta: number }
+  | { kind: "choose_one"; options: EffectAction[][] };
+
+export type TargetRefType = {
+  selector: z.infer<typeof TargetSelectorSchema>;
+  filter?: CardFilter;
+  iid?: string;
+};
 
 // ── 조건 ─────────────────────────────────────────────────
 export const ConditionSchema = z.object({
