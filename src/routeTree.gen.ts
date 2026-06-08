@@ -28,6 +28,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as TierIndexRouteImport } from './routes/tier.index'
 import { Route as StoresIndexRouteImport } from './routes/stores.index'
 import { Route as SimulatorIndexRouteImport } from './routes/simulator.index'
+import { Route as MessagesIndexRouteImport } from './routes/messages.index'
 import { Route as LfgIndexRouteImport } from './routes/lfg.index'
 import { Route as DecksIndexRouteImport } from './routes/decks.index'
 import { Route as CardsIndexRouteImport } from './routes/cards.index'
@@ -36,6 +37,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as TierIdRouteImport } from './routes/tier.$id'
 import { Route as StoresIdRouteImport } from './routes/stores.$id'
 import { Route as SimulatorIdRouteImport } from './routes/simulator.$id'
+import { Route as MessagesIdRouteImport } from './routes/messages.$id'
 import { Route as LfgIdRouteImport } from './routes/lfg.$id'
 import { Route as EventsIdRouteImport } from './routes/events.$id'
 import { Route as DecksIdRouteImport } from './routes/decks.$id'
@@ -147,6 +149,11 @@ const SimulatorIndexRoute = SimulatorIndexRouteImport.update({
   path: '/',
   getParentRoute: () => SimulatorRoute,
 } as any)
+const MessagesIndexRoute = MessagesIndexRouteImport.update({
+  id: '/messages/',
+  path: '/messages/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LfgIndexRoute = LfgIndexRouteImport.update({
   id: '/lfg/',
   path: '/lfg/',
@@ -186,6 +193,11 @@ const SimulatorIdRoute = SimulatorIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => SimulatorRoute,
+} as any)
+const MessagesIdRoute = MessagesIdRouteImport.update({
+  id: '/messages/$id',
+  path: '/messages/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const LfgIdRoute = LfgIdRouteImport.update({
   id: '/lfg/$id',
@@ -291,6 +303,7 @@ export interface FileRoutesByFullPath {
   '/decks/$id': typeof DecksIdRoute
   '/events/$id': typeof EventsIdRoute
   '/lfg/$id': typeof LfgIdRoute
+  '/messages/$id': typeof MessagesIdRoute
   '/simulator/$id': typeof SimulatorIdRoute
   '/stores/$id': typeof StoresIdRoute
   '/tier/$id': typeof TierIdRoute
@@ -299,6 +312,7 @@ export interface FileRoutesByFullPath {
   '/cards/': typeof CardsIndexRoute
   '/decks/': typeof DecksIndexRoute
   '/lfg/': typeof LfgIndexRoute
+  '/messages/': typeof MessagesIndexRoute
   '/simulator/': typeof SimulatorIndexRoute
   '/stores/': typeof StoresIndexRoute
   '/tier/': typeof TierIndexRoute
@@ -333,6 +347,7 @@ export interface FileRoutesByTo {
   '/decks/$id': typeof DecksIdRoute
   '/events/$id': typeof EventsIdRoute
   '/lfg/$id': typeof LfgIdRoute
+  '/messages/$id': typeof MessagesIdRoute
   '/simulator/$id': typeof SimulatorIdRoute
   '/stores/$id': typeof StoresIdRoute
   '/tier/$id': typeof TierIdRoute
@@ -341,6 +356,7 @@ export interface FileRoutesByTo {
   '/cards': typeof CardsIndexRoute
   '/decks': typeof DecksIndexRoute
   '/lfg': typeof LfgIndexRoute
+  '/messages': typeof MessagesIndexRoute
   '/simulator': typeof SimulatorIndexRoute
   '/stores': typeof StoresIndexRoute
   '/tier': typeof TierIndexRoute
@@ -378,6 +394,7 @@ export interface FileRoutesById {
   '/decks/$id': typeof DecksIdRoute
   '/events/$id': typeof EventsIdRoute
   '/lfg/$id': typeof LfgIdRoute
+  '/messages/$id': typeof MessagesIdRoute
   '/simulator/$id': typeof SimulatorIdRoute
   '/stores/$id': typeof StoresIdRoute
   '/tier/$id': typeof TierIdRoute
@@ -386,6 +403,7 @@ export interface FileRoutesById {
   '/cards/': typeof CardsIndexRoute
   '/decks/': typeof DecksIndexRoute
   '/lfg/': typeof LfgIndexRoute
+  '/messages/': typeof MessagesIndexRoute
   '/simulator/': typeof SimulatorIndexRoute
   '/stores/': typeof StoresIndexRoute
   '/tier/': typeof TierIndexRoute
@@ -424,6 +442,7 @@ export interface FileRouteTypes {
     | '/decks/$id'
     | '/events/$id'
     | '/lfg/$id'
+    | '/messages/$id'
     | '/simulator/$id'
     | '/stores/$id'
     | '/tier/$id'
@@ -432,6 +451,7 @@ export interface FileRouteTypes {
     | '/cards/'
     | '/decks/'
     | '/lfg/'
+    | '/messages/'
     | '/simulator/'
     | '/stores/'
     | '/tier/'
@@ -466,6 +486,7 @@ export interface FileRouteTypes {
     | '/decks/$id'
     | '/events/$id'
     | '/lfg/$id'
+    | '/messages/$id'
     | '/simulator/$id'
     | '/stores/$id'
     | '/tier/$id'
@@ -474,6 +495,7 @@ export interface FileRouteTypes {
     | '/cards'
     | '/decks'
     | '/lfg'
+    | '/messages'
     | '/simulator'
     | '/stores'
     | '/tier'
@@ -510,6 +532,7 @@ export interface FileRouteTypes {
     | '/decks/$id'
     | '/events/$id'
     | '/lfg/$id'
+    | '/messages/$id'
     | '/simulator/$id'
     | '/stores/$id'
     | '/tier/$id'
@@ -518,6 +541,7 @@ export interface FileRouteTypes {
     | '/cards/'
     | '/decks/'
     | '/lfg/'
+    | '/messages/'
     | '/simulator/'
     | '/stores/'
     | '/tier/'
@@ -554,12 +578,14 @@ export interface RootRouteChildren {
   DecksIdRoute: typeof DecksIdRoute
   EventsIdRoute: typeof EventsIdRoute
   LfgIdRoute: typeof LfgIdRoute
+  MessagesIdRoute: typeof MessagesIdRoute
   StoresIdRoute: typeof StoresIdRoute
   TierIdRoute: typeof TierIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AnnouncementsIndexRoute: typeof AnnouncementsIndexRoute
   DecksIndexRoute: typeof DecksIndexRoute
   LfgIndexRoute: typeof LfgIndexRoute
+  MessagesIndexRoute: typeof MessagesIndexRoute
   StoresIndexRoute: typeof StoresIndexRoute
   TierIndexRoute: typeof TierIndexRoute
   ApiDriveAuthRoute: typeof ApiDriveAuthRoute
@@ -701,6 +727,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SimulatorIndexRouteImport
       parentRoute: typeof SimulatorRoute
     }
+    '/messages/': {
+      id: '/messages/'
+      path: '/messages'
+      fullPath: '/messages/'
+      preLoaderRoute: typeof MessagesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lfg/': {
       id: '/lfg/'
       path: '/lfg'
@@ -756,6 +789,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/simulator/$id'
       preLoaderRoute: typeof SimulatorIdRouteImport
       parentRoute: typeof SimulatorRoute
+    }
+    '/messages/$id': {
+      id: '/messages/$id'
+      path: '/messages/$id'
+      fullPath: '/messages/$id'
+      preLoaderRoute: typeof MessagesIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/lfg/$id': {
       id: '/lfg/$id'
@@ -932,12 +972,14 @@ const rootRouteChildren: RootRouteChildren = {
   DecksIdRoute: DecksIdRoute,
   EventsIdRoute: EventsIdRoute,
   LfgIdRoute: LfgIdRoute,
+  MessagesIdRoute: MessagesIdRoute,
   StoresIdRoute: StoresIdRoute,
   TierIdRoute: TierIdRoute,
   AdminIndexRoute: AdminIndexRoute,
   AnnouncementsIndexRoute: AnnouncementsIndexRoute,
   DecksIndexRoute: DecksIndexRoute,
   LfgIndexRoute: LfgIndexRoute,
+  MessagesIndexRoute: MessagesIndexRoute,
   StoresIndexRoute: StoresIndexRoute,
   TierIndexRoute: TierIndexRoute,
   ApiDriveAuthRoute: ApiDriveAuthRoute,

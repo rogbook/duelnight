@@ -340,6 +340,42 @@ export type Database = {
         }
         Relationships: []
       }
+      conversations: {
+        Row: {
+          created_at: string
+          id: string
+          last_message: string | null
+          last_message_at: string
+          last_sender_id: string | null
+          read_at_hi: string
+          read_at_lo: string
+          user_hi: string
+          user_lo: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_message?: string | null
+          last_message_at?: string
+          last_sender_id?: string | null
+          read_at_hi?: string
+          read_at_lo?: string
+          user_hi: string
+          user_lo: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_message?: string | null
+          last_message_at?: string
+          last_sender_id?: string | null
+          read_at_hi?: string
+          read_at_lo?: string
+          user_hi?: string
+          user_lo?: string
+        }
+        Relationships: []
+      }
       deck_cards: {
         Row: {
           card_code: string
@@ -858,6 +894,38 @@ export type Database = {
           },
         ]
       }
+      messages: {
+        Row: {
+          body: string
+          conversation_id: string
+          created_at: string
+          id: string
+          sender_id: string
+        }
+        Insert: {
+          body: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          sender_id: string
+        }
+        Update: {
+          body?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string | null
@@ -1185,6 +1253,24 @@ export type Database = {
         }
         Relationships: []
       }
+      user_blocks: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       user_collection: {
         Row: {
           card_code: string
@@ -1289,6 +1375,41 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_reports: {
+        Row: {
+          conversation_id: string | null
+          created_at: string
+          id: string
+          reason: string | null
+          reported_id: string
+          reporter_id: string
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          reported_id: string
+          reporter_id: string
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          reported_id?: string
+          reporter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_reports_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -1406,6 +1527,7 @@ export type Database = {
         Args: { _feature: string; _source: string; _user_id: string }
         Returns: undefined
       }
+      mark_dm_read: { Args: { _conversation: string }; Returns: undefined }
       process_successful_payment:
         | {
             Args: {
@@ -1452,6 +1574,7 @@ export type Database = {
           username: string
         }[]
       }
+      start_dm: { Args: { _other: string }; Returns: string }
       update_opponent_match: {
         Args: {
           _match_id: string
