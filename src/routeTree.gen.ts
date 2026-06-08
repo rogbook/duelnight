@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StoreRouteImport } from './routes/store'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as SimulatorRouteImport } from './routes/simulator'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PacksRouteImport } from './routes/packs'
@@ -26,6 +27,7 @@ import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TierIndexRouteImport } from './routes/tier.index'
 import { Route as StoresIndexRouteImport } from './routes/stores.index'
+import { Route as SimulatorIndexRouteImport } from './routes/simulator.index'
 import { Route as LfgIndexRouteImport } from './routes/lfg.index'
 import { Route as DecksIndexRouteImport } from './routes/decks.index'
 import { Route as CardsIndexRouteImport } from './routes/cards.index'
@@ -33,6 +35,7 @@ import { Route as AnnouncementsIndexRouteImport } from './routes/announcements.i
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as TierIdRouteImport } from './routes/tier.$id'
 import { Route as StoresIdRouteImport } from './routes/stores.$id'
+import { Route as SimulatorIdRouteImport } from './routes/simulator.$id'
 import { Route as LfgIdRouteImport } from './routes/lfg.$id'
 import { Route as EventsIdRouteImport } from './routes/events.$id'
 import { Route as DecksIdRouteImport } from './routes/decks.$id'
@@ -57,6 +60,11 @@ const StoreRoute = StoreRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SimulatorRoute = SimulatorRouteImport.update({
+  id: '/simulator',
+  path: '/simulator',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -134,6 +142,11 @@ const StoresIndexRoute = StoresIndexRouteImport.update({
   path: '/stores/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SimulatorIndexRoute = SimulatorIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SimulatorRoute,
+} as any)
 const LfgIndexRoute = LfgIndexRouteImport.update({
   id: '/lfg/',
   path: '/lfg/',
@@ -168,6 +181,11 @@ const StoresIdRoute = StoresIdRouteImport.update({
   id: '/stores/$id',
   path: '/stores/$id',
   getParentRoute: () => rootRouteImport,
+} as any)
+const SimulatorIdRoute = SimulatorIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => SimulatorRoute,
 } as any)
 const LfgIdRoute = LfgIdRouteImport.update({
   id: '/lfg/$id',
@@ -259,6 +277,7 @@ export interface FileRoutesByFullPath {
   '/packs': typeof PacksRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/simulator': typeof SimulatorRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/store': typeof StoreRoute
   '/admin/cards': typeof AdminCardsRouteWithChildren
@@ -272,6 +291,7 @@ export interface FileRoutesByFullPath {
   '/decks/$id': typeof DecksIdRoute
   '/events/$id': typeof EventsIdRoute
   '/lfg/$id': typeof LfgIdRoute
+  '/simulator/$id': typeof SimulatorIdRoute
   '/stores/$id': typeof StoresIdRoute
   '/tier/$id': typeof TierIdRoute
   '/admin/': typeof AdminIndexRoute
@@ -279,6 +299,7 @@ export interface FileRoutesByFullPath {
   '/cards/': typeof CardsIndexRoute
   '/decks/': typeof DecksIndexRoute
   '/lfg/': typeof LfgIndexRoute
+  '/simulator/': typeof SimulatorIndexRoute
   '/stores/': typeof StoresIndexRoute
   '/tier/': typeof TierIndexRoute
   '/admin/cards/manage': typeof AdminCardsManageRoute
@@ -312,6 +333,7 @@ export interface FileRoutesByTo {
   '/decks/$id': typeof DecksIdRoute
   '/events/$id': typeof EventsIdRoute
   '/lfg/$id': typeof LfgIdRoute
+  '/simulator/$id': typeof SimulatorIdRoute
   '/stores/$id': typeof StoresIdRoute
   '/tier/$id': typeof TierIdRoute
   '/admin': typeof AdminIndexRoute
@@ -319,6 +341,7 @@ export interface FileRoutesByTo {
   '/cards': typeof CardsIndexRoute
   '/decks': typeof DecksIndexRoute
   '/lfg': typeof LfgIndexRoute
+  '/simulator': typeof SimulatorIndexRoute
   '/stores': typeof StoresIndexRoute
   '/tier': typeof TierIndexRoute
   '/admin/cards/manage': typeof AdminCardsManageRoute
@@ -341,6 +364,7 @@ export interface FileRoutesById {
   '/packs': typeof PacksRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/simulator': typeof SimulatorRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/store': typeof StoreRoute
   '/admin/cards': typeof AdminCardsRouteWithChildren
@@ -354,6 +378,7 @@ export interface FileRoutesById {
   '/decks/$id': typeof DecksIdRoute
   '/events/$id': typeof EventsIdRoute
   '/lfg/$id': typeof LfgIdRoute
+  '/simulator/$id': typeof SimulatorIdRoute
   '/stores/$id': typeof StoresIdRoute
   '/tier/$id': typeof TierIdRoute
   '/admin/': typeof AdminIndexRoute
@@ -361,6 +386,7 @@ export interface FileRoutesById {
   '/cards/': typeof CardsIndexRoute
   '/decks/': typeof DecksIndexRoute
   '/lfg/': typeof LfgIndexRoute
+  '/simulator/': typeof SimulatorIndexRoute
   '/stores/': typeof StoresIndexRoute
   '/tier/': typeof TierIndexRoute
   '/admin/cards/manage': typeof AdminCardsManageRoute
@@ -384,6 +410,7 @@ export interface FileRouteTypes {
     | '/packs'
     | '/profile'
     | '/reset-password'
+    | '/simulator'
     | '/sitemap.xml'
     | '/store'
     | '/admin/cards'
@@ -397,6 +424,7 @@ export interface FileRouteTypes {
     | '/decks/$id'
     | '/events/$id'
     | '/lfg/$id'
+    | '/simulator/$id'
     | '/stores/$id'
     | '/tier/$id'
     | '/admin/'
@@ -404,6 +432,7 @@ export interface FileRouteTypes {
     | '/cards/'
     | '/decks/'
     | '/lfg/'
+    | '/simulator/'
     | '/stores/'
     | '/tier/'
     | '/admin/cards/manage'
@@ -437,6 +466,7 @@ export interface FileRouteTypes {
     | '/decks/$id'
     | '/events/$id'
     | '/lfg/$id'
+    | '/simulator/$id'
     | '/stores/$id'
     | '/tier/$id'
     | '/admin'
@@ -444,6 +474,7 @@ export interface FileRouteTypes {
     | '/cards'
     | '/decks'
     | '/lfg'
+    | '/simulator'
     | '/stores'
     | '/tier'
     | '/admin/cards/manage'
@@ -465,6 +496,7 @@ export interface FileRouteTypes {
     | '/packs'
     | '/profile'
     | '/reset-password'
+    | '/simulator'
     | '/sitemap.xml'
     | '/store'
     | '/admin/cards'
@@ -478,6 +510,7 @@ export interface FileRouteTypes {
     | '/decks/$id'
     | '/events/$id'
     | '/lfg/$id'
+    | '/simulator/$id'
     | '/stores/$id'
     | '/tier/$id'
     | '/admin/'
@@ -485,6 +518,7 @@ export interface FileRouteTypes {
     | '/cards/'
     | '/decks/'
     | '/lfg/'
+    | '/simulator/'
     | '/stores/'
     | '/tier/'
     | '/admin/cards/manage'
@@ -507,6 +541,7 @@ export interface RootRouteChildren {
   PacksRoute: typeof PacksRoute
   ProfileRoute: typeof ProfileRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SimulatorRoute: typeof SimulatorRouteWithChildren
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StoreRoute: typeof StoreRoute
   AdminCardsRoute: typeof AdminCardsRouteWithChildren
@@ -545,6 +580,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/simulator': {
+      id: '/simulator'
+      path: '/simulator'
+      fullPath: '/simulator'
+      preLoaderRoute: typeof SimulatorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -652,6 +694,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StoresIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/simulator/': {
+      id: '/simulator/'
+      path: '/'
+      fullPath: '/simulator/'
+      preLoaderRoute: typeof SimulatorIndexRouteImport
+      parentRoute: typeof SimulatorRoute
+    }
     '/lfg/': {
       id: '/lfg/'
       path: '/lfg'
@@ -700,6 +749,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/stores/$id'
       preLoaderRoute: typeof StoresIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/simulator/$id': {
+      id: '/simulator/$id'
+      path: '/$id'
+      fullPath: '/simulator/$id'
+      preLoaderRoute: typeof SimulatorIdRouteImport
+      parentRoute: typeof SimulatorRoute
     }
     '/lfg/$id': {
       id: '/lfg/$id'
@@ -821,6 +877,20 @@ const CardsRouteChildren: CardsRouteChildren = {
 
 const CardsRouteWithChildren = CardsRoute._addFileChildren(CardsRouteChildren)
 
+interface SimulatorRouteChildren {
+  SimulatorIdRoute: typeof SimulatorIdRoute
+  SimulatorIndexRoute: typeof SimulatorIndexRoute
+}
+
+const SimulatorRouteChildren: SimulatorRouteChildren = {
+  SimulatorIdRoute: SimulatorIdRoute,
+  SimulatorIndexRoute: SimulatorIndexRoute,
+}
+
+const SimulatorRouteWithChildren = SimulatorRoute._addFileChildren(
+  SimulatorRouteChildren,
+)
+
 interface AdminCardsRouteChildren {
   AdminCardsManageRoute: typeof AdminCardsManageRoute
   AdminCardsReviewRoute: typeof AdminCardsReviewRoute
@@ -849,6 +919,7 @@ const rootRouteChildren: RootRouteChildren = {
   PacksRoute: PacksRoute,
   ProfileRoute: ProfileRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SimulatorRoute: SimulatorRouteWithChildren,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StoreRoute: StoreRoute,
   AdminCardsRoute: AdminCardsRouteWithChildren,

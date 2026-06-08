@@ -89,7 +89,7 @@ function SimulatorMatchRoomPage() {
         // Supabase에서 메타데이터 검색
         const { data: cardRows, error } = await supabase
           .from("cards")
-          .select("code, cost, power, counter, type, colors, effects")
+          .select("code, name, cost, power, counter, type, colors, effects")
           .in("code", allCodes);
 
         if (error) throw error;
@@ -97,6 +97,7 @@ function SimulatorMatchRoomPage() {
         // 글로벌 캐시 적재
         for (const row of cardRows ?? []) {
           CARD_METADATA_CACHE[row.code] = {
+            name: row.name ?? row.code,
             cost: row.cost ?? 0,
             power: row.power ?? (row.type === "leader" ? 5000 : 0),
             counterValue: row.counter ?? 0,
@@ -105,6 +106,7 @@ function SimulatorMatchRoomPage() {
             effects: (row.effects as any) ?? [],
           };
         }
+
 
         // 게임 인메모리 엔진 구동
         const startSeed = "seed-" + Math.floor(Math.random() * 1000000);
@@ -198,58 +200,49 @@ function SimulatorMatchRoomPage() {
     : [];
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-6 flex flex-col gap-6">
-      {/* ── 헤더 영역 ── */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
-        <div className="flex items-center gap-3">
-          <Link to="/simulator" className="p-2 border border-border rounded-lg bg-card hover:bg-accent text-muted-foreground hover:text-foreground transition-all">
+    <div className="mx-auto w-full max-w-7xl px-3 sm:px-4 py-3 sm:py-6 pb-28 lg:pb-6 flex flex-col gap-4 sm:gap-6">
+      {/* ── 헤더 영역 (모바일에서 상단 sticky) ── */}
+      <div className="sticky top-0 z-30 -mx-3 sm:-mx-4 px-3 sm:px-4 py-2 sm:py-0 sm:static bg-background/85 backdrop-blur sm:bg-transparent sm:backdrop-blur-0 flex flex-wrap items-center justify-between gap-2 sm:gap-4 border-b border-border pb-2 sm:pb-4">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <Link to="/simulator" className="p-2 border border-border rounded-lg bg-card hover:bg-accent text-muted-foreground hover:text-foreground transition-all shrink-0">
             <ArrowLeft className="h-4 w-4" />
           </Link>
-          <div>
-            <h1 className="text-lg font-black tracking-tight flex items-center gap-2">
-              <Swords className="h-5 w-5 text-red-500" /> 시뮬레이션 매치 룸
+          <div className="min-w-0">
+            <h1 className="text-sm sm:text-lg font-black tracking-tight flex items-center gap-2 truncate">
+              <Swords className="h-4 w-4 sm:h-5 sm:w-5 text-red-500 shrink-0" /> <span className="truncate">시뮬레이션 매치 룸</span>
             </h1>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Turn {gameState.turn} · {gameState.phase === "main" ? "메인 페이즈" : "전투 대응 페이즈"} ·{" "}
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 truncate">
+              Turn {gameState.turn} · {gameState.phase === "main" ? "메인" : "전투대응"} ·{" "}
               <span className="font-extrabold text-primary">
-                {gameState.activePlayer === "p1" ? "Player 1 (User)" : "Player 2 (AI)"} 턴
+                {gameState.activePlayer === "p1" ? "P1(나)" : "P2(AI)"} 턴
               </span>
             </p>
           </div>
         </div>
 
         {/* 관전/자동 속도 컨트롤 */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {mode === "auto" && (
-            <div className="flex items-center gap-1 bg-muted p-0.5 rounded-lg text-xs">
+            <div className="flex items-center gap-1 bg-muted p-0.5 rounded-lg text-[11px] sm:text-xs">
               <button
                 onClick={() => setIsAutoPlaying(prev => !prev)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md font-bold transition-all ${
+                className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md font-bold transition-all ${
                   isAutoPlaying ? "bg-primary text-primary-foreground shadow" : "hover:bg-card text-muted-foreground"
                 }`}
               >
                 {isAutoPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 fill-current" />}
-                {isAutoPlaying ? "일시정지" : "자동재생"}
+                <span className="hidden sm:inline">{isAutoPlaying ? "일시정지" : "자동재생"}</span>
               </button>
               <div className="h-4 w-[1px] bg-border mx-1" />
-              <button
-                onClick={() => setSpeedMs(1500)}
-                className={`px-2 py-1.5 rounded-md ${speedMs === 1500 ? "font-bold text-foreground" : "text-muted-foreground"}`}
-              >
-                1.5s
-              </button>
-              <button
-                onClick={() => setSpeedMs(1000)}
-                className={`px-2 py-1.5 rounded-md ${speedMs === 1000 ? "font-bold text-foreground" : "text-muted-foreground"}`}
-              >
-                1.0s
-              </button>
-              <button
-                onClick={() => setSpeedMs(500)}
-                className={`px-2 py-1.5 rounded-md ${speedMs === 500 ? "font-bold text-foreground" : "text-muted-foreground"}`}
-              >
-                0.5s
-              </button>
+              {[1500, 1000, 500].map((ms) => (
+                <button
+                  key={ms}
+                  onClick={() => setSpeedMs(ms)}
+                  className={`px-2 py-1.5 rounded-md ${speedMs === ms ? "font-bold text-foreground" : "text-muted-foreground"}`}
+                >
+                  {(ms / 1000).toFixed(1)}s
+                </button>
+              ))}
             </div>
           )}
 
@@ -259,12 +252,13 @@ function SimulatorMatchRoomPage() {
                 navigate({ to: "/simulator" });
               }
             }}
-            className="flex items-center gap-1.5 px-3 py-2 bg-destructive/10 text-destructive hover:bg-destructive hover:text-white rounded-lg text-xs font-bold transition-all"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 bg-destructive/10 text-destructive hover:bg-destructive hover:text-white rounded-lg text-[11px] sm:text-xs font-bold transition-all min-h-10"
           >
-            <LogOut className="h-3.5 w-3.5" /> 기권 및 퇴장
+            <LogOut className="h-3.5 w-3.5" /> <span className="hidden sm:inline">기권 및 퇴장</span><span className="sm:hidden">기권</span>
           </button>
         </div>
       </div>
+
 
       {/* ── 승패 종료 알림 배너 ── */}
       {isTerminalResult && (
@@ -290,20 +284,21 @@ function SimulatorMatchRoomPage() {
       )}
 
       {/* ── 시뮬레이터 배틀 보드 ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start">
         {/* ── 배틀 필드 보드 (12열 중 8열) ── */}
-        <div className="lg:col-span-8 flex flex-col gap-6">
+        <div className="lg:col-span-8 flex flex-col gap-4 sm:gap-6 min-w-0">
           
           {/* ── PLAYER 2 (상단: AI) ── */}
-          <div className="rounded-2xl border border-border bg-card/40 p-4 relative space-y-4">
-            <div className="absolute top-3 right-4 flex items-center gap-1.5 text-[10px] font-bold text-red-500 bg-red-500/10 px-2 py-0.5 rounded-full">
-              <Cpu className="h-3.5 w-3.5" /> AI PLAYER (P2)
+          <div className="rounded-2xl border border-border bg-card/40 p-3 sm:p-4 relative space-y-3 sm:space-y-4">
+            <div className="absolute top-2 right-2 sm:top-3 sm:right-4 flex items-center gap-1 sm:gap-1.5 text-[9px] sm:text-[10px] font-bold text-red-500 bg-red-500/10 px-1.5 sm:px-2 py-0.5 rounded-full">
+              <Cpu className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> AI (P2)
             </div>
 
             <PlayerStatRow playerState={p2State} isTop={true} />
 
             {/* AI 필드 에리어 */}
-            <div className="grid grid-cols-6 gap-3 items-center min-h-[140px] border-t border-border/20 pt-4">
+            <div className="grid grid-cols-[auto_1fr] gap-2 sm:gap-3 items-center min-h-[120px] sm:min-h-[140px] border-t border-border/20 pt-3 sm:pt-4">
+
               {/* 리더 슬롯 */}
               <div className="flex flex-col items-center">
                 <span className="text-[9px] font-bold text-muted-foreground mb-1">LEADER</span>
@@ -313,9 +308,9 @@ function SimulatorMatchRoomPage() {
               </div>
 
               {/* 캐릭터 에리어 (최대 5개) */}
-              <div className="col-span-5 flex gap-3 overflow-x-auto pb-1">
+              <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-1 min-w-0">
                 {p2State.zones.secondary.length === 0 ? (
-                  <div className="flex-1 flex items-center justify-center border border-dashed border-border/40 rounded-xl text-[10px] text-muted-foreground min-h-[120px]">
+                  <div className="flex-1 flex items-center justify-center border border-dashed border-border/40 rounded-xl text-[10px] text-muted-foreground min-h-[100px] sm:min-h-[120px] px-4">
                     배틀 영역이 비어 있습니다.
                   </div>
                 ) : (
@@ -324,6 +319,7 @@ function SimulatorMatchRoomPage() {
                   ))
                 )}
               </div>
+
             </div>
 
             {/* AI 핸드 에리어 (비공개 또는 반투명) */}
@@ -371,15 +367,15 @@ function SimulatorMatchRoomPage() {
           )}
 
           {/* ── PLAYER 1 (하단: USER) ── */}
-          <div className="rounded-2xl border border-border bg-card/40 p-4 relative space-y-4">
-            <div className="absolute top-3 right-4 flex items-center gap-1.5 text-[10px] font-bold text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded-full">
-              <User className="h-3.5 w-3.5" /> USER PLAYER (P1)
+          <div className="rounded-2xl border border-border bg-card/40 p-3 sm:p-4 relative space-y-3 sm:space-y-4">
+            <div className="absolute top-2 right-2 sm:top-3 sm:right-4 flex items-center gap-1 sm:gap-1.5 text-[9px] sm:text-[10px] font-bold text-blue-500 bg-blue-500/10 px-1.5 sm:px-2 py-0.5 rounded-full">
+              <User className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> USER (P1)
             </div>
 
             <PlayerStatRow playerState={p1State} isTop={false} />
 
             {/* USER 필드 에리어 */}
-            <div className="grid grid-cols-6 gap-3 items-center min-h-[140px] border-t border-border/20 pt-4">
+            <div className="grid grid-cols-[auto_1fr] gap-2 sm:gap-3 items-center min-h-[120px] sm:min-h-[140px] border-t border-border/20 pt-3 sm:pt-4">
               {/* 리더 슬롯 */}
               <div className="flex flex-col items-center">
                 <span className="text-[9px] font-bold text-muted-foreground mb-1">LEADER</span>
@@ -389,9 +385,9 @@ function SimulatorMatchRoomPage() {
               </div>
 
               {/* 캐릭터 에리어 */}
-              <div className="col-span-5 flex gap-3 overflow-x-auto pb-1">
+              <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-1 min-w-0">
                 {p1State.zones.secondary.length === 0 ? (
-                  <div className="flex-1 flex items-center justify-center border border-dashed border-border/40 rounded-xl text-[10px] text-muted-foreground min-h-[120px]">
+                  <div className="flex-1 flex items-center justify-center border border-dashed border-border/40 rounded-xl text-[10px] text-muted-foreground min-h-[100px] sm:min-h-[120px] px-4">
                     배틀 영역이 비어 있습니다.
                   </div>
                 ) : (
@@ -401,6 +397,7 @@ function SimulatorMatchRoomPage() {
                 )}
               </div>
             </div>
+
 
             {/* USER 핸드 에리어 */}
             <div className="border-t border-border/20 pt-3 flex items-center gap-2">
@@ -414,9 +411,10 @@ function SimulatorMatchRoomPage() {
                     return (
                       <div
                         key={c.iid}
-                        className="w-16 h-24 rounded-lg border border-border bg-card p-1 flex flex-col justify-between shrink-0 shadow-sm relative group cursor-pointer hover:border-primary/50"
+                        className="w-12 h-[68px] sm:w-16 sm:h-24 rounded-lg border border-border bg-card p-1 flex flex-col justify-between shrink-0 shadow-sm relative group cursor-pointer hover:border-primary/50"
                         title={meta.name}
                       >
+
                         <div className="min-w-0">
                           <span className="text-[8px] font-extrabold truncate block leading-tight">
                             {meta.name}
@@ -437,13 +435,13 @@ function SimulatorMatchRoomPage() {
             </div>
           </div>
 
-          {/* ── 수동 조작 액션 리스트 Panel ── */}
+          {/* ── 수동 조작 액션 리스트 Panel — 모바일은 하단 sticky ── */}
           {p1AvailableActions.length > 0 && (
-            <div className="rounded-2xl border border-border bg-card p-4 space-y-3 shadow-md">
-              <h3 className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
-                <User className="h-4 w-4 text-blue-500" /> 수동 조작 액션 선택 (Player 1)
+            <div className="rounded-2xl border border-border bg-card p-3 sm:p-4 space-y-2 sm:space-y-3 shadow-md lg:static fixed bottom-0 left-0 right-0 z-40 lg:z-auto rounded-b-none lg:rounded-2xl border-t-2 lg:border pb-[calc(0.75rem+env(safe-area-inset-bottom))] lg:pb-4">
+              <h3 className="text-[11px] sm:text-xs font-bold text-muted-foreground flex items-center gap-1.5">
+                <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-500" /> 수동 조작 액션 (P1)
               </h3>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5 sm:gap-2 max-h-32 lg:max-h-none overflow-y-auto">
                 {p1AvailableActions.map((act, index) => {
                   const label = getActionLabel(act);
                   const colorClass = getActionColorClass(act.type);
@@ -451,7 +449,7 @@ function SimulatorMatchRoomPage() {
                     <button
                       key={index}
                       onClick={() => handlePerformAction(act)}
-                      className={`px-3 py-2 rounded-lg text-xs font-bold transition-all border shadow-sm ${colorClass}`}
+                      className={`px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-xs font-bold transition-all border shadow-sm min-h-10 ${colorClass}`}
                     >
                       {label}
                     </button>
@@ -462,34 +460,37 @@ function SimulatorMatchRoomPage() {
           )}
         </div>
 
-        {/* ── 실시간 대국 로그 창 (12열 중 4열) ── */}
-        <div className="lg:col-span-4 flex flex-col h-[650px] rounded-2xl border border-border bg-card/60 backdrop-blur shadow-md overflow-hidden">
-          <div className="p-4 border-b border-border bg-card">
+        {/* ── 실시간 대국 로그 창 — 모바일은 접이식 ── */}
+        <details open className="lg:col-span-4 lg:open:!block group rounded-2xl border border-border bg-card/60 backdrop-blur shadow-md overflow-hidden">
+          <summary className="cursor-pointer lg:cursor-default list-none p-3 sm:p-4 border-b border-border bg-card flex items-center justify-between">
             <h3 className="text-xs font-black uppercase tracking-wider flex items-center gap-2">
-              <Swords className="h-4 w-4 text-primary" /> 실시간 대국 로그 피드
+              <Swords className="h-4 w-4 text-primary" /> 실시간 대국 로그
             </h3>
+            <span className="text-[10px] text-muted-foreground lg:hidden">탭하여 열기/닫기</span>
+          </summary>
+          <div className="flex flex-col lg:h-[650px] max-h-[40vh] lg:max-h-none">
+            {/* 로그 리스트 */}
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 sm:space-y-3 font-mono text-[11px] leading-relaxed">
+              {gameState.log.map((evt, idx) => {
+                const text = formatEventLog(evt);
+                return (
+                  <div key={idx} className="border-b border-border/20 pb-2">
+                    <span className="text-[10px] text-muted-foreground select-none">
+                      [T{evt.turn} {evt.player.toUpperCase()}]
+                    </span>{" "}
+                    <span className="text-foreground/90">{text}</span>
+                  </div>
+                );
+              })}
+              <div ref={logEndRef} />
+            </div>
           </div>
-          
-          {/* 로그 리스트 */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 font-mono text-[11px] leading-relaxed">
-            {gameState.log.map((evt, idx) => {
-              const text = formatEventLog(evt);
-              return (
-                <div key={idx} className="border-b border-border/20 pb-2">
-                  <span className="text-[10px] text-muted-foreground select-none">
-                    [T{evt.turn} {evt.player.toUpperCase()}]
-                  </span>{" "}
-                  <span className="text-foreground/90">{text}</span>
-                </div>
-              );
-            })}
-            <div ref={logEndRef} />
-          </div>
-        </div>
+        </details>
       </div>
     </div>
   );
 }
+
 
 // ──────────────────────────────────────────────────────────
 // 헬퍼 컴포넌트: 플레이어 정보 행
@@ -539,7 +540,7 @@ function BattleUnit({ unit }: { unit: CardInstance }) {
 
   return (
     <div
-      className={`relative w-20 h-28 rounded-lg border bg-card p-1.5 flex flex-col justify-between shrink-0 shadow transition-all ${
+      className={`relative w-16 h-24 sm:w-20 sm:h-28 rounded-lg border bg-card p-1.5 flex flex-col justify-between shrink-0 shadow transition-all ${
         unit.rested ? "opacity-65 border-border scale-95" : "border-primary"
       }`}
       style={{
