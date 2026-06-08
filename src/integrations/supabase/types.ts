@@ -1368,6 +1368,7 @@ export type Database = {
         }[]
       }
       grant_admin_by_email: { Args: { _email: string }; Returns: string }
+      grant_ai_unlimited_by_email: { Args: { _email: string }; Returns: string }
       grant_credits: {
         Args: { _amount: number; _payment_id: string; _user_id: string }
         Returns: undefined
@@ -1384,6 +1385,15 @@ export type Database = {
         Returns: undefined
       }
       list_admins: {
+        Args: never
+        Returns: {
+          display_name: string
+          email: string
+          granted_at: string
+          user_id: string
+        }[]
+      }
+      list_ai_unlimited: {
         Args: never
         Returns: {
           display_name: string
@@ -1427,6 +1437,10 @@ export type Database = {
         Returns: undefined
       }
       revoke_admin_by_email: { Args: { _email: string }; Returns: string }
+      revoke_ai_unlimited_by_email: {
+        Args: { _email: string }
+        Returns: string
+      }
       search_users: {
         Args: { lim?: number; q: string }
         Returns: {
