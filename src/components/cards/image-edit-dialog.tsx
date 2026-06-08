@@ -96,7 +96,11 @@ export function ImageEditDialog({ open, imageUrl, setCode, cardCode, onClose, on
         filename: `${cardCode || "card"}-${Date.now()}.webp`,
       });
       const folder = setCode || cardCode?.split("-")[0] || "misc";
-      const path = `${folder}/${cardCode || "card"}-${Date.now()}.webp`;
+      const filename = `${cardCode || "card"}-${Date.now()}.webp`;
+      // RLS: 비관리자는 user-uploads/{uid}/... 경로만 허용. 관리자는 어디든 허용되므로 동일 경로 사용 OK.
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth.user?.id;
+      const path = uid ? `user-uploads/${uid}/${folder}/${filename}` : `${folder}/${filename}`;
       const { error } = await supabase.storage.from("card-images").upload(path, file, {
         contentType: "image/webp", cacheControl: "3600", upsert: false,
       });
