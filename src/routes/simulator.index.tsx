@@ -544,7 +544,7 @@ function SimulatorRecipeEditor({ deck, onSaveComplete }: { deck: SimulatorDeck; 
         .limit(150);
 
       if (q.trim()) qb = qb.or(`name.ilike.%${q.trim()}%,code.ilike.%${q.trim()}%`);
-      if (filterType !== "all") qb = qb.eq("type", filterType);
+      if (filterType !== "all") qb = qb.eq("type", filterType as any);
       if (filterColor !== "all") qb = qb.contains("colors", [filterColor]);
       if (filterSet !== "all") qb = qb.eq("set_code", filterSet);
 

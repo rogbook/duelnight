@@ -89,7 +89,7 @@ function SimulatorMatchRoomPage() {
         // Supabase에서 메타데이터 검색
         const { data: cardRows, error } = await supabase
           .from("cards")
-          .select("code, cost, power, counter, type, colors, effects")
+          .select("code, name, cost, power, counter, type, colors, effects")
           .in("code", allCodes);
 
         if (error) throw error;
@@ -97,6 +97,7 @@ function SimulatorMatchRoomPage() {
         // 글로벌 캐시 적재
         for (const row of cardRows ?? []) {
           CARD_METADATA_CACHE[row.code] = {
+            name: row.name ?? row.code,
             cost: row.cost ?? 0,
             power: row.power ?? (row.type === "leader" ? 5000 : 0),
             counterValue: row.counter ?? 0,
@@ -105,6 +106,7 @@ function SimulatorMatchRoomPage() {
             effects: (row.effects as any) ?? [],
           };
         }
+
 
         // 게임 인메모리 엔진 구동
         const startSeed = "seed-" + Math.floor(Math.random() * 1000000);
