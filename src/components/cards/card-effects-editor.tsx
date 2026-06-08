@@ -21,6 +21,12 @@ const SNIPPETS: { label: string; effect: Record<string, unknown> }[] = [
   { label: "덱 서치", effect: { id: "search1", label: "등장 시 덱에서 캐릭터 1장 서치", trigger: "on_play", actions: [{ kind: "search_deck", filter: { type: ["character"] }, count: 1, destination: "hand", then_order: "shuffle" }] } },
   { label: "블로커", effect: { id: "blocker", label: "블로커", trigger: "passive", actions: [{ kind: "gain_keyword", keyword: "blocker", duration: "permanent", target: { selector: "self_active" } }] } },
   { label: "라이프 추가", effect: { id: "life1", label: "등장 시 손에서 라이프 1장 추가", trigger: "on_play", actions: [{ kind: "add_to_life", from: "hand", count: 1 }] } },
+  { label: "러시", effect: { id: "rush", label: "러시", trigger: "passive", actions: [{ kind: "gain_keyword", keyword: "rush", duration: "permanent", target: { selector: "self_active" } }] } },
+  { label: "더블어택", effect: { id: "double", label: "더블어택", trigger: "passive", actions: [{ kind: "gain_keyword", keyword: "double_attack", duration: "permanent", target: { selector: "self_active" } }] } },
+  { label: "상대 손패 -1", effect: { id: "disc1", label: "등장 시 상대 손패 1장 버리기", trigger: "on_play", actions: [{ kind: "discard_hand", count: 1, who: "opponent", choose: "opponent_choice" }] } },
+  { label: "손으로 되돌리기", effect: { id: "bounce1", label: "등장 시 상대 코스트2 이하 1장 손으로", trigger: "on_play", actions: [{ kind: "return_to_hand", count: 1, target: { selector: "opponent_character_filter", filter: { cost_max: 2 } } }] } },
+  { label: "상대 레스트", effect: { id: "rest1", label: "등장 시 상대 캐릭터 1장 레스트", trigger: "on_play", actions: [{ kind: "rest_target", count: 1, target: { selector: "opponent_character_any" } }] } },
+  { label: "카운터 +2000", effect: { id: "counter2k", label: "[카운터] 이 캐릭터 +2000", trigger: "counter", actions: [{ kind: "power_modifier", delta: 2000, duration: "this_battle", target: { selector: "self_active" }, scope: "single" }] } },
 ];
 
 const TRIGGERS = "on_play · on_ko · on_block · on_attack · on_being_attacked · on_trigger · on_turn_start · on_turn_end · activate_main · counter · passive";
