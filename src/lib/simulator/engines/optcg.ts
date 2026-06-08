@@ -32,6 +32,7 @@ export const CARD_METADATA_CACHE: Record<
     type: "leader" | "character" | "event" | "stage";
     colors: string[];
     effects?: any[];
+    imageUrl?: string | null;
   }
 > = {};
 
@@ -46,9 +47,11 @@ export function getCardMeta(code: string) {
       type: "character" as const,
       colors: ["red"],
       effects: [],
+      imageUrl: null,
     }
   );
 }
+
 
 
 const meta: EngineMeta = {
