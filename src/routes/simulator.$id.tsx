@@ -289,9 +289,10 @@ function SimulatorMatchRoomPage() {
       </div>
 
       {/* ── 배틀 보드(매트) ── */}
-      <div className="relative rounded-3xl border border-border overflow-hidden shadow-xl bg-gradient-to-b from-rose-500/10 via-card to-sky-500/10">
-        {/* 은은한 비네팅 */}
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,hsl(var(--background)/0.55))]" />
+      <div className="relative rounded-3xl border-2 border-border/70 overflow-hidden shadow-2xl bg-gradient-to-b from-red-600/[0.12] via-card to-blue-600/[0.12]">
+        {/* 매트 질감 + 중앙 비네팅 */}
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.06),transparent_45%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_50%,hsl(var(--background)/0.6))]" />
 
         <div className="relative flex flex-col">
           {/* ─ 상대(AI) 진영 ─ */}
@@ -463,8 +464,12 @@ function PlayerSide({
   return (
     <div
       className={`relative px-3 py-3 sm:px-4 sm:py-4 transition-colors ${
-        isActive ? (isOpponent ? "bg-red-500/[0.04]" : "bg-blue-500/[0.04]") : ""
-      } ${isOpponent ? "flex flex-col" : "flex flex-col-reverse"}`}
+        isOpponent
+          ? "bg-gradient-to-b from-red-500/[0.05] to-transparent"
+          : "bg-gradient-to-t from-blue-500/[0.05] to-transparent"
+      } ${isActive ? "ring-1 ring-inset " + (isOpponent ? "ring-red-500/30" : "ring-blue-500/30") : ""} ${
+        isOpponent ? "flex flex-col" : "flex flex-col-reverse"
+      }`}
     >
       {/* 손패 트레이 */}
       {isOpponent ? (
@@ -499,20 +504,20 @@ function PlayerSide({
                     key={c.iid}
                     onClick={() => onHandSelect?.(c.iid)}
                     title={meta.name}
-                    className={`relative w-14 h-20 sm:w-16 sm:h-24 rounded-lg border overflow-hidden shrink-0 shadow-sm transition-all ${
+                    className={`relative w-16 h-24 sm:w-20 sm:h-28 rounded-lg border-2 overflow-hidden shrink-0 shadow-md transition-all ${
                       selected
-                        ? "border-primary ring-2 ring-primary -translate-y-1.5"
+                        ? "border-primary ring-2 ring-primary -translate-y-2"
                         : playable
-                          ? "border-green-500/60 hover:-translate-y-1"
-                          : "border-border opacity-80"
+                          ? "border-green-500/70 hover:-translate-y-1.5"
+                          : "border-border/70 opacity-75"
                     }`}
                   >
                     <CardArt meta={meta} />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/30 pointer-events-none" />
-                    <span className="absolute top-0.5 left-0.5 right-0.5 text-[7px] font-extrabold truncate text-white drop-shadow leading-tight">
+                    <span className="absolute top-0.5 left-0.5 right-0.5 text-[8px] font-extrabold truncate text-white drop-shadow leading-tight">
                       {meta.name}
                     </span>
-                    <div className="absolute bottom-0.5 left-0.5 right-0.5 flex items-center justify-between text-[7px]">
+                    <div className="absolute bottom-0.5 left-0.5 right-0.5 flex items-center justify-between text-[8px]">
                       <span className="bg-black/70 text-white px-1 rounded font-bold">{meta.cost}</span>
                       {meta.power > 0 && (
                         <span className="bg-red-600/90 text-white px-1 rounded font-bold">{meta.power}</span>
@@ -530,23 +535,21 @@ function PlayerSide({
       )}
 
       {/* 필드: 리더 + 캐릭터 에리어 */}
-      <div className="flex items-stretch gap-2 sm:gap-3">
+      <div className="flex items-end gap-2 sm:gap-4">
         {/* 리더 */}
         <div className="flex flex-col items-center gap-1 shrink-0">
           <span className="text-[8px] font-bold text-muted-foreground tracking-wider">LEADER</span>
-          {leader ? <BattleUnit unit={leader} isLeader /> : <EmptySlot />}
+          {leader ? <BattleUnit unit={leader} isLeader /> : <EmptySlot isLeader />}
         </div>
 
-        {/* 캐릭터 에리어 */}
-        <div className="flex-1 min-w-0 flex flex-col">
-          <span className="text-[8px] font-bold text-muted-foreground tracking-wider mb-1">
+        {/* 캐릭터 에리어 — 항상 5개 슬롯 노출(보드처럼 보이게) */}
+        <div className="flex-1 min-w-0 flex flex-col gap-1">
+          <span className="text-[8px] font-bold text-muted-foreground tracking-wider">
             CHARACTER {chars.length}/5
           </span>
-          <div className="flex-1 flex items-center gap-2 overflow-x-auto rounded-xl border border-dashed border-border/40 bg-background/20 p-2 min-h-[88px] sm:min-h-[104px]">
-            {chars.length === 0 ? (
-              <span className="text-[10px] text-muted-foreground mx-auto">배틀 영역이 비어 있습니다</span>
-            ) : (
-              chars.map((c) => <BattleUnit key={c.iid} unit={c} />)
+          <div className="flex items-end gap-1.5 sm:gap-2 overflow-x-auto justify-start lg:justify-center py-0.5">
+            {Array.from({ length: 5 }).map((_, i) =>
+              chars[i] ? <BattleUnit key={chars[i].iid} unit={chars[i]} /> : <EmptySlot key={i} />,
             )}
           </div>
         </div>
@@ -628,11 +631,13 @@ function CardArt({ meta }: { meta: ReturnType<typeof getCardMeta> }) {
   );
 }
 
-function EmptySlot() {
+function EmptySlot({ isLeader }: { isLeader?: boolean }) {
   return (
-    <div className="w-16 h-24 sm:w-20 sm:h-28 rounded-lg border border-dashed border-border/50 bg-background/20 flex items-center justify-center text-[8px] text-muted-foreground">
-      비어있음
-    </div>
+    <div
+      className={`shrink-0 rounded-lg border border-dashed border-border/40 bg-background/10 ${
+        isLeader ? "w-[72px] h-[104px] sm:w-24 sm:h-36" : "w-16 h-24 sm:w-[76px] sm:h-[108px]"
+      }`}
+    />
   );
 }
 
@@ -646,9 +651,9 @@ function BattleUnit({ unit, isLeader }: { unit: CardInstance; isLeader?: boolean
 
   return (
     <div
-      className={`relative rounded-lg border overflow-hidden flex flex-col justify-between shrink-0 shadow transition-all ${
-        isLeader ? "w-16 h-24 sm:w-20 sm:h-28" : "w-14 h-20 sm:w-16 sm:h-24"
-      } ${unit.rested ? "opacity-70 border-border rotate-[8deg]" : "border-primary/70"}`}
+      className={`relative rounded-lg border-2 overflow-hidden flex flex-col justify-between shrink-0 shadow-lg transition-all ${
+        isLeader ? "w-[72px] h-[104px] sm:w-24 sm:h-36" : "w-16 h-24 sm:w-[76px] sm:h-[108px]"
+      } ${unit.rested ? "opacity-70 border-border rotate-[8deg]" : "border-primary/80 ring-1 ring-primary/20"}`}
       title={meta.name}
     >
       <CardArt meta={meta} />
