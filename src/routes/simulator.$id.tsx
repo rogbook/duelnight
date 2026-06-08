@@ -288,39 +288,32 @@ function SimulatorMatchRoomPage() {
         </div>
       </div>
 
-      {/* ── 배틀 보드(매트) ── */}
-      <div className="relative rounded-3xl border-2 border-border/70 overflow-hidden shadow-2xl bg-gradient-to-b from-red-600/[0.12] via-card to-blue-600/[0.12]">
-        {/* 매트 질감 + 중앙 비네팅 */}
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.06),transparent_45%)]" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_50%,hsl(var(--background)/0.6))]" />
+      {/* ── 배틀 보드(플레이매트) ── */}
+      <div className="relative mx-auto w-full max-w-lg rounded-[2rem] border-2 border-border/50 overflow-hidden shadow-2xl bg-gradient-to-b from-orange-300/30 via-card to-sky-300/30 dark:from-orange-500/[0.15] dark:via-card dark:to-sky-500/[0.15]">
+        {/* 매트 외곽 오벌 링 + 중앙 비네팅 */}
+        <div className="pointer-events-none absolute inset-2 rounded-[1.6rem] border border-white/25 dark:border-white/10" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,hsl(var(--background)/0.45))]" />
 
         <div className="relative flex flex-col">
           {/* ─ 상대(AI) 진영 ─ */}
-          <PlayerSide
-            state={p2State}
-            isOpponent
-            isActive={gameState.activePlayer === "p2"}
-            gameState={gameState}
-          />
+          <PlayerSide state={p2State} isOpponent isActive={gameState.activePlayer === "p2"} />
 
-          {/* ─ 중앙 턴/대응 밴드 ─ */}
-          <div className="relative z-10 px-3 py-2 bg-background/40 backdrop-blur-sm border-y border-border/50">
+          {/* ─ 중앙 곡선 밴드 ─ */}
+          <div className="relative z-10 mx-3 my-1 rounded-full bg-background/60 backdrop-blur-sm border border-border/50 px-3 py-1.5 shadow-lg">
             {gameState.pendingResponse ? (
               <CounterBand pending={gameState.pendingResponse} state={gameState} />
             ) : (
               <div className="flex items-center justify-center gap-2 text-[11px] sm:text-xs font-bold">
                 <span
-                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full ${
-                    isMyTurn ? "bg-blue-500/15 text-blue-500" : "bg-red-500/15 text-red-500"
+                  className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full ${
+                    isMyTurn ? "bg-blue-500/20 text-blue-500" : "bg-red-500/20 text-red-500"
                   }`}
                 >
                   {isMyTurn ? <User className="h-3.5 w-3.5" /> : <Cpu className="h-3.5 w-3.5" />}
-                  {isMyTurn ? "내 턴" : "AI 턴 진행 중..."}
+                  {isMyTurn ? "내 턴" : "AI 턴..."}
                 </span>
                 {isMyTurn && !isTerminalResult && (
-                  <span className="text-muted-foreground hidden sm:inline">
-                    손패 카드를 탭해서 내거나 아래 액션을 선택하세요
-                  </span>
+                  <span className="text-muted-foreground hidden sm:inline">손패를 탭해 카드를 내세요</span>
                 )}
               </div>
             )}
@@ -331,7 +324,6 @@ function SimulatorMatchRoomPage() {
             state={p1State}
             isOpponent={false}
             isActive={isMyTurn}
-            gameState={gameState}
             selectedHandIid={selectedHandIid}
             playableHandIids={playableHandIids}
             onHandSelect={(iid) => setSelectedHandIid((cur) => (cur === iid ? null : iid))}
@@ -445,7 +437,6 @@ function PlayerSide({
   state,
   isOpponent,
   isActive,
-  gameState,
   selectedHandIid,
   playableHandIids,
   onHandSelect,
@@ -453,165 +444,271 @@ function PlayerSide({
   state: PlayerState;
   isOpponent: boolean;
   isActive: boolean;
-  gameState: GameState;
   selectedHandIid?: string | null;
   playableHandIids?: Set<string>;
   onHandSelect?: (iid: string) => void;
 }) {
   const leader = state.zones.primary[0];
   const chars = state.zones.secondary;
+  const life = state.zones.life.length;
+  const donTotal = state.donActive + state.donRested;
+
+  // 상태 줄: 이름 배너 + 덱/트래시 + DON 배지 (상대=왼쪽 DON / 나=오른쪽 DON, 레퍼런스 배치)
+  const statusRow = (
+    <div className="flex items-center justify-between gap-2">
+      {isOpponent ? <DonBadge active={state.donActive} total={donTotal} /> : <NameBanner isOpponent={false} isActive={isActive} life={life} />}
+      <div className="flex items-center gap-1.5">
+        <Pile kind="deck" count={state.zones.deck.length} />
+        <Pile kind="trash" count={state.zones.graveyard.length} />
+      </div>
+      {isOpponent ? <NameBanner isOpponent isActive={isActive} life={life} /> : <DonBadge active={state.donActive} total={donTotal} />}
+    </div>
+  );
+
+  // 벤치(캐릭터 5슬롯)
+  const bench = (
+    <div className="flex items-center justify-start lg:justify-center gap-1.5 overflow-x-auto py-0.5">
+      {Array.from({ length: 5 }).map((_, i) =>
+        chars[i] ? <BattleUnit key={chars[i].iid} unit={chars[i]} /> : <EmptySlot key={i} />,
+      )}
+    </div>
+  );
+
+  // 액티브(리더) — 중앙, 내 리더는 상시 글로우
+  const active = (
+    <div className="flex justify-center py-0.5">
+      {leader ? <LeaderCard unit={leader} life={life} glowing={!isOpponent} /> : <EmptySlot isLeader />}
+    </div>
+  );
+
+  // 손패
+  const hand = isOpponent ? (
+    <OppHand count={state.zones.hand.length} />
+  ) : (
+    <HandFan
+      hand={state.zones.hand}
+      selectedHandIid={selectedHandIid}
+      playableHandIids={playableHandIids}
+      onHandSelect={onHandSelect}
+    />
+  );
 
   return (
     <div
-      className={`relative px-3 py-3 sm:px-4 sm:py-4 transition-colors ${
+      className={`relative px-3 sm:px-5 py-2 sm:py-3 flex flex-col gap-1.5 ${
         isOpponent
-          ? "bg-gradient-to-b from-red-500/[0.05] to-transparent"
-          : "bg-gradient-to-t from-blue-500/[0.05] to-transparent"
-      } ${isActive ? "ring-1 ring-inset " + (isOpponent ? "ring-red-500/30" : "ring-blue-500/30") : ""} ${
-        isOpponent ? "flex flex-col" : "flex flex-col-reverse"
+          ? "bg-gradient-to-b from-orange-400/10 to-transparent"
+          : "bg-gradient-to-t from-sky-400/10 to-transparent"
       }`}
     >
-      {/* 손패 트레이 */}
       {isOpponent ? (
-        // 상대 손패는 카드 뒷면만 (정보 비공개)
-        <div className="flex items-center gap-1.5 mt-3">
-          <span className="text-[9px] font-bold text-muted-foreground shrink-0">손패 {state.zones.hand.length}</span>
-          <div className="flex gap-1 overflow-hidden">
-            {state.zones.hand.slice(0, 12).map((c) => (
-              <div
-                key={c.iid}
-                className="w-6 h-9 sm:w-7 sm:h-10 rounded-sm bg-gradient-to-br from-slate-600 to-slate-800 border border-slate-500/50 shrink-0"
-              />
-            ))}
-          </div>
-        </div>
+        <>
+          {hand}
+          {statusRow}
+          {bench}
+          {active}
+        </>
       ) : (
-        // 내 손패는 실제 카드 + 탭하여 선택
-        <div className="mt-3">
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <span className="text-[9px] font-bold text-blue-500 shrink-0">내 손패 {state.zones.hand.length}</span>
-          </div>
-          <div className="flex gap-1.5 overflow-x-auto pb-1">
-            {state.zones.hand.length === 0 ? (
-              <span className="text-[10px] text-muted-foreground py-3">손패가 없습니다.</span>
-            ) : (
-              state.zones.hand.map((c) => {
-                const meta = getCardMeta(c.code);
-                const playable = playableHandIids?.has(c.iid);
-                const selected = selectedHandIid === c.iid;
-                return (
-                  <button
-                    key={c.iid}
-                    onClick={() => onHandSelect?.(c.iid)}
-                    title={meta.name}
-                    className={`relative w-16 h-24 sm:w-20 sm:h-28 rounded-lg border-2 overflow-hidden shrink-0 shadow-md transition-all ${
-                      selected
-                        ? "border-primary ring-2 ring-primary -translate-y-2"
-                        : playable
-                          ? "border-green-500/70 hover:-translate-y-1.5"
-                          : "border-border/70 opacity-75"
-                    }`}
-                  >
-                    <CardArt meta={meta} />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/30 pointer-events-none" />
-                    <span className="absolute top-0.5 left-0.5 right-0.5 text-[8px] font-extrabold truncate text-white drop-shadow leading-tight">
-                      {meta.name}
-                    </span>
-                    <div className="absolute bottom-0.5 left-0.5 right-0.5 flex items-center justify-between text-[8px]">
-                      <span className="bg-black/70 text-white px-1 rounded font-bold">{meta.cost}</span>
-                      {meta.power > 0 && (
-                        <span className="bg-red-600/90 text-white px-1 rounded font-bold">{meta.power}</span>
-                      )}
-                    </div>
-                    {playable && !selected && (
-                      <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-green-400 shadow ring-1 ring-white/40" />
-                    )}
-                  </button>
-                );
-              })
-            )}
-          </div>
-        </div>
+        <>
+          {active}
+          {bench}
+          {statusRow}
+          {hand}
+        </>
       )}
-
-      {/* 필드: 리더 + 캐릭터 에리어 */}
-      <div className="flex items-end gap-2 sm:gap-4">
-        {/* 리더 */}
-        <div className="flex flex-col items-center gap-1 shrink-0">
-          <span className="text-[8px] font-bold text-muted-foreground tracking-wider">LEADER</span>
-          {leader ? <BattleUnit unit={leader} isLeader /> : <EmptySlot isLeader />}
-        </div>
-
-        {/* 캐릭터 에리어 — 항상 5개 슬롯 노출(보드처럼 보이게) */}
-        <div className="flex-1 min-w-0 flex flex-col gap-1">
-          <span className="text-[8px] font-bold text-muted-foreground tracking-wider">
-            CHARACTER {chars.length}/5
-          </span>
-          <div className="flex items-end gap-1.5 sm:gap-2 overflow-x-auto justify-start lg:justify-center py-0.5">
-            {Array.from({ length: 5 }).map((_, i) =>
-              chars[i] ? <BattleUnit key={chars[i].iid} unit={chars[i]} /> : <EmptySlot key={i} />,
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* 스탯 행: 라이프 / DON / 덱 / 트래시 */}
-      <StatRow state={state} isOpponent={isOpponent} />
     </div>
   );
 }
 
 // ──────────────────────────────────────────────────────────
-// 스탯 행
+// 이름 배너 (플레이어 식별 + 라이프 ❤️)
 // ──────────────────────────────────────────────────────────
-function StatRow({ state, isOpponent }: { state: PlayerState; isOpponent: boolean }) {
-  const life = state.zones.life.length;
-  const donTotal = state.donActive + state.donRested;
+function NameBanner({ isOpponent, isActive, life }: { isOpponent: boolean; isActive: boolean; life: number }) {
+  return (
+    <div
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold text-white bg-slate-800/90 shadow ${
+        isActive ? "ring-2 " + (isOpponent ? "ring-red-400" : "ring-sky-400") : ""
+      }`}
+    >
+      {isOpponent ? <Cpu className="h-3.5 w-3.5 text-red-300" /> : <User className="h-3.5 w-3.5 text-sky-300" />}
+      <span>{isOpponent ? "AI 상대" : "나"}</span>
+      <span className="flex items-center gap-0.5 text-rose-300">
+        <Heart className="h-3 w-3 fill-current" />
+        {life}
+      </span>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────
+// DON!! 리소스 배지 (포켓몬 에너지존 느낌)
+// ──────────────────────────────────────────────────────────
+function DonBadge({ active, total }: { active: number; total: number }) {
+  return (
+    <div className="relative flex flex-col items-center justify-center h-11 w-11 shrink-0 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 text-black shadow-lg ring-2 ring-yellow-200/60">
+      <Coins className="h-3.5 w-3.5" />
+      <span className="text-[10px] font-black leading-none">
+        {active}
+        <span className="text-[7px] font-bold opacity-70">/{total}</span>
+      </span>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────
+// 덱 / 트래시 더미
+// ──────────────────────────────────────────────────────────
+function Pile({ kind, count }: { kind: "deck" | "trash"; count: number }) {
+  const isDeck = kind === "deck";
+  return (
+    <div className="relative w-8 h-11 shrink-0" title={isDeck ? "덱" : "트래시"}>
+      <div
+        className={`absolute inset-0 translate-x-0.5 translate-y-0.5 rounded-md border ${
+          isDeck ? "bg-indigo-800 border-indigo-400/40" : "bg-muted border-border"
+        }`}
+      />
+      <div
+        className={`absolute inset-0 rounded-md border flex items-center justify-center ${
+          isDeck ? "bg-gradient-to-br from-indigo-500 to-indigo-700 border-indigo-300/40" : "bg-card border-border"
+        }`}
+      >
+        {isDeck ? <Layers className="h-3.5 w-3.5 text-white/80" /> : <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />}
+      </div>
+      <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 text-[8px] font-black bg-background/90 rounded px-1 border border-border">
+        {count}
+      </span>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────
+// 리더(액티브) 카드 — 크게 + 글로우 + 라이프 HP 배지
+// ──────────────────────────────────────────────────────────
+function LeaderCard({ unit, life, glowing }: { unit: CardInstance; life: number; glowing: boolean }) {
+  const meta = getCardMeta(unit.code);
+  const power = getBattlePower(unit);
+  const donAttached = unit.attached.filter((t) => t.code === "DON!!").length;
   const lowLife = life <= 1;
 
   return (
-    <div
-      className={`flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[10px] ${
-        isOpponent ? "mb-2 order-first" : "mt-2"
-      }`}
-    >
-      {/* 플레이어 라벨 */}
+    <div className="relative">
+      {glowing && <div className="absolute -inset-1.5 rounded-2xl bg-cyan-400/40 blur-md" />}
+      <div
+        className={`relative w-24 h-32 sm:w-28 sm:h-40 rounded-xl border-2 overflow-hidden shadow-xl ${
+          unit.rested ? "opacity-70 border-border rotate-[6deg]" : glowing ? "border-cyan-300" : "border-primary/80"
+        }`}
+        title={meta.name}
+      >
+        <CardArt meta={meta} />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/30 pointer-events-none" />
+        <span className="absolute top-1 left-1 right-9 text-[9px] font-extrabold truncate text-white drop-shadow">
+          {meta.name}
+        </span>
+        <span className="absolute bottom-1 left-1 bg-red-600/90 text-white text-[10px] font-black px-1.5 rounded">
+          {power}
+        </span>
+        {donAttached > 0 && (
+          <span className="absolute bottom-1 right-1 bg-yellow-500 text-black text-[9px] font-black px-1 rounded">
+            +{donAttached}
+          </span>
+        )}
+        {unit.rested && (
+          <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/80 text-destructive font-black text-[9px] px-1.5 py-0.5 rounded">
+            REST
+          </span>
+        )}
+      </div>
+      {/* 라이프 = HP 배지(카드 우상단) */}
       <span
-        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold ${
-          isOpponent ? "bg-red-500/10 text-red-500" : "bg-blue-500/10 text-blue-500"
+        className={`absolute -top-2 -right-2 flex items-center gap-0.5 text-white text-xs font-black px-1.5 py-0.5 rounded-full shadow-lg ring-2 ring-white/40 ${
+          lowLife ? "bg-destructive animate-pulse" : "bg-rose-500"
         }`}
       >
-        {isOpponent ? <Cpu className="h-3 w-3" /> : <User className="h-3 w-3" />}
-        {isOpponent ? "AI" : "나"}
+        <Heart className="h-3 w-3 fill-current" />
+        {life}
       </span>
+    </div>
+  );
+}
 
-      {/* 라이프 */}
-      <span className="inline-flex items-center gap-1 font-bold">
-        <Heart className={`h-3.5 w-3.5 ${lowLife ? "text-destructive animate-pulse" : "text-rose-500"} fill-current`} />
-        <span className={lowLife ? "text-destructive" : "text-foreground"}>{life}</span>
-        <span className="flex gap-0.5">
-          {Array.from({ length: Math.min(life, 7) }).map((_, i) => (
-            <span key={i} className="h-2.5 w-1.5 rounded-[1px] bg-rose-500/80" />
-          ))}
-        </span>
-      </span>
+// ──────────────────────────────────────────────────────────
+// 내 손패 — 하단에 부채꼴(겹침) 배치
+// ──────────────────────────────────────────────────────────
+function HandFan({
+  hand,
+  selectedHandIid,
+  playableHandIids,
+  onHandSelect,
+}: {
+  hand: CardInstance[];
+  selectedHandIid?: string | null;
+  playableHandIids?: Set<string>;
+  onHandSelect?: (iid: string) => void;
+}) {
+  if (hand.length === 0) {
+    return <div className="flex justify-center py-3 text-[10px] text-muted-foreground">손패 없음</div>;
+  }
+  return (
+    <div className="flex justify-center items-end overflow-x-auto pt-1">
+      <div className="flex items-end">
+        {hand.map((c, i) => {
+          const meta = getCardMeta(c.code);
+          const playable = playableHandIids?.has(c.iid);
+          const selected = selectedHandIid === c.iid;
+          return (
+            <button
+              key={c.iid}
+              onClick={() => onHandSelect?.(c.iid)}
+              title={meta.name}
+              style={{ zIndex: selected ? 30 : i }}
+              className={`relative w-16 h-24 sm:w-[72px] sm:h-[104px] rounded-lg border-2 overflow-hidden shrink-0 shadow-lg transition-all ${
+                i > 0 ? "-ml-5 sm:-ml-6" : ""
+              } ${
+                selected
+                  ? "border-cyan-300 ring-2 ring-cyan-300 -translate-y-3"
+                  : playable
+                    ? "border-green-400/80 hover:-translate-y-2"
+                    : "border-border/60 opacity-80"
+              }`}
+            >
+              <CardArt meta={meta} />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/20 pointer-events-none" />
+              <span className="absolute top-0.5 left-0.5 right-0.5 text-[8px] font-extrabold truncate text-white drop-shadow">
+                {meta.name}
+              </span>
+              <div className="absolute bottom-0.5 left-0.5 right-0.5 flex items-center justify-between text-[8px]">
+                <span className="bg-black/70 text-white px-1 rounded font-bold">{meta.cost}</span>
+                {meta.power > 0 && <span className="bg-red-600/90 text-white px-1 rounded font-bold">{meta.power}</span>}
+              </div>
+              {playable && !selected && (
+                <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-green-400 ring-1 ring-white/50" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
-      {/* DON */}
-      <span className="inline-flex items-center gap-1 font-bold">
-        <Coins className="h-3.5 w-3.5 text-yellow-500" />
-        <span className="text-yellow-500">{state.donActive}</span>
-        <span className="text-muted-foreground font-normal">/ {donTotal}</span>
-      </span>
-
-      {/* 덱 / 트래시 */}
-      <span className="inline-flex items-center gap-1 text-muted-foreground">
-        <Layers className="h-3 w-3" />
-        {state.zones.deck.length}
-      </span>
-      <span className="inline-flex items-center gap-1 text-muted-foreground">
-        <Trash2 className="h-3 w-3" />
-        {state.zones.graveyard.length}
-      </span>
+// ──────────────────────────────────────────────────────────
+// 상대 손패 — 카드 뒷면만(겹침), 정보 비공개
+// ──────────────────────────────────────────────────────────
+function OppHand({ count }: { count: number }) {
+  return (
+    <div className="flex justify-center items-start">
+      <div className="flex">
+        {Array.from({ length: Math.min(count, 10) }).map((_, i) => (
+          <div
+            key={i}
+            style={{ zIndex: i }}
+            className={`w-7 h-10 rounded-sm bg-gradient-to-br from-slate-600 to-slate-800 border border-slate-500/40 shadow ${
+              i > 0 ? "-ml-3" : ""
+            }`}
+          />
+        ))}
+      </div>
+      <span className="ml-2 self-center text-[9px] font-bold text-muted-foreground">{count}</span>
     </div>
   );
 }
@@ -634,51 +731,49 @@ function CardArt({ meta }: { meta: ReturnType<typeof getCardMeta> }) {
 function EmptySlot({ isLeader }: { isLeader?: boolean }) {
   return (
     <div
-      className={`shrink-0 rounded-lg border border-dashed border-border/40 bg-background/10 ${
-        isLeader ? "w-[72px] h-[104px] sm:w-24 sm:h-36" : "w-16 h-24 sm:w-[76px] sm:h-[108px]"
+      className={`shrink-0 rounded-lg border-2 border-dashed border-white/30 bg-white/5 dark:border-white/15 ${
+        isLeader ? "w-24 h-32 sm:w-28 sm:h-40 rounded-xl" : "w-12 h-[68px] sm:w-14 sm:h-20"
       }`}
     />
   );
 }
 
 // ──────────────────────────────────────────────────────────
-// 필드 유닛 카드
+// 벤치(캐릭터) 유닛 카드 — 작게 + 파워 배지 플로팅
 // ──────────────────────────────────────────────────────────
-function BattleUnit({ unit, isLeader }: { unit: CardInstance; isLeader?: boolean }) {
+function BattleUnit({ unit }: { unit: CardInstance }) {
   const meta = getCardMeta(unit.code);
   const power = getBattlePower(unit);
   const donAttached = unit.attached.filter((t) => t.code === "DON!!").length;
 
   return (
-    <div
-      className={`relative rounded-lg border-2 overflow-hidden flex flex-col justify-between shrink-0 shadow-lg transition-all ${
-        isLeader ? "w-[72px] h-[104px] sm:w-24 sm:h-36" : "w-16 h-24 sm:w-[76px] sm:h-[108px]"
-      } ${unit.rested ? "opacity-70 border-border rotate-[8deg]" : "border-primary/80 ring-1 ring-primary/20"}`}
-      title={meta.name}
-    >
-      <CardArt meta={meta} />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/30 pointer-events-none" />
-
-      <span className="relative text-[8px] font-extrabold truncate text-white drop-shadow leading-tight px-1 pt-0.5">
-        {meta.name}
+    <div className="relative shrink-0">
+      <div
+        className={`relative w-12 h-[68px] sm:w-14 sm:h-20 rounded-lg border overflow-hidden shadow-md ${
+          unit.rested ? "opacity-70 border-border rotate-[8deg]" : "border-primary/70"
+        }`}
+        title={meta.name}
+      >
+        <CardArt meta={meta} />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 to-transparent pointer-events-none" />
+        <span className="absolute bottom-0.5 left-0.5 right-0.5 text-[7px] font-bold truncate text-white drop-shadow">
+          {meta.name}
+        </span>
+        {unit.rested && (
+          <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/80 text-destructive font-black text-[8px] px-1 rounded">
+            R
+          </span>
+        )}
+      </div>
+      {/* 파워 배지(우상단 플로팅) */}
+      <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[9px] font-black px-1 rounded-full shadow ring-1 ring-white/40">
+        {power}
       </span>
-
       {donAttached > 0 && (
-        <span className="absolute top-1 right-1 bg-yellow-500 text-black font-black text-[8px] px-1 rounded-sm shadow z-10">
+        <span className="absolute -bottom-1 -right-1 bg-yellow-500 text-black text-[8px] font-black px-1 rounded-full shadow">
           +{donAttached}
         </span>
       )}
-
-      {unit.rested && (
-        <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/80 text-destructive font-black text-[8px] px-1 py-0.5 rounded tracking-wider z-10">
-          REST
-        </span>
-      )}
-
-      <div className="relative flex items-center justify-between text-[8px] px-1 pb-0.5">
-        <span className="bg-black/70 text-white px-1 rounded font-bold">{meta.cost}</span>
-        <span className="bg-red-600/90 text-white px-1 rounded font-extrabold">{power}</span>
-      </div>
     </div>
   );
 }
