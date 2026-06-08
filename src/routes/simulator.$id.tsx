@@ -198,58 +198,49 @@ function SimulatorMatchRoomPage() {
     : [];
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-6 flex flex-col gap-6">
-      {/* ── 헤더 영역 ── */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
-        <div className="flex items-center gap-3">
-          <Link to="/simulator" className="p-2 border border-border rounded-lg bg-card hover:bg-accent text-muted-foreground hover:text-foreground transition-all">
+    <div className="mx-auto w-full max-w-7xl px-3 sm:px-4 py-3 sm:py-6 pb-28 lg:pb-6 flex flex-col gap-4 sm:gap-6">
+      {/* ── 헤더 영역 (모바일에서 상단 sticky) ── */}
+      <div className="sticky top-0 z-30 -mx-3 sm:-mx-4 px-3 sm:px-4 py-2 sm:py-0 sm:static bg-background/85 backdrop-blur sm:bg-transparent sm:backdrop-blur-0 flex flex-wrap items-center justify-between gap-2 sm:gap-4 border-b border-border pb-2 sm:pb-4">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <Link to="/simulator" className="p-2 border border-border rounded-lg bg-card hover:bg-accent text-muted-foreground hover:text-foreground transition-all shrink-0">
             <ArrowLeft className="h-4 w-4" />
           </Link>
-          <div>
-            <h1 className="text-lg font-black tracking-tight flex items-center gap-2">
-              <Swords className="h-5 w-5 text-red-500" /> 시뮬레이션 매치 룸
+          <div className="min-w-0">
+            <h1 className="text-sm sm:text-lg font-black tracking-tight flex items-center gap-2 truncate">
+              <Swords className="h-4 w-4 sm:h-5 sm:w-5 text-red-500 shrink-0" /> <span className="truncate">시뮬레이션 매치 룸</span>
             </h1>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Turn {gameState.turn} · {gameState.phase === "main" ? "메인 페이즈" : "전투 대응 페이즈"} ·{" "}
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 truncate">
+              Turn {gameState.turn} · {gameState.phase === "main" ? "메인" : "전투대응"} ·{" "}
               <span className="font-extrabold text-primary">
-                {gameState.activePlayer === "p1" ? "Player 1 (User)" : "Player 2 (AI)"} 턴
+                {gameState.activePlayer === "p1" ? "P1(나)" : "P2(AI)"} 턴
               </span>
             </p>
           </div>
         </div>
 
         {/* 관전/자동 속도 컨트롤 */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {mode === "auto" && (
-            <div className="flex items-center gap-1 bg-muted p-0.5 rounded-lg text-xs">
+            <div className="flex items-center gap-1 bg-muted p-0.5 rounded-lg text-[11px] sm:text-xs">
               <button
                 onClick={() => setIsAutoPlaying(prev => !prev)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md font-bold transition-all ${
+                className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md font-bold transition-all ${
                   isAutoPlaying ? "bg-primary text-primary-foreground shadow" : "hover:bg-card text-muted-foreground"
                 }`}
               >
                 {isAutoPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 fill-current" />}
-                {isAutoPlaying ? "일시정지" : "자동재생"}
+                <span className="hidden sm:inline">{isAutoPlaying ? "일시정지" : "자동재생"}</span>
               </button>
               <div className="h-4 w-[1px] bg-border mx-1" />
-              <button
-                onClick={() => setSpeedMs(1500)}
-                className={`px-2 py-1.5 rounded-md ${speedMs === 1500 ? "font-bold text-foreground" : "text-muted-foreground"}`}
-              >
-                1.5s
-              </button>
-              <button
-                onClick={() => setSpeedMs(1000)}
-                className={`px-2 py-1.5 rounded-md ${speedMs === 1000 ? "font-bold text-foreground" : "text-muted-foreground"}`}
-              >
-                1.0s
-              </button>
-              <button
-                onClick={() => setSpeedMs(500)}
-                className={`px-2 py-1.5 rounded-md ${speedMs === 500 ? "font-bold text-foreground" : "text-muted-foreground"}`}
-              >
-                0.5s
-              </button>
+              {[1500, 1000, 500].map((ms) => (
+                <button
+                  key={ms}
+                  onClick={() => setSpeedMs(ms)}
+                  className={`px-2 py-1.5 rounded-md ${speedMs === ms ? "font-bold text-foreground" : "text-muted-foreground"}`}
+                >
+                  {(ms / 1000).toFixed(1)}s
+                </button>
+              ))}
             </div>
           )}
 
@@ -259,12 +250,13 @@ function SimulatorMatchRoomPage() {
                 navigate({ to: "/simulator" });
               }
             }}
-            className="flex items-center gap-1.5 px-3 py-2 bg-destructive/10 text-destructive hover:bg-destructive hover:text-white rounded-lg text-xs font-bold transition-all"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 bg-destructive/10 text-destructive hover:bg-destructive hover:text-white rounded-lg text-[11px] sm:text-xs font-bold transition-all min-h-10"
           >
-            <LogOut className="h-3.5 w-3.5" /> 기권 및 퇴장
+            <LogOut className="h-3.5 w-3.5" /> <span className="hidden sm:inline">기권 및 퇴장</span><span className="sm:hidden">기권</span>
           </button>
         </div>
       </div>
+
 
       {/* ── 승패 종료 알림 배너 ── */}
       {isTerminalResult && (
