@@ -59,6 +59,16 @@ export const TriggerSchema = z.enum([
 const TargetRef = z.object({
   selector: TargetSelectorSchema,
   filter: CardFilterSchema.optional(),
+  iid: z.string().optional(),
+});
+
+// choose_one은 자기 재귀라 explicit any 한 곳에 격리.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const ActionSchema: z.ZodType<any> = z.lazy(() => ActionSchemaInner);
+
+const ActionSchemaInner = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("draw"), count: z.number().int().min(1).max(10) }),
+  filter: CardFilterSchema.optional(),
   iid: z.string().optional(),     // self_active 등에 사용
 });
 
