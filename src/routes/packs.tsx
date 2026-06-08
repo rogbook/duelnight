@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { PackageOpen, Sparkles, ImageOff } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
@@ -79,6 +80,8 @@ function rarityWeight(r: string | null | undefined): number {
 
 function PacksPage() {
   const { t } = useI18n();
+  const { user } = useAuth();
+  const qc = useQueryClient();
   const [setCode, setSetCode] = useState<string>("");
   const [packs, setPacks] = useState<number>(1);
   const [results, setResults] = useState<Card[]>([]);
@@ -118,7 +121,7 @@ function PacksPage() {
     },
   });
 
-  const open = () => {
+  const open = async () => {
     if (pool.length === 0) {
       toast.error(t("packs.noCardsError"));
       return;
@@ -141,6 +144,49 @@ function PacksPage() {
       }
     }
     setResults(pulled);
+
+    if (!user) {
+      toast.info(t("packs.loginRequiredToast"));
+      return;
+    }
+
+    try {
+      const codes = Array.from(new Set(pulled.map((c) => c.code)));
+      const { data: current, error: selectError } = await supabase
+        .from("user_collection")
+        .select("card_code, quantity")
+        .eq("user_id", user.id)
+        .in("card_code", codes);
+
+      if (selectError) throw selectError;
+
+      const currentMap = new Map<string, number>();
+      for (const r of current ?? []) {
+        currentMap.set(r.card_code, r.quantity);
+      }
+
+      const upsertData = codes.map((code) => {
+        const pulledCount = pulled.filter((c) => c.code === code).length;
+        const existingQty = currentMap.get(code) ?? 0;
+        return {
+          user_id: user.id,
+          card_code: code,
+          quantity: existingQty + pulledCount,
+        };
+      });
+
+      const { error: upsertError } = await supabase
+        .from("user_collection")
+        .upsert(upsertData, { onConflict: "user_id,card_code" });
+
+      if (upsertError) throw upsertError;
+
+      qc.invalidateQueries({ queryKey: ["collection"] });
+      toast.success(t("packs.savedToCollection"));
+    } catch (err: any) {
+      console.error("Failed to save pack results to collection:", err);
+      toast.error(t("packs.saveError") + err.message);
+    }
   };
 
   const tally = useMemo(() => {

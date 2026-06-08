@@ -17,6 +17,7 @@ import {
   Shield,
   Upload,
   ShoppingCart,
+  Gamepad,
 } from "lucide-react";
 
 import {
@@ -55,6 +56,7 @@ const cardItems: SidebarItem[] = [
 
 const playItems: SidebarItem[] = [
   { titleKey: "nav.matches", url: "/matches", icon: Swords },
+  { titleKey: "nav.simulator", url: "/simulator", icon: Gamepad },
   { titleKey: "nav.leaderboard", url: "/leaderboard", icon: Trophy },
   { titleKey: "nav.tier", url: "/tier", icon: ListOrdered },
 ];

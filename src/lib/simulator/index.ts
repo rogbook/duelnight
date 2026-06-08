@@ -4,7 +4,7 @@
 
 export * from "./types";
 export * as rng from "./rng";
-export { optcgEngine } from "./engines/optcg";
+export { optcgEngine, CARD_METADATA_CACHE, getCardMeta } from "./engines/optcg";
 export { chooseAction, runMatch } from "./ai/agent";
 export { evaluate, extractFeatures, DEFAULT_WEIGHTS, type ValueWeights } from "./ai/value-fn";
 export {
