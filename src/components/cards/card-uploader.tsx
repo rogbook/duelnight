@@ -292,6 +292,14 @@ type Props = {
   onComplete?: (result: { inserted: number; skipped: number }) => void;
 };
 
+function buildUploadPath(setCode: string, code: string, isAdmin: boolean, userId: string | null) {
+  const folder = setCode || "misc";
+  const filename = `${code}-${Date.now()}.webp`;
+  // 비관리자는 본인 폴더(user-uploads/{uid}/...)로만 업로드 가능 (RLS)
+  if (!isAdmin && userId) return `user-uploads/${userId}/${folder}/${filename}`;
+  return `${folder}/${filename}`;
+}
+
 export function CardUploader({ isAdmin, onComplete }: Props) {
   const { rows: allSets } = useUniqueSets();
   const { games, labelOf } = useGames();
