@@ -327,18 +327,25 @@ function SimulatorMatchRoomPage() {
             <div className="border-t border-border/20 pt-3 flex items-center gap-2">
               <span className="text-[10px] font-bold text-muted-foreground">손패 ({p2State.zones.hand.length}):</span>
               <div className="flex gap-1.5 overflow-x-auto py-1">
-                {p2State.zones.hand.map((c, i) => (
-                  <div
-                    key={c.iid}
-                    className="w-10 h-14 rounded border border-border bg-card/60 flex flex-col items-center justify-center text-[7px] text-muted-foreground relative opacity-60 hover:opacity-100 transition-opacity"
-                    title={getCardMeta(c.code).name}
-                  >
-                    <span className="font-extrabold truncate w-full px-1 text-center">
-                      {getCardMeta(c.code).name}
-                    </span>
-                    <span className="absolute bottom-0.5 text-[6px] text-primary">{c.code}</span>
-                  </div>
-                ))}
+                {p2State.zones.hand.map((c) => {
+                  const m = getCardMeta(c.code);
+                  return (
+                    <div
+                      key={c.iid}
+                      className="relative w-10 h-14 rounded border border-border bg-card/60 overflow-hidden opacity-70 hover:opacity-100 transition-opacity"
+                      title={m.name}
+                    >
+                      {m.imageUrl ? (
+                        <img src={m.imageUrl} alt={m.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-[7px] font-extrabold text-muted-foreground text-center px-0.5">
+                          {m.name}
+                        </div>
+                      )}
+                      <span className="absolute bottom-0 left-0 right-0 text-[6px] text-white bg-black/70 text-center">{c.code}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
