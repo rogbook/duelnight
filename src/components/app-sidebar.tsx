@@ -18,6 +18,7 @@ import {
   Upload,
   ShoppingCart,
   Gamepad,
+  MessageCircle,
 } from "lucide-react";
 
 import {
@@ -64,6 +65,7 @@ const playItems: SidebarItem[] = [
 const communityItems: SidebarItem[] = [
   { titleKey: "nav.store", url: "/stores", icon: MapPin },
   { titleKey: "nav.lfg", url: "/lfg", icon: Users },
+  { titleKey: "nav.messages", url: "/messages", icon: MessageCircle },
   { titleKey: "nav.friends", url: "/friends", icon: UserPlus },
   { titleKey: "nav.announcements", url: "/announcements", icon: Megaphone },
 ];

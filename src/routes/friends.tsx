@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { StartDmButton } from "@/components/start-dm-button";
 import { OpponentSearch, type FoundUser } from "@/components/opponent-search";
 import { toast } from "sonner";
 import { useI18n } from "@/i18n/language-context";
@@ -172,6 +173,7 @@ function FriendsPage() {
         ) : (
           friends.map((r) => (
             <UserRow key={r.id} other={r.other} anonymous={t("friends.anonymous")}>
+              {r.other?.id && <StartDmButton userId={r.other.id} size="sm" variant="outline" />}
               <Button size="sm" variant="ghost" onClick={() => remove(r.id)} className="text-destructive hover:text-destructive">
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>

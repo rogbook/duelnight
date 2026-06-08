@@ -30,6 +30,7 @@ import { GAME_LABEL } from "@/lib/match-stats";
 import type { Database } from "@/integrations/supabase/types";
 import { useI18n } from "@/i18n/language-context";
 import { useGames } from "@/hooks/use-games";
+import { StartDmButton } from "@/components/start-dm-button";
 
 type Post = Database["public"]["Tables"]["lfg_posts"]["Row"];
 type Profile = { display_name: string | null; username: string | null };
@@ -324,18 +325,7 @@ function LfgDetailPage() {
               ) : null}
 
               {!post.quick_match && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() =>
-                    setChatWith({
-                      userId: post.user_id,
-                      name: profile?.display_name || profile?.username || t("lfg.authorLabel"),
-                    })
-                  }
-                >
-                  <MessageSquare className="mr-1 h-4 w-4" /> {t("lfg.chatWithAuthor")}
-                </Button>
+                <StartDmButton userId={post.user_id} variant="outline" label={t("lfg.chatWithAuthor")} />
               )}
             </>
           )}
@@ -376,18 +366,7 @@ function LfgDetailPage() {
                   </div>
                   <div className="flex gap-1">
                     {!post.quick_match && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() =>
-                          setChatWith({
-                            userId: p.user_id,
-                            name: p.profile?.display_name || p.profile?.username || t("lfg.applicant"),
-                          })
-                        }
-                      >
-                        <MessageSquare className="h-4 w-4" />
-                      </Button>
+                      <StartDmButton userId={p.user_id} variant="ghost" size="icon" iconOnly />
                     )}
                     {p.status !== "accepted" && (
                       <Button size="sm" variant="outline" onClick={() => updateParticipant(p.id, "accepted")}>
