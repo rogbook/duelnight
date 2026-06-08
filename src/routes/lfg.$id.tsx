@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import {
   ArrowLeft,
   MapPin,
@@ -8,16 +8,13 @@ import {
   Hash,
   Tag,
   Zap,
-  MessageSquare,
   Check,
   X as XIcon,
-  Send,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -42,14 +39,6 @@ type Participant = {
   created_at: string;
   profile?: Profile | null;
 };
-type ChatMsg = {
-  id: string;
-  sender_id: string;
-  recipient_id: string;
-  body: string;
-  created_at: string;
-};
-
 const SITE = "https://duelnight.app";
 
 export const Route = createFileRoute("/lfg/$id")({
@@ -124,7 +113,6 @@ function LfgDetailPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { t, language } = useI18n();
-  const [chatWith, setChatWith] = useState<{ userId: string; name: string } | null>(null);
 
   const dateLocale = language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US";
 
@@ -386,17 +374,6 @@ function LfgDetailPage() {
         </section>
       )}
 
-      {user && chatWith && (
-        <ChatDialog
-          open={!!chatWith}
-          onOpenChange={(o) => !o && setChatWith(null)}
-          postId={post.id}
-          meId={user.id}
-          otherId={chatWith.userId}
-          otherName={chatWith.name}
-          dateLocale={dateLocale}
-        />
-      )}
     </div>
   );
 }
@@ -446,124 +423,6 @@ function JoinButton({ onJoin, quick }: { onJoin: (msg?: string) => void; quick: 
         </DialogContent>
       </Dialog>
     </>
-  );
-}
-
-function ChatDialog({
-  open,
-  onOpenChange,
-  postId,
-  meId,
-  otherId,
-  otherName,
-  dateLocale,
-}: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  postId: string;
-  meId: string;
-  otherId: string;
-  otherName: string;
-  dateLocale: string;
-}) {
-  const { t } = useI18n();
-  const [body, setBody] = useState("");
-  const [sending, setSending] = useState(false);
-  const endRef = useRef<HTMLDivElement>(null);
-
-  const { data: messages = [], refetch } = useQuery({
-    queryKey: ["lfg-chat", postId, meId, otherId],
-    enabled: open,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("lfg_messages")
-        .select("*")
-        .eq("post_id", postId)
-        .or(
-          `and(sender_id.eq.${meId},recipient_id.eq.${otherId}),and(sender_id.eq.${otherId},recipient_id.eq.${meId})`,
-        )
-        .order("created_at");
-      if (error) throw error;
-      return (data ?? []) as ChatMsg[];
-    },
-    refetchInterval: open ? 4000 : false,
-  });
-
-  useEffect(() => {
-    if (open) endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length, open]);
-
-  const send = async () => {
-    if (!body.trim()) return;
-    setSending(true);
-    const { error } = await supabase.from("lfg_messages").insert({
-      post_id: postId,
-      sender_id: meId,
-      recipient_id: otherId,
-      body: body.trim(),
-    });
-    setSending(false);
-    if (error) toast.error(error.message);
-    else {
-      setBody("");
-      refetch();
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t("lfg.chatWithTitle", { name: otherName })}</DialogTitle>
-        </DialogHeader>
-        <div className="max-h-[50vh] min-h-[200px] space-y-2 overflow-y-auto rounded-md border border-border bg-muted/30 p-3">
-          {messages.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              {t("lfg.noMessages")}
-            </p>
-          ) : (
-            messages.map((m) => {
-              const mine = m.sender_id === meId;
-              return (
-                <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-                  <div
-                    className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
-                      mine ? "bg-primary text-primary-foreground" : "bg-card border border-border"
-                    }`}
-                  >
-                    <p className="whitespace-pre-wrap break-words">{m.body}</p>
-                    <p className={`mt-1 text-[10px] ${mine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                      {new Intl.DateTimeFormat(dateLocale, {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      }).format(new Date(m.created_at))}
-                    </p>
-                  </div>
-                </div>
-              );
-            })
-          )}
-          <div ref={endRef} />
-        </div>
-        <div className="flex gap-2">
-          <Input
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            placeholder={t("lfg.messagePlaceholder")}
-            maxLength={500}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                send();
-              }
-            }}
-          />
-          <Button onClick={send} disabled={sending || !body.trim()} size="icon">
-            <Send className="h-4 w-4" />
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
   );
 }
 

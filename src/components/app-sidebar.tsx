@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsAdmin } from "@/hooks/use-is-admin";
+import { useUnreadDmCount } from "@/hooks/use-unread-dm";
 import { useI18n, TranslationKey } from "@/i18n/language-context";
 
 interface SidebarItem {
@@ -89,6 +90,7 @@ export function AppSidebar() {
   });
   const { isAdmin } = useIsAdmin();
   const { user } = useAuth();
+  const unreadDm = useUnreadDmCount();
 
   const filteredAccountItems = accountItems.filter((item) => {
     if (item.url === "/store" && !user) return false;
@@ -117,16 +119,29 @@ export function AppSidebar() {
       {!collapsed && <SidebarGroupLabel>{t(labelKey)}</SidebarGroupLabel>}
       <SidebarGroupContent>
         <SidebarMenu>
-          {items.map((item) => (
-            <SidebarMenuItem key={item.url}>
-              <SidebarMenuButton asChild isActive={item.url === activeUrl}>
-                <Link to={item.url} className="flex items-center gap-2">
-                  <item.icon className="h-4 w-4" />
-                  {!collapsed && <span>{t(item.titleKey)}</span>}
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+          {items.map((item) => {
+            const badge = item.url === "/messages" ? unreadDm : 0;
+            return (
+              <SidebarMenuItem key={item.url}>
+                <SidebarMenuButton asChild isActive={item.url === activeUrl}>
+                  <Link to={item.url} className="flex items-center gap-2">
+                    <span className="relative">
+                      <item.icon className="h-4 w-4" />
+                      {badge > 0 && collapsed && (
+                        <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-primary" />
+                      )}
+                    </span>
+                    {!collapsed && <span className="flex-1">{t(item.titleKey)}</span>}
+                    {!collapsed && badge > 0 && (
+                      <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                        {badge > 99 ? "99+" : badge}
+                      </span>
+                    )}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>

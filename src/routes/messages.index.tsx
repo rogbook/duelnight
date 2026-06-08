@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { displayImageSrc } from "@/lib/image-proxy";
+import { useIsOnline } from "@/hooks/use-online-presence";
 import {
   fetchConversations,
   fetchProfiles,
@@ -57,6 +58,12 @@ function Avatar({ profile, size = 44 }: { profile?: DMProfile; size?: number }) 
       )}
     </div>
   );
+}
+
+function OnlineDot({ userId }: { userId: string }) {
+  const online = useIsOnline(userId);
+  if (!online) return null;
+  return <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-card bg-green-500" />;
 }
 
 function MessagesInboxPage() {
@@ -138,7 +145,10 @@ function MessagesInboxPage() {
                   params={{ id: c.id }}
                   className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-accent/40"
                 >
-                  <Avatar profile={p} />
+                  <div className="relative">
+                    <Avatar profile={p} />
+                    <OnlineDot userId={oid} />
+                  </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <span className={`truncate text-sm ${unread ? "font-bold" : "font-medium"}`}>
