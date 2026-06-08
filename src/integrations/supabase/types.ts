@@ -247,6 +247,7 @@ export type Database = {
           counter: number | null
           created_at: string
           effect: string | null
+          effects: Json
           extra: Json | null
           game: string
           id: string
@@ -272,6 +273,7 @@ export type Database = {
           counter?: number | null
           created_at?: string
           effect?: string | null
+          effects?: Json
           extra?: Json | null
           game?: string
           id?: string
@@ -297,6 +299,7 @@ export type Database = {
           counter?: number | null
           created_at?: string
           effect?: string | null
+          effects?: Json
           extra?: Json | null
           game?: string
           id?: string
@@ -972,6 +975,42 @@ export type Database = {
           primary_game?: string | null
           updated_at?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      simulator_decks: {
+        Row: {
+          created_at: string
+          game: string
+          id: string
+          is_public: boolean
+          leader_code: string | null
+          name: string
+          recipe: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          game: string
+          id?: string
+          is_public?: boolean
+          leader_code?: string | null
+          name: string
+          recipe?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          game?: string
+          id?: string
+          is_public?: boolean
+          leader_code?: string | null
+          name?: string
+          recipe?: Json
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
