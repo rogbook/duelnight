@@ -367,15 +367,15 @@ function SimulatorMatchRoomPage() {
           )}
 
           {/* ── PLAYER 1 (하단: USER) ── */}
-          <div className="rounded-2xl border border-border bg-card/40 p-4 relative space-y-4">
-            <div className="absolute top-3 right-4 flex items-center gap-1.5 text-[10px] font-bold text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded-full">
-              <User className="h-3.5 w-3.5" /> USER PLAYER (P1)
+          <div className="rounded-2xl border border-border bg-card/40 p-3 sm:p-4 relative space-y-3 sm:space-y-4">
+            <div className="absolute top-2 right-2 sm:top-3 sm:right-4 flex items-center gap-1 sm:gap-1.5 text-[9px] sm:text-[10px] font-bold text-blue-500 bg-blue-500/10 px-1.5 sm:px-2 py-0.5 rounded-full">
+              <User className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> USER (P1)
             </div>
 
             <PlayerStatRow playerState={p1State} isTop={false} />
 
             {/* USER 필드 에리어 */}
-            <div className="grid grid-cols-6 gap-3 items-center min-h-[140px] border-t border-border/20 pt-4">
+            <div className="grid grid-cols-[auto_1fr] gap-2 sm:gap-3 items-center min-h-[120px] sm:min-h-[140px] border-t border-border/20 pt-3 sm:pt-4">
               {/* 리더 슬롯 */}
               <div className="flex flex-col items-center">
                 <span className="text-[9px] font-bold text-muted-foreground mb-1">LEADER</span>
@@ -385,9 +385,9 @@ function SimulatorMatchRoomPage() {
               </div>
 
               {/* 캐릭터 에리어 */}
-              <div className="col-span-5 flex gap-3 overflow-x-auto pb-1">
+              <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-1 min-w-0">
                 {p1State.zones.secondary.length === 0 ? (
-                  <div className="flex-1 flex items-center justify-center border border-dashed border-border/40 rounded-xl text-[10px] text-muted-foreground min-h-[120px]">
+                  <div className="flex-1 flex items-center justify-center border border-dashed border-border/40 rounded-xl text-[10px] text-muted-foreground min-h-[100px] sm:min-h-[120px] px-4">
                     배틀 영역이 비어 있습니다.
                   </div>
                 ) : (
@@ -397,6 +397,7 @@ function SimulatorMatchRoomPage() {
                 )}
               </div>
             </div>
+
 
             {/* USER 핸드 에리어 */}
             <div className="border-t border-border/20 pt-3 flex items-center gap-2">
@@ -410,9 +411,10 @@ function SimulatorMatchRoomPage() {
                     return (
                       <div
                         key={c.iid}
-                        className="w-16 h-24 rounded-lg border border-border bg-card p-1 flex flex-col justify-between shrink-0 shadow-sm relative group cursor-pointer hover:border-primary/50"
+                        className="w-12 h-[68px] sm:w-16 sm:h-24 rounded-lg border border-border bg-card p-1 flex flex-col justify-between shrink-0 shadow-sm relative group cursor-pointer hover:border-primary/50"
                         title={meta.name}
                       >
+
                         <div className="min-w-0">
                           <span className="text-[8px] font-extrabold truncate block leading-tight">
                             {meta.name}
