@@ -292,6 +292,14 @@ type Props = {
   onComplete?: (result: { inserted: number; skipped: number }) => void;
 };
 
+function buildUploadPath(setCode: string, code: string, isAdmin: boolean, userId: string | null) {
+  const folder = setCode || "misc";
+  const filename = `${code}-${Date.now()}.webp`;
+  // 비관리자는 본인 폴더(user-uploads/{uid}/...)로만 업로드 가능 (RLS)
+  if (!isAdmin && userId) return `user-uploads/${userId}/${folder}/${filename}`;
+  return `${folder}/${filename}`;
+}
+
 export function CardUploader({ isAdmin, onComplete }: Props) {
   const { rows: allSets } = useUniqueSets();
   const { games, labelOf } = useGames();
@@ -411,13 +419,15 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
     const newRows: CardRow[] = [];
     let done = 0;
     try {
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth.user?.id ?? null;
       for (const original of files) {
         if (!original.type.startsWith("image/")) { done++; continue; }
         // WebP 변환 + 800px 리사이즈로 업로드 비용 절감
         const f = await compressToWebp(original, { maxWidth: 800, quality: 0.82 });
         const code = extractCodeFromFilename(original.name);
         const setCode = code.split("-")[0] || "";
-        const path = `${setCode || "misc"}/${code}-${Date.now()}.webp`;
+        const path = buildUploadPath(setCode, code, isAdmin, uid);
         const { error: upErr } = await supabase.storage.from("card-images").upload(path, f, {
           cacheControl: "3600", upsert: false, contentType: "image/webp",
         });
