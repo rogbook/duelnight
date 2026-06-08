@@ -12,6 +12,24 @@
 
 ---
 
+## 2026-06-08 | 🟠 High — 대국 시뮬레이터 시작 시 페이지 로드 실패
+
+**수정자**: Lovable
+**관련 파일**:
+- `src/lib/simulator/dsl/interpreter.ts`
+
+### 문제
+AI 대국 시뮬레이터 로비에서 `대국 시작하기`를 누르면 `/simulator/play` 화면이 루트 에러 화면(`This page didn't load`)으로 전환됨.
+
+### 원인
+카드 효과 DSL 인터프리터가 모듈 초기화 중 기본 액션 핸들러를 등록할 때, `actionHandlers` 상수가 아직 초기화되기 전에 `registerActionHandler()`가 실행되어 `ReferenceError: Cannot access 'actionHandlers' before initialization`가 발생함.
+
+### 수정 내용
+- `actionHandlers` 선언과 `registerActionHandler()` 정의를 기본 핸들러 일괄 등록 루프보다 먼저 배치.
+- `/simulator/play?p1=prebuilt-zoro-red&p2=prebuilt-oden-green&mode=manual` 진입 시 대국 화면이 로드되는 것을 미리보기에서 확인.
+
+---
+
 ## 템플릿
 
 ```markdown
