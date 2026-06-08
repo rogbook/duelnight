@@ -1,10 +1,27 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, useMemo, useEffect, useRef } from "react";
-import { ArrowLeft, Swords, RefreshCw, LogOut, ShieldAlert, Cpu, User, Play, Pause, FastForward } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import {
+  ArrowLeft,
+  Swords,
+  RefreshCw,
+  LogOut,
+  ShieldAlert,
+  Cpu,
+  User,
+  Play,
+  Pause,
+  Heart,
+  Coins,
+  Layers,
+  Trash2,
+  ScrollText,
+  Sparkles,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useI18n } from "@/i18n/language-context";
+import { displayImageSrc } from "@/lib/image-proxy";
 import { PREBUILT_DECKS } from "@/lib/simulator/prebuilt-decks";
 import { optcgEngine, CARD_METADATA_CACHE, getCardMeta, getBattlePower } from "@/lib/simulator/engines/optcg";
 import { chooseAction } from "@/lib/simulator/ai/agent";
@@ -30,16 +47,18 @@ export const Route = createFileRoute("/simulator/$id")({
 function SimulatorMatchRoomPage() {
   const { p1, p2, mode = "manual" } = Route.useSearch();
   const navigate = useNavigate();
-  const { t } = useI18n();
+  useI18n();
 
   const [loading, setLoading] = useState(true);
   const [loadingText, setLoadingText] = useState("대국 정보 불러오는 중...");
-  
-  // 게임 세션 관련 상태
+
+  // 게임 세션 상태
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [isAutoPlaying, setIsAutoPlaying] = useState(mode === "auto");
   const [speedMs, setSpeedMs] = useState<number>(1000); // AI 진행 속도
-  const autoPlayTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [selectedHandIid, setSelectedHandIid] = useState<string | null>(null);
+  const [logOpen, setLogOpen] = useState(false);
+  const autoPlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const logEndRef = useRef<HTMLDivElement | null>(null);
 
   // 1. P1 덱 레시피 로드
@@ -70,23 +89,20 @@ function SimulatorMatchRoomPage() {
     },
   });
 
-  // 3. 카드 메타데이터 캐시 로드 및 게임 초기화
+  // 3. 카드 메타데이터 캐시 적재 및 게임 초기화
   useEffect(() => {
     if (!p1Deck || !p2Deck) return;
 
     const initBattle = async () => {
       setLoadingText("카드 효과 사전 적재 중...");
       try {
-        // 모든 투입 코드 추출
         const p1Codes = p1Deck.cards.map((c: any) => c.card_code);
         if (p1Deck.leaderCode) p1Codes.push(p1Deck.leaderCode);
-        
         const p2Codes = p2Deck.cards.map((c: any) => c.card_code);
         if (p2Deck.leaderCode) p2Codes.push(p2Deck.leaderCode);
 
         const allCodes = Array.from(new Set([...p1Codes, ...p2Codes]));
 
-        // Supabase에서 메타데이터 검색
         const { data: cardRows, error } = await supabase
           .from("cards")
           .select("code, name, cost, power, counter, type, colors, effects, image_url")
@@ -94,7 +110,6 @@ function SimulatorMatchRoomPage() {
 
         if (error) throw error;
 
-        // 글로벌 캐시 적재
         for (const row of cardRows ?? []) {
           CARD_METADATA_CACHE[row.code] = {
             name: row.name ?? row.code,
@@ -108,11 +123,9 @@ function SimulatorMatchRoomPage() {
           };
         }
 
-
-        // 게임 인메모리 엔진 구동
         const startSeed = "seed-" + Math.floor(Math.random() * 1000000);
         const initialState = optcgEngine.init([p1Deck, p2Deck], startSeed);
-        
+
         setGameState(initialState);
         setLoading(false);
       } catch (err: any) {
@@ -124,18 +137,17 @@ function SimulatorMatchRoomPage() {
     initBattle();
   }, [p1Deck, p2Deck, navigate]);
 
-  // 로그 스크롤 이동
+  // 로그 자동 스크롤
   useEffect(() => {
     if (logEndRef.current) {
       logEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [gameState?.log]);
+  }, [gameState?.log, logOpen]);
 
   // AI 의사결정 타이머 루프
   useEffect(() => {
     if (!gameState) return;
 
-    // 터미널 상태 판정
     const terminal = optcgEngine.isTerminal(gameState);
     if (terminal) {
       setIsAutoPlaying(false);
@@ -143,24 +155,21 @@ function SimulatorMatchRoomPage() {
       return;
     }
 
-    // AI 진행 필요 여부
     const isP2Turn = gameState.activePlayer === "p2";
     const isP2Countering = gameState.pendingResponse && gameState.pendingResponse.defenderPlayer === "p2";
-    
-    // AI vs AI 모드인 경우
     const shouldAiPlay = isAutoPlaying || isP2Turn || isP2Countering;
 
     if (shouldAiPlay) {
-      const activeAiPlayer = isP2Countering ? "p2" : (isP2Turn ? "p2" : "p1");
-      
+      const activeAiPlayer = isP2Countering ? "p2" : isP2Turn ? "p2" : "p1";
+
       autoPlayTimerRef.current = setTimeout(() => {
         const action = chooseAction(optcgEngine, gameState, activeAiPlayer);
         if (action) {
-          const next = optcgEngine.applyAction(gameState, action);
-          setGameState(next);
+          setGameState(optcgEngine.applyAction(gameState, action));
         } else {
-          // 기권 또는 패스
-          const passAction = optcgEngine.getAvailableActions(gameState, activeAiPlayer).find(a => a.type === "pass_counter" || a.type === "end_main");
+          const passAction = optcgEngine
+            .getAvailableActions(gameState, activeAiPlayer)
+            .find((a) => a.type === "pass_counter" || a.type === "end_main");
           if (passAction) {
             setGameState(optcgEngine.applyAction(gameState, passAction));
           }
@@ -182,64 +191,85 @@ function SimulatorMatchRoomPage() {
     );
   }
 
-  // 액션 수행 핸들러
   const handlePerformAction = (action: Action) => {
-    const next = optcgEngine.applyAction(gameState, action);
-    setGameState(next);
+    setSelectedHandIid(null);
+    setGameState(optcgEngine.applyAction(gameState, action));
   };
 
-  const isTerminalResult = optcgEngine.isTerminal(gameState);
-  const activePlayerState = gameState.players[gameState.activePlayer];
+  const terminalResult = optcgEngine.isTerminal(gameState);
+  const isTerminalResult = !!terminalResult;
   const p1State = gameState.players.p1;
   const p2State = gameState.players.p2;
+  const isMyTurn = gameState.activePlayer === "p1";
+  const myCounterWindow = !!gameState.pendingResponse && gameState.pendingResponse.defenderPlayer === "p1";
 
-  // 현재 P1이 수동 대응 가능한 액션 조회
-  const p1AvailableActions = !isTerminalResult && !isAutoPlaying && 
-    ((gameState.activePlayer === "p1" && !gameState.pendingResponse) || 
-     (gameState.pendingResponse && gameState.pendingResponse.defenderPlayer === "p1"))
-    ? optcgEngine.getAvailableActions(gameState, "p1")
+  // P1 수동 가능 액션
+  const p1AvailableActions =
+    !isTerminalResult && !isAutoPlaying && ((isMyTurn && !gameState.pendingResponse) || myCounterWindow)
+      ? optcgEngine.getAvailableActions(gameState, "p1")
+      : [];
+
+  // 선택된 손패 카드와 연결된 플레이 액션(코스트 선택지 포함)
+  const selectedCardActions = selectedHandIid
+    ? p1AvailableActions.filter(
+        (a) =>
+          (a.type === "play_character" || a.type === "play_event" || a.type === "play_stage") &&
+          a.iid === selectedHandIid,
+      )
     : [];
 
+  // 손패 외 보드 액션(부착/공격/턴종료/카운터 응답)
+  const boardActions = p1AvailableActions.filter(
+    (a) => a.type !== "play_character" && a.type !== "play_event" && a.type !== "play_stage",
+  );
+
+  // 손패 카드별로 "낼 수 있는지" 빠르게 판단하기 위한 집합
+  const playableHandIids = new Set(
+    p1AvailableActions
+      .filter((a) => a.type === "play_character" || a.type === "play_event" || a.type === "play_stage")
+      .map((a) => (a as any).iid as string),
+  );
+
   return (
-    <div className="mx-auto w-full max-w-7xl px-3 sm:px-4 py-3 sm:py-6 pb-28 lg:pb-6 flex flex-col gap-4 sm:gap-6">
-      {/* ── 헤더 영역 (모바일에서 상단 sticky) ── */}
-      <div className="sticky top-0 z-30 -mx-3 sm:-mx-4 px-3 sm:px-4 py-2 sm:py-0 sm:static bg-background/85 backdrop-blur sm:bg-transparent sm:backdrop-blur-0 flex flex-wrap items-center justify-between gap-2 sm:gap-4 border-b border-border pb-2 sm:pb-4">
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <Link to="/simulator" className="p-2 border border-border rounded-lg bg-card hover:bg-accent text-muted-foreground hover:text-foreground transition-all shrink-0">
+    <div className="mx-auto w-full max-w-6xl px-2 sm:px-4 py-2 sm:py-4 pb-32 lg:pb-6 flex flex-col gap-3">
+      {/* ── 상단 헤더 ── */}
+      <div className="sticky top-0 z-30 -mx-2 sm:mx-0 px-2 sm:px-0 py-2 bg-background/90 backdrop-blur flex items-center justify-between gap-2 border-b border-border/60 sm:border-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <Link
+            to="/simulator"
+            className="p-2 border border-border rounded-lg bg-card hover:bg-accent text-muted-foreground hover:text-foreground transition-all shrink-0"
+          >
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <div className="min-w-0">
-            <h1 className="text-sm sm:text-lg font-black tracking-tight flex items-center gap-2 truncate">
-              <Swords className="h-4 w-4 sm:h-5 sm:w-5 text-red-500 shrink-0" /> <span className="truncate">시뮬레이션 매치 룸</span>
+            <h1 className="text-sm sm:text-base font-black tracking-tight flex items-center gap-1.5 truncate">
+              <Swords className="h-4 w-4 text-red-500 shrink-0" /> <span className="truncate">AI 대국</span>
             </h1>
-            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 truncate">
-              Turn {gameState.turn} · {gameState.phase === "main" ? "메인" : "전투대응"} ·{" "}
-              <span className="font-extrabold text-primary">
-                {gameState.activePlayer === "p1" ? "P1(나)" : "P2(AI)"} 턴
-              </span>
+            <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
+              Turn {gameState.turn} · {gameState.phase === "main" ? "메인" : "전투"}
             </p>
           </div>
         </div>
 
-        {/* 관전/자동 속도 컨트롤 */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
           {mode === "auto" && (
-            <div className="flex items-center gap-1 bg-muted p-0.5 rounded-lg text-[11px] sm:text-xs">
+            <div className="flex items-center gap-0.5 bg-muted p-0.5 rounded-lg text-[11px]">
               <button
-                onClick={() => setIsAutoPlaying(prev => !prev)}
-                className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md font-bold transition-all ${
+                onClick={() => setIsAutoPlaying((p) => !p)}
+                className={`flex items-center gap-1 px-2 py-1.5 rounded-md font-bold transition-all ${
                   isAutoPlaying ? "bg-primary text-primary-foreground shadow" : "hover:bg-card text-muted-foreground"
                 }`}
               >
                 {isAutoPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 fill-current" />}
-                <span className="hidden sm:inline">{isAutoPlaying ? "일시정지" : "자동재생"}</span>
               </button>
-              <div className="h-4 w-[1px] bg-border mx-1" />
+              <div className="h-4 w-px bg-border mx-0.5" />
               {[1500, 1000, 500].map((ms) => (
                 <button
                   key={ms}
                   onClick={() => setSpeedMs(ms)}
-                  className={`px-2 py-1.5 rounded-md ${speedMs === ms ? "font-bold text-foreground" : "text-muted-foreground"}`}
+                  className={`px-1.5 py-1.5 rounded-md ${
+                    speedMs === ms ? "font-bold text-foreground" : "text-muted-foreground"
+                  }`}
                 >
                   {(ms / 1000).toFixed(1)}s
                 </button>
@@ -249,384 +279,472 @@ function SimulatorMatchRoomPage() {
 
           <button
             onClick={() => {
-              if (confirm("대국을 기권하고 로비로 돌아가시겠습니까?")) {
-                navigate({ to: "/simulator" });
-              }
+              if (confirm("대국을 기권하고 로비로 돌아가시겠습니까?")) navigate({ to: "/simulator" });
             }}
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 bg-destructive/10 text-destructive hover:bg-destructive hover:text-white rounded-lg text-[11px] sm:text-xs font-bold transition-all min-h-10"
+            className="flex items-center gap-1.5 px-2.5 py-2 bg-destructive/10 text-destructive hover:bg-destructive hover:text-white rounded-lg text-[11px] font-bold transition-all min-h-10"
           >
-            <LogOut className="h-3.5 w-3.5" /> <span className="hidden sm:inline">기권 및 퇴장</span><span className="sm:hidden">기권</span>
+            <LogOut className="h-3.5 w-3.5" /> <span className="hidden sm:inline">기권</span>
           </button>
         </div>
       </div>
 
+      {/* ── 배틀 보드(매트) ── */}
+      <div className="relative rounded-3xl border border-border overflow-hidden shadow-xl bg-gradient-to-b from-rose-500/10 via-card to-sky-500/10">
+        {/* 은은한 비네팅 */}
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,hsl(var(--background)/0.55))]" />
 
-      {/* ── 승패 종료 알림 배너 ── */}
+        <div className="relative flex flex-col">
+          {/* ─ 상대(AI) 진영 ─ */}
+          <PlayerSide
+            state={p2State}
+            isOpponent
+            isActive={gameState.activePlayer === "p2"}
+            gameState={gameState}
+          />
+
+          {/* ─ 중앙 턴/대응 밴드 ─ */}
+          <div className="relative z-10 px-3 py-2 bg-background/40 backdrop-blur-sm border-y border-border/50">
+            {gameState.pendingResponse ? (
+              <CounterBand pending={gameState.pendingResponse} state={gameState} />
+            ) : (
+              <div className="flex items-center justify-center gap-2 text-[11px] sm:text-xs font-bold">
+                <span
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full ${
+                    isMyTurn ? "bg-blue-500/15 text-blue-500" : "bg-red-500/15 text-red-500"
+                  }`}
+                >
+                  {isMyTurn ? <User className="h-3.5 w-3.5" /> : <Cpu className="h-3.5 w-3.5" />}
+                  {isMyTurn ? "내 턴" : "AI 턴 진행 중..."}
+                </span>
+                {isMyTurn && !isTerminalResult && (
+                  <span className="text-muted-foreground hidden sm:inline">
+                    손패 카드를 탭해서 내거나 아래 액션을 선택하세요
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* ─ 내(P1) 진영 ─ */}
+          <PlayerSide
+            state={p1State}
+            isOpponent={false}
+            isActive={isMyTurn}
+            gameState={gameState}
+            selectedHandIid={selectedHandIid}
+            playableHandIids={playableHandIids}
+            onHandSelect={(iid) => setSelectedHandIid((cur) => (cur === iid ? null : iid))}
+          />
+        </div>
+      </div>
+
+      {/* ── 종료 배너 ── */}
       {isTerminalResult && (
-        <div className="rounded-xl border border-primary/20 bg-primary/5 p-6 text-center shadow-lg space-y-3">
-          <h2 className="text-xl font-black text-primary animate-bounce">
-            🎉 대국이 종료되었습니다! 🎉
-          </h2>
+        <div className="rounded-2xl border border-primary/30 bg-primary/5 p-6 text-center shadow-lg space-y-3">
+          <h2 className="text-xl font-black text-primary">🎉 대국 종료!</h2>
           <p className="text-sm font-bold text-muted-foreground">
-            우승 플레이어: {"winner" in isTerminalResult && isTerminalResult.winner === "p1" ? "Player 1 (User) 🏆" : "Player 2 (AI) 🏆"}
+            우승: {"winner" in terminalResult! && terminalResult!.winner === "p1" ? "🏆 나 (P1)" : "🏆 AI (P2)"}
           </p>
-          <div className="flex justify-center gap-3 mt-4">
-            <Link to="/simulator" className="px-4 py-2 border border-border bg-card rounded-lg text-xs font-bold hover:bg-accent">
-              로비로 이동
+          <div className="flex justify-center gap-3 pt-1">
+            <Link
+              to="/simulator"
+              className="px-4 py-2 border border-border bg-card rounded-lg text-xs font-bold hover:bg-accent"
+            >
+              로비로
             </Link>
             <button
               onClick={() => window.location.reload()}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-xs font-bold hover:opacity-90 shadow"
             >
-              재대국 하기
+              재대국
             </button>
           </div>
         </div>
       )}
 
-      {/* ── 시뮬레이터 배틀 보드 ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start">
-        {/* ── 배틀 필드 보드 (12열 중 8열) ── */}
-        <div className="lg:col-span-8 flex flex-col gap-4 sm:gap-6 min-w-0">
-          
-          {/* ── PLAYER 2 (상단: AI) ── */}
-          <div className="rounded-2xl border border-border bg-card/40 p-3 sm:p-4 relative space-y-3 sm:space-y-4">
-            <div className="absolute top-2 right-2 sm:top-3 sm:right-4 flex items-center gap-1 sm:gap-1.5 text-[9px] sm:text-[10px] font-bold text-red-500 bg-red-500/10 px-1.5 sm:px-2 py-0.5 rounded-full">
-              <Cpu className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> AI (P2)
-            </div>
-
-            <PlayerStatRow playerState={p2State} isTop={true} />
-
-            {/* AI 필드 에리어 */}
-            <div className="grid grid-cols-[auto_1fr] gap-2 sm:gap-3 items-center min-h-[120px] sm:min-h-[140px] border-t border-border/20 pt-3 sm:pt-4">
-
-              {/* 리더 슬롯 */}
-              <div className="flex flex-col items-center">
-                <span className="text-[9px] font-bold text-muted-foreground mb-1">LEADER</span>
-                {p2State.zones.primary[0] && (
-                  <BattleUnit unit={p2State.zones.primary[0]} />
-                )}
+      {/* ── 로그(접이식) ── */}
+      <div className="rounded-2xl border border-border bg-card/60 overflow-hidden">
+        <button
+          onClick={() => setLogOpen((o) => !o)}
+          className="w-full p-3 flex items-center justify-between hover:bg-accent/40 transition-colors"
+        >
+          <span className="text-xs font-black uppercase tracking-wider flex items-center gap-2">
+            <ScrollText className="h-4 w-4 text-primary" /> 대국 로그
+          </span>
+          <span className="text-[10px] text-muted-foreground">{logOpen ? "닫기 ▲" : `열기 ▼ (${gameState.log.length})`}</span>
+        </button>
+        {logOpen && (
+          <div className="max-h-[38vh] overflow-y-auto p-3 space-y-2 font-mono text-[11px] leading-relaxed border-t border-border">
+            {gameState.log.map((evt, idx) => (
+              <div key={idx} className="border-b border-border/20 pb-1.5">
+                <span className="text-[10px] text-muted-foreground select-none">
+                  [T{evt.turn} {evt.player.toUpperCase()}]
+                </span>{" "}
+                <span className="text-foreground/90">{formatEventLog(evt)}</span>
               </div>
-
-              {/* 캐릭터 에리어 (최대 5개) */}
-              <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-1 min-w-0">
-                {p2State.zones.secondary.length === 0 ? (
-                  <div className="flex-1 flex items-center justify-center border border-dashed border-border/40 rounded-xl text-[10px] text-muted-foreground min-h-[100px] sm:min-h-[120px] px-4">
-                    배틀 영역이 비어 있습니다.
-                  </div>
-                ) : (
-                  p2State.zones.secondary.map((c) => (
-                    <BattleUnit key={c.iid} unit={c} />
-                  ))
-                )}
-              </div>
-
-            </div>
-
-            {/* AI 핸드 에리어 (비공개 또는 반투명) */}
-            <div className="border-t border-border/20 pt-3 flex items-center gap-2">
-              <span className="text-[10px] font-bold text-muted-foreground">손패 ({p2State.zones.hand.length}):</span>
-              <div className="flex gap-1.5 overflow-x-auto py-1">
-                {p2State.zones.hand.map((c) => {
-                  const m = getCardMeta(c.code);
-                  return (
-                    <div
-                      key={c.iid}
-                      className="relative w-10 h-14 rounded border border-border bg-card/60 overflow-hidden opacity-70 hover:opacity-100 transition-opacity"
-                      title={m.name}
-                    >
-                      {m.imageUrl ? (
-                        <img src={m.imageUrl} alt={m.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center text-[7px] font-extrabold text-muted-foreground text-center px-0.5">
-                          {m.name}
-                        </div>
-                      )}
-                      <span className="absolute bottom-0 left-0 right-0 text-[6px] text-white bg-black/70 text-center">{c.code}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+            ))}
+            <div ref={logEndRef} />
           </div>
-
-          {/* ── 대국 현황 중재선 (Pending Counter Info) ── */}
-          {gameState.pendingResponse && (
-            <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3.5 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2.5">
-                <ShieldAlert className="h-4 w-4 text-amber-500 shrink-0" />
-                <div>
-                  <span className="font-bold text-amber-500">배틀 대응 발생!</span>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">
-                    공격력 {gameState.pendingResponse.baseAttackerPower} vs 방어력{" "}
-                    {gameState.pendingResponse.baseDefenderPower +
-                      gameState.pendingResponse.appliedModifiers.reduce((acc, m) => acc + m.delta, 0)}{" "}
-                    (기본 수비력 {gameState.pendingResponse.baseDefenderPower}
-                    {gameState.pendingResponse.appliedModifiers.length > 0 &&
-                      ` + 카운터 ${gameState.pendingResponse.appliedModifiers.reduce((acc, m) => acc + m.delta, 0)}`}
-                    )
-                  </p>
-                </div>
-              </div>
-              <div className="text-[10px] font-bold bg-amber-500/10 text-amber-500 px-2 py-1 rounded">
-                수비 대상: {gameState.pendingResponse.defenderIid.endsWith("-leader") ? "리더" : "캐릭터"}
-              </div>
-            </div>
-          )}
-
-          {/* ── PLAYER 1 (하단: USER) ── */}
-          <div className="rounded-2xl border border-border bg-card/40 p-3 sm:p-4 relative space-y-3 sm:space-y-4">
-            <div className="absolute top-2 right-2 sm:top-3 sm:right-4 flex items-center gap-1 sm:gap-1.5 text-[9px] sm:text-[10px] font-bold text-blue-500 bg-blue-500/10 px-1.5 sm:px-2 py-0.5 rounded-full">
-              <User className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> USER (P1)
-            </div>
-
-            <PlayerStatRow playerState={p1State} isTop={false} />
-
-            {/* USER 필드 에리어 */}
-            <div className="grid grid-cols-[auto_1fr] gap-2 sm:gap-3 items-center min-h-[120px] sm:min-h-[140px] border-t border-border/20 pt-3 sm:pt-4">
-              {/* 리더 슬롯 */}
-              <div className="flex flex-col items-center">
-                <span className="text-[9px] font-bold text-muted-foreground mb-1">LEADER</span>
-                {p1State.zones.primary[0] && (
-                  <BattleUnit unit={p1State.zones.primary[0]} />
-                )}
-              </div>
-
-              {/* 캐릭터 에리어 */}
-              <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-1 min-w-0">
-                {p1State.zones.secondary.length === 0 ? (
-                  <div className="flex-1 flex items-center justify-center border border-dashed border-border/40 rounded-xl text-[10px] text-muted-foreground min-h-[100px] sm:min-h-[120px] px-4">
-                    배틀 영역이 비어 있습니다.
-                  </div>
-                ) : (
-                  p1State.zones.secondary.map((c) => (
-                    <BattleUnit key={c.iid} unit={c} />
-                  ))
-                )}
-              </div>
-            </div>
-
-
-            {/* USER 핸드 에리어 */}
-            <div className="border-t border-border/20 pt-3 flex items-center gap-2">
-              <span className="text-[10px] font-bold text-muted-foreground shrink-0">내 손패 ({p1State.zones.hand.length}):</span>
-              <div className="flex gap-2 overflow-x-auto py-1 flex-1">
-                {p1State.zones.hand.length === 0 ? (
-                  <span className="text-[10px] text-muted-foreground">손패가 없습니다.</span>
-                ) : (
-                  p1State.zones.hand.map((c) => {
-                    const meta = getCardMeta(c.code);
-                    return (
-                      <div
-                        key={c.iid}
-                        className="relative w-12 h-[68px] sm:w-16 sm:h-24 rounded-lg border border-border bg-card overflow-hidden shrink-0 shadow-sm cursor-pointer hover:border-primary/50 transition-colors"
-                        title={meta.name}
-                      >
-                        {meta.imageUrl ? (
-                          <img src={meta.imageUrl} alt={meta.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
-                        ) : null}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/40 pointer-events-none" />
-                        <div className="relative min-w-0 p-1">
-                          <span className="text-[8px] font-extrabold truncate block leading-tight text-white drop-shadow">
-                            {meta.name}
-                          </span>
-                          <span className="text-[7px] text-white/70 block leading-none mt-0.5">
-                            {c.code}
-                          </span>
-                        </div>
-                        <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between text-[7px] px-1 pb-1">
-                          <span className="bg-black/70 text-white px-1 rounded font-bold">Cost {meta.cost}</span>
-                          {meta.power > 0 && <span className="font-bold text-white bg-red-600/90 px-1 rounded">{meta.power}</span>}
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* ── 수동 조작 액션 리스트 Panel — 모바일은 하단 sticky ── */}
-          {p1AvailableActions.length > 0 && (
-            <div className="rounded-2xl border border-border bg-card p-3 sm:p-4 space-y-2 sm:space-y-3 shadow-md lg:static fixed bottom-0 left-0 right-0 z-40 lg:z-auto rounded-b-none lg:rounded-2xl border-t-2 lg:border pb-[calc(0.75rem+env(safe-area-inset-bottom))] lg:pb-4">
-              <h3 className="text-[11px] sm:text-xs font-bold text-muted-foreground flex items-center gap-1.5">
-                <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-500" /> 수동 조작 액션 (P1)
-              </h3>
-              <div className="flex flex-wrap gap-1.5 sm:gap-2 max-h-32 lg:max-h-none overflow-y-auto">
-                {p1AvailableActions.map((act, index) => {
-                  const label = getActionLabel(act);
-                  const colorClass = getActionColorClass(act.type);
-                  return (
-                    <button
-                      key={index}
-                      onClick={() => handlePerformAction(act)}
-                      className={`px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-xs font-bold transition-all border shadow-sm min-h-10 ${colorClass}`}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ── 실시간 대국 로그 창 — 모바일은 접이식 ── */}
-        <details open className="lg:col-span-4 lg:open:!block group rounded-2xl border border-border bg-card/60 backdrop-blur shadow-md overflow-hidden">
-          <summary className="cursor-pointer lg:cursor-default list-none p-3 sm:p-4 border-b border-border bg-card flex items-center justify-between">
-            <h3 className="text-xs font-black uppercase tracking-wider flex items-center gap-2">
-              <Swords className="h-4 w-4 text-primary" /> 실시간 대국 로그
-            </h3>
-            <span className="text-[10px] text-muted-foreground lg:hidden">탭하여 열기/닫기</span>
-          </summary>
-          <div className="flex flex-col lg:h-[650px] max-h-[40vh] lg:max-h-none">
-            {/* 로그 리스트 */}
-            <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 sm:space-y-3 font-mono text-[11px] leading-relaxed">
-              {gameState.log.map((evt, idx) => {
-                const text = formatEventLog(evt);
-                return (
-                  <div key={idx} className="border-b border-border/20 pb-2">
-                    <span className="text-[10px] text-muted-foreground select-none">
-                      [T{evt.turn} {evt.player.toUpperCase()}]
-                    </span>{" "}
-                    <span className="text-foreground/90">{text}</span>
-                  </div>
-                );
-              })}
-              <div ref={logEndRef} />
-            </div>
-          </div>
-        </details>
+        )}
       </div>
+
+      {/* ── 하단 고정 액션 바 ── */}
+      {!isTerminalResult && (selectedCardActions.length > 0 || boardActions.length > 0) && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur border-t-2 border-primary/30 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] pb-[env(safe-area-inset-bottom)]">
+          <div className="mx-auto w-full max-w-6xl px-3 py-2.5 space-y-2">
+            {/* 선택된 손패 카드 전용 액션 */}
+            {selectedCardActions.length > 0 && (
+              <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                <span className="text-[10px] font-bold text-primary shrink-0 flex items-center gap-1">
+                  <Sparkles className="h-3.5 w-3.5" />내기:
+                </span>
+                {selectedCardActions.map((act, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handlePerformAction(act)}
+                    className="px-3 py-2 rounded-lg text-xs font-bold border shadow-sm min-h-10 whitespace-nowrap bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30 hover:bg-green-500 hover:text-white transition-all"
+                  >
+                    {getActionLabel(act, gameState)}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setSelectedHandIid(null)}
+                  className="px-2.5 py-2 rounded-lg text-xs font-bold border border-border text-muted-foreground hover:bg-accent shrink-0"
+                >
+                  취소
+                </button>
+              </div>
+            )}
+
+            {/* 보드 액션 */}
+            <div className="flex items-center gap-1.5 overflow-x-auto">
+              {boardActions.map((act, i) => (
+                <button
+                  key={i}
+                  onClick={() => handlePerformAction(act)}
+                  className={`px-3 py-2 rounded-lg text-xs font-bold border shadow-sm min-h-10 whitespace-nowrap transition-all ${getActionColorClass(
+                    act.type,
+                  )}`}
+                >
+                  {getActionLabel(act, gameState)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
+// ──────────────────────────────────────────────────────────
+// 한 플레이어 진영(상대=상단 / 나=하단)
+// ──────────────────────────────────────────────────────────
+function PlayerSide({
+  state,
+  isOpponent,
+  isActive,
+  gameState,
+  selectedHandIid,
+  playableHandIids,
+  onHandSelect,
+}: {
+  state: PlayerState;
+  isOpponent: boolean;
+  isActive: boolean;
+  gameState: GameState;
+  selectedHandIid?: string | null;
+  playableHandIids?: Set<string>;
+  onHandSelect?: (iid: string) => void;
+}) {
+  const leader = state.zones.primary[0];
+  const chars = state.zones.secondary;
 
-// ──────────────────────────────────────────────────────────
-// 헬퍼 컴포넌트: 플레이어 정보 행
-// ──────────────────────────────────────────────────────────
-function PlayerStatRow({ playerState, isTop }: { playerState: PlayerState; isTop: boolean }) {
   return (
-    <div className={`flex flex-wrap items-center justify-between gap-4 py-2 text-xs border-b border-border/20 pb-3 ${isTop ? "flex-row" : "flex-row"}`}>
-      <div className="flex items-center gap-4">
-        <div className="space-y-0.5">
-          <span className="text-[9px] text-muted-foreground uppercase font-bold">라이프</span>
-          <div className="flex gap-1">
-            {playerState.zones.life.length === 0 ? (
-              <span className="text-[10px] text-destructive font-black">0 LIFE (🚨 패배 위기)</span>
+    <div
+      className={`relative px-3 py-3 sm:px-4 sm:py-4 transition-colors ${
+        isActive ? (isOpponent ? "bg-red-500/[0.04]" : "bg-blue-500/[0.04]") : ""
+      } ${isOpponent ? "flex flex-col" : "flex flex-col-reverse"}`}
+    >
+      {/* 손패 트레이 */}
+      {isOpponent ? (
+        // 상대 손패는 카드 뒷면만 (정보 비공개)
+        <div className="flex items-center gap-1.5 mt-3">
+          <span className="text-[9px] font-bold text-muted-foreground shrink-0">손패 {state.zones.hand.length}</span>
+          <div className="flex gap-1 overflow-hidden">
+            {state.zones.hand.slice(0, 12).map((c) => (
+              <div
+                key={c.iid}
+                className="w-6 h-9 sm:w-7 sm:h-10 rounded-sm bg-gradient-to-br from-slate-600 to-slate-800 border border-slate-500/50 shrink-0"
+              />
+            ))}
+          </div>
+        </div>
+      ) : (
+        // 내 손패는 실제 카드 + 탭하여 선택
+        <div className="mt-3">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <span className="text-[9px] font-bold text-blue-500 shrink-0">내 손패 {state.zones.hand.length}</span>
+          </div>
+          <div className="flex gap-1.5 overflow-x-auto pb-1">
+            {state.zones.hand.length === 0 ? (
+              <span className="text-[10px] text-muted-foreground py-3">손패가 없습니다.</span>
             ) : (
-              Array.from({ length: playerState.zones.life.length }).map((_, i) => (
-                <div key={i} className="h-3 w-5 bg-yellow-500/80 border border-yellow-600 rounded-sm shadow-sm" />
-              ))
+              state.zones.hand.map((c) => {
+                const meta = getCardMeta(c.code);
+                const playable = playableHandIids?.has(c.iid);
+                const selected = selectedHandIid === c.iid;
+                return (
+                  <button
+                    key={c.iid}
+                    onClick={() => onHandSelect?.(c.iid)}
+                    title={meta.name}
+                    className={`relative w-14 h-20 sm:w-16 sm:h-24 rounded-lg border overflow-hidden shrink-0 shadow-sm transition-all ${
+                      selected
+                        ? "border-primary ring-2 ring-primary -translate-y-1.5"
+                        : playable
+                          ? "border-green-500/60 hover:-translate-y-1"
+                          : "border-border opacity-80"
+                    }`}
+                  >
+                    <CardArt meta={meta} />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/30 pointer-events-none" />
+                    <span className="absolute top-0.5 left-0.5 right-0.5 text-[7px] font-extrabold truncate text-white drop-shadow leading-tight">
+                      {meta.name}
+                    </span>
+                    <div className="absolute bottom-0.5 left-0.5 right-0.5 flex items-center justify-between text-[7px]">
+                      <span className="bg-black/70 text-white px-1 rounded font-bold">{meta.cost}</span>
+                      {meta.power > 0 && (
+                        <span className="bg-red-600/90 text-white px-1 rounded font-bold">{meta.power}</span>
+                      )}
+                    </div>
+                    {playable && !selected && (
+                      <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-green-400 shadow ring-1 ring-white/40" />
+                    )}
+                  </button>
+                );
+              })
             )}
           </div>
         </div>
+      )}
 
-        <div className="h-6 w-[1px] bg-border/40" />
+      {/* 필드: 리더 + 캐릭터 에리어 */}
+      <div className="flex items-stretch gap-2 sm:gap-3">
+        {/* 리더 */}
+        <div className="flex flex-col items-center gap-1 shrink-0">
+          <span className="text-[8px] font-bold text-muted-foreground tracking-wider">LEADER</span>
+          {leader ? <BattleUnit unit={leader} isLeader /> : <EmptySlot />}
+        </div>
 
-        <div>
-          <span className="text-[9px] text-muted-foreground uppercase font-bold block">DON!! 활성 / 총</span>
-          <span className="font-extrabold text-xs text-yellow-500">
-            {playerState.donActive} Active <span className="text-muted-foreground font-normal">/ {playerState.donActive + playerState.donRested}</span>
+        {/* 캐릭터 에리어 */}
+        <div className="flex-1 min-w-0 flex flex-col">
+          <span className="text-[8px] font-bold text-muted-foreground tracking-wider mb-1">
+            CHARACTER {chars.length}/5
           </span>
+          <div className="flex-1 flex items-center gap-2 overflow-x-auto rounded-xl border border-dashed border-border/40 bg-background/20 p-2 min-h-[88px] sm:min-h-[104px]">
+            {chars.length === 0 ? (
+              <span className="text-[10px] text-muted-foreground mx-auto">배틀 영역이 비어 있습니다</span>
+            ) : (
+              chars.map((c) => <BattleUnit key={c.iid} unit={c} />)
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-4 text-[10px] text-muted-foreground">
-        <div>덱: <span className="font-bold text-foreground">{playerState.zones.deck.length}장</span></div>
-        <div>트래시: <span className="font-bold text-foreground">{playerState.zones.graveyard.length}장</span></div>
-      </div>
+      {/* 스탯 행: 라이프 / DON / 덱 / 트래시 */}
+      <StatRow state={state} isOpponent={isOpponent} />
     </div>
   );
 }
 
 // ──────────────────────────────────────────────────────────
-// 헬퍼 컴포넌트: 필드 유닛 카드
+// 스탯 행
 // ──────────────────────────────────────────────────────────
-function BattleUnit({ unit }: { unit: CardInstance }) {
+function StatRow({ state, isOpponent }: { state: PlayerState; isOpponent: boolean }) {
+  const life = state.zones.life.length;
+  const donTotal = state.donActive + state.donRested;
+  const lowLife = life <= 1;
+
+  return (
+    <div
+      className={`flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[10px] ${
+        isOpponent ? "mb-2 order-first" : "mt-2"
+      }`}
+    >
+      {/* 플레이어 라벨 */}
+      <span
+        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold ${
+          isOpponent ? "bg-red-500/10 text-red-500" : "bg-blue-500/10 text-blue-500"
+        }`}
+      >
+        {isOpponent ? <Cpu className="h-3 w-3" /> : <User className="h-3 w-3" />}
+        {isOpponent ? "AI" : "나"}
+      </span>
+
+      {/* 라이프 */}
+      <span className="inline-flex items-center gap-1 font-bold">
+        <Heart className={`h-3.5 w-3.5 ${lowLife ? "text-destructive animate-pulse" : "text-rose-500"} fill-current`} />
+        <span className={lowLife ? "text-destructive" : "text-foreground"}>{life}</span>
+        <span className="flex gap-0.5">
+          {Array.from({ length: Math.min(life, 7) }).map((_, i) => (
+            <span key={i} className="h-2.5 w-1.5 rounded-[1px] bg-rose-500/80" />
+          ))}
+        </span>
+      </span>
+
+      {/* DON */}
+      <span className="inline-flex items-center gap-1 font-bold">
+        <Coins className="h-3.5 w-3.5 text-yellow-500" />
+        <span className="text-yellow-500">{state.donActive}</span>
+        <span className="text-muted-foreground font-normal">/ {donTotal}</span>
+      </span>
+
+      {/* 덱 / 트래시 */}
+      <span className="inline-flex items-center gap-1 text-muted-foreground">
+        <Layers className="h-3 w-3" />
+        {state.zones.deck.length}
+      </span>
+      <span className="inline-flex items-center gap-1 text-muted-foreground">
+        <Trash2 className="h-3 w-3" />
+        {state.zones.graveyard.length}
+      </span>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────
+// 카드 아트 (이미지/대체)
+// ──────────────────────────────────────────────────────────
+function CardArt({ meta }: { meta: ReturnType<typeof getCardMeta> }) {
+  const src = displayImageSrc(meta.imageUrl);
+  if (src) {
+    return <img src={src} alt={meta.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />;
+  }
+  return (
+    <div className="absolute inset-0 flex items-center justify-center bg-muted text-[7px] font-extrabold text-muted-foreground text-center px-0.5">
+      {meta.name}
+    </div>
+  );
+}
+
+function EmptySlot() {
+  return (
+    <div className="w-16 h-24 sm:w-20 sm:h-28 rounded-lg border border-dashed border-border/50 bg-background/20 flex items-center justify-center text-[8px] text-muted-foreground">
+      비어있음
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────
+// 필드 유닛 카드
+// ──────────────────────────────────────────────────────────
+function BattleUnit({ unit, isLeader }: { unit: CardInstance; isLeader?: boolean }) {
   const meta = getCardMeta(unit.code);
   const power = getBattlePower(unit);
   const donAttached = unit.attached.filter((t) => t.code === "DON!!").length;
 
   return (
     <div
-      className={`relative w-16 h-24 sm:w-20 sm:h-28 rounded-lg border bg-card overflow-hidden flex flex-col justify-between shrink-0 shadow transition-all ${
-        unit.rested ? "opacity-65 border-border scale-95" : "border-primary"
-      }`}
-      style={{
-        transform: unit.rested ? "rotate(10deg)" : "none",
-      }}
+      className={`relative rounded-lg border overflow-hidden flex flex-col justify-between shrink-0 shadow transition-all ${
+        isLeader ? "w-16 h-24 sm:w-20 sm:h-28" : "w-14 h-20 sm:w-16 sm:h-24"
+      } ${unit.rested ? "opacity-70 border-border rotate-[8deg]" : "border-primary/70"}`}
       title={meta.name}
     >
-      {/* 배경 이미지 */}
-      {meta.imageUrl ? (
-        <img
-          src={meta.imageUrl}
-          alt={meta.name}
-          loading="lazy"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-      ) : null}
-      {/* 어둠 오버레이로 텍스트 가독성 확보 */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/40 pointer-events-none" />
+      <CardArt meta={meta} />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/30 pointer-events-none" />
 
-      <div className="relative min-w-0 leading-none p-1.5">
-        <span className="text-[9px] font-extrabold truncate block leading-tight text-white drop-shadow">{meta.name}</span>
-        <span className="text-[7px] text-white/70 block mt-0.5">{unit.code}</span>
-      </div>
+      <span className="relative text-[8px] font-extrabold truncate text-white drop-shadow leading-tight px-1 pt-0.5">
+        {meta.name}
+      </span>
 
-      {/* 부착된 DON!! 표시 */}
       {donAttached > 0 && (
-        <span className="absolute top-1.5 right-1.5 bg-yellow-500 text-white font-extrabold text-[8px] px-1 rounded-sm shadow flex items-center gap-0.5 z-10">
-          <FastForward className="h-2 w-2" /> D+{donAttached}
+        <span className="absolute top-1 right-1 bg-yellow-500 text-black font-black text-[8px] px-1 rounded-sm shadow z-10">
+          +{donAttached}
         </span>
       )}
 
-      {/* 상태 배지 */}
       {unit.rested && (
-        <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/85 text-destructive font-black text-[9px] px-1.5 py-0.5 rounded shadow tracking-widest border border-destructive/20 select-none z-10">
-          RESTED
+        <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/80 text-destructive font-black text-[8px] px-1 py-0.5 rounded tracking-wider z-10">
+          REST
         </span>
       )}
 
-      <div className="relative flex items-center justify-between text-[8px] px-1.5 pb-1.5 leading-none">
-        <span className="bg-black/70 text-white px-1 rounded font-bold">Cost {meta.cost}</span>
-        <span className="font-extrabold text-white bg-red-600/90 px-1 rounded">{power}</span>
+      <div className="relative flex items-center justify-between text-[8px] px-1 pb-0.5">
+        <span className="bg-black/70 text-white px-1 rounded font-bold">{meta.cost}</span>
+        <span className="bg-red-600/90 text-white px-1 rounded font-extrabold">{power}</span>
       </div>
     </div>
   );
 }
 
 // ──────────────────────────────────────────────────────────
-// 헬퍼: 액션 레이블 한국어 포맷
+// 카운터 윈도우 안내 밴드
 // ──────────────────────────────────────────────────────────
-function getActionLabel(act: Action): string {
+function CounterBand({ pending, state }: { pending: NonNullable<GameState["pendingResponse"]>; state: GameState }) {
+  const def =
+    pending.baseDefenderPower + pending.appliedModifiers.reduce((acc, m) => acc + m.delta, 0);
+  const attackerName = nameOfIid(state, pending.attackerIid);
+  const isLeaderTarget = pending.defenderIid.endsWith("-leader");
+
+  return (
+    <div className="flex items-center justify-center gap-2 text-[11px] flex-wrap">
+      <ShieldAlert className="h-4 w-4 text-amber-500 shrink-0" />
+      <span className="font-bold text-amber-500">배틀!</span>
+      <span className="text-muted-foreground">
+        <span className="font-bold text-foreground">{attackerName}</span> 공격{" "}
+        <span className="font-black text-red-500">{pending.baseAttackerPower}</span> vs 수비{" "}
+        <span className="font-black text-blue-500">{def}</span>{" "}
+        <span className="text-[10px]">({isLeaderTarget ? "리더" : "캐릭터"} 대상)</span>
+      </span>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────
+// iid → 카드 인스턴스/이름 조회
+// ──────────────────────────────────────────────────────────
+function findInstance(state: GameState, iid: string): CardInstance | null {
+  for (const pid of ["p1", "p2"] as PlayerId[]) {
+    const z = state.players[pid].zones;
+    for (const arr of [z.primary, z.secondary, z.hand, z.graveyard, z.deck, z.life, z.resource]) {
+      const found = arr.find((c) => c.iid === iid);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function nameOfIid(state: GameState, iid: string): string {
+  const inst = findInstance(state, iid);
+  return inst ? getCardMeta(inst.code).name : iid;
+}
+
+// ──────────────────────────────────────────────────────────
+// 액션 레이블 (iid → 실제 카드명 해석)
+// ──────────────────────────────────────────────────────────
+function getActionLabel(act: Action, state: GameState): string {
   switch (act.type) {
-    case "play_character": {
-      const name = getCardMeta(getCardIidCode(act.iid)).name;
-      return `🃏 캐릭터 플레이: ${name} (DON!! ${act.donToPay})`;
-    }
-    case "play_event": {
-      const name = getCardMeta(getCardIidCode(act.iid)).name;
-      return `⚡ 이벤트 사용: ${name} (DON!! ${act.donToPay})`;
-    }
-    case "play_stage": {
-      const name = getCardMeta(getCardIidCode(act.iid)).name;
-      return `🏰 스테이지 플레이: ${name} (DON!! ${act.donToPay})`;
-    }
+    case "play_character":
+      return `🃏 ${nameOfIid(state, act.iid)} (DON ${act.donToPay})`;
+    case "play_event":
+      return `⚡ ${nameOfIid(state, act.iid)} (DON ${act.donToPay})`;
+    case "play_stage":
+      return `🏰 ${nameOfIid(state, act.iid)} (DON ${act.donToPay})`;
     case "attach_don":
-      return `💪 DON!! 부착 (x${act.count})`;
+      return `💪 DON 부착 ×${act.count}`;
+    case "activate_main":
+      return `✨ ${nameOfIid(state, act.sourceIid)} 효과`;
     case "attack":
-      return `🎯 공격 선언!`;
+      return `🎯 공격: ${nameOfIid(state, act.attackerIid)} → ${
+        act.targetIid.endsWith("-leader") ? "리더" : nameOfIid(state, act.targetIid)
+      }`;
     case "use_blocker":
-      return `🛡️ 블로커 사용`;
-    case "play_counter": {
-      const name = getCardMeta(getCardIidCode(act.iid)).name;
-      return `⚡ 카운터: ${name}`;
-    }
+      return `🛡️ 블로커: ${nameOfIid(state, act.blockerIid)}`;
+    case "play_counter":
+      return `⚡ 카운터: ${nameOfIid(state, act.iid)}`;
     case "pass_counter":
-      return "🤝 카운터 패스";
+      return "🤝 패스";
     case "end_main":
       return "⏰ 턴 종료";
     case "concede":
@@ -636,23 +754,14 @@ function getActionLabel(act: Action): string {
   }
 }
 
-// IID에서 카드 코드 파싱하는 단순 헬퍼
-function getCardIidCode(iid: string): string {
-  // 예: p1-c3 또는 p1-leader. 실제로 카드 정보를 조회하기 위해선 iid를 코드에 연결하거나
-  // iid가 포함된 전체 플레이어 덱 등을 거쳐 코드를 역산해야 합니다.
-  // 여기서는 단순히 iid의 코드 정보를 map에서 역산하여 가져옵니다.
-  return iid;
-}
-
 // ──────────────────────────────────────────────────────────
-// 헬퍼: 액션 버튼 색상 지정
+// 액션 버튼 색상
 // ──────────────────────────────────────────────────────────
 function getActionColorClass(type: Action["type"]): string {
   switch (type) {
-    case "play_character":
-    case "play_event":
-    case "play_stage":
-      return "bg-green-500/10 text-green-500 border-green-500/30 hover:bg-green-500 hover:text-white";
+    case "attach_don":
+    case "activate_main":
+      return "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/30 hover:bg-yellow-500 hover:text-white";
     case "attack":
       return "bg-red-500/10 text-red-500 border-red-500/30 hover:bg-red-500 hover:text-white";
     case "use_blocker":
@@ -661,40 +770,42 @@ function getActionColorClass(type: Action["type"]): string {
     case "end_main":
     case "pass_counter":
       return "bg-muted text-muted-foreground border-border hover:bg-foreground hover:text-background";
+    case "concede":
+      return "bg-destructive/10 text-destructive border-destructive/30 hover:bg-destructive hover:text-white";
     default:
-      return "bg-card text-foreground hover:bg-accent";
+      return "bg-card text-foreground border-border hover:bg-accent";
   }
 }
 
 // ──────────────────────────────────────────────────────────
-// 헬퍼: 대국 이벤트 로그 메시지 서식화
+// 로그 메시지 서식
 // ──────────────────────────────────────────────────────────
 function formatEventLog(evt: any): string {
-  const pName = evt.player === "p1" ? "Player 1 (User)" : "Player 2 (AI)";
+  const pName = evt.player === "p1" ? "나(P1)" : "AI(P2)";
   switch (evt.type) {
     case "game_start":
-      return "⚔️ 시뮬레이션 대국이 시작되었습니다!";
+      return "⚔️ 대국 시작!";
     case "turn_start":
-      return `━━━━━━━━ 턴 ${evt.turn} (${pName}) 시작 ━━━━━━━━`;
+      return `━━ 턴 ${evt.turn} (${pName}) ━━`;
     case "play_character":
-      return `🃏 ${pName}님이 캐릭터 [${getCardMeta(evt.payload?.code).name}]을(를) 필드에 등장시켰습니다.`;
+      return `🃏 ${pName}: 캐릭터 [${getCardMeta(evt.payload?.code).name}] 등장`;
     case "attach_don":
-      return `💪 ${pName}님이 유닛에게 DON!! ${evt.payload?.count}장을 부착했습니다.`;
+      return `💪 ${pName}: DON!! ${evt.payload?.count}장 부착`;
     case "attack_declared":
-      return `🎯 ${pName}님이 공격을 선언했습니다!`;
+      return `🎯 ${pName}: 공격 선언!`;
     case "use_blocker":
-      return `🛡️ ${pName}님이 블로커 유닛으로 공격을 방어하기 시작했습니다.`;
+      return `🛡️ ${pName}: 블로커로 방어`;
     case "play_counter":
-      return `⚡ ${pName}님이 손패에서 카운터 카드 [${getCardMeta(evt.payload?.code).name}]를 사용해 전력을 보강했습니다.`;
+      return `⚡ ${pName}: 카운터 [${getCardMeta(evt.payload?.code).name}]`;
     case "damage_taken":
-      return `💥 피격! 라이프가 1 감소했습니다. (남은 라이프: ${evt.payload?.leftLife}장)`;
+      return `💥 피격! 라이프 -1 (남은 ${evt.payload?.leftLife}장)`;
     case "character_ko":
-      return `💀 캐릭터 [${getCardMeta(evt.payload?.code).name}]이(가) KO되어 트래시(Graveyard)로 이동했습니다.`;
+      return `💀 [${getCardMeta(evt.payload?.code).name}] KO → 트래시`;
     case "attack_defended":
-      return "🛡️ 수비측이 공격을 성공적으로 무력화했습니다.";
+      return "🛡️ 공격 방어 성공";
     case "concede":
-      return `🏳️ ${pName}님이 기권을 선언했습니다.`;
+      return `🏳️ ${pName}: 기권`;
     default:
-      return `${pName}: ${evt.type} 액션을 수행함`;
+      return `${pName}: ${evt.type}`;
   }
 }
