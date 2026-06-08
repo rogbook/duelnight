@@ -10,7 +10,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const AI_COST = {
   ocr: 5,
-  coach: 10,
+  coach: 5,
 } as const;
 
 export type AiFeature = keyof typeof AI_COST;

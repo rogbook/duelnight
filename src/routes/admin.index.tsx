@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { UserPlus, UserMinus, Crown, Lock, LogIn } from "lucide-react";
+import { UserPlus, UserMinus, Crown, Lock, LogIn, Infinity as InfinityIcon, Trash2 } from "lucide-react";
 import { z } from "zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -15,8 +15,11 @@ import {
   checkIsAdmin,
   claimFirstAdmin,
   grantAdmin,
+  grantAiUnlimited,
   listAdmins,
+  listAiUnlimited,
   revokeAdmin,
+  revokeAiUnlimited,
 } from "@/lib/admin.functions";
 
 const emailSchema = z
@@ -45,6 +48,9 @@ function AdminPage() {
   const fnGrant = useServerFn(grantAdmin);
   const fnRevoke = useServerFn(revokeAdmin);
   const fnList = useServerFn(listAdmins);
+  const fnGrantUnlimited = useServerFn(grantAiUnlimited);
+  const fnRevokeUnlimited = useServerFn(revokeAiUnlimited);
+  const fnListUnlimited = useServerFn(listAiUnlimited);
 
   const { data: anyAdmin, isLoading: l1 } = useQuery({
     queryKey: ["any-admin"],
@@ -63,8 +69,15 @@ function AdminPage() {
     queryFn: () => fnList().then((r) => r.admins),
   });
 
+  const { data: unlimitedUsers = [], refetch: refetchUnlimited } = useQuery({
+    queryKey: ["ai-unlimited-list"],
+    enabled: !!amAdmin,
+    queryFn: () => fnListUnlimited().then((r) => r.users),
+  });
+
   const [grantEmail, setGrantEmail] = useState("");
   const [revokeEmail, setRevokeEmail] = useState("");
+  const [unlimitedEmail, setUnlimitedEmail] = useState("");
   const [busy, setBusy] = useState(false);
 
   const refresh = () => {
@@ -72,6 +85,36 @@ function AdminPage() {
     qc.invalidateQueries({ queryKey: ["am-admin"] });
     qc.invalidateQueries({ queryKey: ["is-admin"] });
     refetchAdmins();
+  };
+
+  const grantUnlimited = async () => {
+    const parsed = emailSchema.safeParse(unlimitedEmail);
+    if (!parsed.success) return toast.error(parsed.error.issues[0].message);
+    setBusy(true);
+    try {
+      await fnGrantUnlimited({ data: { email: parsed.data } });
+      toast.success(`${parsed.data} 에게 AI 무제한을 부여했어요`);
+      setUnlimitedEmail("");
+      refetchUnlimited();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const revokeUnlimited = async (email: string) => {
+    if (!confirm(`${email} 의 AI 무제한을 해제할까요?`)) return;
+    setBusy(true);
+    try {
+      await fnRevokeUnlimited({ data: { email } });
+      toast.success("AI 무제한을 해제했어요");
+      refetchUnlimited();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
   };
 
   const claim = async () => {
@@ -252,6 +295,58 @@ function AdminPage() {
                         나
                       </span>
                     )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {/* ── AI 무제한 사용자 ── */}
+          <section className="mt-8 rounded-lg border border-border bg-card p-4">
+            <h2 className="flex items-center gap-1.5 text-sm font-semibold">
+              <InfinityIcon className="h-4 w-4 text-primary" /> AI 무제한 사용자
+            </h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              지정한 사용자는 요금제·크레딧 없이 AI 기능(카드 OCR·코치)을 무제한으로 씁니다.
+              관리자는 별도 지정 없이 항상 무제한입니다.
+            </p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
+              <Input
+                type="email"
+                value={unlimitedEmail}
+                onChange={(e) => setUnlimitedEmail(e.target.value)}
+                placeholder="user@example.com"
+                maxLength={255}
+              />
+              <Button onClick={grantUnlimited} disabled={busy} className="gap-1">
+                <UserPlus className="h-4 w-4" /> 무제한 부여
+              </Button>
+            </div>
+
+            <h3 className="mt-5 text-xs font-semibold text-muted-foreground">
+              지정된 사용자 ({unlimitedUsers.length})
+            </h3>
+            {unlimitedUsers.length === 0 ? (
+              <p className="mt-2 text-sm text-muted-foreground">지정된 사용자가 없습니다.</p>
+            ) : (
+              <ul className="mt-2 divide-y divide-border rounded-lg border border-border">
+                {unlimitedUsers.map((u) => (
+                  <li key={u.user_id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{u.display_name ?? u.email}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {u.email} · {new Date(u.granted_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => revokeUnlimited(u.email)}
+                      disabled={busy}
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1 text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" /> 해제
+                    </Button>
                   </li>
                 ))}
               </ul>
