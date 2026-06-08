@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { normalizeImageUrl } from "@/components/cards/card-uploader";
 import { ImageUploadDialog } from "@/components/cards/image-upload-dialog";
+import { CardEffectsEditor } from "@/components/cards/card-effects-editor";
 import { useUniqueSets } from "@/hooks/use-unique-sets";
 import { useGames } from "@/hooks/use-games";
 
@@ -504,6 +505,11 @@ export function EditCardDialog({
                 onChange={(e) => setForm({ ...form, effect: e.target.value })}
                 rows={4}
               />
+            </div>
+          )}
+          {form.game === "optcg" && (
+            <div className="sm:col-span-2 border-t border-border pt-3">
+              <CardEffectsEditor cardId={card.id} initial={(card as { effects?: unknown }).effects} />
             </div>
           )}
         </div>
