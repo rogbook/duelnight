@@ -110,6 +110,67 @@ export const listAdmins = createServerFn({ method: "POST" })
     };
   });
 
+/** 호출자가 admin인지 서버에서 재검증하는 헬퍼. */
+async function assertAdmin(
+  supabase: Awaited<ReturnType<typeof getAuthContext>>["supabase"],
+  userId: string,
+) {
+  const { data: me } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("role", "admin")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!me) throw new Response("관리자만 호출할 수 있어요", { status: 403 });
+}
+
+/** 이메일로 AI 무제한 권한 부여. */
+export const grantAiUnlimited = createServerFn({ method: "POST" })
+  .inputValidator((d: { email: string }) => emailInput.parse(d))
+  .handler(async ({ data }) => {
+    const { email } = data;
+    const { supabase, userId } = await getAuthContext();
+    await assertAdmin(supabase, userId);
+    const { data: targetId, error } = await (supabase as any).rpc(
+      "grant_ai_unlimited_by_email",
+      { _email: email },
+    );
+    if (error) throw new Response(error.message, { status: 400 });
+    return { userId: targetId as string };
+  });
+
+/** 이메일로 AI 무제한 권한 해제. */
+export const revokeAiUnlimited = createServerFn({ method: "POST" })
+  .inputValidator((d: { email: string }) => emailInput.parse(d))
+  .handler(async ({ data }) => {
+    const { email } = data;
+    const { supabase, userId } = await getAuthContext();
+    await assertAdmin(supabase, userId);
+    const { data: targetId, error } = await (supabase as any).rpc(
+      "revoke_ai_unlimited_by_email",
+      { _email: email },
+    );
+    if (error) throw new Response(error.message, { status: 400 });
+    return { userId: targetId as string };
+  });
+
+/** AI 무제한 사용자 목록. */
+export const listAiUnlimited = createServerFn({ method: "POST" })
+  .handler(async () => {
+    const { supabase, userId } = await getAuthContext();
+    await assertAdmin(supabase, userId);
+    const { data, error } = await (supabase as any).rpc("list_ai_unlimited");
+    if (error) throw new Response(error.message, { status: 403 });
+    return {
+      users: (data ?? []) as Array<{
+        user_id: string;
+        email: string;
+        display_name: string | null;
+        granted_at: string;
+      }>,
+    };
+  });
+
 /** 관리자 존재 여부. */
 export const anyAdminExists = createServerFn({ method: "POST" })
   .handler(async () => {
