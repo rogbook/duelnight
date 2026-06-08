@@ -1,11 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { PackageOpen, Sparkles, ImageOff } from "lucide-react";
+import { PackageOpen, Sparkles, ImageOff, Library, Layers, RotateCw, LogIn } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
+import { LoginModal } from "@/components/login-modal";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -85,6 +86,8 @@ function PacksPage() {
   const [setCode, setSetCode] = useState<string>("");
   const [packs, setPacks] = useState<number>(1);
   const [results, setResults] = useState<Card[]>([]);
+  const [newCodes, setNewCodes] = useState<Set<string>>(new Set());
+  const [loginOpen, setLoginOpen] = useState(false);
 
   const packOptions = useMemo(() => [
     { label: t("packs.packLabel", { count: 1, cards: 12 }), packs: 1 },
@@ -144,6 +147,7 @@ function PacksPage() {
       }
     }
     setResults(pulled);
+    setNewCodes(new Set());
 
     if (!user) {
       toast.info(t("packs.loginRequiredToast"));
@@ -164,6 +168,9 @@ function PacksPage() {
       for (const r of current ?? []) {
         currentMap.set(r.card_code, r.quantity);
       }
+
+      // 이번 개봉으로 처음 얻은(컬렉션에 없던) 카드 표시
+      setNewCodes(new Set(codes.filter((code) => (currentMap.get(code) ?? 0) === 0)));
 
       const upsertData = codes.map((code) => {
         const pulledCount = pulled.filter((c) => c.code === code).length;
@@ -257,6 +264,44 @@ function PacksPage() {
         </div>
       ) : (
         <>
+          {/* ── 개봉 후 다음 행동 ── */}
+          <div className="mt-6 flex flex-col gap-3 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-center">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold">{t("packs.nextTitle")}</p>
+              <p className="text-xs text-muted-foreground">
+                {user ? t("packs.savedNote", { count: tally.length }) : t("packs.loginToSaveNote")}
+                {user && newCodes.size > 0 && (
+                  <span className="ml-1 font-semibold text-primary">· {t("packs.newCount", { count: newCodes.size })}</span>
+                )}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {user ? (
+                <Button asChild variant="outline" className="gap-1">
+                  <Link to="/collection">
+                    <Library className="h-4 w-4" />
+                    {t("packs.viewCollection")}
+                  </Link>
+                </Button>
+              ) : (
+                <Button variant="outline" className="gap-1" onClick={() => setLoginOpen(true)}>
+                  <LogIn className="h-4 w-4" />
+                  {t("packs.loginToSave")}
+                </Button>
+              )}
+              <Button asChild variant="outline" className="gap-1">
+                <Link to="/decks">
+                  <Layers className="h-4 w-4" />
+                  {t("packs.buildDeck")}
+                </Link>
+              </Button>
+              <Button className="gap-1" onClick={open}>
+                <RotateCw className="h-4 w-4" />
+                {t("packs.openAgain")}
+              </Button>
+            </div>
+          </div>
+
           <div className="mt-6">
             <p className="text-sm text-muted-foreground">
               {t("packs.summary", { total: results.length, count: tally.length })}
@@ -292,6 +337,11 @@ function PacksPage() {
                       ×{count}
                     </span>
                   )}
+                  {newCodes.has(card.code) && (
+                    <span className="absolute bottom-1 left-1 rounded bg-emerald-500 px-1.5 py-0.5 text-[10px] font-bold text-white shadow">
+                      {t("packs.newBadge")}
+                    </span>
+                  )}
                 </div>
                 <div className="p-2">
                   <p className="truncate text-[11px] text-muted-foreground">
@@ -304,6 +354,8 @@ function PacksPage() {
           </ul>
         </>
       )}
+
+      <LoginModal open={loginOpen} onOpenChange={setLoginOpen} />
     </div>
   );
 }
