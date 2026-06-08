@@ -536,6 +536,24 @@ export type Database = {
           },
         ]
       }
+      friend_favorites: {
+        Row: {
+          created_at: string
+          favorite_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          favorite_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          favorite_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       friendships: {
         Row: {
           addressee_id: string
