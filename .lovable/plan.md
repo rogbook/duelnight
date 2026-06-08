@@ -1,98 +1,130 @@
-# 범용 TCG AI · 팩 시뮬레이터 구현 플랜
+# 수정된 플랜 — OPTCG 우선, 30장 DSL 검증 관문
 
-선택사항: **PTCG 우선** / **simulator_decks 신설** / **가치함수 풀구현** / **효과 DSL 먼저 설계**
+**선택사항 확정**: OPTCG 첫 엔진 / simulator_decks 신설 / 가치함수 풀구현 / 효과 DSL 먼저 / **샘플 30장 검증 게이트 추가**
+
+`SIMULATOR_SPEC.md`는 PTCG 기준으로 작성된 상태 → OPTCG 기준으로 보정 필요.
 
 ---
 
-## 0단계 — 효과 DSL & 엔진 인터페이스 스펙 (DB 변경 없음)
+## 0a단계 — 스펙 문서 OPTCG로 보정 (즉시)
 
-문서 작업만 수행. `docs/SIMULATOR_SPEC.md` 신규.
+`docs/SIMULATOR_SPEC.md` 수정:
+- 1차 타깃: PTCG → **OPTCG**
+- ZoneKind 매핑 OPTCG 기준 명시 (primary=리더, secondary=캐릭터, resource=DON!!, graveyard=트래시)
+- Action 타입을 OPTCG 액션으로 교체 (`play_character`, `attach_don`, `attack_with_card`, `play_event`, `counter` 등)
+- 가치함수 feature를 OPTCG 기준으로 (리더 LP, 액티브 DON, 보드 파워 총합, 카운터 핸드 추정)
+- 카운터 시스템 모델 추가 (인터럽트 처리: 공격 선언 → 방어자 카운터 응답 윈도우)
 
-- **효과 DSL**: JSON 기반, `trigger` + `conditions[]` + `actions[]` 구조
-  - trigger: `on_play | on_attack | on_damage | on_turn_start | ability`
-  - action: `draw | discard | heal | damage_modifier | search | attach_energy | switch_active` 등
-  - PTCG 카드 30장 샘플로 DSL 표현 가능성 검증 (베이직/스테이지1/트레이너스/에너지 각 카테고리)
-- **ITcgEngine 인터페이스**: `init(decks) → GameState`, `getAvailableActions(state, player) → Action[]`, `applyAction(state, action) → GameState`, `isTerminal(state) → Winner | null`
-- **GameState 모델**: `Zones { primary, secondary[], resource[], graveyard, hand, deck, prize }`, `Counters { damage, status[], energy_attached[] }`
-- **결정론성**: `rngSeed` 필드로 셔플/코인 재현 가능
+## 0b단계 — **샘플 30장 DSL 검증 게이트** (관문)
 
-산출물: 스펙 문서 1개. Lovable·Antigravity·사용자 모두 참조.
+`docs/SIMULATOR_SAMPLE_CARDS.md` 신규. DB에 있는 OPTCG 카드 중 대표 30장 추출 후 DSL로 표현.
 
-## 1단계 — TS 타입/인터페이스 코드화 (DB 변경 없음)
+**카테고리 (목표 분포)**
+- 리더 4장 (단색·다색, 카운터 상시 능력 포함)
+- 캐릭터 — 일반 8장 (다양한 코스트·파워)
+- 캐릭터 — On Play 효과 6장 (드로우/서치/제거/부스트)
+- 캐릭터 — 블로커 / Activate:Main 4장
+- 이벤트 4장 (제거/드로우/방해)
+- 카운터 카드 4장 (+1000, +2000, 트리거 카운터)
 
-`src/lib/simulator/` 생성:
+**판정 기준**
+- 30장 중 **27장(90%) 이상 DSL로 표현 가능** → 게이트 통과 → 1단계 진행
+- 표현 불가 카드 3장 초과 → DSL 액션·트리거 보강 후 재검증
+- 표현 불가 카드는 사유 명시 (어떤 trigger·action·target이 부족했는지)
 
-```text
-src/lib/simulator/
-  types.ts            ITcgEngine, GameState, Action, Zone, CardInstance
-  dsl/
-    schema.ts         zod 스키마 (효과 DSL 검증)
-    interpreter.ts    DSL action 실행기
-  engines/
-    ptcg.ts           PTCG 규칙 엔진 (ITcgEngine 구현)
-  ai/
-    value-fn.ts       가치함수 V = Σ Wi·feature_i
-    agent.ts          getAvailableActions → score → argmax
+산출물: 카드별 DSL JSON + 통과/실패 표.
+
+## 1단계 — TS 인터페이스 코드화
+
+`src/lib/simulator/` 디렉토리:
+```
+types.ts              ITcgEngine, GameState, Action, OPTCGAction
+rng.ts                결정론적 RNG (seedrandom)
+dsl/
+  schema.ts           zod 스키마 (효과 DSL 검증)
+  interpreter.ts      DSL 실행기
+engines/
+  optcg.ts            OPTCG 엔진 (ITcgEngine 구현)
+ai/
+  value-fn.ts         가치함수 + W 가중치
+  agent.ts            액션 선택 루프
 ```
 
-엔진은 순수 함수 (DB 의존 없음) → 단위 테스트 용이.
+엔진은 순수 함수. DB 의존 없음.
 
-## 2단계 — 팩 → user_collection 연동 (기존 테이블, DB 변경 없음)
+## 2단계 — 팩 → user_collection 연동
 
-`src/routes/packs.tsx` 보강:
-- 팩 개봉 결과를 `user_collection`에 `upsert` (card_code 기준 quantity 증가)
-- 비로그인 시 안내 토스트 + 로그인 유도
-- 획득 연출 개선 (희귀도별 등장 애니메이션)
-- `src/routes/collection.tsx`에 자동 반영 확인
+`src/routes/packs.tsx`:
+- 팩 개봉 결과를 `user_collection`에 upsert (card_code 기준 quantity 누적)
+- 비로그인 시 토스트 + 로그인 모달
+- 희귀도별 등장 연출 강화
+- `collection.tsx`에 자동 반영 확인
 
-## 3단계 — DB 스키마 추가 (Lovable에 위임)
+## 3단계 — DB 마이그레이션 (Lovable 위임, 1회로 묶음)
 
-DSL 스펙이 확정된 뒤 1회로 묶어서 적용. `docs/DB_WORKFLOW.md` 포맷 준수.
+`docs/DB_WORKFLOW.md` §3 포맷 준수.
 
-추가 컬럼/테이블:
-- `cards.effects jsonb` — DSL 효과 배열 (기존 `extra`와 분리, 쿼리/검증 용이)
-- `simulator_decks` 신규 테이블 — id, user_id, game(text, 기존 컨벤션 일치), name, recipe(jsonb), is_public, created_at, updated_at
-- RLS: 본인만 CRUD, 공개 덱은 모두 SELECT
-- GRANT: authenticated 전체 + service_role 전체
+**변경 내용**
+- `cards.effects jsonb DEFAULT '[]'::jsonb` 추가 (기존 `extra`와 별개)
+- `simulator_decks` 테이블 신규
+  - id, user_id, game(text), name, recipe(jsonb), is_public, created_at, updated_at
+  - RLS: 본인 CRUD + 공개 SELECT
+  - GRANT: authenticated 전체, service_role 전체, anon 없음
+- updated_at 트리거
 
-`attributes` 컬럼은 추가하지 않음 (기존 `power/counter/cost/colors/traits/attribute/extra`로 충분).
+**적용 시점**: 0b 게이트 통과 후. DSL 스키마가 흔들리면 마이그레이션 재실행 부담.
 
-## 4단계 — PTCG 엔진 + 룰베이스 → 가치함수 AI
+## 4단계 — OPTCG 엔진 + 가치함수 AI
 
-- PTCG 핵심 규칙: 액티브/벤치(최대5)/에너지 부착/진화/사이드 6장/약점·저항
-- 효과 DSL 인터프리터 연결
-- 가치함수 feature 후보: 상대 사이드 남은 수, 내 액티브 HP 비율, 벤치 위협도, 손패 카드 우위, 에너지 진행도
-- 가중치 W는 상수 export → 추후 튜닝 가능
-- AI vs AI 자동 대전 러너 + 결과 로그
+OPTCG 핵심 규칙 구현:
+- 리더 5000~6000 파워, LP=5
+- 캐릭터 최대 5장, 코스트=DON!! 소모
+- DON!! 어태치(+1000), 공격 시 1회 차감 없음 (영구 부여)
+- 공격 → 카운터 윈도우 → 데미지 → 트리거
+- 인터럽트 처리 모델 (액션 큐 + 응답 단계)
+
+가치함수 feature (OPTCG)
+- `lp_diff` 양 측 LP 차이
+- `board_power_sum` 보드 파워 총합
+- `don_progress` 활성 DON!! 수
+- `hand_threat` 손패 평균 코스트/파워
+- `counter_estimate` 손패 내 카운터 가능 카드 추정 (확률)
+- `leader_active_hp` 리더 파워 - 위협
+- `terminal_win/loss` ±9999
+
+AI vs AI 자동 대전 러너 + 결과 로그.
 
 ## 5단계 — 덱 빌더 + 배틀 UI
 
-- `recipe-editor.tsx`: "보유 카드만 보기" 토글 + 보유 수량 초과 add 차단
-- `src/routes/simulator.index.tsx`: 시뮬 덱 목록/생성
-- `src/routes/simulator.$id.tsx`: 배틀 화면 (수동 vs AI / AI vs AI 모드)
-- 턴 진행, 데미지 카운터, 사이드 카드 시각화
+- `recipe-editor.tsx`에 "보유량 필터" 토글 (시뮬 모드 한정)
+- `src/routes/simulator.index.tsx` — 시뮬 덱 목록/생성/편집
+- `src/routes/simulator.$id.tsx` — 배틀 화면
+  - 모드: 수동 vs AI / AI vs AI / AI vs 사용자
+  - 턴/페이즈/카운터 윈도우 UI
+  - 카드 이동 애니메이션, 데미지 연출
 
 ---
 
-## 협업 분담 (docs/DB_WORKFLOW.md 준수)
+## 협업 분담
 
-| 단계 | 담당 | 작업 |
-|---|---|---|
-| 0 | 사용자 합의 + Antigravity | 스펙 문서 작성 |
-| 1 | Antigravity | TS 코드 |
-| 2 | Antigravity | packs.tsx upsert |
-| 3 | **Lovable** | 마이그레이션 적용 + types.ts 재생성 |
-| 4-5 | Antigravity | 엔진/AI/UI |
+| 단계 | 담당 |
+|---|---|
+| 0a (스펙 OPTCG 보정) | Antigravity |
+| 0b (샘플 30장 검증) | Antigravity, **게이트 통과 필수** |
+| 1 (TS 코드) | Antigravity |
+| 2 (packs upsert) | Antigravity |
+| 3 (DB 마이그레이션) | **Lovable** |
+| 4-5 (엔진/AI/UI) | Antigravity |
 
 ## 권장 첫 액션
 
-**0단계 효과 DSL 스펙 문서 작성**부터 시작. PTCG 샘플 카드 30장으로 DSL 표현력을 검증한 뒤에야 3단계 DB 마이그레이션이 안전합니다. 컬럼 추가 후 DSL을 바꾸면 재마이그레이션이 필요하므로 순서가 중요합니다.
+이번 턴에 **0a (SIMULATOR_SPEC.md OPTCG 보정)** + **0b 검증 문서 골격(SIMULATOR_SAMPLE_CARDS.md)** 2개 동시 진행. 실제 30장 카드 추출은 다음 턴에서 DB read_query로 수행.
 
 ---
 
 ## 기술 메모
 
-- **JSONB vs 별도 테이블**: `effects`는 카드당 평균 2~5개, 카드 단건 조회 시 항상 함께 필요 → JSONB가 조인 비용 절감.
-- **DSL vs 코드**: DSL 우선 선택은 카드 데이터를 비개발자(어드민)가 입력/수정 가능하게 만들기 위한 결정. TS 함수 하드코딩은 카드마다 배포가 필요해짐.
-- **결정론적 RNG**: seedrandom 같은 경량 라이브러리로 셔플/코인 재현. 리플레이 기능과 AI 디버깅에 필수.
-- **엔진 분리 원칙**: PTCG 엔진은 PTCG 규칙만, ITcgEngine 인터페이스만 코어가 알도록 → 다른 게임 추가 시 코어 무수정.
+- **인터럽트 처리**: GameState에 `pendingAction` + `responseWindow` 필드 추가. 공격 → 응답 윈도우 진입 → 방어자 카운터 액션 → 데미지 산정. 이 모델은 DTCG 시큐리티에도 그대로 재사용.
+- **DON!! 모델링**: DON!!은 카드가 아닌 카운터/리소스 토큰으로 처리. `resource` zone의 length가 곧 DON!! 보유량.
+- **카운터 카드**: `trigger: "on_being_attacked"`, `actions: [{ kind: "modify_damage", delta: -1000 }]`. DSL 검증에서 표현 가능 여부 1순위로 확인.
+- **다음 게임 확장**: DTCG 추가 시 ITcgEngine 새 구현체만 작성. UI/AI 루프/덱빌더는 무수정.
