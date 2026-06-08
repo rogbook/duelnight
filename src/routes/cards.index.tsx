@@ -97,21 +97,22 @@ function CardsPage() {
   const [selected, setSelected] = useState<Card | null>(null);
 
   const { data: sets = [] } = useQuery({
-    queryKey: ["card-sets", game],
-    staleTime: 10 * 60_000, // 세트 목록은 거의 안 바뀌므로 10분 캐시
+    queryKey: ["card-sets-list", game],
+    staleTime: 10 * 60_000,
     queryFn: async () => {
-      // 게임당 카드가 수천 개여도 set_code만 가져오면 작지만,
-      // 그래도 상한을 두어 회귀 안전장치 마련
+      // card_sets 테이블에서 직접 조회 (cards에서 distinct를 뽑으면
+      // PostgREST max-rows(기본 1000)에 잘려 오래된 세트가 누락됨)
       const { data, error } = await supabase
-        .from("cards")
-        .select("set_code")
+        .from("card_sets")
+        .select("name")
         .eq("game", game)
-        .order("set_code", { ascending: false })
-        .limit(5000);
+        .order("name", { ascending: false })
+        .limit(2000);
       if (error) throw error;
-      return Array.from(new Set((data ?? []).map((r) => r.set_code)));
+      return Array.from(new Set((data ?? []).map((r) => r.name)));
     },
   });
+
 
   const { data: favSet = new Set<string>() } = useQuery({
     queryKey: ["card-favs", user?.id],
