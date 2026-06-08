@@ -435,13 +435,13 @@ function SimulatorMatchRoomPage() {
             </div>
           </div>
 
-          {/* ── 수동 조작 액션 리스트 Panel ── */}
+          {/* ── 수동 조작 액션 리스트 Panel — 모바일은 하단 sticky ── */}
           {p1AvailableActions.length > 0 && (
-            <div className="rounded-2xl border border-border bg-card p-4 space-y-3 shadow-md">
-              <h3 className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
-                <User className="h-4 w-4 text-blue-500" /> 수동 조작 액션 선택 (Player 1)
+            <div className="rounded-2xl border border-border bg-card p-3 sm:p-4 space-y-2 sm:space-y-3 shadow-md lg:static fixed bottom-0 left-0 right-0 z-40 lg:z-auto rounded-b-none lg:rounded-2xl border-t-2 lg:border pb-[calc(0.75rem+env(safe-area-inset-bottom))] lg:pb-4">
+              <h3 className="text-[11px] sm:text-xs font-bold text-muted-foreground flex items-center gap-1.5">
+                <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-500" /> 수동 조작 액션 (P1)
               </h3>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5 sm:gap-2 max-h-32 lg:max-h-none overflow-y-auto">
                 {p1AvailableActions.map((act, index) => {
                   const label = getActionLabel(act);
                   const colorClass = getActionColorClass(act.type);
@@ -449,7 +449,7 @@ function SimulatorMatchRoomPage() {
                     <button
                       key={index}
                       onClick={() => handlePerformAction(act)}
-                      className={`px-3 py-2 rounded-lg text-xs font-bold transition-all border shadow-sm ${colorClass}`}
+                      className={`px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-xs font-bold transition-all border shadow-sm min-h-10 ${colorClass}`}
                     >
                       {label}
                     </button>
@@ -460,34 +460,37 @@ function SimulatorMatchRoomPage() {
           )}
         </div>
 
-        {/* ── 실시간 대국 로그 창 (12열 중 4열) ── */}
-        <div className="lg:col-span-4 flex flex-col h-[650px] rounded-2xl border border-border bg-card/60 backdrop-blur shadow-md overflow-hidden">
-          <div className="p-4 border-b border-border bg-card">
+        {/* ── 실시간 대국 로그 창 — 모바일은 접이식 ── */}
+        <details open className="lg:col-span-4 lg:open:!block group rounded-2xl border border-border bg-card/60 backdrop-blur shadow-md overflow-hidden">
+          <summary className="cursor-pointer lg:cursor-default list-none p-3 sm:p-4 border-b border-border bg-card flex items-center justify-between">
             <h3 className="text-xs font-black uppercase tracking-wider flex items-center gap-2">
-              <Swords className="h-4 w-4 text-primary" /> 실시간 대국 로그 피드
+              <Swords className="h-4 w-4 text-primary" /> 실시간 대국 로그
             </h3>
+            <span className="text-[10px] text-muted-foreground lg:hidden">탭하여 열기/닫기</span>
+          </summary>
+          <div className="flex flex-col lg:h-[650px] max-h-[40vh] lg:max-h-none">
+            {/* 로그 리스트 */}
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 sm:space-y-3 font-mono text-[11px] leading-relaxed">
+              {gameState.log.map((evt, idx) => {
+                const text = formatEventLog(evt);
+                return (
+                  <div key={idx} className="border-b border-border/20 pb-2">
+                    <span className="text-[10px] text-muted-foreground select-none">
+                      [T{evt.turn} {evt.player.toUpperCase()}]
+                    </span>{" "}
+                    <span className="text-foreground/90">{text}</span>
+                  </div>
+                );
+              })}
+              <div ref={logEndRef} />
+            </div>
           </div>
-          
-          {/* 로그 리스트 */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 font-mono text-[11px] leading-relaxed">
-            {gameState.log.map((evt, idx) => {
-              const text = formatEventLog(evt);
-              return (
-                <div key={idx} className="border-b border-border/20 pb-2">
-                  <span className="text-[10px] text-muted-foreground select-none">
-                    [T{evt.turn} {evt.player.toUpperCase()}]
-                  </span>{" "}
-                  <span className="text-foreground/90">{text}</span>
-                </div>
-              );
-            })}
-            <div ref={logEndRef} />
-          </div>
-        </div>
+        </details>
       </div>
     </div>
   );
 }
+
 
 // ──────────────────────────────────────────────────────────
 // 헬퍼 컴포넌트: 플레이어 정보 행
@@ -537,7 +540,7 @@ function BattleUnit({ unit }: { unit: CardInstance }) {
 
   return (
     <div
-      className={`relative w-20 h-28 rounded-lg border bg-card p-1.5 flex flex-col justify-between shrink-0 shadow transition-all ${
+      className={`relative w-16 h-24 sm:w-20 sm:h-28 rounded-lg border bg-card p-1.5 flex flex-col justify-between shrink-0 shadow transition-all ${
         unit.rested ? "opacity-65 border-border scale-95" : "border-primary"
       }`}
       style={{
