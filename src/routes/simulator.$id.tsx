@@ -89,7 +89,7 @@ function SimulatorMatchRoomPage() {
         // Supabase에서 메타데이터 검색
         const { data: cardRows, error } = await supabase
           .from("cards")
-          .select("code, name, cost, power, counter, type, colors, effects")
+          .select("code, name, cost, power, counter, type, colors, effects, image_url")
           .in("code", allCodes);
 
         if (error) throw error;
@@ -104,6 +104,7 @@ function SimulatorMatchRoomPage() {
             type: row.type as any,
             colors: row.colors ?? [],
             effects: (row.effects as any) ?? [],
+            imageUrl: row.image_url ?? null,
           };
         }
 
