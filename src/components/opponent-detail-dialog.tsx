@@ -9,6 +9,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { fmtPctVal } from "@/lib/match-stats";
 import { useGames } from "@/hooks/use-games";
+import { StartDmButton } from "@/components/start-dm-button";
 
 type Game = string;
 
@@ -114,6 +115,12 @@ export function OpponentDetailDialog({
                 )}
               </DialogTitle>
             </DialogHeader>
+
+            {opponent.userId && (
+              <div>
+                <StartDmButton userId={opponent.userId} variant="outline" size="sm" />
+              </div>
+            )}
 
             {profile?.bio && (
               <p className="text-sm text-muted-foreground">{profile.bio}</p>
