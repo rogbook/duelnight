@@ -59,9 +59,13 @@ export const Route = createFileRoute("/api/img-proxy")({
             res = await fetch(current.toString(), {
               headers: {
                 "User-Agent": BROWSER_UA,
-                Accept: "image/avif,image/webp,image/png,image/jpeg,image/*,*/*;q=0.8",
-                // 같은 출처에서 온 것처럼 보이게 해 referer 핫링크 차단을 우회
+                Accept: "image/avif,image/webp,image/apng,image/png,image/jpeg,image/*,*/*;q=0.8",
+                "Accept-Language": "ko-KR,ko;q=0.9,en;q=0.8",
+                // 같은 출처의 이미지 요청처럼 보이게 해 referer/봇 핫링크 차단을 우회
                 Referer: current.origin + "/",
+                "Sec-Fetch-Dest": "image",
+                "Sec-Fetch-Mode": "no-cors",
+                "Sec-Fetch-Site": "same-origin",
               },
               redirect: "manual",
               signal: AbortSignal.timeout(15000),
