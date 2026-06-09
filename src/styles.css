@@ -1,5 +1,3 @@
-/* 친근한 본문 폰트 (개인 유저용 톤). CDN 실패 시 시스템 폰트로 폴백. */
-@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.css");
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
