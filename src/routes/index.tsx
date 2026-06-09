@@ -162,24 +162,27 @@ function Dashboard() {
       desc: t("dashboard.shortcutCalendarDesc"),
       to: "/calendar",
       icon: Calendar,
+      color: "bg-rose-500/10 text-rose-500",
     },
-    { title: t("dashboard.shortcutCardsTitle"), desc: t("dashboard.shortcutCardsDesc"), to: "/cards", icon: Library },
-    { title: t("dashboard.shortcutDecksTitle"), desc: t("dashboard.shortcutDecksDesc"), to: "/decks", icon: Layers },
+    { title: t("dashboard.shortcutCardsTitle"), desc: t("dashboard.shortcutCardsDesc"), to: "/cards", icon: Library, color: "bg-violet-500/10 text-violet-500" },
+    { title: t("dashboard.shortcutDecksTitle"), desc: t("dashboard.shortcutDecksDesc"), to: "/decks", icon: Layers, color: "bg-blue-500/10 text-blue-500" },
     {
       title: t("dashboard.shortcutCollectionTitle"),
       desc: t("dashboard.shortcutCollectionDesc"),
       to: "/collection",
       icon: PackageOpen,
+      color: "bg-amber-500/10 text-amber-500",
     },
-    { title: t("dashboard.shortcutMatchesTitle"), desc: t("dashboard.shortcutMatchesDesc"), to: "/matches", icon: Swords },
+    { title: t("dashboard.shortcutMatchesTitle"), desc: t("dashboard.shortcutMatchesDesc"), to: "/matches", icon: Swords, color: "bg-red-500/10 text-red-500" },
     {
       title: t("dashboard.shortcutLeaderboardTitle"),
       desc: t("dashboard.shortcutLeaderboardDesc"),
       to: "/leaderboard",
       icon: Trophy,
+      color: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-500",
     },
-    { title: t("dashboard.shortcutStoreTitle"), desc: t("dashboard.shortcutStoreDesc"), to: "/stores", icon: MapPin },
-    { title: t("dashboard.shortcutLfgTitle"), desc: t("dashboard.shortcutLfgDesc"), to: "/lfg", icon: Users },
+    { title: t("dashboard.shortcutStoreTitle"), desc: t("dashboard.shortcutStoreDesc"), to: "/stores", icon: MapPin, color: "bg-emerald-500/10 text-emerald-500" },
+    { title: t("dashboard.shortcutLfgTitle"), desc: t("dashboard.shortcutLfgDesc"), to: "/lfg", icon: Users, color: "bg-cyan-500/10 text-cyan-500" },
   ];
 
   return (
@@ -217,34 +220,40 @@ function Dashboard() {
 
       {/* KPI 미니 */}
       <section className="mt-4 grid grid-cols-2 gap-3">
-        {kpi.map((s) => (
-          <div key={s.label} className="rounded-lg border border-border bg-card p-4">
-            <p className="text-xs text-muted-foreground">{s.label}</p>
-            <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">{s.value}</p>
-            <p className="mt-1 text-[11px] text-muted-foreground">{s.hint}</p>
-          </div>
-        ))}
+        {kpi.map((s, i) => {
+          const Icon = [Library, Layers][i] ?? Library;
+          return (
+            <div key={s.label} className="rounded-2xl border border-border bg-card p-4">
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <Icon className="h-4 w-4" />
+                </span>
+                <p className="text-xs font-medium text-muted-foreground">{s.label}</p>
+              </div>
+              <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">{s.value}</p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">{s.hint}</p>
+            </div>
+          );
+        })}
       </section>
 
       <section className="mt-8">
-        <h2 className="text-sm font-medium text-foreground">{t("dashboard.quickLinks")}</h2>
-        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <h2 className="text-sm font-bold text-foreground">{t("dashboard.quickLinks")}</h2>
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {localizedShortcuts.map((s) => (
             <Link
               key={s.to}
               to={s.to}
-              className="group flex flex-col gap-3 rounded-lg border border-border bg-card p-4 transition-colors hover:bg-accent"
+              className="group flex items-center gap-3 rounded-2xl border border-border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted">
-                  <s.icon className="h-4 w-4 text-foreground" />
-                </div>
-                <ArrowUpRight className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+              <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${s.color}`}>
+                <s.icon className="h-5 w-5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-foreground">{s.title}</p>
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">{s.desc}</p>
               </div>
-              <div>
-                <p className="text-sm font-medium text-foreground">{s.title}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{s.desc}</p>
-              </div>
+              <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
             </Link>
           ))}
         </div>

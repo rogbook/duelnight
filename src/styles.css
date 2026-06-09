@@ -1,6 +1,8 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
+/* 친근한 본문 폰트 (개인 유저용 톤). CDN 실패 시 시스템 폰트로 폴백. */
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.css");
 
 @custom-variant dark (&:is(.dark *));
 
@@ -19,6 +21,8 @@
  */
 
 @theme inline {
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+    "Apple SD Gothic Neo", "Segoe UI", Roboto, "Noto Sans KR", "Helvetica Neue", Arial, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -64,28 +68,30 @@
 }
 
 :root {
-  --radius: 0.5rem;
+  /* 개인 유저용 톤: 라운드를 키워 더 말랑/친근하게 */
+  --radius: 0.85rem;
   --background: oklch(0.995 0 0);
   --foreground: oklch(0.18 0.005 270);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.18 0.005 270);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.18 0.005 270);
-  --primary: oklch(0.22 0.005 270);
+  /* 검정 대신 친근한 인디고를 메인 컬러로 → 기업 SaaS 룩 탈피 */
+  --primary: oklch(0.55 0.2 277);
   --primary-foreground: oklch(0.99 0 0);
   --secondary: oklch(0.97 0.003 270);
   --secondary-foreground: oklch(0.22 0.005 270);
   --muted: oklch(0.965 0.003 270);
   --muted-foreground: oklch(0.5 0.01 270);
-  --accent: oklch(0.96 0.005 270);
-  --accent-foreground: oklch(0.22 0.005 270);
-  --brand: oklch(0.62 0.18 260);
+  --accent: oklch(0.95 0.025 277);
+  --accent-foreground: oklch(0.4 0.12 277);
+  --brand: oklch(0.55 0.2 277);
   --brand-foreground: oklch(0.99 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.984 0.003 247.858);
   --border: oklch(0.929 0.013 255.508);
   --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+  --ring: oklch(0.55 0.2 277);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -93,12 +99,12 @@
   --chart-5: oklch(0.769 0.188 70.08);
   --sidebar: oklch(0.984 0.003 247.858);
   --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
+  --sidebar-primary: oklch(0.55 0.2 277);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.95 0.025 277);
+  --sidebar-accent-foreground: oklch(0.4 0.12 277);
   --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
+  --sidebar-ring: oklch(0.55 0.2 277);
 }
 
 .dark {
@@ -108,19 +114,21 @@
   --card-foreground: oklch(0.984 0.003 247.858);
   --popover: oklch(0.208 0.042 265.755);
   --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
+  --primary: oklch(0.62 0.19 277);
+  --primary-foreground: oklch(0.99 0 0);
   --secondary: oklch(0.279 0.041 260.031);
   --secondary-foreground: oklch(0.984 0.003 247.858);
   --muted: oklch(0.279 0.041 260.031);
   --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
+  --accent: oklch(0.32 0.045 277);
+  --accent-foreground: oklch(0.97 0 0);
+  --brand: oklch(0.62 0.19 277);
+  --brand-foreground: oklch(0.99 0 0);
   --destructive: oklch(0.704 0.191 22.216);
   --destructive-foreground: oklch(0.984 0.003 247.858);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
+  --ring: oklch(0.62 0.19 277);
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -128,12 +136,12 @@
   --chart-5: oklch(0.645 0.246 16.439);
   --sidebar: oklch(0.208 0.042 265.755);
   --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-primary: oklch(0.62 0.19 277);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.32 0.045 277);
+  --sidebar-accent-foreground: oklch(0.97 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  --sidebar-ring: oklch(0.62 0.19 277);
 }
 
 @layer base {
@@ -149,6 +157,7 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
     /* iOS 네이티브 앱 컨테이너에서 노치/홈 인디케이터 영역 회피 */
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
