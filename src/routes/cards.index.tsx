@@ -74,6 +74,31 @@ export const Route = createFileRoute("/cards/")({
   component: CardsPage,
 });
 
+/**
+ * 카드 썸네일. 이미지가 없거나(로드 실패 포함) 깨지면 흉한 깨짐 아이콘 대신
+ * 카드 이름 placeholder로 폴백해 어떤 카드인지 식별 가능하게 한다.
+ */
+function CardThumb({ src, name, noImageLabel }: { src: string | null; name: string; noImageLabel: string }) {
+  const [failed, setFailed] = useState(false);
+  if (!src || failed) {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-1 px-1.5 text-center text-muted-foreground">
+        <ImageOff className="h-6 w-6" />
+        <span className="line-clamp-2 text-[11px] font-medium">{failed ? name : noImageLabel}</span>
+      </div>
+    );
+  }
+  return (
+    <img
+      src={src}
+      alt={name}
+      loading="lazy"
+      className="h-full w-full object-cover"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 function CardsPage() {
   const { t, language } = useI18n();
   const { games, labelOf } = useGames();
@@ -358,19 +383,11 @@ function CardTile({
         className="block w-full overflow-hidden rounded-lg border border-border bg-card text-left transition hover:border-primary"
       >
         <div className="relative aspect-[5/7] w-full bg-muted">
-          {(() => { const u = normalizeImageUrl(card.image_url); return u ? (
-            <img
-              src={displayImageSrc(u)}
-              alt={card.name}
-              loading="lazy"
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground">
-              <ImageOff className="h-6 w-6" />
-              <span className="text-[10px]">{t("cards.noImage")}</span>
-            </div>
-          ); })()}
+          {(() => {
+            const u = normalizeImageUrl(card.image_url);
+            const src = u ? displayImageSrc(u) ?? null : null;
+            return <CardThumb src={src} name={card.name} noImageLabel={t("cards.noImage")} />;
+          })()}
           {card.type === "leader" && (
             <span className="absolute left-1 top-1 rounded bg-primary px-1.5 py-0.5 text-[10px] font-bold text-primary-foreground">
               {t("cards.typeLeader")}
