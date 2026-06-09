@@ -155,6 +155,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           rel: "stylesheet",
           href: appCss,
         },
+        // 친근한 본문 폰트(Pretendard). CSS @import 대신 head link로 로드해
+        // Tailwind/lightningcss 빌드 파이프라인과 분리(빌드 안정).
+        {
+          rel: "stylesheet",
+          href: "https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.min.css",
+        },
         {
           rel: "manifest",
           href: "/manifest.webmanifest",
