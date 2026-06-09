@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { AlertTriangle, X } from "lucide-react";
+
+
+
 
 /**
  * 현재 호스트를 보고 Preview(테스트) 환경이면 상단에 경고 배너를 띄운다.
