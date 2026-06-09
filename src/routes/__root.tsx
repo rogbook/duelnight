@@ -177,12 +177,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    {/*
+      THEME_INIT 인라인 스크립트가 하이드레이션 전에 html.classList에 'dark'를
+      토글하기 때문에 SSR HTML과 클라이언트 트리가 항상 어긋난다.
+      React 19는 이 불일치를 만나면 전체 트리를 클라이언트 재렌더로 폴백시키며,
+      그 사이에 onClick 핸들러가 잠시 붙지 않아 "버튼이 안 눌린다"는 증상이 난다.
+      기본값을 dark로 고정하고 suppressHydrationWarning으로 인라인 스크립트의
+      class 조정과의 미스매치를 명시적으로 허용한다.
+    */}
+    <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         <HeadContent />
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         {children}
         <Scripts />
       </body>
