@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { BottomTabBar } from "@/components/bottom-tab-bar";
+import { BackButton } from "@/components/back-button";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/sonner";
 import { NotificationBell } from "@/components/notification-bell";
@@ -229,6 +230,7 @@ function RootComponent() {
                 className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-background/80 px-4 backdrop-blur"
                 style={{ paddingTop: "env(safe-area-inset-top)" }}
               >
+                <BackButton />
                 <div className="flex-1" />
                 <ThemeToggle />
                 <LanguageSelector />
@@ -255,6 +257,7 @@ function RootComponent() {
                     style={{ paddingTop: "env(safe-area-inset-top)" }}
                   >
                     <SidebarTrigger />
+                    <BackButton />
                     <div className="flex-1" />
                     <ThemeToggle />
                     <LanguageSelector />
