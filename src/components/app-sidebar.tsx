@@ -26,7 +26,6 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -114,26 +113,30 @@ export function AppSidebar() {
     )
     .sort((a, b) => b.url.length - a.url.length)[0]?.url;
 
-  const renderGroup = (labelKey: TranslationKey, items: SidebarItem[]) => (
-    <SidebarGroup>
-      {!collapsed && <SidebarGroupLabel>{t(labelKey)}</SidebarGroupLabel>}
+  // 그룹 라벨(메인/카드/…) 없이 간격으로만 구분 → 어드민/SaaS 느낌 제거, 개인 앱 톤
+  const renderGroup = (_labelKey: TranslationKey, items: SidebarItem[]) => (
+    <SidebarGroup className="py-1">
       <SidebarGroupContent>
-        <SidebarMenu>
+        <SidebarMenu className="gap-1">
           {items.map((item) => {
             const badge = item.url === "/messages" ? unreadDm : 0;
             return (
               <SidebarMenuItem key={item.url}>
-                <SidebarMenuButton asChild isActive={item.url === activeUrl}>
-                  <Link to={item.url} className="flex items-center gap-2">
+                <SidebarMenuButton
+                  asChild
+                  isActive={item.url === activeUrl}
+                  className="rounded-xl py-5 data-[active=true]:bg-primary data-[active=true]:font-semibold data-[active=true]:text-primary-foreground data-[active=true]:hover:bg-primary data-[active=true]:hover:text-primary-foreground"
+                >
+                  <Link to={item.url} className="flex items-center gap-2.5">
                     <span className="relative">
-                      <item.icon className="h-4 w-4" />
+                      <item.icon className="h-[18px] w-[18px]" />
                       {badge > 0 && collapsed && (
-                        <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-primary" />
+                        <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-sidebar" />
                       )}
                     </span>
                     {!collapsed && <span className="flex-1">{t(item.titleKey)}</span>}
                     {!collapsed && badge > 0 && (
-                      <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                      <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold text-white">
                         {badge > 99 ? "99+" : badge}
                       </span>
                     )}
@@ -151,7 +154,7 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b">
         <Link to="/" className="flex items-center gap-2 px-2 py-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-foreground text-background text-xs font-bold">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-sm font-black text-white shadow-sm">
             D
           </div>
           {!collapsed && (
