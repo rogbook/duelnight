@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   getProjectRef,
+  isAlreadyExistsError,
   normalizeStoragePath,
   parseArgs,
   parseStorageObjectPath,
@@ -101,5 +102,23 @@ describe("parseArgs", () => {
 
   test("알 수 없는 옵션을 거부한다", () => {
     expect(() => parseArgs(["--force"])).toThrow("알 수 없는 옵션");
+  });
+});
+
+describe("isAlreadyExistsError", () => {
+  test("409 Storage 오류를 경쟁 상태로 판별한다", () => {
+    expect(isAlreadyExistsError({ statusCode: "409" })).toBeTrue();
+  });
+
+  test("중복 객체 메시지를 경쟁 상태로 판별한다", () => {
+    expect(
+      isAlreadyExistsError({ message: "The resource already exists" }),
+    ).toBeTrue();
+  });
+
+  test("다른 Storage 오류는 제외한다", () => {
+    expect(
+      isAlreadyExistsError({ statusCode: 500, message: "Internal error" }),
+    ).toBeFalse();
   });
 });

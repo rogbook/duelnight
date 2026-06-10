@@ -254,6 +254,16 @@ export function parseArgs(args: string[]): CliOptions {
   return options;
 }
 
+export function isAlreadyExistsError(error: {
+  message?: string;
+  statusCode?: string | number;
+}): boolean {
+  return (
+    String(error.statusCode ?? "") === "409" ||
+    error.message?.toLowerCase().includes("already exists") === true
+  );
+}
+
 function printHelp(): void {
   console.log(`
 DuelNight card-images 증분 이관
@@ -528,7 +538,24 @@ async function processObject(
         upsert: targetObject !== undefined,
       },
     );
-    if (error) throw new Error(`업로드 실패: ${error.message}`);
+    if (error) {
+      if (isAlreadyExistsError(error)) {
+        const targetHash = await verifyTargetObject(
+          target,
+          { ...sourceObject, size: downloaded.buffer.byteLength },
+          downloaded.hash,
+          options.maxBytes,
+        );
+        return {
+          path: sourceObject.path,
+          status: "verified-existing",
+          bytes: downloaded.buffer.byteLength,
+          sourceSha256: downloaded.hash,
+          targetSha256: targetHash,
+        };
+      }
+      throw new Error(`업로드 실패: ${error.message}`);
+    }
 
     const targetHash = await verifyTargetObject(
       target,
