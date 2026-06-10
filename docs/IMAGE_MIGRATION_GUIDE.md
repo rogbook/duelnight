@@ -1,56 +1,99 @@
-# DuelNight DB 이미지 이관 가이드
+# DuelNight 이미지 이관 가이드
 
-기존 Supabase Storage에 저장된 카드 일러스트 및 이미지들을 새로 독립 가동할 Supabase Storage로 가져오는 자동 이관 방법 설명서입니다.
+기존 Lovable Supabase의 공개 `card-images` 버킷을 새 독립 Supabase로 증분 복사하고, 새 DB의 이전 프로젝트 `image_url`을 새 공개 URL로 변경한다.
 
----
+## 안전 원칙
 
-## 1. 작동 원리
+- 기본 실행은 쓰기 없는 dry-run이다.
+- 원본 프로젝트는 목록 조회와 다운로드만 수행한다.
+- 대상 버킷은 자동 생성하지 않는다. 버킷/RLS 변경은 Claude 담당 작업이다.
+- `--execute`에서만 대상 Storage와 DB를 변경한다.
+- 업로드한 파일과 기존 동일 크기 파일은 SHA-256으로 검증한다.
+- 파일 처리 실패가 하나라도 있으면 DB URL을 변경하지 않는다.
+- DB 갱신은 기존 `image_url`이 그대로인 행만 변경해 동시 작업을 덮어쓰지 않는다.
+- 모든 실행 결과는 `backups/image-migration/`의 JSON 보고서로 남는다.
 
-이관 스크립트(`scripts/migrate-images.ts`)는 다음 단계로 실행됩니다:
+## 환경 변수
 
-1. **테이블 스캔**: 새 Supabase DB의 `cards` 및 `card_illustrations` 테이블에서 이전 Supabase 스토리지(예: `tgybttphkmesgfbtgftt.supabase.co`)를 가리키는 이미지 URL 목록을 수집합니다.
-2. **버킷 확인**: 새 Supabase에 `card-images` 버킷이 없는 경우 퍼블릭 버킷으로 자동 생성합니다.
-3. **다운로드 및 업로드**: 예전 URL을 통해 퍼블릭 인터넷 망을 통해 원본 이미지를 다운로드하고, 이를 새 Supabase `card-images` 버킷으로 동일 경로에 실시간으로 업로드합니다.
-4. **URL 업데이트**: 업로드가 완료되면 데이터베이스 레코드의 `image_url`을 신규 Supabase 퍼블릭 URL로 일괄 업데이트합니다.
+새 클론의 `.env.local`에 다음 값을 설정한다. 실제 키를 채팅, 문서, 커밋 또는 로그에 출력하지 않는다.
 
-이 방식은 이전 Supabase의 관리자 비밀키가 없더라도, **공개 노출된 기존 이미지 링크를 활용하여 이관하므로 안전하고 간편**합니다.
+```ini
+SUPABASE_URL=https://nrtdhkjeziknmafauypv.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=새_프로젝트_관리자_키
 
----
+# 생략하면 기존 Lovable 프로젝트 URL을 사용한다.
+SOURCE_SUPABASE_URL=https://tgybttphkmesgfbtgftt.supabase.co
+SOURCE_SUPABASE_PUBLISHABLE_KEY=기존_프로젝트_공개_키
+```
 
-## 2. 사전 요구 사항
+`SOURCE_SUPABASE_PUBLISHABLE_KEY`는 원본 버킷 목록과 공개 파일 다운로드에만 사용한다. 원본 관리자 키는 사용하지 않는다.
 
-1. **데이터베이스 데이터 이관 완료**:
-   * SQL Editor 복사/붙여넣기 또는 CSV 등을 이용해 예전 테이블의 텍스트 데이터(스키마 포함)가 새 Supabase DB로 복제되어 있어야 합니다.
-2. **환경 변수 구성**:
-   * 프로젝트 루트의 `.env.local` 파일에 새 Supabase 프로젝트 정보가 입력되어야 합니다.
-   ```ini
-   SUPABASE_URL="https://YOUR_NEW_PROJECT_REF.supabase.co"
-   SUPABASE_SERVICE_ROLE_KEY="YOUR_NEW_SERVICE_ROLE_KEY"
-   ```
+## 실행 순서
 
----
+### 1. 도움말과 단위 테스트
 
-## 3. 이관 실행 방법
+```bash
+bun run migrate-images --help
+bun run test:migrate-images
+```
 
-프로젝트 루트 폴더 터미널에서 다음 명령어를 실행합니다.
+### 2. Dry-run
 
-### Bun 환경 (권장)
+원본과 대상의 파일 경로·크기를 비교한다. 파일이나 DB를 변경하지 않는다.
+
 ```bash
 bun run migrate-images
 ```
 
-### Node.js 환경
+소량만 점검하려면:
+
 ```bash
-npm run migrate-images
+bun run migrate-images --limit 20
 ```
 
----
+기존 동일 크기 파일까지 다운로드해 SHA-256을 비교하려면:
 
-## 4. 이관 후 확인 및 검증
+```bash
+bun run migrate-images --verify-existing
+```
 
-1. **데이터베이스 확인**:
-   * [Supabase 대시보드](https://supabase.com/) -> SQL Editor 또는 Table Editor에서 `cards` 테이블을 확인하여 `image_url`에 새 프로젝트 Reference(`nrtdhkjeziknmafauypv`)가 정상적으로 포함되어 있는지 확인합니다.
-2. **스토리지 확인**:
-   * Supabase 대시보드 -> **Storage > card-images** 버킷을 열어 이관된 이미지 폴더와 파일들이 잘 업로드되었는지 확인합니다.
-3. **앱 구동 테스트**:
-   * `npm run dev`를 실행하고 브라우저에서 카드 데이터와 이미지가 깨짐 없이 올바르게 출력되는지 최종 확인합니다.
+### 3. 시험 복사
+
+DB URL을 건드리지 않고 Storage 파일 20개만 복사·검증한다.
+
+```bash
+bun run migrate-images --execute --skip-db-update --limit 20
+```
+
+### 4. 전체 실행
+
+원본 전체를 증분 복사하고 검증을 통과한 경로에 한해 `cards.image_url`과 `card_illustrations.image_url`을 변경한다.
+
+```bash
+bun run migrate-images --execute
+```
+
+실행 모드에서는 대상에 같은 경로와 크기의 파일이 있어도 SHA-256을 비교한다. 파일이 없으면 복사하고, 크기가 다르면 덮어쓴 뒤 다시 다운로드해 검증한다.
+
+## 옵션
+
+| 옵션 | 설명 |
+|---|---|
+| `--execute` | 실제 Storage 복사와 DB URL 갱신 |
+| `--verify-existing` | dry-run에서도 동일 크기 파일 SHA-256 검증 |
+| `--skip-db-update` | Storage만 처리 |
+| `--limit <n>` | 앞에서부터 n개 객체만 처리 |
+| `--concurrency <n>` | 동시 다운로드·업로드 수, 기본 4 |
+| `--max-bytes <n>` | 파일당 최대 바이트, 기본 20 MiB |
+| `--report <path>` | JSON 보고서 경로 지정 |
+
+## 완료 판정
+
+1. JSON 보고서에서 `failed=0`, `databaseFailed=0` 확인
+2. 원본 파일 수와 대상 파일 수 비교
+3. 두 번째 `--execute` 실행에서 신규 복사 없이 기존 파일 검증만 수행되는지 확인
+4. 새 DB의 이전 프로젝트 URL 잔여 행이 0인지 확인
+5. 앱의 카드 목록·상세·일러스트 화면에서 이미지 확인
+6. 완료 후 Claude 보안 검토 수행
+
+원본 버킷과 기존 Lovable DB는 전환 안정화가 끝날 때까지 삭제하거나 수정하지 않는다.
