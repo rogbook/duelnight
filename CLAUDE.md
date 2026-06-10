@@ -87,6 +87,10 @@ Antigravity의 플래닝 모드(Planning Mode)를 켜고 제미나이 3.5 플래
 1) (필요 시) `deep-research`로 사전 조사 → 2) 구현 → 3) 구문/타입 검증 → 4) `code-review`(+민감 시 `security-review`) → 5) 필요 시 `simplify`/`verify` → 6) 커밋·푸시.
 설정/훅 변경은 `update-config`로 처리.
 
+## 3-1. 멀티 AI 협업 (Claude · Codex · Antigravity)
+> **역할 분담·작업 절차·핸드오프는 [AGENTS.md](./AGENTS.md)가 단일 기준이다.** 작업 시작 전 반드시 확인.
+> Claude 기본 책임: 서버 아키텍처 · DB/RLS/마이그레이션 · 보안 검토. 커밋 메시지에 `(claude)` 태그.
+
 ## 4. Git 워크플로우 (이미 운영 중 · 명문화)
 - 작업 시작: `git fetch` → 변경 있으면 `git pull --rebase` 로 최신화.
 - 작업 종료: 구문 검증 → 커밋 → `git push`.
