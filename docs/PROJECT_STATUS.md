@@ -2,6 +2,7 @@
 
 작성일: 2026-05-12
 문서 목적: 1차 개발이 끝난 시점에서 **무엇을 사용자에게 제공할 수 있는지**, **어떤 흐름으로 검증할지**, **남은 의사결정/이슈는 무엇인지**를 기획 관점에서 정리.
+관련 문서: [`docs/PROJECT_MANAGEMENT.md`](./PROJECT_MANAGEMENT.md) — 주간 운영, 우선순위, 작업 카드, 배포 전 관리 기준. 앞으로의 작업 흐름은 [`docs/CODEX_WORKFLOW.md`](./CODEX_WORKFLOW.md), Lovable 작업 정리는 [`docs/LOVABLE_HANDOFF.md`](./LOVABLE_HANDOFF.md)를 기준으로 확인합니다.
 
 ---
 

@@ -1,5 +1,7 @@
-# DuelNight 협업 개발 가이드 — Lovable + Antigravity + Claude
+# DuelNight 협업 개발 가이드 — 보관용
 
+> **전환 공지(2026-06-09):** 이 문서는 과거 Lovable + Antigravity + Claude 협업 방식을 설명하는 보관용 문서입니다. 앞으로 신규 작업은 협업 도구 분담이 아니라 `docs/CODEX_WORKFLOW.md`의 Codex 중심 흐름을 따릅니다.
+>
 > **최종 수정**: 2026-06-03
 > **적용 대상**: 프로젝트에 참여하는 모든 도구와 개발자
 >

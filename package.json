@@ -10,7 +10,10 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "verify:deck-detail": "bun scripts/verify-deck-detail.ts"
+    "verify:deck-detail": "bun scripts/verify-deck-detail.ts",
+    "check:supabase": "node scripts/check-supabase-config.mjs",
+    "check:supabase:online": "node scripts/check-supabase-config.mjs --online",
+    "check:supabase:migration": "node scripts/check-supabase-config.mjs --migration"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.25.5",

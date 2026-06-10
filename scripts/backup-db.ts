@@ -100,20 +100,15 @@ ${colors.cyan}${colors.bold}====================================================
 
   // 환경변수 추출 (VITE_ 접두사도 호환 지원)
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  // 서비스 롤 키가 없으면 anon 키로 대체 시도하나 RLS로 인해 백업이 온전치 않을 수 있으므로 경고
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  const isUsingServiceRole = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+  // 백업은 RLS를 우회할 수 있는 서버 전용 키가 반드시 필요합니다.
+  const serviceRoleKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !serviceRoleKey) {
     console.error(`${colors.red}✖ 오류: Supabase 접속을 위한 환경변수가 설정되지 않았습니다.${colors.reset}`);
-    console.error(`${colors.yellow}💡 해결 방법: 프로젝트 루트의 .env 파일에 SUPABASE_URL 및 SUPABASE_SERVICE_ROLE_KEY를 정의해 주세요.${colors.reset}\n`);
+    console.error(`${colors.yellow}💡 해결 방법: 프로젝트 루트의 .env 파일에 SUPABASE_URL과 SUPABASE_SECRET_KEY(또는 legacy SUPABASE_SERVICE_ROLE_KEY)를 정의해 주세요.${colors.reset}\n`);
     process.exit(1);
   }
 
-  if (!isUsingServiceRole) {
-    console.warn(`${colors.yellow}⚠️ 경고: SUPABASE_SERVICE_ROLE_KEY가 감지되지 않아 퍼블릭 API Key를 사용합니다.${colors.reset}`);
-    console.warn(`${colors.yellow}일부 비공개 테이블(RLS 적용 테이블)은 백업되지 않을 수 있습니다.${colors.reset}\n`);
-  }
 
   // 백업 디렉토리 없으면 자동 생성
   if (!fs.existsSync(BACKUP_DIR)) {

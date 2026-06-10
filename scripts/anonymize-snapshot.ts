@@ -13,7 +13,7 @@
  * [사용법]
  *   - Direct DB 모드:
  *     export SUPABASE_URL="https://your-project.supabase.co"
- *     export SUPABASE_SERVICE_ROLE_KEY="your-secret-service-role-key"
+ *     export SUPABASE_SECRET_KEY="your-server-only-secret-key"
  *     npx tsx scripts/anonymize-snapshot.ts --db
  *
  *   - SQL 파일 마스킹 모드:
@@ -45,11 +45,11 @@ ${colors.cyan}${colors.bold}====================================================
 
 async function runDirectDBMode() {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const serviceRoleKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !serviceRoleKey) {
     console.error(
-      `${colors.red}✖ 오류: SUPABASE_URL 및 SUPABASE_SERVICE_ROLE_KEY 환경변수가 정의되지 않았습니다.${colors.reset}`
+      `${colors.red}✖ 오류: SUPABASE_URL 및 SUPABASE_SECRET_KEY(또는 SUPABASE_SERVICE_ROLE_KEY) 환경변수가 정의되지 않았습니다.${colors.reset}`
     );
     console.error(
       `${colors.yellow}💡 도움말: Direct DB Mode는 반드시 서비스 롤 키(Service Role Key)가 필요합니다 (RLS 바이패스).${colors.reset}\n`

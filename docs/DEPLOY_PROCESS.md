@@ -1,7 +1,9 @@
 # duelnight 배포 운영 절차
 
 > 본 문서는 **개발 → 테스트(Preview) → 실운영(Published)** 2단계 배포 워크플로를 정의합니다.
-> `docs/COLLABORATION_GUIDE.md`(Lovable↔Antigravity 협업)와 함께 읽어 주세요.
+> 과거 협업 절차는 `docs/COLLABORATION_GUIDE.md`에 보관되어 있습니다. 신규 작업은 `docs/CODEX_WORKFLOW.md`를 우선합니다.
+
+> **전환 공지(2026-06-09):** 앞으로 Lovable에서는 신규 작업·Publish를 진행하지 않습니다. 아래 내용은 기존 운영 이력으로 보관하며, 새 배포 환경 전환 기준은 `docs/CODEX_WORKFLOW.md`, `docs/LOVABLE_HANDOFF.md`, `docs/INDEPENDENCE_GUIDE.md`를 우선합니다.
 
 ---
 
