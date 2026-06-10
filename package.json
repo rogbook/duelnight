@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "verify:deck-detail": "bun scripts/verify-deck-detail.ts"
+    "verify:deck-detail": "bun scripts/verify-deck-detail.ts",
+    "migrate-images": "bun scripts/migrate-images.ts"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.25.5",
