@@ -91,8 +91,15 @@ Antigravity의 플래닝 모드(Planning Mode)를 켜고 제미나이 3.5 플래
 - 작업 시작: `git fetch` → 변경 있으면 `git pull --rebase` 로 최신화.
 - 작업 종료: 구문 검증 → 커밋 → `git push`.
 
-## 5. DB 변경
-- DB(스키마·RLS·함수·데이터구조)는 **Lovable이 단독 적용**. Claude/Antigravity는 **마이그레이션 SQL/문구만 작성해 전달**한다.
-- 상세 규칙: [`docs/DB_WORKFLOW.md`](./docs/DB_WORKFLOW.md) 를 따른다. `types.ts`/`client.ts`/`.env`/`config.toml` 수동 수정 금지.
+## 5. DB 변경 (2026-06-10 개정 — 독립 저장소 체제)
+> **이 저장소(rogbook/duelnight)는 Lovable과 동기화되지 않는 독립 저장소다.**
+> 구 저장소(rogbook/tcg-hub)에서 클론해 새로 만든 것으로, 여기 코드는 Lovable 서비스에 반영되지 않는다.
+
+- DB는 사용자 소유 Supabase 프로젝트 **`nrtdhkjeziknmafauypv`** (supabase.com 직접 관리). Claude가 **Supabase MCP(`apply_migration`)로 직접 적용**한다.
+- 적용한 SQL은 `supabase/migrations/`에 파일로도 보관해 이력을 남긴다.
+- DB 변경 후 `get_advisors`(security)로 RLS/보안 점검.
+- **`.env` 커밋 금지**(.gitignore 처리됨). 로컬 키는 `.env.local`에 작성(`.env.example` 양식 참고). 서버 관리자 키 변수명은 `SUPABASE_SERVICE_ROLE_KEY` 하나로 통일(신형 `sb_secret_` 키도 이 자리에).
+- ⚠️ **기존 Lovable 운영 서비스(duelnight.app + DB `tgybttphkmesgfbtgftt`)는 테스터 사용 중이라 별도 유지.** 그쪽 DB·코드 변경은 여전히 Lovable에서만 한다. 두 환경의 데이터 동기화는 재실행 가능한 스크립트로 관리(전환 시점에 최종 실행).
+- 구 체제 문서(`docs/DB_WORKFLOW.md`의 "Lovable 단독 적용" 규칙 등)는 이 저장소에는 더 이상 적용되지 않는다.
 
 
