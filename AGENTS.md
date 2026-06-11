@@ -14,6 +14,18 @@
 - DB: 사용자 소유 Supabase `nrtdhkjeziknmafauypv` (ap-south-1)
 - 런타임/패키지: **bun** (`bun install`, `bun run dev`, `bun run build`)
 
+### 작업 폴더 (2026-06-10 도구별 분리 — 반드시 자기 폴더에서만 작업)
+
+| 도구 | 작업 폴더 |
+|---|---|
+| Claude | `C:\dev\duelnight` |
+| Codex | `C:\dev\duelnight-codex` |
+| Antigravity | `C:\dev\duelnight-anti` |
+
+- **다른 도구의 폴더를 열거나 수정하지 않는다.** 협업은 오직 GitHub(push/pull)로만.
+- 구 작업 폴더(`G:\내 드라이브\Development\duelnight`, Google Drive)는 **사용 중지** — 파일 잠금·속도·저장소 손상 위험 때문. 코드 백업은 GitHub가 담당.
+- `.env.local`/`.dev.vars`는 git에 없으므로 각 폴더에 개별 존재한다. **내용 변경은 Claude만** 하며, 변경 시 세 폴더에 동일하게 배포한다.
+
 ## 1. 역할 분담 (2026-06-10 사용자 확정)
 
 > **체계: Claude = 주 개발자(리드), Codex·Antigravity = 부 개발자.**
