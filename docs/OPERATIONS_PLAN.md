@@ -16,7 +16,7 @@
 | 앱 호스팅 (SSR+API) | **Cloudflare Workers** | 이미 코드가 Cloudflare용으로 설정됨(`wrangler.jsonc`). GitHub 연동 시 push마다 자동 배포 | 무료(10만 요청/일) → 성장 시 $5/월 |
 | DB·로그인·스토리지·실시간 | **Supabase** (`nrtdhkjeziknmafauypv`) | 이미 스키마 이관 완료 | 무료 → 운영 본격화 시 Pro $25/월 (자동백업·복구 때문에 **정식 오픈 전 Pro 전환 권장**) |
 | AI (코치·OCR·카드 가져오기) | **Google Gemini 직접 호출** | Lovable 게이트웨이 대체. 호출당 ~2원 (AI_GATEWAY_COST_SIMULATION.md) | 사용량 과금 |
-| 도메인 | 병행 기간: `*.workers.dev` 또는 `beta.duelnight.app` → 전환 시 `duelnight.app` 이전 | 테스터 서비스와 충돌 없음 | — |
+| 도메인 | **별도 신규 도메인 구매 후 연결 (사용자 결정 2026-06-11).** 구매 전 병행 기간은 `*.workers.dev` 무료 주소 사용 | 기존 duelnight.app(테스터 서비스)과 완전 분리 | 약 $10~15/년 |
 
 - **환경 2단계**: `main` push → 자동 배포(베타) / 운영 도메인 전환은 수동 승인 후. Cloudflare는 브랜치별 프리뷰 URL도 자동 생성.
 - **모니터링**: Cloudflare 대시보드(트래픽/에러) + Supabase Logs/Advisors. 오류 추적 필요해지면 Sentry 무료 플랜 추가.
@@ -50,6 +50,7 @@
 | 태블릿·폰에서 확인 | 같은 와이파이에서 터미널에 표시되는 **Network 주소**(예: `http://192.168.219.106:8080`) 접속 |
 | AI가 직접 화면 검증 | Claude가 브라우저 도구로 앱을 띄워 스크린샷·클릭 테스트 후 결과 보고 (`verify`/`run`) |
 | 외부 테스터 공유 | Cloudflare 연결 후 브랜치 프리뷰 URL 공유 |
+| **외부 관리자 실운영 테스트** (사용자 결정 2026-06-11) | 베타 배포 URL(초기 `*.workers.dev` → 도메인 구매 후 신규 도메인)로 관리자 수 명이 실제 운영처럼 테스트. 관리자 계정 발급·권한은 Claude가 DB(RLS)로 관리. 절차 상세: [EXTERNAL_TESTING_GUIDE.md](./EXTERNAL_TESTING_GUIDE.md) |
 
 - 참고: 프로젝트가 Google Drive 폴더에 있어 빌드·설치가 느림(예: 의존성 설치 15분). 코드는 git이 이미 보관하므로 **로컬 디스크(C:\dev 등)로 이동을 권장** — 체감 속도 수 배 개선. (이동 시 Claude가 처리 가능)
 
