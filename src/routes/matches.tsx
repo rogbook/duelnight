@@ -304,13 +304,13 @@ function PeriodTabs({
     { id: "all", label: t("matches.all") },
   ];
   return (
-    <div className="inline-flex items-center gap-1 rounded-lg border border-border bg-card p-1">
+    <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1 overflow-x-auto max-w-full flex-nowrap scrollbar-none">
       {items.map((p) => (
         <button
           key={p.id}
           onClick={() => onChange(p.id)}
           className={
-            "rounded-md px-3 py-1.5 text-xs font-medium transition-colors " +
+            "rounded-md px-3 py-1.5 text-xs font-medium transition-colors shrink-0 " +
             (value === p.id
               ? "bg-foreground text-background"
               : "text-muted-foreground hover:text-foreground")
@@ -337,13 +337,13 @@ function GameTabs({
     ...games.map((g) => ({ id: g.code as Game | "all", label: labelOf(g.code) })),
   ];
   return (
-    <div className="inline-flex items-center gap-1 rounded-lg border border-border bg-card p-1">
+    <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1 overflow-x-auto max-w-full flex-nowrap scrollbar-none">
       {items.map((g) => (
         <button
           key={g.id}
           onClick={() => onChange(g.id)}
           className={
-            "rounded-md px-3 py-1.5 text-xs font-medium transition-colors " +
+            "rounded-md px-3 py-1.5 text-xs font-medium transition-colors shrink-0 " +
             (value === g.id
               ? "bg-foreground text-background"
               : "text-muted-foreground hover:text-foreground")

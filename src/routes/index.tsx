@@ -15,6 +15,7 @@ import {
 import { PageHeader } from "@/components/page-header";
 import { GameFilter } from "@/components/game-filter";
 import { SeasonReport } from "@/components/season-report/season-report";
+import { PwaInstallBanner } from "@/components/pwa-install-banner";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { getSeasonStartISO } from "@/lib/season";
@@ -190,6 +191,8 @@ function Dashboard() {
       <PageHeader title={t("dashboard.title")} description={t("dashboard.desc")}>
         <GameFilter />
       </PageHeader>
+
+      <PwaInstallBanner />
 
       {/* 내 시즌 성적표 (가장 많이 한 게임 기준) */}
       <section className="mt-6">
