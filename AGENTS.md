@@ -82,7 +82,7 @@ DB 변경 여부: (있으면 Claude 요청 사항 명시)
 | ~~DB 행 데이터 동기화 스크립트~~                                    | Claude                           | ✅ **완료** — `bun run sync-db`, 1차 실행 4,212건 반영·실패 0. 상세: [docs/DB_ROW_SYNC_GUIDE.md](./docs/DB_ROW_SYNC_GUIDE.md). 컷오버 때 재실행      |
 | ~~ESLint CRLF/Prettier 줄바꿈 정규화~~                              | Codex                            | ✅ **완료 (2026-06-11)** — .gitattributes(LF)·재포맷 병합. Claude 검토 수정 2건: endOfLine auto→lf, no-explicit-any off→**warn**(규칙 무단 비활성 거부) |
 | ~~UI_USABILITY_REPORT.md 지적 항목 코드 반영~~                      | Antigravity                      | ✅ **완료 (2026-06-11)** — usability-fixes + 카드 목록 최적화(디바운스·번호형 페이지네이션·스켈레톤·PWA 배너) Claude 검토·결함 2건 수정 후 main 병합 |
-| Cloudflare 배포 연결                                                | Claude(설계) + 사용자(계정 연결) | 대기                                                                                                                                                 |
+| ~~Cloudflare 배포 연결~~                                            | Claude + 사용자                  | ✅ **완료 (2026-06-11)** — main push마다 자동 배포. 베타 URL: https://duelnight.mick-kwon.workers.dev (SSR·카드DB·번들 검증 통과)                      |
 | ~~유출 키 종결~~                                                    | 사용자 + Claude                  | ✅ **완료 (2026-06-11)** — 새 secret key 발급·세 폴더 배포, 구 키 폐기. 유출 키 실호출 401 확인(캐시 커밋에서 추출 테스트). 사고 종결                |
 
 ## 5. 참고 문서
