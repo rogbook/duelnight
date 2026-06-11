@@ -34,11 +34,12 @@ export const Route = createFileRoute("/announcements/$id")({
       };
       return { meta: [{ title: notFounds[locale] || notFounds.ko }] };
     }
-    const suffix = {
-      ko: "DuelNight 공지",
-      en: "DuelNight Announcement",
-      ja: "DuelNight お知らせ",
-    }[locale] || "DuelNight 공지";
+    const suffix =
+      {
+        ko: "DuelNight 공지",
+        en: "DuelNight Announcement",
+        ja: "DuelNight お知らせ",
+      }[locale] || "DuelNight 공지";
 
     const title = `${a.title} — ${suffix}`;
     const desc = a.body.replace(/\s+/g, " ").slice(0, 150);
@@ -71,7 +72,7 @@ export const Route = createFileRoute("/announcements/$id")({
     };
   },
   component: AnnouncementDetailPage,
-  notFoundComponent: () => {
+  notFoundComponent: function AnnouncementNotFound() {
     const { t } = useI18n();
     return (
       <div className="mx-auto max-w-3xl px-6 py-16 text-center">
@@ -112,11 +113,10 @@ function AnnouncementDetailPage() {
         </h1>
         <p className="mt-2 text-xs text-muted-foreground">
           {new Date(item.created_at).toLocaleString(dateLocale)} ·{" "}
-          <Eye className="inline h-3 w-3" /> {t("announcements.viewCount", { count: item.view_count })}
+          <Eye className="inline h-3 w-3" />{" "}
+          {t("announcements.viewCount", { count: item.view_count })}
         </p>
-        <div className="mt-6 whitespace-pre-wrap text-sm leading-relaxed">
-          {item.body}
-        </div>
+        <div className="mt-6 whitespace-pre-wrap text-sm leading-relaxed">{item.body}</div>
       </article>
     </div>
   );

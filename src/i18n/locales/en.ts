@@ -134,7 +134,8 @@ export const en = {
     noSavedDecks: "No saved decks — input manually",
     deckPlaceholder: "e.g., Red Luffy",
     oppSavedDeck: "Opp. Saved Deck",
-    noOppDecksDesc: "This user has no public decks. If you input manually, the opponent can update it later.",
+    noOppDecksDesc:
+      "This user has no public decks. If you input manually, the opponent can update it later.",
     tournamentNote: "Tournament Note",
     tournamentNotePlaceholder: "Round, shop name, remarks, etc.",
     matchNote: "Match Note",
@@ -147,7 +148,8 @@ export const en = {
     myDeckRequiredToast: "Please select or enter your deck",
     recordedWithElo: "Recorded (Expected {delta} pts)",
     recordedToast: "Recorded successfully",
-    normalizeConfirm: "Do you want to normalize deck and leader names of existing match records? Only modified items will be updated.",
+    normalizeConfirm:
+      "Do you want to normalize deck and leader names of existing match records? Only modified items will be updated.",
     normalizingPrepare: "Preparing normalization...",
     noNormalizingMatches: "No match records to normalize.",
     normalizingScan: "Scanning {scanned}/{total}...",
@@ -182,7 +184,8 @@ export const en = {
     importedSuccess: "Imported {count} records",
     importFailed: "Import failed",
     taggedMatches: "Matches Tagged as Opponent",
-    taggedMatchesDesc: "Matches recorded by other users with you as the opponent. Fill in your deck info to reflect in stats.",
+    taggedMatchesDesc:
+      "Matches recorded by other users with you as the opponent. Fill in your deck info to reflect in stats.",
     notEntered: "Not Entered",
     oppSelfEditTitle: "Enter My Deck Info",
     selectMyDeck: "Select My Deck",
@@ -211,7 +214,8 @@ export const en = {
     ratingHint: "{game} · {count} matches",
     quickLinks: "Quick Shortcuts",
     metaTitle: "DuelNight — Integrated Management Platform",
-    metaDesc: "One Piece, Pokémon, and Digimon TCG schedules, cards, records, stores, and matchings in one place.",
+    metaDesc:
+      "One Piece, Pokémon, and Digimon TCG schedules, cards, records, stores, and matchings in one place.",
     shortcutCalendarTitle: "Calendar",
     shortcutCalendarDesc: "Release & tournament schedule at a glance",
     shortcutCardsTitle: "Card DB",
@@ -231,7 +235,8 @@ export const en = {
   },
   intro: {
     tagline: "All-in-One Hub for One Piece, Pokémon, and Digimon TCG Players",
-    description: "Match records, AI card OCR, deck builder, tournament/release schedule, and store LFG. Your TCG workflow completed in one place.",
+    description:
+      "Match records, AI card OCR, deck builder, tournament/release schedule, and store LFG. Your TCG workflow completed in one place.",
     testing: "Beta",
     freeStart: "Get Started Free",
     gameIntegrated: "OPTCG · PTCG · DTCG Integrated",
@@ -239,21 +244,29 @@ export const en = {
     heroTitle2: "Find the Winning Deck",
     nowStartFree: "Start Now — Free",
     viewPricing: "View Pricing",
-    testPhaseNotice: "Currently in testing phase. Subscription/payment will be enabled upon official launch.",
+    testPhaseNotice:
+      "Currently in testing phase. Subscription/payment will be enabled upon official launch.",
     featureTitle1: "Match & Win Rate Analytics",
-    featureDesc1: "Win rate by deck and opponent, first/second turn filters, event filters, and automatic ELO calculation.",
+    featureDesc1:
+      "Win rate by deck and opponent, first/second turn filters, event filters, and automatic ELO calculation.",
     featureTitle2: "AI Card OCR",
-    featureDesc2: "Fill in card code, stats, and effects automatically from a single card photo using Gemini Vision.",
+    featureDesc2:
+      "Fill in card code, stats, and effects automatically from a single card photo using Gemini Vision.",
     featureTitle3: "Deck Builder & Tier List",
-    featureDesc3: "Deck validation, color restrictions, card count checks, and shared community tier lists.",
+    featureDesc3:
+      "Deck validation, color restrictions, card count checks, and shared community tier lists.",
     featureTitle4: "Release & Event Schedules",
-    featureDesc4: "Release dates, tournaments, and store events at a glance. Favorites, notifications, and .ics calendar exports.",
+    featureDesc4:
+      "Release dates, tournaments, and store events at a glance. Favorites, notifications, and .ics calendar exports.",
     featureTitle5: "LFG & Friends",
-    featureDesc5: "Store-level matchmaking, DMs, friend management, and automatic match result synchronization.",
+    featureDesc5:
+      "Store-level matchmaking, DMs, friend management, and automatic match result synchronization.",
     featureTitle6: "AI Coach",
-    featureDesc6: "Get personalized matchup and weakness coaching based on your match history (3 free tokens per month).",
+    featureDesc6:
+      "Get personalized matchup and weakness coaching based on your match history (3 free tokens per month).",
     pricingTitle: "Simple Pricing",
-    pricingDesc: "Core features are free forever. AI features can be refilled via usage or subscription.",
+    pricingDesc:
+      "Core features are free forever. AI features can be refilled via usage or subscription.",
     pricingTestNotice: "Beta stage — Payment will be enabled upon official launch",
     priceFreeName: "Free Plan",
     priceProName: "Pro Plan",
@@ -288,7 +301,8 @@ export const en = {
   },
   cards: {
     metaTitle: "Card DB — DuelNight",
-    metaDesc: "One Piece, Pokémon, and Digimon TCG card database search, filters, favorites, and reviews.",
+    metaDesc:
+      "One Piece, Pokémon, and Digimon TCG card database search, filters, favorites, and reviews.",
     title: "Card DB",
     desc: "Search, filter, and favorite cards",
     searchPlaceholder: "Card name, code, or trait (e.g., Luffy, OP12-004, Straw Hat Crew)",
@@ -313,7 +327,8 @@ export const en = {
     detail: "Detail →",
     detailAria: "Go to shareable details page",
     deleteConfirmTitle: "Delete this card?",
-    deleteConfirmDesc: "This will permanently delete card {code} · {name}. This action cannot be undone.",
+    deleteConfirmDesc:
+      "This will permanently delete card {code} · {name}. This action cannot be undone.",
     deleteSuccess: "Card deleted successfully",
     deleteFailed: "Failed to delete: ",
     deleting: "Deleting...",
@@ -341,7 +356,8 @@ export const en = {
     checkingPermission: "Checking permissions...",
     adminOnlyFunc: "Administrator function only",
     noPermissionTitle: "Access Denied",
-    noPermissionDesc: "Registering or editing cards can only be performed by administrators. If you spot a missing or incorrect card, please contact support.",
+    noPermissionDesc:
+      "Registering or editing cards can only be performed by administrators. If you spot a missing or incorrect card, please contact support.",
     browseDb: "Browse Card DB",
     cardNotFound: "Card not found",
     backToDb: "Back to Card DB",
@@ -360,7 +376,8 @@ export const en = {
     addDeck: "Add Deck",
     emptyTitle: "No saved decks",
     emptyDesc: "Try adding your first deck using 'Add Deck' in the top right.",
-    deleteConfirm: "Are you sure you want to delete this deck? Associated match records will be kept.",
+    deleteConfirm:
+      "Are you sure you want to delete this deck? Associated match records will be kept.",
     deletedToast: "Deleted successfully",
     public: "Public",
     private: "Private",
@@ -393,7 +410,8 @@ export const en = {
     archetype: "Archetype",
     noArchetypeInfo: "No info",
     summaryTitle: "Summary",
-    summaryDesc: "This deck is used in the {game} environment. Currently, {total} cards are registered, and it is {status}.",
+    summaryDesc:
+      "This deck is used in the {game} environment. Currently, {total} cards are registered, and it is {status}.",
     cardsInDeck: "Included Cards ({count})",
     notRegisteredDb: "Not in DB",
     notRegisteredDbTooltip: "{code} — Not in Card DB",
@@ -746,7 +764,8 @@ export const en = {
     processing: "Processing...",
     resetPasswordTitle: "Reset Password",
     resetPasswordDesc: "Please enter your new password.",
-    resetPasswordInvalidLink: "You must access this page from the link sent to your email. The link might have expired.",
+    resetPasswordInvalidLink:
+      "You must access this page from the link sent to your email. The link might have expired.",
     newPasswordInput: "New Password",
     confirmNewPasswordInput: "Confirm Password",
     passwordMinLengthError: "Password must be at least 6 characters.",
@@ -801,7 +820,8 @@ export const en = {
     purchaseBtn: "Purchase",
     purchaseSuccess: "Successfully purchased {name}!",
     secureTitle: "Secure Payment Guaranteed",
-    secureDesc: "DuelNight provides a highly secure payment environment through certified providers (Stripe & PortOne). Your payment details are encrypted and never stored on our servers.",
+    secureDesc:
+      "DuelNight provides a highly secure payment environment through certified providers (Stripe & PortOne). Your payment details are encrypted and never stored on our servers.",
     bonusCredits: "+{bonus} Bonus Credits",
     standardPack: "Standard Pack",
     priceKRW: "{price} KRW",
@@ -927,4 +947,3 @@ export const en = {
     kindMatch: "Match",
   },
 };
-

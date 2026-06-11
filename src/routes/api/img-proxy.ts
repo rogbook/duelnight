@@ -19,7 +19,8 @@ function hostBlocked(host: string): boolean {
   if (h === "metadata.google.internal" || h === "169.254.169.254") return true;
   if (h === "0.0.0.0" || h === "::1" || h === "::") return true;
   // IPv4 사설/루프백/링크로컬 + CGNAT(100.64.0.0/10)
-  if (/^127\./.test(h) || /^10\./.test(h) || /^192\.168\./.test(h) || /^169\.254\./.test(h)) return true;
+  if (/^127\./.test(h) || /^10\./.test(h) || /^192\.168\./.test(h) || /^169\.254\./.test(h))
+    return true;
   if (/^172\.(1[6-9]|2\d|3[01])\./.test(h)) return true;
   if (/^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./.test(h)) return true;
   // IPv6 ULA(fc00::/7) / 링크로컬(fe80::/10)
@@ -79,7 +80,10 @@ export const Route = createFileRoute("/api/img-proxy")({
             } catch {
               return new Response("bad redirect", { status: 502 });
             }
-            if ((next.protocol !== "https:" && next.protocol !== "http:") || hostBlocked(next.hostname)) {
+            if (
+              (next.protocol !== "https:" && next.protocol !== "http:") ||
+              hostBlocked(next.hostname)
+            ) {
               return new Response("blocked redirect", { status: 400 });
             }
             current = next;
@@ -109,9 +113,13 @@ export const Route = createFileRoute("/api/img-proxy")({
             return new Response("too large", { status: 413 });
           }
           // 응답 Content-Type 결정: image/*면 그대로, 아니면(octet-stream/누락) URL 확장자로 추정
-          const ext = current.pathname.toLowerCase().match(/\.(png|jpe?g|gif|webp|avif|bmp)(?:$|[?#])/);
+          const ext = current.pathname
+            .toLowerCase()
+            .match(/\.(png|jpe?g|gif|webp|avif|bmp)(?:$|[?#])/);
           const extType = ext ? (ext[1] === "jpg" ? "image/jpeg" : `image/${ext[1]}`) : null;
-          const outType = upstreamType.startsWith("image/") ? upstreamType : (extType ?? "image/jpeg");
+          const outType = upstreamType.startsWith("image/")
+            ? upstreamType
+            : (extType ?? "image/jpeg");
 
           return new Response(res.body, {
             status: 200,

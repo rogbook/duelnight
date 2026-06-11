@@ -23,7 +23,12 @@ import { toast } from "sonner";
 import { useI18n } from "@/i18n/language-context";
 import { displayImageSrc } from "@/lib/image-proxy";
 import { PREBUILT_DECKS } from "@/lib/simulator/prebuilt-decks";
-import { optcgEngine, CARD_METADATA_CACHE, getCardMeta, getBattlePower } from "@/lib/simulator/engines/optcg";
+import {
+  optcgEngine,
+  CARD_METADATA_CACHE,
+  getCardMeta,
+  getBattlePower,
+} from "@/lib/simulator/engines/optcg";
 import { chooseAction } from "@/lib/simulator/ai/agent";
 import type { GameState, Action, CardInstance, PlayerId, PlayerState } from "@/lib/simulator/types";
 
@@ -69,7 +74,11 @@ function SimulatorMatchRoomPage() {
       if (p1!.startsWith("prebuilt-")) {
         return PREBUILT_DECKS.find((d) => d.id === p1)?.recipe ?? null;
       }
-      const { data, error } = await supabase.from("simulator_decks").select("*").eq("id", p1!).single();
+      const { data, error } = await supabase
+        .from("simulator_decks")
+        .select("*")
+        .eq("id", p1!)
+        .single();
       if (error) throw error;
       return data.recipe as any;
     },
@@ -83,7 +92,11 @@ function SimulatorMatchRoomPage() {
       if (p2!.startsWith("prebuilt-")) {
         return PREBUILT_DECKS.find((d) => d.id === p2)?.recipe ?? null;
       }
-      const { data, error } = await supabase.from("simulator_decks").select("*").eq("id", p2!).single();
+      const { data, error } = await supabase
+        .from("simulator_decks")
+        .select("*")
+        .eq("id", p2!)
+        .single();
       if (error) throw error;
       return data.recipe as any;
     },
@@ -172,7 +185,9 @@ function SimulatorMatchRoomPage() {
           // 안전 폴백: 진행 가능한 패스/턴종료/기권으로 교착 방지
           const fallback = optcgEngine
             .getAvailableActions(gameState, actor)
-            .find((a) => a.type === "pass_counter" || a.type === "end_main" || a.type === "concede");
+            .find(
+              (a) => a.type === "pass_counter" || a.type === "end_main" || a.type === "concede",
+            );
           if (fallback) {
             setGameState(optcgEngine.applyAction(gameState, fallback));
           }
@@ -204,11 +219,14 @@ function SimulatorMatchRoomPage() {
   const p1State = gameState.players.p1;
   const p2State = gameState.players.p2;
   const isMyTurn = gameState.activePlayer === "p1";
-  const myCounterWindow = !!gameState.pendingResponse && gameState.pendingResponse.defenderPlayer === "p1";
+  const myCounterWindow =
+    !!gameState.pendingResponse && gameState.pendingResponse.defenderPlayer === "p1";
 
   // P1 수동 가능 액션
   const p1AvailableActions =
-    !isTerminalResult && !isAutoPlaying && ((isMyTurn && !gameState.pendingResponse) || myCounterWindow)
+    !isTerminalResult &&
+    !isAutoPlaying &&
+    ((isMyTurn && !gameState.pendingResponse) || myCounterWindow)
       ? optcgEngine.getAvailableActions(gameState, "p1")
       : [];
 
@@ -229,7 +247,9 @@ function SimulatorMatchRoomPage() {
   // 손패 카드별로 "낼 수 있는지" 빠르게 판단하기 위한 집합
   const playableHandIids = new Set(
     p1AvailableActions
-      .filter((a) => a.type === "play_character" || a.type === "play_event" || a.type === "play_stage")
+      .filter(
+        (a) => a.type === "play_character" || a.type === "play_event" || a.type === "play_stage",
+      )
       .map((a) => (a as any).iid as string),
   );
 
@@ -246,7 +266,8 @@ function SimulatorMatchRoomPage() {
           </Link>
           <div className="min-w-0">
             <h1 className="text-sm sm:text-base font-black tracking-tight flex items-center gap-1.5 truncate">
-              <Swords className="h-4 w-4 text-red-500 shrink-0" /> <span className="truncate">AI 대국</span>
+              <Swords className="h-4 w-4 text-red-500 shrink-0" />{" "}
+              <span className="truncate">AI 대국</span>
             </h1>
             <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
               Turn {gameState.turn} · {gameState.phase === "main" ? "메인" : "전투"}
@@ -260,10 +281,16 @@ function SimulatorMatchRoomPage() {
               <button
                 onClick={() => setIsAutoPlaying((p) => !p)}
                 className={`flex items-center gap-1 px-2 py-1.5 rounded-md font-bold transition-all ${
-                  isAutoPlaying ? "bg-primary text-primary-foreground shadow" : "hover:bg-card text-muted-foreground"
+                  isAutoPlaying
+                    ? "bg-primary text-primary-foreground shadow"
+                    : "hover:bg-card text-muted-foreground"
                 }`}
               >
-                {isAutoPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 fill-current" />}
+                {isAutoPlaying ? (
+                  <Pause className="h-3.5 w-3.5" />
+                ) : (
+                  <Play className="h-3.5 w-3.5 fill-current" />
+                )}
               </button>
               <div className="h-4 w-px bg-border mx-0.5" />
               {[1500, 1000, 500].map((ms) => (
@@ -282,7 +309,8 @@ function SimulatorMatchRoomPage() {
 
           <button
             onClick={() => {
-              if (confirm("대국을 기권하고 로비로 돌아가시겠습니까?")) navigate({ to: "/simulator" });
+              if (confirm("대국을 기권하고 로비로 돌아가시겠습니까?"))
+                navigate({ to: "/simulator" });
             }}
             className="flex items-center gap-1.5 px-2.5 py-2 bg-destructive/10 text-destructive hover:bg-destructive hover:text-white rounded-lg text-[11px] font-bold transition-all min-h-10"
           >
@@ -316,7 +344,9 @@ function SimulatorMatchRoomPage() {
                   {isMyTurn ? "내 턴" : "AI 턴..."}
                 </span>
                 {isMyTurn && !isTerminalResult && (
-                  <span className="text-muted-foreground hidden sm:inline">손패를 탭해 카드를 내세요</span>
+                  <span className="text-muted-foreground hidden sm:inline">
+                    손패를 탭해 카드를 내세요
+                  </span>
                 )}
               </div>
             )}
@@ -339,7 +369,10 @@ function SimulatorMatchRoomPage() {
         <div className="rounded-2xl border border-primary/30 bg-primary/5 p-6 text-center shadow-lg space-y-3">
           <h2 className="text-xl font-black text-primary">🎉 대국 종료!</h2>
           <p className="text-sm font-bold text-muted-foreground">
-            우승: {"winner" in terminalResult! && terminalResult!.winner === "p1" ? "🏆 나 (P1)" : "🏆 AI (P2)"}
+            우승:{" "}
+            {"winner" in terminalResult! && terminalResult!.winner === "p1"
+              ? "🏆 나 (P1)"
+              : "🏆 AI (P2)"}
           </p>
           <div className="flex justify-center gap-3 pt-1">
             <Link
@@ -367,7 +400,9 @@ function SimulatorMatchRoomPage() {
           <span className="text-xs font-black uppercase tracking-wider flex items-center gap-2">
             <ScrollText className="h-4 w-4 text-primary" /> 대국 로그
           </span>
-          <span className="text-[10px] text-muted-foreground">{logOpen ? "닫기 ▲" : `열기 ▼ (${gameState.log.length})`}</span>
+          <span className="text-[10px] text-muted-foreground">
+            {logOpen ? "닫기 ▲" : `열기 ▼ (${gameState.log.length})`}
+          </span>
         </button>
         {logOpen && (
           <div className="max-h-[38vh] overflow-y-auto p-3 space-y-2 font-mono text-[11px] leading-relaxed border-t border-border">
@@ -392,7 +427,8 @@ function SimulatorMatchRoomPage() {
             {selectedCardActions.length > 0 && (
               <div className="flex items-center gap-2 overflow-x-auto pb-1">
                 <span className="text-[10px] font-bold text-primary shrink-0 flex items-center gap-1">
-                  <Sparkles className="h-3.5 w-3.5" />내기:
+                  <Sparkles className="h-3.5 w-3.5" />
+                  내기:
                 </span>
                 {selectedCardActions.map((act, i) => (
                   <button
@@ -459,12 +495,20 @@ function PlayerSide({
   // 상태 줄: 이름 배너 + 덱/트래시 + DON 배지 (상대=왼쪽 DON / 나=오른쪽 DON, 레퍼런스 배치)
   const statusRow = (
     <div className="flex items-center justify-between gap-2">
-      {isOpponent ? <DonBadge active={state.donActive} total={donTotal} /> : <NameBanner isOpponent={false} isActive={isActive} life={life} />}
+      {isOpponent ? (
+        <DonBadge active={state.donActive} total={donTotal} />
+      ) : (
+        <NameBanner isOpponent={false} isActive={isActive} life={life} />
+      )}
       <div className="flex items-center gap-1.5">
         <Pile kind="deck" count={state.zones.deck.length} />
         <Pile kind="trash" count={state.zones.graveyard.length} />
       </div>
-      {isOpponent ? <NameBanner isOpponent isActive={isActive} life={life} /> : <DonBadge active={state.donActive} total={donTotal} />}
+      {isOpponent ? (
+        <NameBanner isOpponent isActive={isActive} life={life} />
+      ) : (
+        <DonBadge active={state.donActive} total={donTotal} />
+      )}
     </div>
   );
 
@@ -480,7 +524,11 @@ function PlayerSide({
   // 액티브(리더) — 중앙, 내 리더는 상시 글로우
   const active = (
     <div className="flex justify-center py-0.5">
-      {leader ? <LeaderCard unit={leader} life={life} glowing={!isOpponent} /> : <EmptySlot isLeader />}
+      {leader ? (
+        <LeaderCard unit={leader} life={life} glowing={!isOpponent} />
+      ) : (
+        <EmptySlot isLeader />
+      )}
     </div>
   );
 
@@ -526,14 +574,26 @@ function PlayerSide({
 // ──────────────────────────────────────────────────────────
 // 이름 배너 (플레이어 식별 + 라이프 ❤️)
 // ──────────────────────────────────────────────────────────
-function NameBanner({ isOpponent, isActive, life }: { isOpponent: boolean; isActive: boolean; life: number }) {
+function NameBanner({
+  isOpponent,
+  isActive,
+  life,
+}: {
+  isOpponent: boolean;
+  isActive: boolean;
+  life: number;
+}) {
   return (
     <div
       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold text-white bg-slate-800/90 shadow ${
         isActive ? "ring-2 " + (isOpponent ? "ring-red-400" : "ring-sky-400") : ""
       }`}
     >
-      {isOpponent ? <Cpu className="h-3.5 w-3.5 text-red-300" /> : <User className="h-3.5 w-3.5 text-sky-300" />}
+      {isOpponent ? (
+        <Cpu className="h-3.5 w-3.5 text-red-300" />
+      ) : (
+        <User className="h-3.5 w-3.5 text-sky-300" />
+      )}
       <span>{isOpponent ? "AI 상대" : "나"}</span>
       <span className="flex items-center gap-0.5 text-rose-300">
         <Heart className="h-3 w-3 fill-current" />
@@ -572,10 +632,16 @@ function Pile({ kind, count }: { kind: "deck" | "trash"; count: number }) {
       />
       <div
         className={`absolute inset-0 rounded-md border flex items-center justify-center ${
-          isDeck ? "bg-gradient-to-br from-indigo-500 to-indigo-700 border-indigo-300/40" : "bg-card border-border"
+          isDeck
+            ? "bg-gradient-to-br from-indigo-500 to-indigo-700 border-indigo-300/40"
+            : "bg-card border-border"
         }`}
       >
-        {isDeck ? <Layers className="h-3.5 w-3.5 text-white/80" /> : <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />}
+        {isDeck ? (
+          <Layers className="h-3.5 w-3.5 text-white/80" />
+        ) : (
+          <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+        )}
       </div>
       <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 text-[8px] font-black bg-background/90 rounded px-1 border border-border">
         {count}
@@ -587,7 +653,15 @@ function Pile({ kind, count }: { kind: "deck" | "trash"; count: number }) {
 // ──────────────────────────────────────────────────────────
 // 리더(액티브) 카드 — 크게 + 글로우 + 라이프 HP 배지
 // ──────────────────────────────────────────────────────────
-function LeaderCard({ unit, life, glowing }: { unit: CardInstance; life: number; glowing: boolean }) {
+function LeaderCard({
+  unit,
+  life,
+  glowing,
+}: {
+  unit: CardInstance;
+  life: number;
+  glowing: boolean;
+}) {
   const meta = getCardMeta(unit.code);
   const power = getBattlePower(unit);
   const donAttached = unit.attached.filter((t) => t.code === "DON!!").length;
@@ -598,7 +672,11 @@ function LeaderCard({ unit, life, glowing }: { unit: CardInstance; life: number;
       {glowing && <div className="absolute -inset-1.5 rounded-2xl bg-cyan-400/40 blur-md" />}
       <div
         className={`relative w-24 h-32 sm:w-28 sm:h-40 rounded-xl border-2 overflow-hidden shadow-xl ${
-          unit.rested ? "opacity-70 border-border rotate-[6deg]" : glowing ? "border-cyan-300" : "border-primary/80"
+          unit.rested
+            ? "opacity-70 border-border rotate-[6deg]"
+            : glowing
+              ? "border-cyan-300"
+              : "border-primary/80"
         }`}
         title={meta.name}
       >
@@ -649,7 +727,9 @@ function HandFan({
   onHandSelect?: (iid: string) => void;
 }) {
   if (hand.length === 0) {
-    return <div className="flex justify-center py-3 text-[10px] text-muted-foreground">손패 없음</div>;
+    return (
+      <div className="flex justify-center py-3 text-[10px] text-muted-foreground">손패 없음</div>
+    );
   }
   return (
     <div className="flex justify-center items-end overflow-x-auto pt-1">
@@ -681,7 +761,11 @@ function HandFan({
               </span>
               <div className="absolute bottom-0.5 left-0.5 right-0.5 flex items-center justify-between text-[8px]">
                 <span className="bg-black/70 text-white px-1 rounded font-bold">{meta.cost}</span>
-                {meta.power > 0 && <span className="bg-red-600/90 text-white px-1 rounded font-bold">{meta.power}</span>}
+                {meta.power > 0 && (
+                  <span className="bg-red-600/90 text-white px-1 rounded font-bold">
+                    {meta.power}
+                  </span>
+                )}
               </div>
               {playable && !selected && (
                 <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-green-400 ring-1 ring-white/50" />
@@ -722,7 +806,14 @@ function OppHand({ count }: { count: number }) {
 function CardArt({ meta }: { meta: ReturnType<typeof getCardMeta> }) {
   const src = displayImageSrc(meta.imageUrl);
   if (src) {
-    return <img src={src} alt={meta.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />;
+    return (
+      <img
+        src={src}
+        alt={meta.name}
+        loading="lazy"
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+    );
   }
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-muted text-[7px] font-extrabold text-muted-foreground text-center px-0.5">
@@ -784,7 +875,13 @@ function BattleUnit({ unit }: { unit: CardInstance }) {
 // ──────────────────────────────────────────────────────────
 // 카운터 윈도우 안내 밴드
 // ──────────────────────────────────────────────────────────
-function CounterBand({ pending, state }: { pending: NonNullable<GameState["pendingResponse"]>; state: GameState }) {
+function CounterBand({
+  pending,
+  state,
+}: {
+  pending: NonNullable<GameState["pendingResponse"]>;
+  state: GameState;
+}) {
   const def =
     pending.baseDefenderPower + pending.appliedModifiers.reduce((acc, m) => acc + m.delta, 0);
   const attackerName = nameOfIid(state, pending.attackerIid);

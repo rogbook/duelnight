@@ -25,7 +25,7 @@ export function LanguageSelector() {
         <button
           className={cn(
             "flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-medium text-foreground transition-all duration-200 hover:border-white/20 hover:bg-white/10 focus:outline-none sm:gap-2 sm:px-3 sm:py-1.5",
-            "backdrop-blur-md shadow-[0_4px_30px_rgba(0,0,0,0.1)]"
+            "backdrop-blur-md shadow-[0_4px_30px_rgba(0,0,0,0.1)]",
           )}
           aria-label="Select language"
         >
@@ -53,7 +53,7 @@ export function LanguageSelector() {
                 "flex items-center justify-between rounded-md px-2 py-1.5 text-xs transition-colors cursor-pointer select-none",
                 isSelected
                   ? "bg-primary/10 text-primary font-medium"
-                  : "text-foreground hover:bg-white/5"
+                  : "text-foreground hover:bg-white/5",
               )}
             >
               <div className="flex items-center gap-2">

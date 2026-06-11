@@ -20,11 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 
 import { normalizeDeckName } from "@/lib/normalize-deck";
@@ -39,7 +35,6 @@ import {
 import type { Tables } from "@/integrations/supabase/types";
 import { useI18n } from "@/i18n/language-context";
 import { useGames } from "@/hooks/use-games";
-
 
 type Deck = Tables<"decks">;
 
@@ -102,7 +97,9 @@ function LeaderPicker({
         </div>
         <div className="max-h-64 overflow-y-auto py-1">
           {isLoading ? (
-            <div className="px-3 py-6 text-center text-xs text-muted-foreground">불러오는 중...</div>
+            <div className="px-3 py-6 text-center text-xs text-muted-foreground">
+              불러오는 중...
+            </div>
           ) : filtered.length === 0 ? (
             <div className="px-3 py-6 text-center text-xs text-muted-foreground">
               {leaders.length === 0
@@ -153,7 +150,6 @@ export function DeckDialog({ mode, deck, onSaved, trigger }: DeckDialogProps) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
-
   const [game, setGame] = useState<Game>("optcg");
   const [name, setName] = useState("");
   const [leader, setLeader] = useState("");
@@ -183,19 +179,19 @@ export function DeckDialog({ mode, deck, onSaved, trigger }: DeckDialogProps) {
   }, [open, mode, deck]);
 
   const toggleColor = (c: string) => {
-    setColors((prev) =>
-      prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c],
-    );
+    setColors((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
   };
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return toast.error("덱 이름을 입력해 주세요.");
     if (colors.length === 0) return toast.error("최소 1개 이상의 색상을 선택해 주세요.");
-    
+
     setBusy(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("인증이 필요합니다.");
 
       const payload = {
@@ -262,10 +258,11 @@ export function DeckDialog({ mode, deck, onSaved, trigger }: DeckDialogProps) {
               </SelectTrigger>
               <SelectContent>
                 {gameOptions.map((g) => (
-                  <SelectItem key={g.code} value={g.code}>{labelOf(g.code)}</SelectItem>
+                  <SelectItem key={g.code} value={g.code}>
+                    {labelOf(g.code)}
+                  </SelectItem>
                 ))}
               </SelectContent>
-
             </Select>
           </div>
 
@@ -331,7 +328,9 @@ export function DeckDialog({ mode, deck, onSaved, trigger }: DeckDialogProps) {
           <div className="col-span-2 flex items-center justify-between rounded-lg border border-border p-3">
             <div className="space-y-0.5">
               <Label className="text-xs">공개 여부</Label>
-              <p className="text-[10px] text-muted-foreground">공개 시 다른 유저가 이 덱을 볼 수 있습니다.</p>
+              <p className="text-[10px] text-muted-foreground">
+                공개 시 다른 유저가 이 덱을 볼 수 있습니다.
+              </p>
             </div>
             <button
               type="button"
@@ -349,8 +348,12 @@ export function DeckDialog({ mode, deck, onSaved, trigger }: DeckDialogProps) {
           </div>
 
           <div className="col-span-2 flex justify-end gap-2 pt-2">
-            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>취소</Button>
-            <Button type="submit" disabled={busy}>{busy ? "저장 중..." : "저장"}</Button>
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+              취소
+            </Button>
+            <Button type="submit" disabled={busy}>
+              {busy ? "저장 중..." : "저장"}
+            </Button>
           </div>
         </form>
       </DialogContent>

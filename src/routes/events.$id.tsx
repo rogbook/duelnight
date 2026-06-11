@@ -1,5 +1,13 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowLeft, MapPin, Clock, ExternalLink, Star, Download, Calendar as CalIcon } from "lucide-react";
+import {
+  ArrowLeft,
+  MapPin,
+  Clock,
+  ExternalLink,
+  Star,
+  Download,
+  Calendar as CalIcon,
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -17,9 +25,14 @@ const SITE = "https://duelnight.app";
 
 function googleCalendarUrl(ev: Event) {
   const fmt = (iso: string) =>
-    new Date(iso).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+    new Date(iso)
+      .toISOString()
+      .replace(/[-:]/g, "")
+      .replace(/\.\d{3}/, "");
   const start = fmt(ev.starts_at);
-  const end = fmt(ev.ends_at ?? new Date(new Date(ev.starts_at).getTime() + 60 * 60 * 1000).toISOString());
+  const end = fmt(
+    ev.ends_at ?? new Date(new Date(ev.starts_at).getTime() + 60 * 60 * 1000).toISOString(),
+  );
   const params = new URLSearchParams({
     action: "TEMPLATE",
     text: ev.title,
@@ -61,10 +74,9 @@ export const Route = createFileRoute("/events/$id")({
       match: locale === "ja" ? "マッチ" : locale === "en" ? "Match" : "매칭",
     };
     const title = `${e.title} — ${kindLabels[e.kind] || e.kind} · DuelNight`;
-    const desc =
-      (e.notes ?? `${GAME_LABEL[e.game]} · ${e.location ?? ""}`)
-        .replace(/\s+/g, " ")
-        .slice(0, 150);
+    const desc = (e.notes ?? `${GAME_LABEL[e.game]} · ${e.location ?? ""}`)
+      .replace(/\s+/g, " ")
+      .slice(0, 150);
     const url = `${SITE}/events/${e.id}`;
     return {
       meta: [
@@ -87,9 +99,7 @@ export const Route = createFileRoute("/events/$id")({
             name: e.title,
             startDate: e.starts_at,
             endDate: e.ends_at ?? undefined,
-            location: e.location
-              ? { "@type": "Place", name: e.location }
-              : undefined,
+            location: e.location ? { "@type": "Place", name: e.location } : undefined,
             url: e.url ?? e.product_url ?? undefined,
             description: e.notes ?? undefined,
           }),
@@ -98,7 +108,7 @@ export const Route = createFileRoute("/events/$id")({
     };
   },
   component: EventDetailPage,
-  notFoundComponent: () => {
+  notFoundComponent: function EventNotFound() {
     const { t } = useI18n();
     return (
       <div className="mx-auto max-w-3xl px-6 py-16 text-center">
@@ -157,9 +167,7 @@ function EventDetailPage() {
         .eq("event_id", event.id);
       toast.success(t("eventsDetail.favRemoveSuccess"));
     } else {
-      await supabase
-        .from("event_favorites")
-        .insert({ user_id: user.id, event_id: event.id });
+      await supabase.from("event_favorites").insert({ user_id: user.id, event_id: event.id });
       toast.success(t("eventsDetail.favAddSuccess"));
     }
     refetchFav();
@@ -208,7 +216,9 @@ function EventDetailPage() {
               className="inline-flex items-center gap-1 text-foreground hover:underline"
             >
               <ExternalLink className="h-3.5 w-3.5" />
-              {event.kind === "release" ? t("eventsDetail.officialHomepage") : t("eventsDetail.officialLink")}
+              {event.kind === "release"
+                ? t("eventsDetail.officialHomepage")
+                : t("eventsDetail.officialLink")}
             </a>
           )}
         </div>
@@ -220,20 +230,12 @@ function EventDetailPage() {
         )}
 
         <div className="mt-6 flex flex-wrap gap-2">
-          <Button
-            size="sm"
-            variant={isFav ? "default" : "outline"}
-            onClick={toggleFav}
-          >
+          <Button size="sm" variant={isFav ? "default" : "outline"} onClick={toggleFav}>
             <Star className="mr-1 h-4 w-4" fill={isFav ? "currentColor" : "none"} />
             {isFav ? t("eventsDetail.favRemove") : t("eventsDetail.favAdd")}
           </Button>
           <Button size="sm" variant="outline" asChild>
-            <a
-              href={googleCalendarUrl(event)}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a href={googleCalendarUrl(event)} target="_blank" rel="noopener noreferrer">
               <CalIcon className="mr-1 h-4 w-4" />
               {t("eventsDetail.addToGoogleCalendar")}
             </a>

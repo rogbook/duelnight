@@ -58,7 +58,11 @@ export async function markRead(conversationId: string): Promise<void> {
 }
 
 export async function fetchConversation(conversationId: string): Promise<DMConversation | null> {
-  const { data, error } = await sb().from("conversations").select("*").eq("id", conversationId).maybeSingle();
+  const { data, error } = await sb()
+    .from("conversations")
+    .select("*")
+    .eq("id", conversationId)
+    .maybeSingle();
   if (error) throw error;
   return (data as DMConversation) ?? null;
 }
@@ -98,7 +102,9 @@ export async function fetchProfiles(ids: string[]): Promise<Record<string, DMPro
 export async function blockUser(otherId: string): Promise<void> {
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) throw new Error("로그인이 필요합니다");
-  const { error } = await sb().from("user_blocks").insert({ blocker_id: u.user.id, blocked_id: otherId });
+  const { error } = await sb()
+    .from("user_blocks")
+    .insert({ blocker_id: u.user.id, blocked_id: otherId });
   if (error) throw error;
 }
 
@@ -127,9 +133,12 @@ export async function reportUser(
 ): Promise<void> {
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) throw new Error("로그인이 필요합니다");
-  const { error } = await sb()
-    .from("user_reports")
-    .insert({ reporter_id: u.user.id, reported_id: reportedId, conversation_id: conversationId, reason });
+  const { error } = await sb().from("user_reports").insert({
+    reporter_id: u.user.id,
+    reported_id: reportedId,
+    conversation_id: conversationId,
+    reason,
+  });
   if (error) throw error;
 }
 

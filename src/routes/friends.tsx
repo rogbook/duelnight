@@ -20,7 +20,12 @@ type Row = {
   addressee_id: string;
   status: "pending" | "accepted";
   created_at: string;
-  other: { id: string; display_name: string | null; username: string | null; avatar_url: string | null } | null;
+  other: {
+    id: string;
+    display_name: string | null;
+    username: string | null;
+    avatar_url: string | null;
+  } | null;
 };
 
 export const Route = createFileRoute("/friends")({
@@ -105,9 +110,19 @@ function FriendsPage() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       const otherIds = Array.from(
-        new Set((data ?? []).map((r) => (r.requester_id === user!.id ? r.addressee_id : r.requester_id))),
+        new Set(
+          (data ?? []).map((r) => (r.requester_id === user!.id ? r.addressee_id : r.requester_id)),
+        ),
       );
-      let profiles: Record<string, { id: string; display_name: string | null; username: string | null; avatar_url: string | null }> = {};
+      const profiles: Record<
+        string,
+        {
+          id: string;
+          display_name: string | null;
+          username: string | null;
+          avatar_url: string | null;
+        }
+      > = {};
       if (otherIds.length > 0) {
         const { data: ps } = await supabase
           .from("profiles")
@@ -122,12 +137,22 @@ function FriendsPage() {
     },
   });
 
-  if (loading) return <div className="mx-auto max-w-4xl px-6 py-8 text-sm text-muted-foreground">{t("friends.loading")}</div>;
+  if (loading)
+    return (
+      <div className="mx-auto max-w-4xl px-6 py-8 text-sm text-muted-foreground">
+        {t("friends.loading")}
+      </div>
+    );
   if (!user) {
     return (
       <div className="mx-auto max-w-4xl px-6 py-8">
         <PageHeader title={t("friends.title")} description={t("friends.loginDesc")} />
-        <Link to="/login" className="mt-4 inline-flex rounded-md bg-foreground px-4 py-2 text-sm text-background">{t("friends.goLogin")}</Link>
+        <Link
+          to="/login"
+          className="mt-4 inline-flex rounded-md bg-foreground px-4 py-2 text-sm text-background"
+        >
+          {t("friends.goLogin")}
+        </Link>
       </div>
     );
   }
@@ -161,7 +186,10 @@ function FriendsPage() {
   };
 
   const accept = async (id: string) => {
-    const { error } = await supabase.from("friendships").update({ status: "accepted" }).eq("id", id);
+    const { error } = await supabase
+      .from("friendships")
+      .update({ status: "accepted" })
+      .eq("id", id);
     if (error) return toast.error(error.message);
     toast.success(t("friends.accepted"));
     refetch();
@@ -181,7 +209,11 @@ function FriendsPage() {
         <h2 className="text-sm font-medium">{t("friends.addFriend")}</h2>
         <div className="mt-3 flex flex-col gap-3 sm:flex-row">
           <div className="flex-1">
-            <OpponentSearch selected={picked} onSelect={setPicked} onClear={() => setPicked(null)} />
+            <OpponentSearch
+              selected={picked}
+              onSelect={setPicked}
+              onClear={() => setPicked(null)}
+            />
           </div>
           <Button onClick={sendRequest} disabled={!picked || picked.friendship_status !== "none"}>
             <UserPlus className="mr-1 h-4 w-4" /> {t("friends.sendRequest")}
@@ -198,8 +230,13 @@ function FriendsPage() {
         ) : (
           incoming.map((r) => (
             <UserRow key={r.id} other={r.other} anonymous={t("friends.anonymous")}>
-              <Button size="sm" onClick={() => accept(r.id)}><Check className="mr-1 h-3.5 w-3.5" />{t("friends.accept")}</Button>
-              <Button size="sm" variant="ghost" onClick={() => remove(r.id)}><X className="h-3.5 w-3.5" /></Button>
+              <Button size="sm" onClick={() => accept(r.id)}>
+                <Check className="mr-1 h-3.5 w-3.5" />
+                {t("friends.accept")}
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => remove(r.id)}>
+                <X className="h-3.5 w-3.5" />
+              </Button>
             </UserRow>
           ))
         )}
@@ -212,7 +249,9 @@ function FriendsPage() {
           outgoing.map((r) => (
             <UserRow key={r.id} other={r.other} anonymous={t("friends.anonymous")}>
               <span className="text-xs text-muted-foreground">{t("friends.pending")}</span>
-              <Button size="sm" variant="ghost" onClick={() => remove(r.id)}>{t("friends.cancel")}</Button>
+              <Button size="sm" variant="ghost" onClick={() => remove(r.id)}>
+                {t("friends.cancel")}
+              </Button>
             </UserRow>
           ))
         )}
@@ -220,7 +259,11 @@ function FriendsPage() {
 
       <Section title={t("friends.friendsSection", { count: friends.length })}>
         {friends.length === 0 ? (
-          <EmptyState icon={Users} title={t("friends.noFriendsTitle")} description={t("friends.noFriendsDesc")} />
+          <EmptyState
+            icon={Users}
+            title={t("friends.noFriendsTitle")}
+            description={t("friends.noFriendsDesc")}
+          />
         ) : (
           <>
             <p className="mb-2 text-[11px] text-muted-foreground">{t("friends.favoritesNote")}</p>
@@ -254,7 +297,11 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function Empty({ text }: { text: string }) {
-  return <p className="rounded-md border border-dashed border-border px-4 py-6 text-center text-xs text-muted-foreground">{text}</p>;
+  return (
+    <p className="rounded-md border border-dashed border-border px-4 py-6 text-center text-xs text-muted-foreground">
+      {text}
+    </p>
+  );
 }
 
 function FriendRow({
@@ -276,7 +323,9 @@ function FriendRow({
         <div className="relative shrink-0">
           <Avatar className="h-9 w-9">
             <AvatarImage src={other?.avatar_url ?? undefined} />
-            <AvatarFallback>{(other?.display_name ?? other?.username ?? "?").slice(0, 1)}</AvatarFallback>
+            <AvatarFallback>
+              {(other?.display_name ?? other?.username ?? "?").slice(0, 1)}
+            </AvatarFallback>
           </Avatar>
           {online && (
             <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card bg-green-500" />
@@ -293,7 +342,9 @@ function FriendRow({
             {online ? (
               <span className="font-medium text-green-500">● {t("friends.online")}</span>
             ) : (
-              <span className="text-muted-foreground">{other?.username ? `@${other.username}` : ""}</span>
+              <span className="text-muted-foreground">
+                {other?.username ? `@${other.username}` : ""}
+              </span>
             )}
           </p>
         </div>
@@ -305,10 +356,17 @@ function FriendRow({
           onClick={onToggleFavorite}
           title={t(isFavorite ? "friends.unfavorite" : "friends.favorite")}
         >
-          <Star className={`h-4 w-4 ${isFavorite ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />
+          <Star
+            className={`h-4 w-4 ${isFavorite ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`}
+          />
         </Button>
         {other?.id && <StartDmButton userId={other.id} size="sm" variant="outline" />}
-        <Button size="icon" variant="ghost" onClick={onRemove} className="text-destructive hover:text-destructive">
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={onRemove}
+          className="text-destructive hover:text-destructive"
+        >
           <Trash2 className="h-3.5 w-3.5" />
         </Button>
       </div>
@@ -316,17 +374,31 @@ function FriendRow({
   );
 }
 
-function UserRow({ other, children, anonymous }: { other: Row["other"]; children: React.ReactNode; anonymous: string }) {
+function UserRow({
+  other,
+  children,
+  anonymous,
+}: {
+  other: Row["other"];
+  children: React.ReactNode;
+  anonymous: string;
+}) {
   return (
     <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-card px-3 py-2">
       <div className="flex items-center gap-2 min-w-0">
         <Avatar className="h-8 w-8">
           <AvatarImage src={other?.avatar_url ?? undefined} />
-          <AvatarFallback>{(other?.display_name ?? other?.username ?? "?").slice(0, 1)}</AvatarFallback>
+          <AvatarFallback>
+            {(other?.display_name ?? other?.username ?? "?").slice(0, 1)}
+          </AvatarFallback>
         </Avatar>
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium">{other?.display_name ?? other?.username ?? anonymous}</p>
-          {other?.username && <p className="truncate text-[11px] text-muted-foreground">@{other.username}</p>}
+          <p className="truncate text-sm font-medium">
+            {other?.display_name ?? other?.username ?? anonymous}
+          </p>
+          {other?.username && (
+            <p className="truncate text-[11px] text-muted-foreground">@{other.username}</p>
+          )}
         </div>
       </div>
       <div className="flex items-center gap-2">{children}</div>

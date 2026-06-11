@@ -11,7 +11,8 @@ export function displayImageSrc(url: string | null | undefined): string | undefi
     const h = new URL(s).hostname.toLowerCase();
     // 우리/신뢰 출처는 프록시 불필요
     if (h.endsWith("supabase.co")) return s;
-    if (h.endsWith("google.com") || h.endsWith("googleusercontent.com") || h.endsWith("ggpht.com")) return s;
+    if (h.endsWith("google.com") || h.endsWith("googleusercontent.com") || h.endsWith("ggpht.com"))
+      return s;
     if (h.endsWith("r2.dev") || h.endsWith("cloudflarestorage.com")) return s;
   } catch {
     return s;

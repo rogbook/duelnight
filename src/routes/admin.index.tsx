@@ -1,6 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { UserPlus, UserMinus, Crown, Lock, LogIn, Infinity as InfinityIcon, Trash2 } from "lucide-react";
+import {
+  UserPlus,
+  UserMinus,
+  Crown,
+  Lock,
+  LogIn,
+  Infinity as InfinityIcon,
+  Trash2,
+} from "lucide-react";
 import { z } from "zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -22,11 +30,7 @@ import {
   revokeAiUnlimited,
 } from "@/lib/admin.functions";
 
-const emailSchema = z
-  .string()
-  .trim()
-  .email({ message: "올바른 이메일 형식이 아닙니다" })
-  .max(255);
+const emailSchema = z.string().trim().email({ message: "올바른 이메일 형식이 아닙니다" }).max(255);
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({
@@ -226,8 +230,7 @@ function AdminPage() {
                 아직 관리자가 없어요. 지금 로그인된 본인 계정을 첫 관리자로 등록할 수 있습니다.
               </p>
               <Button onClick={claim} disabled={busy} className="mt-3">
-                <Crown className="mr-1 h-4 w-4" />
-                내 계정을 첫 관리자로 등록
+                <Crown className="mr-1 h-4 w-4" />내 계정을 첫 관리자로 등록
               </Button>
             </div>
           </div>
@@ -243,7 +246,9 @@ function AdminPage() {
             </p>
             <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
               <div className="space-y-1">
-                <Label htmlFor="grant-email" className="sr-only">이메일</Label>
+                <Label htmlFor="grant-email" className="sr-only">
+                  이메일
+                </Label>
                 <Input
                   id="grant-email"
                   type="email"
@@ -283,7 +288,10 @@ function AdminPage() {
             ) : (
               <ul className="mt-3 divide-y divide-border rounded-lg border border-border bg-card">
                 {admins.map((a) => (
-                  <li key={a.user_id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+                  <li
+                    key={a.user_id}
+                    className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
+                  >
                     <div className="min-w-0">
                       <p className="truncate font-medium">{a.display_name ?? a.email}</p>
                       <p className="truncate text-xs text-muted-foreground">
@@ -331,7 +339,10 @@ function AdminPage() {
             ) : (
               <ul className="mt-2 divide-y divide-border rounded-lg border border-border">
                 {unlimitedUsers.map((u) => (
-                  <li key={u.user_id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+                  <li
+                    key={u.user_id}
+                    className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
+                  >
                     <div className="min-w-0">
                       <p className="truncate font-medium">{u.display_name ?? u.email}</p>
                       <p className="truncate text-xs text-muted-foreground">
@@ -389,4 +400,3 @@ function GuardCard({
     </div>
   );
 }
-

@@ -52,7 +52,9 @@ export function ThemeToggle() {
               onClick={() => setTheme(mode)}
               className={cn(
                 "flex items-center justify-between rounded-md px-2 py-1.5 text-xs transition-colors cursor-pointer select-none",
-                selected ? "bg-primary/10 text-primary font-medium" : "text-foreground hover:bg-white/5",
+                selected
+                  ? "bg-primary/10 text-primary font-medium"
+                  : "text-foreground hover:bg-white/5",
               )}
             >
               <div className="flex items-center gap-2">

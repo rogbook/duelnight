@@ -9,29 +9,21 @@ import {
 
 describe("getProjectRef", () => {
   test("Supabase 프로젝트 ref를 추출한다", () => {
-    expect(
-      getProjectRef("https://nrtdhkjeziknmafauypv.supabase.co"),
-    ).toBe("nrtdhkjeziknmafauypv");
+    expect(getProjectRef("https://nrtdhkjeziknmafauypv.supabase.co")).toBe("nrtdhkjeziknmafauypv");
   });
 
   test("Supabase가 아닌 URL은 거부한다", () => {
-    expect(() => getProjectRef("https://example.com")).toThrow(
-      "Supabase URL 형식",
-    );
+    expect(() => getProjectRef("https://example.com")).toThrow("Supabase URL 형식");
   });
 });
 
 describe("normalizeStoragePath", () => {
   test("정상적인 중첩 경로를 유지한다", () => {
-    expect(normalizeStoragePath("BTK-01/card%2001.webp")).toBe(
-      "BTK-01/card 01.webp",
-    );
+    expect(normalizeStoragePath("BTK-01/card%2001.webp")).toBe("BTK-01/card 01.webp");
   });
 
   test("상위 경로 이동을 거부한다", () => {
-    expect(() => normalizeStoragePath("user/%2E%2E/admin/card.webp")).toThrow(
-      "안전하지 않은",
-    );
+    expect(() => normalizeStoragePath("user/%2E%2E/admin/card.webp")).toThrow("안전하지 않은");
   });
 
   test("백슬래시 경로도 정규화한다", () => {
@@ -111,14 +103,10 @@ describe("isAlreadyExistsError", () => {
   });
 
   test("중복 객체 메시지를 경쟁 상태로 판별한다", () => {
-    expect(
-      isAlreadyExistsError({ message: "The resource already exists" }),
-    ).toBeTrue();
+    expect(isAlreadyExistsError({ message: "The resource already exists" })).toBeTrue();
   });
 
   test("다른 Storage 오류는 제외한다", () => {
-    expect(
-      isAlreadyExistsError({ statusCode: 500, message: "Internal error" }),
-    ).toBeFalse();
+    expect(isAlreadyExistsError({ statusCode: 500, message: "Internal error" })).toBeFalse();
   });
 });

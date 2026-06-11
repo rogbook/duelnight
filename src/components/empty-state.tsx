@@ -13,14 +13,8 @@ export function EmptyState({ icon: Icon, title, description }: EmptyStateProps) 
         <Icon className="h-5 w-5" />
       </div>
       <h3 className="mt-4 text-base font-medium text-foreground">{title}</h3>
-      {description && (
-        <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-          {description}
-        </p>
-      )}
-      <p className="mt-4 text-xs text-muted-foreground">
-        곧 제공될 예정입니다
-      </p>
+      {description && <p className="mt-1 max-w-sm text-sm text-muted-foreground">{description}</p>}
+      <p className="mt-4 text-xs text-muted-foreground">곧 제공될 예정입니다</p>
     </div>
   );
 }

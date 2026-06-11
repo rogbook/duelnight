@@ -32,16 +32,16 @@ export const Route = createFileRoute("/tier/$id")({
     const list = data as TierList;
     const raw = (list.placements ?? {}) as Partial<Placements>;
     const placements: Placements = {
-      S: raw.S ?? [], A: raw.A ?? [], B: raw.B ?? [],
-      C: raw.C ?? [], D: raw.D ?? [],
+      S: raw.S ?? [],
+      A: raw.A ?? [],
+      B: raw.B ?? [],
+      C: raw.C ?? [],
+      D: raw.D ?? [],
     };
     const allCodes = TIERS.flatMap((t) => placements[t]);
     let cards: Card[] = [];
     if (allCodes.length) {
-      const { data: cs } = await supabase
-        .from("cards")
-        .select("*")
-        .in("code", allCodes);
+      const { data: cs } = await supabase.from("cards").select("*").in("code", allCodes);
       cards = (cs ?? []) as Card[];
     }
     return { list, placements, cards };
@@ -82,7 +82,7 @@ export const Route = createFileRoute("/tier/$id")({
     };
   },
   component: TierDetailPage,
-  notFoundComponent: () => {
+  notFoundComponent: function TierNotFound() {
     const { t } = useI18n();
     return (
       <div className="mx-auto max-w-3xl px-6 py-16 text-center">
@@ -123,10 +123,7 @@ function TierDetailPage() {
       </div>
       <div className="mt-6 space-y-2">
         {TIERS.map((tRow) => (
-          <div
-            key={tRow}
-            className={`flex gap-2 rounded-lg border-2 ${TIER_COLOR[tRow]}`}
-          >
+          <div key={tRow} className={`flex gap-2 rounded-lg border-2 ${TIER_COLOR[tRow]}`}>
             <div className="flex w-14 shrink-0 items-center justify-center rounded-l-md bg-background/40 text-2xl font-bold">
               {tRow}
             </div>

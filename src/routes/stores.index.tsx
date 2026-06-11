@@ -47,20 +47,54 @@ export const KR_REGIONS: { group: string; cities: string[] }[] = [
   {
     group: "서울",
     cities: [
-      "서울 강남", "서울 강동", "서울 강북", "서울 강서",
-      "서울 건대", "서울 구로", "서울 노원", "서울 마포",
-      "서울 목동", "서울 서초", "서울 성수", "서울 신촌",
-      "서울 압구정", "서울 역삼", "서울 용산", "서울 종로", "서울 홍대",
+      "서울 강남",
+      "서울 강동",
+      "서울 강북",
+      "서울 강서",
+      "서울 건대",
+      "서울 구로",
+      "서울 노원",
+      "서울 마포",
+      "서울 목동",
+      "서울 서초",
+      "서울 성수",
+      "서울 신촌",
+      "서울 압구정",
+      "서울 역삼",
+      "서울 용산",
+      "서울 종로",
+      "서울 홍대",
     ],
   },
   {
     group: "경기",
     cities: [
-      "고양 일산", "광명", "구리", "군포", "김포",
-      "남양주", "부천 상동", "부천 신중동", "부천 역곡",
-      "분당 서현", "분당 수내", "성남", "수원 권선", "수원 영통", "수원 인계",
-      "시흥", "안산", "안양", "양주", "용인", "의정부", "이천",
-      "파주", "평택", "하남", "화성 동탄",
+      "고양 일산",
+      "광명",
+      "구리",
+      "군포",
+      "김포",
+      "남양주",
+      "부천 상동",
+      "부천 신중동",
+      "부천 역곡",
+      "분당 서현",
+      "분당 수내",
+      "성남",
+      "수원 권선",
+      "수원 영통",
+      "수원 인계",
+      "시흥",
+      "안산",
+      "안양",
+      "양주",
+      "용인",
+      "의정부",
+      "이천",
+      "파주",
+      "평택",
+      "하남",
+      "화성 동탄",
     ],
   },
   {
@@ -120,7 +154,7 @@ export const MAP_PROVIDER_LABELS: Record<MapProvider, string> = {
 
 export function buildMapUrl(
   s: { name: string; address: string | null; region: string | null },
-  provider: MapProvider
+  provider: MapProvider,
 ): string {
   const q = encodeURIComponent(s.address || `${s.name} ${s.region ?? ""}`.trim());
   if (provider === "kakao") return `https://map.kakao.com/?q=${q}`;
@@ -297,7 +331,9 @@ function StoresPage() {
             ))}
             {(() => {
               // DB에만 있고 대분류로 안 잡히는 지역은 개별 노출
-              const extras = regions.filter((r) => !MAJOR_REGIONS.some((m) => regionMatchesMajor(r, m)));
+              const extras = regions.filter(
+                (r) => !MAJOR_REGIONS.some((m) => regionMatchesMajor(r, m)),
+              );
               if (extras.length === 0) return null;
               return extras.map((r) => (
                 <SelectItem key={r} value={r}>
@@ -310,10 +346,7 @@ function StoresPage() {
 
         {user && (
           <label className="ml-1 inline-flex items-center gap-2 text-sm">
-            <Checkbox
-              checked={favOnly}
-              onCheckedChange={(v) => setFavOnly(!!v)}
-            />
+            <Checkbox checked={favOnly} onCheckedChange={(v) => setFavOnly(!!v)} />
             {t("stores.favoritesOnly")}
           </label>
         )}
@@ -337,7 +370,9 @@ function StoresPage() {
         </div>
       </div>
       <div className="mt-1 flex justify-end">
-        <span className="text-xs text-muted-foreground">{t("stores.storeCount", { count: filtered.length })}</span>
+        <span className="text-xs text-muted-foreground">
+          {t("stores.storeCount", { count: filtered.length })}
+        </span>
       </div>
 
       {filtered.length === 0 ? (
@@ -376,9 +411,7 @@ function StoresPage() {
                       }}
                       title={isFav ? t("stores.removeFav") : t("stores.addFav")}
                       className={
-                        isFav
-                          ? "text-yellow-500"
-                          : "text-muted-foreground hover:text-yellow-500"
+                        isFav ? "text-yellow-500" : "text-muted-foreground hover:text-yellow-500"
                       }
                     >
                       <Star className={`h-4 w-4 ${isFav ? "fill-current" : ""}`} />
@@ -389,10 +422,7 @@ function StoresPage() {
                           e.preventDefault();
                           e.stopPropagation();
                           if (!confirm(t("stores.confirmDelete"))) return;
-                          const { error } = await supabase
-                            .from("stores")
-                            .delete()
-                            .eq("id", s.id);
+                          const { error } = await supabase.from("stores").delete().eq("id", s.id);
                           if (error) toast.error(error.message);
                           else {
                             toast.success(t("stores.deleteSuccess"));
@@ -406,9 +436,7 @@ function StoresPage() {
                     )}
                   </div>
                 </div>
-                {s.address && (
-                  <p className="mt-2 text-xs text-muted-foreground">{s.address}</p>
-                )}
+                {s.address && <p className="mt-2 text-xs text-muted-foreground">{s.address}</p>}
                 <div className="mt-2 flex flex-wrap gap-1">
                   {s.games.map((g) => (
                     <span
@@ -483,7 +511,7 @@ function NewStoreDialog({ onCreated }: { onCreated: () => void }) {
   const [form, setForm] = useState({
     name: "",
     region: "",
-    regionCustom: "",   // "기타 직접입력" 선택 시 사용
+    regionCustom: "", // "기타 직접입력" 선택 시 사용
     address: "",
     phone: "",
     url: "",
@@ -523,7 +551,16 @@ function NewStoreDialog({ onCreated }: { onCreated: () => void }) {
     }
     toast.success(t("stores.addSuccess"));
     setOpen(false);
-    setForm({ name: "", region: "", regionCustom: "", address: "", phone: "", url: "", notes: "", games: [] });
+    setForm({
+      name: "",
+      region: "",
+      regionCustom: "",
+      address: "",
+      phone: "",
+      url: "",
+      notes: "",
+      games: [],
+    });
     qc.invalidateQueries({ queryKey: ["stores"] });
     onCreated();
   };
@@ -537,7 +574,9 @@ function NewStoreDialog({ onCreated }: { onCreated: () => void }) {
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle>{t("stores.addStoreTitle")}</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>{t("stores.addStoreTitle")}</DialogTitle>
+        </DialogHeader>
         <form onSubmit={submit} className="space-y-3">
           <div className="flex flex-col gap-1.5">
             <Label>{t("stores.fieldName")}</Label>
@@ -550,10 +589,7 @@ function NewStoreDialog({ onCreated }: { onCreated: () => void }) {
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
               <Label>{t("stores.fieldRegion")}</Label>
-              <Select
-                value={form.region}
-                onValueChange={(v) => setForm({ ...form, region: v })}
-              >
+              <Select value={form.region} onValueChange={(v) => setForm({ ...form, region: v })}>
                 <SelectTrigger>
                   <SelectValue placeholder={t("stores.placeholderRegion")} />
                 </SelectTrigger>

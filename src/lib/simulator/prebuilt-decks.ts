@@ -15,7 +15,8 @@ export const PREBUILT_DECKS: PrebuiltDeck[] = [
     name: "조로의 밀짚모자 일당 덱 (Red)",
     game: "optcg",
     leaderCode: "OP01-001",
-    description: "공격적인 적색 속공 카드들로 상대의 라이프를 압박하는 빠른 템포의 어그로 덱입니다.",
+    description:
+      "공격적인 적색 속공 카드들로 상대의 라이프를 압박하는 빠른 템포의 어그로 덱입니다.",
     recipe: {
       game: "optcg",
       leaderCode: "OP01-001",
@@ -41,7 +42,8 @@ export const PREBUILT_DECKS: PrebuiltDeck[] = [
     name: "오뎅의 와노쿠니 컨트롤 덱 (Green)",
     game: "optcg",
     leaderCode: "OP01-031",
-    description: "강력한 블로커와 돈 부스팅 및 메인 기동 효과를 적극적으로 활용하는 중후반 컨트롤 덱입니다.",
+    description:
+      "강력한 블로커와 돈 부스팅 및 메인 기동 효과를 적극적으로 활용하는 중후반 컨트롤 덱입니다.",
     recipe: {
       game: "optcg",
       leaderCode: "OP01-031",

@@ -134,7 +134,8 @@ export const ja = {
     noSavedDecks: "保存されたデッキがありません — 直接入力",
     deckPlaceholder: "例：赤ルフィ",
     oppSavedDeck: "相手の保存デッキ",
-    noOppDecksDesc: "このユーザーが公開したデッキはありません。直接入力すると、相手が後で自分のデッキ情報を修正できます。",
+    noOppDecksDesc:
+      "このユーザーが公開したデッキはありません。直接入力すると、相手が後で自分のデッキ情報を修正できます。",
     tournamentNote: "大会メモ",
     tournamentNotePlaceholder: "ラウンド、店舗名、備考など",
     matchNote: "対戦メモ",
@@ -147,7 +148,8 @@ export const ja = {
     myDeckRequiredToast: "マイデッキを選択または入力してください",
     recordedWithElo: "記録されました (予想 {delta}点)",
     recordedToast: "記録されました",
-    normalizeConfirm: "既存の戦績のデッキ・リーダー名を正規化ルールで一括整理しますか？変更された項目のみ更新されます。",
+    normalizeConfirm:
+      "既存の戦績のデッキ・リーダー名を正規化ルールで一括整理しますか？変更された項目のみ更新されます。",
     normalizingPrepare: "整理準備中...",
     noNormalizingMatches: "整理する戦績がありません",
     normalizingScan: "スキャン {scanned}/{total}...",
@@ -182,7 +184,8 @@ export const ja = {
     importedSuccess: "{count}件インポートしました",
     importFailed: "インポート失敗",
     taggedMatches: "自分が対戦相手としてタグ付けされた試合",
-    taggedMatchesDesc: "他のユーザーがあなたを対戦相手として記録した試合です。マイデッキ情報を入力すると統計に反映されます。",
+    taggedMatchesDesc:
+      "他のユーザーがあなたを対戦相手として記録した試合です。マイデッキ情報を入力すると統計に反映されます。",
     notEntered: "未入力",
     oppSelfEditTitle: "マイデッキ情報入力",
     selectMyDeck: "マイデッキ選択",
@@ -231,7 +234,8 @@ export const ja = {
   },
   intro: {
     tagline: "ワンピース・ポケモン・デジモンTCGプレイヤーのためのオールインワンハブ",
-    description: "戦績記録、AIカードOCR、デッキビルダー、大会・発売日程、店舗LFGまで。TCGのワークフローを1箇所で完結。",
+    description:
+      "戦績記録、AIカードOCR、デッキビルダー、大会・発売日程、店舗LFGまで。TCGのワークフローを1箇所で完結。",
     testing: "テスト運営中",
     freeStart: "無料で始める",
     gameIntegrated: "OPTCG · PTCG · DTCG 統合",
@@ -241,13 +245,15 @@ export const ja = {
     viewPricing: "料金プラン",
     testPhaseNotice: "現在はテスト段階です。正式サービス開始時に決済・購読が有効になります。",
     featureTitle1: "戦績・勝率分析",
-    featureDesc1: "デッキ別・相手別の勝率、先攻後攻・イベントフィルター、レーティング(ELO)の自動計算。",
+    featureDesc1:
+      "デッキ別・相手別の勝率、先攻後攻・イベントフィルター、レーティング(ELO)の自動計算。",
     featureTitle2: "AIカード OCR",
     featureDesc2: "カード写真1枚で、コード・ステータ스・効果を自動入力するGemini Vision。",
     featureTitle3: "デッキビルダー ＆ ティアリスト",
     featureDesc3: "レシピ検証・色制限・枚数制限、ゲーム別ティアリスト共有。",
     featureTitle4: "発売・大会スケジュール",
-    featureDesc4: "発売日、大会、店舗イベントを一目で。お気に入り、通知、.icsカレンダーエクスポート。",
+    featureDesc4:
+      "発売日、大会、店舗イベントを一目で。お気に入り、通知、.icsカレンダーエクスポート。",
     featureTitle5: "LFG ＆ フレンド",
     featureDesc5: "店舗単位のマッチング募集・DM、フレンド管理と戦績自動同期。",
     featureTitle6: "AIコーチ",
@@ -288,7 +294,8 @@ export const ja = {
   },
   cards: {
     metaTitle: "カードDB — DuelNight",
-    metaDesc: "ワンピース・ポケモン・デジモンTCGカードデータベース検索・フィルター・お気に入り・評価。",
+    metaDesc:
+      "ワンピース・ポケモン・デジモンTCGカードデータベース検索・フィルター・お気に入り・評価。",
     title: "カードDB",
     desc: "カードの検索・フィルター・お気に入り",
     searchPlaceholder: "カード名・カード番号・特徴 (例：ルフィ、OP12-004、麦わらの一味)",
@@ -341,7 +348,8 @@ export const ja = {
     checkingPermission: "権限を確認中...",
     adminOnlyFunc: "管理者専用機能です",
     noPermissionTitle: "アクセス権限がありません",
-    noPermissionDesc: "カードの登録・編集は管理者のみ実行できます。登録されていないカードや誤りを見つけた場合は、運営にお問い合わせください。",
+    noPermissionDesc:
+      "カードの登録・編集は管理者のみ実行できます。登録されていないカードや誤りを見つけた場合は、運営にお問い合わせください。",
     browseDb: "カードDBを検索",
     cardNotFound: "カードが見つかりません",
     backToDb: "カードDBへ",
@@ -393,7 +401,8 @@ export const ja = {
     archetype: "アーキタイプ",
     noArchetypeInfo: "情報なし",
     summaryTitle: "概要",
-    summaryDesc: "このデッキは {game} 環境で使用されるデッキです。現在 {total} 枚のカードが登録されており、{status} 状態です。",
+    summaryDesc:
+      "このデッキは {game} 環境で使用されるデッキです。現在 {total} 枚のカードが登録されており、{status} 状態です。",
     cardsInDeck: "採用カード ({count}枚)",
     notRegisteredDb: "DB未登録",
     notRegisteredDbTooltip: "{code} — カードDB未登録",
@@ -746,7 +755,8 @@ export const ja = {
     processing: "処理中...",
     resetPasswordTitle: "パスワード再設定",
     resetPasswordDesc: "新しいパスワードを入力してください。",
-    resetPasswordInvalidLink: "メールで受信した再設定リンクからこのページへアクセスする必要があります。リンクが期限切れの可能性があります。",
+    resetPasswordInvalidLink:
+      "メールで受信した再設定リンクからこのページへアクセスする必要があります。リンクが期限切れの可能性があります。",
     newPasswordInput: "新しいパスワード",
     confirmNewPasswordInput: "パスワードの確認",
     passwordMinLengthError: "パスワードは最低6文字以上にする必要があります。",
@@ -801,7 +811,8 @@ export const ja = {
     purchaseBtn: "購入する",
     purchaseSuccess: "{name} の購入が完了しました！",
     secureTitle: "安全な決済の保証",
-    secureDesc: "DuelNightは、公認の決済代行業者（StripeおよびPortOne）を通じて安全な決済環境を提供します。決済情報は暗号化され、システムに直接保存されません。",
+    secureDesc:
+      "DuelNightは、公認の決済代行業者（StripeおよびPortOne）を通じて安全な決済環境を提供します。決済情報は暗号化され、システムに直接保存されません。",
     bonusCredits: "+{bonus} ボーナスクレジット",
     standardPack: "通常パック",
     priceKRW: "{price} ウォン",
@@ -884,7 +895,8 @@ export const ja = {
     allSets: "全セット",
     fieldPublic: "公開",
     leaderPool: "リーダープール ({count})",
-    noLeaders: "登録されたリーダーカードが見つかりません。カードDBにリーダーデータを追加してください。",
+    noLeaders:
+      "登録されたリーダーカードが見つかりません。カードDBにリーダーデータを追加してください。",
     dropHere: "リーダーをドラッグしてティアに配置するか、ここにドロップしてプールに戻します。",
     myTiers: "マイティア表",
     noMyTiers: "保存されたティア表はまだありません。",
@@ -927,4 +939,3 @@ export const ja = {
     kindMatch: "マッチ",
   },
 };
-

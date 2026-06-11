@@ -161,31 +161,32 @@ function CalendarPage() {
         .eq("user_id", user.id)
         .eq("event_id", eventId);
     } else {
-      await supabase
-        .from("event_favorites")
-        .insert({ user_id: user.id, event_id: eventId });
+      await supabase.from("event_favorites").insert({ user_id: user.id, event_id: eventId });
     }
     refetch();
-    void supabase
-      .from("event_favorites")
-      .select("event_id")
-      .eq("user_id", user.id);
+    void supabase.from("event_favorites").select("event_id").eq("user_id", user.id);
   };
 
   return (
     <div className="mx-auto w-full max-w-4xl px-6 py-8">
       <PageHeader title={t("calendar.title")} description={t("calendar.desc")}>
         <Select value={game} onValueChange={(v) => setGame(v as Game | "all")}>
-          <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[120px]">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t("matches.all")}</SelectItem>
             {games.map((g) => (
-              <SelectItem key={g.code} value={g.code}>{labelOf(g.code)}</SelectItem>
+              <SelectItem key={g.code} value={g.code}>
+                {labelOf(g.code)}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select value={scope} onValueChange={(v) => setScope(v as "upcoming" | "past")}>
-          <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[110px]">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="upcoming">{t("calendar.upcoming")}</SelectItem>
             <SelectItem value="past">{t("calendar.past")}</SelectItem>
@@ -284,7 +285,9 @@ function CalendarPage() {
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <ExternalLink className="h-3 w-3" />
-                                {ev.kind === "release" ? t("calendar.official") : t("calendar.detail")}
+                                {ev.kind === "release"
+                                  ? t("calendar.official")
+                                  : t("calendar.detail")}
                               </a>
                             )}
                           </div>
@@ -298,7 +301,11 @@ function CalendarPage() {
                           {user && (
                             <button
                               onClick={() => toggleFav(ev.id, isFav)}
-                              className={isFav ? "text-amber-500" : "text-muted-foreground hover:text-amber-500"}
+                              className={
+                                isFav
+                                  ? "text-amber-500"
+                                  : "text-muted-foreground hover:text-amber-500"
+                              }
                               title={isFav ? t("calendar.removeFav") : t("calendar.addFav")}
                             >
                               <Star className="h-4 w-4" fill={isFav ? "currentColor" : "none"} />
@@ -415,7 +422,9 @@ function NewEventDialog({ onCreated }: { onCreated: () => void }) {
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>{t("calendar.addEvent")}</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>{t("calendar.addEvent")}</DialogTitle>
+        </DialogHeader>
         <form onSubmit={submit} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
@@ -424,7 +433,9 @@ function NewEventDialog({ onCreated }: { onCreated: () => void }) {
                 value={form.kind}
                 onValueChange={(v) => setForm({ ...form, kind: v as EventKind })}
               >
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="tournament">{t("calendar.kindTournament")}</SelectItem>
                   <SelectItem value="release">{t("calendar.kindRelease")}</SelectItem>
@@ -438,17 +449,23 @@ function NewEventDialog({ onCreated }: { onCreated: () => void }) {
                 value={form.game}
                 onValueChange={(v) => setForm({ ...form, game: v as Game })}
               >
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {games.map((g) => (
-                    <SelectItem key={g.code} value={g.code}>{labelOf(g.code)}</SelectItem>
+                    <SelectItem key={g.code} value={g.code}>
+                      {labelOf(g.code)}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>{isRelease ? t("calendar.fieldNameProduct") : t("calendar.fieldNameTitle")}</Label>
+            <Label>
+              {isRelease ? t("calendar.fieldNameProduct") : t("calendar.fieldNameTitle")}
+            </Label>
             <Input
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
@@ -457,7 +474,9 @@ function NewEventDialog({ onCreated }: { onCreated: () => void }) {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <Label>{isRelease ? t("calendar.fieldDateRelease") : t("calendar.fieldDateStart")}</Label>
+              <Label>
+                {isRelease ? t("calendar.fieldDateRelease") : t("calendar.fieldDateStart")}
+              </Label>
               <Input
                 type="datetime-local"
                 value={form.starts_at}
@@ -507,7 +526,9 @@ function NewEventDialog({ onCreated }: { onCreated: () => void }) {
           )}
           {!isRelease && (
             <div className="flex flex-col gap-1.5">
-              <Label>{isMatch ? t("calendar.fieldLocationShop") : t("calendar.fieldLocation")}</Label>
+              <Label>
+                {isMatch ? t("calendar.fieldLocationShop") : t("calendar.fieldLocation")}
+              </Label>
               <Input
                 value={form.location}
                 onChange={(e) => setForm({ ...form, location: e.target.value })}
@@ -531,7 +552,9 @@ function NewEventDialog({ onCreated }: { onCreated: () => void }) {
               rows={3}
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              placeholder={isMatch ? t("calendar.placeholderNotesMatch") : t("calendar.placeholderNotesNormal")}
+              placeholder={
+                isMatch ? t("calendar.placeholderNotesMatch") : t("calendar.placeholderNotesNormal")
+              }
             />
           </div>
           <div className="flex justify-end gap-2 pt-1">

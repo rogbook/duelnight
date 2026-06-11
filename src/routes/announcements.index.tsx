@@ -102,9 +102,7 @@ function AnnouncementsPage() {
             icon={Megaphone}
             title={t("announcements.emptyTitle")}
             description={
-              isAdmin
-                ? t("announcements.emptyDescAdmin")
-                : t("announcements.emptyDescUser")
+              isAdmin ? t("announcements.emptyDescAdmin") : t("announcements.emptyDescUser")
             }
           />
         </div>
@@ -116,14 +114,13 @@ function AnnouncementsPage() {
                 onClick={() => openRead(a)}
                 className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-muted/50"
               >
-                {a.pinned && (
-                  <Pin className="h-4 w-4 shrink-0 fill-primary text-primary" />
-                )}
+                {a.pinned && <Pin className="h-4 w-4 shrink-0 fill-primary text-primary" />}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{a.title}</p>
                   <p className="text-xs text-muted-foreground">
                     {new Date(a.created_at).toLocaleDateString()} ·{" "}
-                    <Eye className="inline h-3 w-3" /> {t("announcements.viewCount", { count: a.view_count })}
+                    <Eye className="inline h-3 w-3" />{" "}
+                    {t("announcements.viewCount", { count: a.view_count })}
                   </p>
                 </div>
                 <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
@@ -165,9 +162,7 @@ function AnnouncementsPage() {
       )}
 
       {!isAdmin && user && (
-        <p className="mt-4 text-xs text-muted-foreground">
-          {t("announcements.adminOnlyNote")}
-        </p>
+        <p className="mt-4 text-xs text-muted-foreground">{t("announcements.adminOnlyNote")}</p>
       )}
 
       <ReadDialog item={reading} onClose={() => setReading(null)} />
@@ -183,13 +178,7 @@ function AnnouncementsPage() {
   );
 }
 
-function ReadDialog({
-  item,
-  onClose,
-}: {
-  item: Announcement | null;
-  onClose: () => void;
-}) {
+function ReadDialog({ item, onClose }: { item: Announcement | null; onClose: () => void }) {
   const { t } = useI18n();
 
   return (
@@ -203,12 +192,11 @@ function ReadDialog({
                 {item.title}
               </DialogTitle>
               <p className="text-xs text-muted-foreground">
-                {new Date(item.created_at).toLocaleString()} · {t("announcements.viewCount", { count: item.view_count })}
+                {new Date(item.created_at).toLocaleString()} ·{" "}
+                {t("announcements.viewCount", { count: item.view_count })}
               </p>
             </DialogHeader>
-            <div className="whitespace-pre-wrap text-sm leading-relaxed">
-              {item.body}
-            </div>
+            <div className="whitespace-pre-wrap text-sm leading-relaxed">{item.body}</div>
           </>
         )}
       </DialogContent>
@@ -264,7 +252,9 @@ function EditDialog({
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{item ? t("announcements.editTitle") : t("announcements.newTitle")}</DialogTitle>
+          <DialogTitle>
+            {item ? t("announcements.editTitle") : t("announcements.newTitle")}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1">

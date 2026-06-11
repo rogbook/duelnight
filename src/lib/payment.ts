@@ -57,11 +57,11 @@ export interface PaymentOptions {
 /**
  * Initialize and process PortOne (Domestic) payment
  */
-export const processPortOnePayment = async (
-  options: PaymentOptions
-): Promise<any> => {
+export const processPortOnePayment = async (options: PaymentOptions): Promise<any> => {
   if (!PORTONE_USER_CODE) {
-    throw new Error("PortOne User Code is not configured in VITE_PORTONE_USER_CODE environment variable.");
+    throw new Error(
+      "PortOne User Code is not configured in VITE_PORTONE_USER_CODE environment variable.",
+    );
   }
 
   await loadScript(PORTONE_SDK_URL);
@@ -71,7 +71,7 @@ export const processPortOnePayment = async (
   return new Promise((resolve, reject) => {
     IMP.request_pay(
       {
-        pg: options.sandbox ? "kakaopay.TC0ONETIME" : "html5_inicis", 
+        pg: options.sandbox ? "kakaopay.TC0ONETIME" : "html5_inicis",
         pay_method: "card",
         merchant_uid: options.orderId,
         name: options.orderName,
@@ -86,8 +86,7 @@ export const processPortOnePayment = async (
         } else {
           reject(new Error(rsp.error_msg));
         }
-      }
+      },
     );
   });
 };
-

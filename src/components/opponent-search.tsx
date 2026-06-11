@@ -95,9 +95,7 @@ export function OpponentSearch({
       />
       {open && (q.trim().length > 0 || loading) && (
         <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-md border border-border bg-popover shadow-md">
-          {loading && (
-            <p className="px-3 py-2 text-xs text-muted-foreground">검색 중...</p>
-          )}
+          {loading && <p className="px-3 py-2 text-xs text-muted-foreground">검색 중...</p>}
           {!loading && results.length === 0 && (
             <p className="px-3 py-2 text-xs text-muted-foreground">결과 없음</p>
           )}
@@ -121,13 +119,9 @@ export function OpponentSearch({
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">
-                      {u.display_name ?? u.username ?? "익명"}
-                    </p>
+                    <p className="truncate font-medium">{u.display_name ?? u.username ?? "익명"}</p>
                     {u.username && (
-                      <p className="truncate text-[10px] text-muted-foreground">
-                        @{u.username}
-                      </p>
+                      <p className="truncate text-[10px] text-muted-foreground">@{u.username}</p>
                     )}
                   </div>
                   <FriendBadge s={u.friendship_status} />
@@ -155,8 +149,6 @@ function FriendBadge({ s }: { s: FoundUser["friendship_status"] }) {
       </span>
     );
   return (
-    <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-      미친구
-    </span>
+    <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">미친구</span>
   );
 }

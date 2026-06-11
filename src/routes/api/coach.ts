@@ -60,36 +60,46 @@ export const Route = createFileRoute("/api/coach")({
       POST: async ({ request }) => {
         const apiKey = process.env.LOVABLE_API_KEY;
         if (!apiKey) {
-          return new Response(
-            JSON.stringify({ error: "AI 게이트웨이가 설정되지 않았습니다." }),
-            { status: 500, headers: corsHeaders },
-          );
+          return new Response(JSON.stringify({ error: "AI 게이트웨이가 설정되지 않았습니다." }), {
+            status: 500,
+            headers: corsHeaders,
+          });
         }
 
         let payload;
         try {
           payload = PayloadSchema.parse(await request.json());
         } catch (e) {
-          return new Response(
-            JSON.stringify({ error: "잘못된 요청 형식입니다." }),
-            { status: 400, headers: corsHeaders },
-          );
+          return new Response(JSON.stringify({ error: "잘못된 요청 형식입니다." }), {
+            status: 400,
+            headers: corsHeaders,
+          });
         }
 
         const authHeader = request.headers.get("authorization");
         if (!authHeader?.startsWith("Bearer ")) {
-          return new Response(JSON.stringify({ error: "로그인이 필요합니다." }), { status: 401, headers: corsHeaders });
+          return new Response(JSON.stringify({ error: "로그인이 필요합니다." }), {
+            status: 401,
+            headers: corsHeaders,
+          });
         }
         const token = authHeader.replace("Bearer ", "");
         const { createClient } = await import("@supabase/supabase-js");
-        const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
-          global: { headers: { Authorization: `Bearer ${token}` } }
-        });
+        const supabase = createClient(
+          process.env.SUPABASE_URL!,
+          process.env.SUPABASE_PUBLISHABLE_KEY!,
+          {
+            global: { headers: { Authorization: `Bearer ${token}` } },
+          },
+        );
 
         const { checkAiQuota, commitAiUsage } = await import("@/lib/ai-quota.server");
         const quota = await checkAiQuota(supabase, "coach");
         if (!quota.ok) {
-          return new Response(JSON.stringify({ error: quota.error }), { status: quota.status, headers: corsHeaders });
+          return new Response(JSON.stringify({ error: quota.error }), {
+            status: quota.status,
+            headers: corsHeaders,
+          });
         }
 
         const system =
@@ -103,23 +113,20 @@ export const Route = createFileRoute("/api/coach")({
         const user = `다음은 사용자의 최근 전적 요약입니다(JSON):\n${JSON.stringify(payload)}`;
 
         try {
-          const res = await fetch(
-            "https://ai.gateway.lovable.dev/v1/chat/completions",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${apiKey}`,
-              },
-              body: JSON.stringify({
-                model: "google/gemini-2.5-flash",
-                messages: [
-                  { role: "system", content: system },
-                  { role: "user", content: user },
-                ],
-              }),
+          const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${apiKey}`,
             },
-          );
+            body: JSON.stringify({
+              model: "google/gemini-2.5-flash",
+              messages: [
+                { role: "system", content: system },
+                { role: "user", content: user },
+              ],
+            }),
+          });
 
           if (res.status === 429) {
             return new Response(
@@ -140,10 +147,10 @@ export const Route = createFileRoute("/api/coach")({
           if (!res.ok) {
             const txt = await res.text();
             console.error("AI gateway error", res.status, txt);
-            return new Response(
-              JSON.stringify({ error: "AI 응답 생성에 실패했습니다." }),
-              { status: 502, headers: corsHeaders },
-            );
+            return new Response(JSON.stringify({ error: "AI 응답 생성에 실패했습니다." }), {
+              status: 502,
+              headers: corsHeaders,
+            });
           }
 
           const json = (await res.json()) as {
@@ -151,10 +158,10 @@ export const Route = createFileRoute("/api/coach")({
           };
           const content = json.choices?.[0]?.message?.content?.trim() ?? "";
           if (!content) {
-            return new Response(
-              JSON.stringify({ error: "응답이 비어 있습니다." }),
-              { status: 502, headers: corsHeaders },
-            );
+            return new Response(JSON.stringify({ error: "응답이 비어 있습니다." }), {
+              status: 502,
+              headers: corsHeaders,
+            });
           }
 
           await commitAiUsage(supabase, quota.userId, "coach", quota.source);
@@ -165,10 +172,10 @@ export const Route = createFileRoute("/api/coach")({
           });
         } catch (e) {
           console.error("coach route error", e);
-          return new Response(
-            JSON.stringify({ error: "AI 서버에 연결할 수 없습니다." }),
-            { status: 500, headers: corsHeaders },
-          );
+          return new Response(JSON.stringify({ error: "AI 서버에 연결할 수 없습니다." }), {
+            status: 500,
+            headers: corsHeaders,
+          });
         }
       },
     },

@@ -59,7 +59,7 @@ const CREDIT_PACKS = [
 function StorePage() {
   const { session } = useAuth();
   const { t, language } = useI18n();
-  const [selectedPack, setSelectedPack] = useState<typeof CREDIT_PACKS[0] | null>(null);
+  const [selectedPack, setSelectedPack] = useState<(typeof CREDIT_PACKS)[0] | null>(null);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
   // 1. Stripe Checkout 리디렉션 파라미터 감지 및 검증
@@ -75,12 +75,12 @@ function StorePage() {
         const toastId = toast.loading(t("common.loading", "결제 결과 확인 중..."));
         try {
           const res = await verifyStripePayment({
-            data: { session_id: sessionId }
+            data: { session_id: sessionId },
           });
 
           if (res.success) {
             toast.success(t("creditStore.purchaseSuccess", { name: "Credits" }), { id: toastId });
-            
+
             // 성공 시 URL 지분 제거하여 리프레시 중복 방지
             const cleanUrl = window.location.pathname;
             window.history.replaceState({}, document.title, cleanUrl);
@@ -95,7 +95,7 @@ function StorePage() {
     }
   }, [t]);
 
-  const handlePurchase = (pack: typeof CREDIT_PACKS[0]) => {
+  const handlePurchase = (pack: (typeof CREDIT_PACKS)[0]) => {
     if (!session) {
       toast.error(t("creditStore.loginRequired"));
       return;
@@ -116,21 +116,23 @@ function StorePage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
-      <PageHeader
-        title={t("creditStore.title")}
-        description={t("creditStore.desc")}
-      />
+      <PageHeader title={t("creditStore.title")} description={t("creditStore.desc")} />
 
       <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {CREDIT_PACKS.map((pack) => (
-          <Card key={pack.id} className={`relative overflow-hidden transition-all hover:shadow-lg ${pack.popular ? 'border-primary ring-1 ring-primary' : ''}`}>
+          <Card
+            key={pack.id}
+            className={`relative overflow-hidden transition-all hover:shadow-lg ${pack.popular ? "border-primary ring-1 ring-primary" : ""}`}
+          >
             {pack.popular && (
               <div className="absolute right-0 top-0 rounded-bl-lg bg-primary px-3 py-1 text-[10px] font-bold text-primary-foreground">
                 POPULAR
               </div>
             )}
             <CardHeader className="text-center pb-2">
-              <div className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted ${pack.color}`}>
+              <div
+                className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted ${pack.color}`}
+              >
                 <pack.icon className="h-8 w-8" />
               </div>
               <CardTitle className="text-xl">{pack.name}</CardTitle>
@@ -144,7 +146,11 @@ function StorePage() {
               <div className="text-3xl font-bold">{renderPrice(pack.amount)}</div>
             </CardContent>
             <CardFooter>
-              <Button onClick={() => handlePurchase(pack)} className="w-full" variant={pack.popular ? "default" : "outline"}>
+              <Button
+                onClick={() => handlePurchase(pack)}
+                className="w-full"
+                variant={pack.popular ? "default" : "outline"}
+              >
                 {t("creditStore.purchaseBtn")}
               </Button>
             </CardFooter>
@@ -159,9 +165,7 @@ function StorePage() {
           </div>
           <div>
             <h3 className="text-lg font-bold">{t("creditStore.secureTitle")}</h3>
-            <p className="max-w-md text-sm text-muted-foreground">
-              {t("creditStore.secureDesc")}
-            </p>
+            <p className="max-w-md text-sm text-muted-foreground">{t("creditStore.secureDesc")}</p>
           </div>
         </div>
       </div>

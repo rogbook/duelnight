@@ -6,22 +6,22 @@ export type CardTypeOption = { id: string; label: string };
 
 export const CARD_TYPES_BY_GAME: Record<Game, CardTypeOption[]> = {
   optcg: [
-    { id: "leader",    label: "리더" },
+    { id: "leader", label: "리더" },
     { id: "character", label: "캐릭터" },
-    { id: "event",     label: "이벤트" },
-    { id: "stage",     label: "스테이지" },
+    { id: "event", label: "이벤트" },
+    { id: "stage", label: "스테이지" },
   ],
   dtcg: [
-    { id: "digitama",  label: "디지타마" },
-    { id: "digimon",   label: "디지몬" },
-    { id: "option",    label: "옵션" },
-    { id: "tamer",     label: "테이머" },
+    { id: "digitama", label: "디지타마" },
+    { id: "digimon", label: "디지몬" },
+    { id: "option", label: "옵션" },
+    { id: "tamer", label: "테이머" },
   ],
   ptcg: [
-    { id: "pokemon",   label: "포켓몬" },
-    { id: "trainer",   label: "트레이너스" },
-    { id: "energy",    label: "에너지" },
-    { id: "ace",       label: "ACE SPEC" },
+    { id: "pokemon", label: "포켓몬" },
+    { id: "trainer", label: "트레이너스" },
+    { id: "energy", label: "에너지" },
+    { id: "ace", label: "ACE SPEC" },
   ],
 };
 
@@ -29,14 +29,14 @@ export const DIGIMON_LEVELS = ["-", "2", "3", "4", "5", "6", "7"];
 
 export const DECK_MAX_TOTAL: Record<Game, number> = {
   optcg: 50,
-  dtcg:  50,
-  ptcg:  60,
+  dtcg: 50,
+  ptcg: 60,
 };
 
 export const DECK_MAX_COPIES: Record<Game, number> = {
   optcg: 4,
-  dtcg:  4,
-  ptcg:  4,
+  dtcg: 4,
+  ptcg: 4,
 };
 
 /** 금지/제한 카드 코드 목록 (향후 DB로 이관 예정) */
@@ -57,7 +57,17 @@ export function checkCanAdd(params: {
   digitamaCountInDeck: number;
   hasAceInDeck: boolean;
 }): AddCardCheck {
-  const { game, cardCode, cardType, rarity, name, currentQtyOfCode, totalCardsInDeck, digitamaCountInDeck, hasAceInDeck } = params;
+  const {
+    game,
+    cardCode,
+    cardType,
+    rarity,
+    name,
+    currentQtyOfCode,
+    totalCardsInDeck,
+    digitamaCountInDeck,
+    hasAceInDeck,
+  } = params;
 
   // 금지 리스트 체크
   if (BAN_LIST.has(cardCode)) {
@@ -74,7 +84,7 @@ export function checkCanAdd(params: {
   if (game === "ptcg" && type === "energy" && !name.includes("특수")) {
     maxCopies = Infinity;
   }
-  
+
   // 리더는 1장
   if (game === "optcg" && type === "leader") maxCopies = 1;
 

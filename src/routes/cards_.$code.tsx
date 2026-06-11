@@ -8,8 +8,14 @@ import { Button } from "@/components/ui/button";
 import { EditCardDialog } from "@/components/cards/edit-card-dialog";
 import { normalizeImageUrl } from "@/components/cards/card-uploader";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import type { Database } from "@/integrations/supabase/types";
@@ -61,8 +67,7 @@ export const Route = createFileRoute("/cards_/$code")({
     const typeLabel = typeLabels[c.type]?.[locale] || typeLabels[c.type]?.ko || c.type;
     const title = `${c.name} (${c.code}) — DuelNight`;
     const desc =
-      (c.effect?.replace(/\s+/g, " ").slice(0, 150) ??
-        `${typeLabel} · ${c.set_code}`) +
+      (c.effect?.replace(/\s+/g, " ").slice(0, 150) ?? `${typeLabel} · ${c.set_code}`) +
       ` · ${c.set_code}`;
     const url = `${SITE}/cards/${encodeURIComponent(c.code)}`;
     const ogImage = normalizeImageUrl(c.image_url) ?? undefined;
@@ -125,7 +130,9 @@ function CardDetailPage() {
   const { card: loaderCard } = Route.useLoaderData();
   const [card, setCard] = useState<Card>(loaderCard);
   const [illusts, setIllusts] = useState<Illustration[]>([]);
-  const [activeUrl, setActiveUrl] = useState<string | null>(normalizeImageUrl(loaderCard.image_url));
+  const [activeUrl, setActiveUrl] = useState<string | null>(
+    normalizeImageUrl(loaderCard.image_url),
+  );
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -180,7 +187,9 @@ function CardDetailPage() {
         .order("created_at", { ascending: true });
       if (alive) setIllusts((data ?? []) as Illustration[]);
     })();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [card.code]);
 
   const gallery: { url: string; label: string | null }[] = [];
@@ -205,7 +214,8 @@ function CardDetailPage() {
         {isAdmin && (
           <div className="flex gap-1.5">
             <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
-              <Pencil className="h-3.5 w-3.5 mr-1" />{t("common.edit")}
+              <Pencil className="h-3.5 w-3.5 mr-1" />
+              {t("common.edit")}
             </Button>
             <Button
               size="sm"
@@ -213,7 +223,8 @@ function CardDetailPage() {
               className="text-destructive hover:text-destructive"
               onClick={() => setConfirmDelete(true)}
             >
-              <Trash2 className="h-3.5 w-3.5 mr-1" />{t("common.delete")}
+              <Trash2 className="h-3.5 w-3.5 mr-1" />
+              {t("common.delete")}
             </Button>
           </div>
         )}
@@ -251,7 +262,11 @@ function CardDetailPage() {
                     displayUrl === g.url ? "border-primary ring-1 ring-primary" : "border-border"
                   }`}
                 >
-                  <img src={displayImageSrc(g.url)} alt={g.label ?? ""} className="h-full w-full object-cover" />
+                  <img
+                    src={displayImageSrc(g.url)}
+                    alt={g.label ?? ""}
+                    className="h-full w-full object-cover"
+                  />
                   {g.label && (
                     <span className="absolute inset-x-0 bottom-0 truncate bg-background/80 px-1 text-[9px] leading-3">
                       {g.label}
@@ -302,7 +317,10 @@ function CardDetailPage() {
             </dl>
           ) : (
             <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-              <Stat label={card.type === "leader" ? t("cards.life") : t("cards.cost")} value={card.cost} />
+              <Stat
+                label={card.type === "leader" ? t("cards.life") : t("cards.cost")}
+                value={card.cost}
+              />
               <Stat label={t("cards.power")} value={card.power?.toLocaleString()} />
               <Stat label={t("cards.counter")} value={card.counter?.toLocaleString()} />
               <Stat label={t("cards.attribute")} value={card.attribute} />
@@ -310,7 +328,9 @@ function CardDetailPage() {
           )}
           {card.traits && card.traits.length > 0 && (
             <div className="mt-4">
-              <p className="text-xs font-semibold text-muted-foreground">{isDtcg ? "유형" : t("cards.traits")}</p>
+              <p className="text-xs font-semibold text-muted-foreground">
+                {isDtcg ? "유형" : t("cards.traits")}
+              </p>
               <div className="mt-1 flex flex-wrap gap-1">
                 {card.traits.map((t: string) => (
                   <Tag key={t}>{t}</Tag>
@@ -323,13 +343,17 @@ function CardDetailPage() {
               {ex.text_top && (
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground">상단 텍스트</p>
-                  <p className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-3 text-sm leading-relaxed">{ex.text_top}</p>
+                  <p className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-3 text-sm leading-relaxed">
+                    {ex.text_top}
+                  </p>
                 </div>
               )}
               {ex.text_bottom && (
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground">하단 텍스트</p>
-                  <p className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-3 text-sm leading-relaxed">{ex.text_bottom}</p>
+                  <p className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-3 text-sm leading-relaxed">
+                    {ex.text_bottom}
+                  </p>
                 </div>
               )}
             </div>
@@ -348,7 +372,10 @@ function CardDetailPage() {
         <EditCardDialog
           card={card}
           onClose={() => setEditing(false)}
-          onSaved={() => { setEditing(false); refetch(); }}
+          onSaved={() => {
+            setEditing(false);
+            refetch();
+          }}
         />
       )}
 
@@ -365,8 +392,12 @@ function CardDetailPage() {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={confirmDelete} onOpenChange={(o) => { if (!o && !deleting) setConfirmDelete(false); }}>
-
+      <AlertDialog
+        open={confirmDelete}
+        onOpenChange={(o) => {
+          if (!o && !deleting) setConfirmDelete(false);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("cards.deleteConfirmTitle")}</AlertDialogTitle>
@@ -400,13 +431,7 @@ function Tag({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Stat({
-  label,
-  value,
-}: {
-  label: string;
-  value?: string | number | null;
-}) {
+function Stat({ label, value }: { label: string; value?: string | number | null }) {
   if (value === null || value === undefined || value === "") return null;
   return (
     <div className="flex gap-2">

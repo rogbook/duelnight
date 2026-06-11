@@ -70,12 +70,8 @@ function ResetPasswordPage() {
 
   return (
     <div className="mx-auto flex min-h-[80vh] max-w-sm flex-col justify-center px-6">
-      <h1 className="text-2xl font-semibold tracking-tight">
-        {t("auth.resetPasswordTitle")}
-      </h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        {t("auth.resetPasswordDesc")}
-      </p>
+      <h1 className="text-2xl font-semibold tracking-tight">{t("auth.resetPasswordTitle")}</h1>
+      <p className="mt-1 text-sm text-muted-foreground">{t("auth.resetPasswordDesc")}</p>
 
       {!ready ? (
         <div className="mt-6 rounded-md border border-dashed border-border bg-muted/30 p-4 text-xs text-muted-foreground">

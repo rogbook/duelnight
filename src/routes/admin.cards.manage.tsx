@@ -11,18 +11,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Card, CardContent, CardDescription, CardHeader, CardTitle,
-} from "@/components/ui/card";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,7 +46,11 @@ type Game = string;
 type CardType = Database["public"]["Enums"]["card_type"];
 
 const TYPE_LABEL: Record<CardType, string> = {
-  leader: "리더", character: "캐릭터", event: "이벤트", stage: "스테이지", don: "DON!!",
+  leader: "리더",
+  character: "캐릭터",
+  event: "이벤트",
+  stage: "스테이지",
+  don: "DON!!",
 };
 const TYPES: CardType[] = ["leader", "character", "event", "stage", "don"];
 
@@ -180,24 +196,44 @@ function ManageInner() {
             </div>
             <div>
               <Label className="text-xs">게임</Label>
-              <Select value={game} onValueChange={(v) => { setGame(v as "all" | Game); setPage(0); }}>
-                <SelectTrigger className="mt-1 w-[140px]"><SelectValue /></SelectTrigger>
+              <Select
+                value={game}
+                onValueChange={(v) => {
+                  setGame(v as "all" | Game);
+                  setPage(0);
+                }}
+              >
+                <SelectTrigger className="mt-1 w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">전체</SelectItem>
                   {games.map((g) => (
-                    <SelectItem key={g.code} value={g.code}>{labelOf(g.code)}</SelectItem>
+                    <SelectItem key={g.code} value={g.code}>
+                      {labelOf(g.code)}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
               <Label className="text-xs">종류</Label>
-              <Select value={type} onValueChange={(v) => { setType(v as "all" | CardType); setPage(0); }}>
-                <SelectTrigger className="mt-1 w-[140px]"><SelectValue /></SelectTrigger>
+              <Select
+                value={type}
+                onValueChange={(v) => {
+                  setType(v as "all" | CardType);
+                  setPage(0);
+                }}
+              >
+                <SelectTrigger className="mt-1 w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">전체</SelectItem>
                   {TYPES.map((t) => (
-                    <SelectItem key={t} value={t}>{TYPE_LABEL[t]}</SelectItem>
+                    <SelectItem key={t} value={t}>
+                      {TYPE_LABEL[t]}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -217,11 +253,14 @@ function ManageInner() {
         {rows.map((c) => (
           <div key={c.code} className="flex gap-3 rounded-lg border border-border bg-card p-3">
             <div className="flex h-20 w-14 shrink-0 items-center justify-center overflow-hidden rounded bg-muted">
-              {(() => { const u = normalizeImageUrl(c.image_url); return u ? (
-                <img src={u} alt={c.name} className="h-full w-full object-cover" />
-              ) : (
-                <ImageOff className="h-5 w-5 text-muted-foreground" />
-              ); })()}
+              {(() => {
+                const u = normalizeImageUrl(c.image_url);
+                return u ? (
+                  <img src={u} alt={c.name} className="h-full w-full object-cover" />
+                ) : (
+                  <ImageOff className="h-5 w-5 text-muted-foreground" />
+                );
+              })()}
             </div>
             <div className="flex min-w-0 flex-1 flex-col">
               <div className="flex items-center gap-1.5">
@@ -233,20 +272,32 @@ function ManageInner() {
                 <span>{labelOf(c.game)}</span>
                 <span>·</span>
                 <span>{TYPE_LABEL[c.type as CardType] ?? c.type}</span>
-                {c.rarity && <Badge variant="outline" className="ml-1 h-4 px-1 text-[10px]">{c.rarity}</Badge>}
+                {c.rarity && (
+                  <Badge variant="outline" className="ml-1 h-4 px-1 text-[10px]">
+                    {c.rarity}
+                  </Badge>
+                )}
               </div>
               {c.traits && c.traits.length > 0 && (
                 <div className="mt-1 flex flex-wrap gap-1">
                   {c.traits.map((t) => (
-                    <Badge key={t} variant="secondary" className="h-4 px-1 text-[10px]">{t}</Badge>
+                    <Badge key={t} variant="secondary" className="h-4 px-1 text-[10px]">
+                      {t}
+                    </Badge>
                   ))}
                 </div>
               )}
               <div className="mt-auto flex justify-end gap-1 pt-2">
                 <Button size="sm" variant="outline" onClick={() => setEditing(c)}>
-                  <Pencil className="h-3.5 w-3.5 mr-1" />편집
+                  <Pencil className="h-3.5 w-3.5 mr-1" />
+                  편집
                 </Button>
-                <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeletingCode(c.code)}>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-destructive"
+                  onClick={() => setDeletingCode(c.code)}
+                >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -262,9 +313,25 @@ function ManageInner() {
 
       {pageCount > 1 && (
         <div className="flex items-center justify-center gap-2 pt-2">
-          <Button variant="outline" size="sm" disabled={page === 0 || loading} onClick={() => setPage((p) => Math.max(0, p - 1))}>이전</Button>
-          <span className="text-xs text-muted-foreground">{page + 1} / {pageCount}</span>
-          <Button variant="outline" size="sm" disabled={page + 1 >= pageCount || loading} onClick={() => setPage((p) => p + 1)}>다음</Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page === 0 || loading}
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+          >
+            이전
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            {page + 1} / {pageCount}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page + 1 >= pageCount || loading}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            다음
+          </Button>
         </div>
       )}
 
@@ -272,11 +339,19 @@ function ManageInner() {
         <EditCardDialog
           card={editing}
           onClose={() => setEditing(null)}
-          onSaved={() => { setEditing(null); fetchRows(); }}
+          onSaved={() => {
+            setEditing(null);
+            fetchRows();
+          }}
         />
       )}
 
-      <AlertDialog open={!!deletingCode} onOpenChange={(o) => { if (!o) setDeletingCode(null); }}>
+      <AlertDialog
+        open={!!deletingCode}
+        onOpenChange={(o) => {
+          if (!o) setDeletingCode(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>카드를 삭제할까요?</AlertDialogTitle>
@@ -300,12 +375,20 @@ function ManageInner() {
 }
 
 function EditCardDialog({
-  card, onClose, onSaved,
-}: { card: CardRow; onClose: () => void; onSaved: () => void }) {
+  card,
+  onClose,
+  onSaved,
+}: {
+  card: CardRow;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
   const { sets } = useUniqueSets();
   const { games, labelOf } = useGames();
   const [isManualSet, setIsManualSet] = useState(false);
-  const displaySets = Array.from(new Set([card.set_code, ...sets])).filter(Boolean).sort((a, b) => a.localeCompare(b));
+  const displaySets = Array.from(new Set([card.set_code, ...sets]))
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b));
 
   const [form, setForm] = useState({
     name: card.name,
@@ -334,7 +417,10 @@ function EditCardDialog({
         const n = Number(v);
         return v.trim() === "" || !Number.isFinite(n) ? null : n;
       };
-      const colors = form.colors.split(/[,|;/]/).map((s) => s.trim()).filter(Boolean);
+      const colors = form.colors
+        .split(/[,|;/]/)
+        .map((s) => s.trim())
+        .filter(Boolean);
       const { error } = await supabase
         .from("cards")
         .update({
@@ -363,7 +449,12 @@ function EditCardDialog({
   };
 
   return (
-    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog
+      open
+      onOpenChange={(o) => {
+        if (!o) onClose();
+      }}
+    >
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>카드 편집 · {card.code}</DialogTitle>
@@ -376,18 +467,33 @@ function EditCardDialog({
           <div>
             <Label className="text-xs">게임</Label>
             <Select value={form.game} onValueChange={(v) => setForm({ ...form, game: v as Game })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
-                {games.map((g) => <SelectItem key={g.code} value={g.code}>{labelOf(g.code)}</SelectItem>)}
+                {games.map((g) => (
+                  <SelectItem key={g.code} value={g.code}>
+                    {labelOf(g.code)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           <div>
             <Label className="text-xs">종류</Label>
-            <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v as CardType })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <Select
+              value={form.type}
+              onValueChange={(v) => setForm({ ...form, type: v as CardType })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
-                {TYPES.map((t) => <SelectItem key={t} value={t}>{TYPE_LABEL[t]}</SelectItem>)}
+                {TYPES.map((t) => (
+                  <SelectItem key={t} value={t}>
+                    {TYPE_LABEL[t]}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -400,7 +506,8 @@ function EditCardDialog({
                   onClick={() => setIsManualSet(true)}
                   className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
                 >
-                  <Keyboard className="h-3 w-3" />직접 입력
+                  <Keyboard className="h-3 w-3" />
+                  직접 입력
                 </button>
               )}
             </Label>
@@ -435,7 +542,9 @@ function EditCardDialog({
                 </SelectTrigger>
                 <SelectContent>
                   {displaySets.map((s) => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
                   ))}
                   <SelectItem value="__NEW_SET__" className="text-primary font-medium">
                     + 직접 입력 / 신규 세트 추가
@@ -446,38 +555,66 @@ function EditCardDialog({
           </div>
           <div>
             <Label className="text-xs">색상 (쉼표 구분)</Label>
-            <Input value={form.colors} onChange={(e) => setForm({ ...form, colors: e.target.value })} placeholder="red, blue" />
+            <Input
+              value={form.colors}
+              onChange={(e) => setForm({ ...form, colors: e.target.value })}
+              placeholder="red, blue"
+            />
           </div>
           <div>
             <Label className="text-xs">비용</Label>
-            <Input type="number" value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} />
+            <Input
+              type="number"
+              value={form.cost}
+              onChange={(e) => setForm({ ...form, cost: e.target.value })}
+            />
           </div>
           <div>
             <Label className="text-xs">파워</Label>
-            <Input type="number" value={form.power} onChange={(e) => setForm({ ...form, power: e.target.value })} />
+            <Input
+              type="number"
+              value={form.power}
+              onChange={(e) => setForm({ ...form, power: e.target.value })}
+            />
           </div>
           <div>
             <Label className="text-xs">카운터</Label>
-            <Input type="number" value={form.counter} onChange={(e) => setForm({ ...form, counter: e.target.value })} />
+            <Input
+              type="number"
+              value={form.counter}
+              onChange={(e) => setForm({ ...form, counter: e.target.value })}
+            />
           </div>
           <div>
             <Label className="text-xs">속성</Label>
-            <Input value={form.attribute} onChange={(e) => setForm({ ...form, attribute: e.target.value })} />
+            <Input
+              value={form.attribute}
+              onChange={(e) => setForm({ ...form, attribute: e.target.value })}
+            />
           </div>
           <div>
             <Label className="text-xs">레어도</Label>
-            <Input value={form.rarity} onChange={(e) => setForm({ ...form, rarity: e.target.value })} />
+            <Input
+              value={form.rarity}
+              onChange={(e) => setForm({ ...form, rarity: e.target.value })}
+            />
           </div>
           <div className="sm:col-span-2">
             <Label className="text-xs">이미지 URL (구글 드라이브 공유 링크 자동 변환)</Label>
             <Input
               value={form.image_url}
               onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-              onBlur={(e) => setForm({ ...form, image_url: normalizeImageUrl(e.target.value) ?? "" })}
+              onBlur={(e) =>
+                setForm({ ...form, image_url: normalizeImageUrl(e.target.value) ?? "" })
+              }
               placeholder="https://... 또는 https://drive.google.com/file/d/.../view"
             />
             {form.image_url && (
-              <img src={normalizeImageUrl(form.image_url) ?? form.image_url} alt="" className="mt-2 h-32 rounded border border-border object-contain" />
+              <img
+                src={normalizeImageUrl(form.image_url) ?? form.image_url}
+                alt=""
+                className="mt-2 h-32 rounded border border-border object-contain"
+              />
             )}
           </div>
           <div className="sm:col-span-2">
@@ -490,9 +627,15 @@ function EditCardDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={saving}>취소</Button>
+          <Button variant="outline" onClick={onClose} disabled={saving}>
+            취소
+          </Button>
           <Button onClick={onSave} disabled={saving}>
-            {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
+            {saving ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-1" />
+            ) : (
+              <Save className="h-4 w-4 mr-1" />
+            )}
             저장
           </Button>
         </DialogFooter>

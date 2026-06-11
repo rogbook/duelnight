@@ -16,11 +16,7 @@ export function installServerFnAuthFetch() {
   const original = window.fetch.bind(window);
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const url =
-      typeof input === "string"
-        ? input
-        : input instanceof URL
-          ? input.toString()
-          : input.url;
+      typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
 
     if (!url.includes("/_serverFn/") && !url.includes("/api/")) {
       return original(input, init);
@@ -32,8 +28,7 @@ export function installServerFnAuthFetch() {
       if (!token) return original(input, init);
 
       const headers = new Headers(
-        init?.headers ??
-          (input instanceof Request ? input.headers : undefined),
+        init?.headers ?? (input instanceof Request ? input.headers : undefined),
       );
       if (!headers.has("authorization")) {
         headers.set("authorization", `Bearer ${token}`);

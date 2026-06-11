@@ -10,13 +10,7 @@ const UPSERT_CHUNK_SIZE = 500;
 const MAX_ERRORS_PER_TABLE = 20;
 const FK_VIOLATION_CODE = "23503";
 
-type JsonValue =
-  | string
-  | number
-  | boolean
-  | null
-  | JsonValue[]
-  | { [key: string]: JsonValue };
+type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
 type Row = Record<string, JsonValue>;
 
@@ -248,9 +242,7 @@ export function rewriteStorageUrls<T extends JsonValue>(
 
   function walk(node: JsonValue): JsonValue {
     if (typeof node === "string") {
-      return node.includes(fromPrefix)
-        ? node.replaceAll(fromPrefix, toPrefix)
-        : node;
+      return node.includes(fromPrefix) ? node.replaceAll(fromPrefix, toPrefix) : node;
     }
     if (Array.isArray(node)) return node.map(walk);
     if (node !== null && typeof node === "object") {
@@ -275,9 +267,7 @@ export function chunk<T>(values: T[], size: number): T[][] {
   return chunks;
 }
 
-export function isForeignKeyViolation(error: {
-  code?: string | null;
-}): boolean {
+export function isForeignKeyViolation(error: { code?: string | null }): boolean {
   return error.code === FK_VIOLATION_CODE;
 }
 
@@ -291,10 +281,7 @@ function pushError(result: TableResult, key: string, message: string): void {
   }
 }
 
-async function fetchAllRows(
-  client: SupabaseClient,
-  config: TableConfig,
-): Promise<Row[]> {
+async function fetchAllRows(client: SupabaseClient, config: TableConfig): Promise<Row[]> {
   const rows: Row[] = [];
 
   for (let from = 0; ; from += PAGE_SIZE) {
@@ -315,9 +302,7 @@ async function fetchAllRows(
   return rows;
 }
 
-async function listTargetAuthUserIds(
-  target: SupabaseClient,
-): Promise<Set<string>> {
+async function listTargetAuthUserIds(target: SupabaseClient): Promise<Set<string>> {
   const ids = new Set<string>();
 
   for (let page = 1; ; page += 1) {
@@ -365,9 +350,7 @@ async function upsertRows(
   const onConflict = config.conflict.join(",");
 
   for (const batch of chunk(rows, UPSERT_CHUNK_SIZE)) {
-    const { error } = await target
-      .from(config.name)
-      .upsert(batch, { onConflict });
+    const { error } = await target.from(config.name).upsert(batch, { onConflict });
     if (!error) {
       result.upserted += batch.length;
       continue;
@@ -375,9 +358,7 @@ async function upsertRows(
 
     // 청크 실패 시 행 단위로 재시도해 FK 보류와 실제 실패를 구분한다.
     for (const row of batch) {
-      const { error: rowError } = await target
-        .from(config.name)
-        .upsert(row, { onConflict });
+      const { error: rowError } = await target.from(config.name).upsert(row, { onConflict });
       if (!rowError) {
         result.upserted += 1;
       } else if (isForeignKeyViolation(rowError)) {
@@ -403,9 +384,7 @@ async function pruneTable(
   }
 
   const keyColumn = config.conflict[0];
-  const sourceKeys = new Set(
-    sourceRows.map((row) => String(row[keyColumn])),
-  );
+  const sourceKeys = new Set(sourceRows.map((row) => String(row[keyColumn])));
   const targetRows = await fetchAllRows(target, config);
   const extras = targetRows
     .map((row) => String(row[keyColumn]))
@@ -415,10 +394,7 @@ async function pruneTable(
   if (!execute || extras.length === 0) return;
 
   for (const batch of chunk(extras, UPSERT_CHUNK_SIZE)) {
-    const { error } = await target
-      .from(config.name)
-      .delete()
-      .in(keyColumn, batch);
+    const { error } = await target.from(config.name).delete().in(keyColumn, batch);
     if (error) {
       result.failed += batch.length;
       pushError(result, `prune:${batch[0]}…`, error.message);
@@ -455,18 +431,12 @@ async function syncTable(
     sourceRows = await fetchAllRows(source, config);
   } catch (error) {
     result.status = "failed";
-    pushError(
-      result,
-      config.name,
-      error instanceof Error ? error.message : String(error),
-    );
+    pushError(result, config.name, error instanceof Error ? error.message : String(error));
     return result;
   }
 
   result.sourceRows = sourceRows.length;
-  const rewritten = sourceRows.map((row) =>
-    rewriteStorageUrls(row, sourceRef, targetRef),
-  );
+  const rewritten = sourceRows.map((row) => rewriteStorageUrls(row, sourceRef, targetRef));
   const { ready, deferred } = splitByAuthUsers(rewritten, config, authUserIds);
   result.deferredNoUser = deferred.length;
 
@@ -525,8 +495,7 @@ async function run(): Promise<void> {
     return;
   }
 
-  const sourceUrl =
-    process.env.SOURCE_SUPABASE_URL?.trim() || DEFAULT_SOURCE_URL;
+  const sourceUrl = process.env.SOURCE_SUPABASE_URL?.trim() || DEFAULT_SOURCE_URL;
   const sourceKey =
     process.env.SOURCE_SUPABASE_SERVICE_ROLE_KEY?.trim() ||
     requireEnv("SOURCE_SUPABASE_PUBLISHABLE_KEY");
@@ -575,12 +544,8 @@ async function run(): Promise<void> {
       `[${report.mode}] ${sourceProjectRef} -> ${targetProjectRef}, 테이블 ${tables.length}개`,
     );
 
-    const needsAuthUsers = tables.some(
-      (table) => (table.authUserColumns ?? []).length > 0,
-    );
-    const authUserIds = needsAuthUsers
-      ? await listTargetAuthUserIds(target)
-      : new Set<string>();
+    const needsAuthUsers = tables.some((table) => (table.authUserColumns ?? []).length > 0);
+    const authUserIds = needsAuthUsers ? await listTargetAuthUserIds(target) : new Set<string>();
     report.targetAuthUserCount = authUserIds.size;
     if (needsAuthUsers) {
       console.log(`대상 auth 사용자 ${authUserIds.size}명 확인`);
@@ -600,9 +565,7 @@ async function run(): Promise<void> {
       console.log(
         `[${index + 1}/${tables.length}] ${config.name}: 원본 ${result.sourceRows}건, ` +
           `${options.execute ? "반영" : "반영 예정"} ${result.upserted}건` +
-          (result.deferredNoUser > 0
-            ? `, 사용자 보류 ${result.deferredNoUser}건`
-            : "") +
+          (result.deferredNoUser > 0 ? `, 사용자 보류 ${result.deferredNoUser}건` : "") +
           (result.deferredFk > 0 ? `, FK 보류 ${result.deferredFk}건` : "") +
           (result.pruneCandidates > 0
             ? `, 정리 ${options.execute ? result.pruned : result.pruneCandidates}건`
@@ -619,9 +582,7 @@ async function run(): Promise<void> {
         `정리 ${summary.pruned}건, 실패 ${summary.failed}건`,
     );
     if (summary.failed > 0) {
-      throw new Error(
-        `${summary.failed}건 실패 — 보고서를 확인한 뒤 재실행하세요.`,
-      );
+      throw new Error(`${summary.failed}건 실패 — 보고서를 확인한 뒤 재실행하세요.`);
     }
   } catch (error) {
     if (!report.finishedAt) writeReport(report);
@@ -631,9 +592,7 @@ async function run(): Promise<void> {
 
 if (import.meta.main) {
   run().catch((error) => {
-    console.error(
-      `DB 동기화 실패: ${error instanceof Error ? error.message : String(error)}`,
-    );
+    console.error(`DB 동기화 실패: ${error instanceof Error ? error.message : String(error)}`);
     process.exitCode = 1;
   });
 }

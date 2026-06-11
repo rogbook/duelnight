@@ -22,14 +22,22 @@ import { useI18n } from "@/i18n/language-context";
 
 export const Route = createFileRoute("/")({
   head: () => {
-    const saved = typeof window !== "undefined" ? localStorage.getItem("duelnight.i18n.locale") : "ko";
-    const title = saved === "ja" ? "ダッシュボード — DuelNight" : saved === "en" ? "Dashboard — DuelNight" : "대시보드 — DuelNight";
-    const desc = saved === "ja" ? "ワンピース・ポケモン・デジモンTCGの日程、カード、戦績、店舗、マッチングを1箇所で。" : saved === "en" ? "Manage One Piece, Pokémon, and Digimon TCG schedules, cards, records, stores, and matchings in one place." : "원피스·포켓몬·디지몬 TCG 일정, 카드, 전적, 매장, 매칭을 한 곳에서.";
+    const saved =
+      typeof window !== "undefined" ? localStorage.getItem("duelnight.i18n.locale") : "ko";
+    const title =
+      saved === "ja"
+        ? "ダッシュボード — DuelNight"
+        : saved === "en"
+          ? "Dashboard — DuelNight"
+          : "대시보드 — DuelNight";
+    const desc =
+      saved === "ja"
+        ? "ワンピース・ポケモン・デジモンTCGの日程、カード、戦績、店舗、マッチングを1箇所で。"
+        : saved === "en"
+          ? "Manage One Piece, Pokémon, and Digimon TCG schedules, cards, records, stores, and matchings in one place."
+          : "원피스·포켓몬·디지몬 TCG 일정, 카드, 전적, 매장, 매칭을 한 곳에서.";
     return {
-      meta: [
-        { title },
-        { name: "description", content: desc },
-      ],
+      meta: [{ title }, { name: "description", content: desc }],
     };
   },
   component: Dashboard,
@@ -164,8 +172,20 @@ function Dashboard() {
       icon: Calendar,
       color: "bg-rose-500/10 text-rose-500",
     },
-    { title: t("dashboard.shortcutCardsTitle"), desc: t("dashboard.shortcutCardsDesc"), to: "/cards", icon: Library, color: "bg-violet-500/10 text-violet-500" },
-    { title: t("dashboard.shortcutDecksTitle"), desc: t("dashboard.shortcutDecksDesc"), to: "/decks", icon: Layers, color: "bg-blue-500/10 text-blue-500" },
+    {
+      title: t("dashboard.shortcutCardsTitle"),
+      desc: t("dashboard.shortcutCardsDesc"),
+      to: "/cards",
+      icon: Library,
+      color: "bg-violet-500/10 text-violet-500",
+    },
+    {
+      title: t("dashboard.shortcutDecksTitle"),
+      desc: t("dashboard.shortcutDecksDesc"),
+      to: "/decks",
+      icon: Layers,
+      color: "bg-blue-500/10 text-blue-500",
+    },
     {
       title: t("dashboard.shortcutCollectionTitle"),
       desc: t("dashboard.shortcutCollectionDesc"),
@@ -173,7 +193,13 @@ function Dashboard() {
       icon: PackageOpen,
       color: "bg-amber-500/10 text-amber-500",
     },
-    { title: t("dashboard.shortcutMatchesTitle"), desc: t("dashboard.shortcutMatchesDesc"), to: "/matches", icon: Swords, color: "bg-red-500/10 text-red-500" },
+    {
+      title: t("dashboard.shortcutMatchesTitle"),
+      desc: t("dashboard.shortcutMatchesDesc"),
+      to: "/matches",
+      icon: Swords,
+      color: "bg-red-500/10 text-red-500",
+    },
     {
       title: t("dashboard.shortcutLeaderboardTitle"),
       desc: t("dashboard.shortcutLeaderboardDesc"),
@@ -181,8 +207,20 @@ function Dashboard() {
       icon: Trophy,
       color: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-500",
     },
-    { title: t("dashboard.shortcutStoreTitle"), desc: t("dashboard.shortcutStoreDesc"), to: "/stores", icon: MapPin, color: "bg-emerald-500/10 text-emerald-500" },
-    { title: t("dashboard.shortcutLfgTitle"), desc: t("dashboard.shortcutLfgDesc"), to: "/lfg", icon: Users, color: "bg-cyan-500/10 text-cyan-500" },
+    {
+      title: t("dashboard.shortcutStoreTitle"),
+      desc: t("dashboard.shortcutStoreDesc"),
+      to: "/stores",
+      icon: MapPin,
+      color: "bg-emerald-500/10 text-emerald-500",
+    },
+    {
+      title: t("dashboard.shortcutLfgTitle"),
+      desc: t("dashboard.shortcutLfgDesc"),
+      to: "/lfg",
+      icon: Users,
+      color: "bg-cyan-500/10 text-cyan-500",
+    },
   ];
 
   return (
@@ -246,7 +284,9 @@ function Dashboard() {
               to={s.to}
               className="group flex items-center gap-3 rounded-2xl border border-border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
             >
-              <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${s.color}`}>
+              <span
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${s.color}`}
+              >
                 <s.icon className="h-5 w-5" />
               </span>
               <div className="min-w-0 flex-1">

@@ -89,12 +89,15 @@ function PacksPage() {
   const [newCodes, setNewCodes] = useState<Set<string>>(new Set());
   const [loginOpen, setLoginOpen] = useState(false);
 
-  const packOptions = useMemo(() => [
-    { label: t("packs.packLabel", { count: 1, cards: 12 }), packs: 1 },
-    { label: t("packs.packLabel", { count: 5, cards: 60 }), packs: 5 },
-    { label: t("packs.packLabel", { count: 10, cards: 120 }), packs: 10 },
-    { label: t("packs.boxLabel"), packs: 24 },
-  ], [t]);
+  const packOptions = useMemo(
+    () => [
+      { label: t("packs.packLabel", { count: 1, cards: 12 }), packs: 1 },
+      { label: t("packs.packLabel", { count: 5, cards: 60 }), packs: 5 },
+      { label: t("packs.packLabel", { count: 10, cards: 120 }), packs: 10 },
+      { label: t("packs.boxLabel"), packs: 24 },
+    ],
+    [t],
+  );
 
   const { data: sets = [] } = useQuery({
     queryKey: ["pack-sets"],
@@ -129,12 +132,8 @@ function PacksPage() {
       toast.error(t("packs.noCardsError"));
       return;
     }
-    const rares = pool.filter((c) =>
-      ["SR", "SEC"].includes((c.rarity ?? "").toUpperCase()),
-    );
-    const commons = pool.filter(
-      (c) => !["SR", "SEC"].includes((c.rarity ?? "").toUpperCase()),
-    );
+    const rares = pool.filter((c) => ["SR", "SEC"].includes((c.rarity ?? "").toUpperCase()));
+    const commons = pool.filter((c) => !["SR", "SEC"].includes((c.rarity ?? "").toUpperCase()));
     const pulled: Card[] = [];
     for (let p = 0; p < packs; p++) {
       if (rares.length > 0) {
@@ -215,10 +214,7 @@ function PacksPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
-      <PageHeader
-        title={t("packs.title")}
-        description={t("packs.desc")}
-      />
+      <PageHeader title={t("packs.title")} description={t("packs.desc")} />
 
       <div className="mt-6 grid gap-3 rounded-lg border border-border bg-card p-4 sm:grid-cols-[1fr_1fr_auto]">
         <Select value={setCode} onValueChange={setSetCode}>
@@ -233,10 +229,7 @@ function PacksPage() {
             ))}
           </SelectContent>
         </Select>
-        <Select
-          value={String(packs)}
-          onValueChange={(v) => setPacks(Number(v))}
-        >
+        <Select value={String(packs)} onValueChange={(v) => setPacks(Number(v))}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -271,7 +264,9 @@ function PacksPage() {
               <p className="text-xs text-muted-foreground">
                 {user ? t("packs.savedNote", { count: tally.length }) : t("packs.loginToSaveNote")}
                 {user && newCodes.size > 0 && (
-                  <span className="ml-1 font-semibold text-primary">· {t("packs.newCount", { count: newCodes.size })}</span>
+                  <span className="ml-1 font-semibold text-primary">
+                    · {t("packs.newCount", { count: newCodes.size })}
+                  </span>
                 )}
               </p>
             </div>
@@ -344,9 +339,7 @@ function PacksPage() {
                   )}
                 </div>
                 <div className="p-2">
-                  <p className="truncate text-[11px] text-muted-foreground">
-                    {card.code}
-                  </p>
+                  <p className="truncate text-[11px] text-muted-foreground">{card.code}</p>
                   <p className="truncate text-sm font-medium">{card.name}</p>
                 </div>
               </li>

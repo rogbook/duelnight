@@ -49,10 +49,10 @@ async function runDirectDBMode() {
 
   if (!supabaseUrl || !serviceRoleKey) {
     console.error(
-      `${colors.red}✖ 오류: SUPABASE_URL 및 SUPABASE_SERVICE_ROLE_KEY 환경변수가 정의되지 않았습니다.${colors.reset}`
+      `${colors.red}✖ 오류: SUPABASE_URL 및 SUPABASE_SERVICE_ROLE_KEY 환경변수가 정의되지 않았습니다.${colors.reset}`,
     );
     console.error(
-      `${colors.yellow}💡 도움말: Direct DB Mode는 반드시 서비스 롤 키(Service Role Key)가 필요합니다 (RLS 바이패스).${colors.reset}\n`
+      `${colors.yellow}💡 도움말: Direct DB Mode는 반드시 서비스 롤 키(Service Role Key)가 필요합니다 (RLS 바이패스).${colors.reset}\n`,
     );
     process.exit(1);
   }
@@ -94,7 +94,9 @@ async function runDirectDBMode() {
           maskedCount++;
         }
       }
-      console.log(`${colors.green}   ✓ 성공적으로 ${maskedCount}개 프로필 마스킹 완료.${colors.reset}`);
+      console.log(
+        `${colors.green}   ✓ 성공적으로 ${maskedCount}개 프로필 마스킹 완료.${colors.reset}`,
+      );
     } else {
       console.log("   profiles 테이블이 비어 있습니다.");
     }
@@ -109,19 +111,19 @@ async function runDirectDBMode() {
 
     if (tokens && tokens.length > 0) {
       console.log(`   총 ${tokens.length}개의 OAuth 토큰 레코드를 리셋합니다.`);
-      const { error: resetErr } = await supabase
-        .from("user_drive_tokens")
-        .update({
-          access_token: "dummy_anonymized_access_token_value_masked_by_antigravity",
-          refresh_token: "dummy_anonymized_refresh_token_value_masked_by_antigravity",
-          connected_email: "anonymized_user@example.com",
-          scope: "https://www.googleapis.com/auth/drive.appdata",
-        });
+      const { error: resetErr } = await supabase.from("user_drive_tokens").update({
+        access_token: "dummy_anonymized_access_token_value_masked_by_antigravity",
+        refresh_token: "dummy_anonymized_refresh_token_value_masked_by_antigravity",
+        connected_email: "anonymized_user@example.com",
+        scope: "https://www.googleapis.com/auth/drive.appdata",
+      });
 
       if (resetErr) {
         console.error(`   ✖ 토큰 테이블 업데이트 실패: ${resetErr.message}`);
       } else {
-        console.log(`${colors.green}   ✓ 모든 OAuth 연동 정보 및 개인 이메일 리셋 성공.${colors.reset}`);
+        console.log(
+          `${colors.green}   ✓ 모든 OAuth 연동 정보 및 개인 이메일 리셋 성공.${colors.reset}`,
+        );
       }
     } else {
       console.log("   연동된 Google Drive OAuth 토큰이 없습니다.");
@@ -129,38 +131,36 @@ async function runDirectDBMode() {
 
     // 3. payments 결제 내역 마스킹
     console.log(`\n${colors.cyan}[3/4] payments 결제 영수증 및 트랜잭션 마스킹...${colors.reset}`);
-    const { data: payments, error: payError } = await supabase
-      .from("payments")
-      .select("id");
+    const { data: payments, error: payError } = await supabase.from("payments").select("id");
 
     if (payError) throw new Error(`payments 조회 실패: ${payError.message}`);
 
     if (payments && payments.length > 0) {
       console.log(`   총 ${payments.length}개의 결제 트랜잭션을 처리합니다.`);
-      const { error: payUpdateErr } = await supabase
-        .from("payments")
-        .update({
-          imp_uid: "imp_dummy_anonymized",
-          order_id: "order_dummy_anonymized",
-          receipt_url: "https://example.com/receipt/anonymized",
-        });
+      const { error: payUpdateErr } = await supabase.from("payments").update({
+        imp_uid: "imp_dummy_anonymized",
+        order_id: "order_dummy_anonymized",
+        receipt_url: "https://example.com/receipt/anonymized",
+      });
 
       if (payUpdateErr) {
         console.error(`   ✖ 결제 데이터 마스킹 실패: ${payUpdateErr.message}`);
       } else {
-        console.log(`${colors.green}   ✓ 포트원/아임포트 결제 영수증 경로 및 ID 익명화 완료.${colors.reset}`);
+        console.log(
+          `${colors.green}   ✓ 포트원/아임포트 결제 영수증 경로 및 ID 익명화 완료.${colors.reset}`,
+        );
       }
     } else {
       console.log("   등록된 결제 데이터가 없습니다.");
     }
 
     // 4. notifications 알림 청소
-    console.log(`\n${colors.cyan}[4/4] 알림 메타데이터 및 본문 개인 식별자 마스킹...${colors.reset}`);
-    const { error: notifErr } = await supabase
-      .from("notifications")
-      .update({
-        body: "개인 정보가 포함될 수 있어 내용이 마스킹 처리되었습니다.",
-      });
+    console.log(
+      `\n${colors.cyan}[4/4] 알림 메타데이터 및 본문 개인 식별자 마스킹...${colors.reset}`,
+    );
+    const { error: notifErr } = await supabase.from("notifications").update({
+      body: "개인 정보가 포함될 수 있어 내용이 마스킹 처리되었습니다.",
+    });
 
     if (notifErr) {
       console.error(`   ✖ 알림 마스킹 실패: ${notifErr.message}`);
@@ -168,8 +168,9 @@ async function runDirectDBMode() {
       console.log(`${colors.green}   ✓ 모든 수신 알림 내용 일괄 마스킹 성공.${colors.reset}`);
     }
 
-    console.log(`\n${colors.green}${colors.bold}🎉 [성공] Supabase 데이터베이스 PII 마스킹을 무사히 마쳤습니다.${colors.reset}\n`);
-
+    console.log(
+      `\n${colors.green}${colors.bold}🎉 [성공] Supabase 데이터베이스 PII 마스킹을 무사히 마쳤습니다.${colors.reset}\n`,
+    );
   } catch (error: any) {
     console.error(`\n${colors.red}✖ 치명적 오류 발생: ${error.message}${colors.reset}\n`);
     process.exit(2);
@@ -181,7 +182,9 @@ function runFileMode(inputPath: string, outputPath: string) {
   const resolvedOut = path.resolve(outputPath);
 
   if (!fs.existsSync(resolvedIn)) {
-    console.error(`${colors.red}✖ 오류: 입력 파일 '${inputPath}'을 찾을 수 없습니다.${colors.reset}\n`);
+    console.error(
+      `${colors.red}✖ 오류: 입력 파일 '${inputPath}'을 찾을 수 없습니다.${colors.reset}\n`,
+    );
     process.exit(1);
   }
 
@@ -220,7 +223,9 @@ function runFileMode(inputPath: string, outputPath: string) {
   console.log(`${colors.yellow}ℹ️  결과 파일 저장 중: ${resolvedOut}${colors.reset}`);
   fs.writeFileSync(resolvedOut, sql, "utf-8");
 
-  console.log(`\n${colors.green}${colors.bold}🎉 [성공] SQL 파일 익명화 필터링이 완료되었습니다! (치환된 원본 백업이 보장됩니다.)${colors.reset}\n`);
+  console.log(
+    `\n${colors.green}${colors.bold}🎉 [성공] SQL 파일 익명화 필터링이 완료되었습니다! (치환된 원본 백업이 보장됩니다.)${colors.reset}\n`,
+  );
 }
 
 async function main() {
@@ -230,9 +235,15 @@ async function main() {
   const mode = args[0];
 
   if (mode === "--db") {
-    console.log(`${colors.yellow}${colors.bold}🚨 경고: Direct DB Mode를 실행합니다.${colors.reset}`);
-    console.log(`${colors.yellow}이 모드는 데이터베이스의 실제 테이블 레코드를 즉시 변조합니다.${colors.reset}`);
-    console.log(`${colors.cyan}프로덕션(실운영) DB에 직접 대입하지 마시고, 개발/테스트 DB에서만 실행하십시오.${colors.reset}\n`);
+    console.log(
+      `${colors.yellow}${colors.bold}🚨 경고: Direct DB Mode를 실행합니다.${colors.reset}`,
+    );
+    console.log(
+      `${colors.yellow}이 모드는 데이터베이스의 실제 테이블 레코드를 즉시 변조합니다.${colors.reset}`,
+    );
+    console.log(
+      `${colors.cyan}프로덕션(실운영) DB에 직접 대입하지 마시고, 개발/테스트 DB에서만 실행하십시오.${colors.reset}\n`,
+    );
     await runDirectDBMode();
   } else if (mode === "--file" && args[1] && args[2]) {
     runFileMode(args[1], args[2]);
@@ -241,7 +252,9 @@ async function main() {
     console.log(`  1. Supabase 데이터베이스 레코드 익명화:`);
     console.log(`     ${colors.green}npx tsx scripts/anonymize-snapshot.ts --db${colors.reset}`);
     console.log(`  2. 백업 .sql 파일 내부 이메일/토큰 익명화:`);
-    console.log(`     ${colors.green}npx tsx scripts/anonymize-snapshot.ts --file <입력파일.sql> <출력파일.sql>${colors.reset}\n`);
+    console.log(
+      `     ${colors.green}npx tsx scripts/anonymize-snapshot.ts --file <입력파일.sql> <출력파일.sql>${colors.reset}\n`,
+    );
   }
 }
 

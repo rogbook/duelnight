@@ -23,18 +23,13 @@ interface PaymentDialogProps {
   onSuccess: (data: any) => void;
 }
 
-export function PaymentDialog({
-  open,
-  onOpenChange,
-  options,
-  onSuccess,
-}: PaymentDialogProps) {
+export function PaymentDialog({ open, onOpenChange, options, onSuccess }: PaymentDialogProps) {
   const { session } = useAuth();
   const { t, language } = useI18n();
   const [busy, setBusy] = useState(false);
   const [countryCode, setCountryCode] = useState<string | null>(null);
   const [loadingCountry, setLoadingCountry] = useState(true);
-  
+
   const isTestMode = import.meta.env.DEV;
 
   // 1. 유저 국가 코드 페칭
@@ -78,7 +73,7 @@ export function PaymentDialog({
         ...options,
         sandbox: isTestMode,
         userEmail: session.user.email,
-        custom_data: { user_id: session.user.id }
+        custom_data: { user_id: session.user.id },
       });
 
       toast.loading("결제 승인 검증 진행 중...", { id: toastId });
@@ -90,7 +85,7 @@ export function PaymentDialog({
           merchant_uid: result.merchant_uid,
           amount: options.amount,
           packId: options.packId,
-        }
+        },
       });
 
       if (!verifyResult.success) {
@@ -113,12 +108,12 @@ export function PaymentDialog({
       toast.error(t("creditStore.loginRequired"));
       return;
     }
-    
+
     setBusy(true);
     try {
       // 1. Stripe Checkout Session 발급 (TanStack Server Function)
       const result = await createStripeCheckoutSession({
-        data: { packId: options.packId }
+        data: { packId: options.packId },
       });
 
       if (!result.url) {
@@ -126,7 +121,7 @@ export function PaymentDialog({
       }
 
       toast.loading(t("common.loading", "결제 페이지로 이동 중..."));
-      
+
       // 2. Stripe Checkout 결제창 리디렉션
       window.location.href = result.url;
     } catch (err) {
@@ -177,7 +172,9 @@ export function PaymentDialog({
         ) : loadingCountry ? (
           <div className="flex flex-col items-center justify-center p-8 gap-3 mt-2">
             <Loader2 className="h-8 w-8 text-primary animate-spin" />
-            <p className="text-xs text-muted-foreground">접속 국가 및 현지화 결제수단 최적화 중...</p>
+            <p className="text-xs text-muted-foreground">
+              접속 국가 및 현지화 결제수단 최적화 중...
+            </p>
           </div>
         ) : (
           <div className="mt-2 space-y-4">
@@ -206,10 +203,9 @@ export function PaymentDialog({
               <div className="flex items-center gap-2.5 pt-2 border-t border-border/30 text-[10px] text-muted-foreground">
                 <Lock className="h-3 w-3 shrink-0" />
                 <span>
-                  {isKorean 
+                  {isKorean
                     ? "SSL Secured & PortOne Korean Local PG Compliance"
-                    : "SSL Secured & Stripe Global Compliance"
-                  }
+                    : "SSL Secured & Stripe Global Compliance"}
                 </span>
               </div>
             </div>
@@ -246,4 +242,3 @@ export function PaymentDialog({
     </Dialog>
   );
 }
-

@@ -82,7 +82,12 @@ function SummaryCard({
   return (
     <div className="w-44 shrink-0 snap-start rounded-2xl border border-border bg-card p-4">
       <p className="text-[11px] text-muted-foreground">{label}</p>
-      <p className={cn("mt-2 text-2xl font-semibold tracking-tight", valueClass ?? "text-foreground")}>
+      <p
+        className={cn(
+          "mt-2 text-2xl font-semibold tracking-tight",
+          valueClass ?? "text-foreground",
+        )}
+      >
         {value}
       </p>
       <p className="mt-1 text-[11px] text-muted-foreground">{sub}</p>
@@ -107,9 +112,17 @@ export function MobileStatScroll({ stats, streak }: { stats: MatchStats; streak:
 
   const cur = streak.current;
   const curLabel =
-    cur === 0 ? "—" : cur > 0 ? `${cur}${t("matches.winsStreak")} 🔥` : `${-cur}${t("matches.lossesStreak")}`;
+    cur === 0
+      ? "—"
+      : cur > 0
+        ? `${cur}${t("matches.winsStreak")} 🔥`
+        : `${-cur}${t("matches.lossesStreak")}`;
   const curClass =
-    cur > 0 ? "text-emerald-600 dark:text-emerald-400" : cur < 0 ? "text-rose-600 dark:text-rose-400" : undefined;
+    cur > 0
+      ? "text-emerald-600 dark:text-emerald-400"
+      : cur < 0
+        ? "text-rose-600 dark:text-rose-400"
+        : undefined;
 
   return (
     <section className="mt-5">
@@ -164,7 +177,9 @@ export function MobileTurnRatioCard({ stats }: { stats: MatchStats }) {
 
         {/* Ratio bar */}
         <div className="mb-4 flex items-center gap-2 text-xs">
-          <span className="w-9 shrink-0 text-right text-muted-foreground">{t("matches.first")}</span>
+          <span className="w-9 shrink-0 text-right text-muted-foreground">
+            {t("matches.first")}
+          </span>
           <div className="relative flex h-7 flex-1 overflow-hidden rounded-full bg-muted text-[10px] font-medium">
             <div
               className="flex h-full items-center justify-center bg-foreground text-background"
@@ -189,7 +204,10 @@ export function MobileTurnRatioCard({ stats }: { stats: MatchStats }) {
               <p className="text-[10px] text-muted-foreground">{label}</p>
               <p className="mt-0.5 text-xl font-semibold">{fmtPct(pack)}</p>
               <p className="text-[10px] text-muted-foreground">
-                {pack.wins}{t("matches.win")} {pack.losses}{t("matches.lose")} · {pack.total}{t("matches.playCount")}
+                {pack.wins}
+                {t("matches.win")} {pack.losses}
+                {t("matches.lose")} · {pack.total}
+                {t("matches.playCount")}
               </p>
             </div>
           ))}
@@ -228,12 +246,21 @@ export function MobileDeckCards({ rows }: { rows: DeckStat[] }) {
           </div>
           <p className="mt-1.5 text-[11px] text-muted-foreground">
             {r.stats.wins}-{r.stats.losses}
-            {r.stats.draws ? `-${r.stats.draws}` : ""} · {r.stats.total}{t("matches.playCount")}
+            {r.stats.draws ? `-${r.stats.draws}` : ""} · {r.stats.total}
+            {t("matches.playCount")}
           </p>
           <div className="mt-2 space-y-0.5 text-[11px] text-muted-foreground">
-            <p>{t("matches.first")} {fmtPct(r.first)} ({r.first.total}{t("matches.playCount")})</p>
-            <p>{t("matches.second")} {fmtPct(r.second)} ({r.second.total}{t("matches.playCount")})</p>
-            <p className="text-[10px]">{t("matches.wilsonLow")} {fmtPctVal(r.stats.wilsonLow)}</p>
+            <p>
+              {t("matches.first")} {fmtPct(r.first)} ({r.first.total}
+              {t("matches.playCount")})
+            </p>
+            <p>
+              {t("matches.second")} {fmtPct(r.second)} ({r.second.total}
+              {t("matches.playCount")})
+            </p>
+            <p className="text-[10px]">
+              {t("matches.wilsonLow")} {fmtPctVal(r.stats.wilsonLow)}
+            </p>
           </div>
         </div>
       ))}
@@ -266,12 +293,19 @@ export function MobileMatchupCards({ rows }: { rows: MatchupStat[] }) {
           <p className="mt-2 text-2xl font-semibold tracking-tight">{fmtPct(r.stats)}</p>
           <p className="mt-1 text-[11px] text-muted-foreground">
             {r.stats.wins}-{r.stats.losses}
-            {r.stats.draws ? `-${r.stats.draws}` : ""} · {r.stats.total}{t("matches.playCount")}
+            {r.stats.draws ? `-${r.stats.draws}` : ""} · {r.stats.total}
+            {t("matches.playCount")}
           </p>
           <div className="mt-2 space-y-0.5 text-[11px] text-muted-foreground">
-            <p>{t("matches.first")} {fmtPct(r.first)} ({r.first.total})</p>
-            <p>{t("matches.second")} {fmtPct(r.second)} ({r.second.total})</p>
-            <p className="text-[10px]">{t("matches.wilsonLow")} {fmtPctVal(r.stats.wilsonLow)}</p>
+            <p>
+              {t("matches.first")} {fmtPct(r.first)} ({r.first.total})
+            </p>
+            <p>
+              {t("matches.second")} {fmtPct(r.second)} ({r.second.total})
+            </p>
+            <p className="text-[10px]">
+              {t("matches.wilsonLow")} {fmtPctVal(r.stats.wilsonLow)}
+            </p>
           </div>
         </div>
       ))}
@@ -299,7 +333,8 @@ export function MobileEventCards({ rows }: { rows: EventStat[] }) {
           <p className="mt-2 text-2xl font-semibold tracking-tight">{fmtPct(r.stats)}</p>
           <p className="mt-1 text-[11px] text-muted-foreground">
             {r.stats.wins}-{r.stats.losses}
-            {r.stats.draws ? `-${r.stats.draws}` : ""} · {r.stats.total}{t("matches.playCount")}
+            {r.stats.draws ? `-${r.stats.draws}` : ""} · {r.stats.total}
+            {t("matches.playCount")}
           </p>
         </div>
       ))}
@@ -358,7 +393,8 @@ export function MobileOpponentCards({
               />
             </div>
             <p className="mt-1.5 text-[11px] text-muted-foreground">
-              {r.count}{t("matches.times")} · {fmtPctVal(r.share)}
+              {r.count}
+              {t("matches.times")} · {fmtPctVal(r.share)}
             </p>
           </button>
         ))}
@@ -409,8 +445,7 @@ export function MobileRecentCards({
   const { t, language } = useI18n();
   const localeStr = language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US";
 
-  const gameLabel = (g: string) =>
-    t(`matches.${g}` as Parameters<typeof t>[0]);
+  const gameLabel = (g: string) => t(`matches.${g}` as Parameters<typeof t>[0]);
 
   if (rows.length === 0) return null;
 

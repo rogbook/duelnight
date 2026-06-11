@@ -18,15 +18,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { EditCardDialog } from "@/components/cards/edit-card-dialog";
 import { normalizeImageUrl } from "@/components/cards/card-uploader";
@@ -78,7 +79,15 @@ export const Route = createFileRoute("/cards/")({
  * 카드 썸네일. 이미지가 없거나(로드 실패 포함) 깨지면 흉한 깨짐 아이콘 대신
  * 카드 이름 placeholder로 폴백해 어떤 카드인지 식별 가능하게 한다.
  */
-function CardThumb({ src, name, noImageLabel }: { src: string | null; name: string; noImageLabel: string }) {
+function CardThumb({
+  src,
+  name,
+  noImageLabel,
+}: {
+  src: string | null;
+  name: string;
+  noImageLabel: string;
+}) {
   const [failed, setFailed] = useState(false);
   if (!src || failed) {
     return (
@@ -138,7 +147,6 @@ function CardsPage() {
     },
   });
 
-
   const { data: favSet = new Set<string>() } = useQuery({
     queryKey: ["card-favs", user?.id],
     enabled: !!user,
@@ -172,9 +180,7 @@ function CardsPage() {
         const term = q.trim();
         // 이름/코드는 부분일치, 특징(traits)은 정확 일치(배열 contains)
         const safe = term.replace(/[",{}\\]/g, "");
-        query = query.or(
-          `name.ilike.%${term}%,code.ilike.%${term}%,traits.cs.{"${safe}"}`
-        );
+        query = query.or(`name.ilike.%${term}%,code.ilike.%${term}%,traits.cs.{"${safe}"}`);
       }
       if (favOnly) {
         const codes = Array.from(favSet);
@@ -196,7 +202,6 @@ function CardsPage() {
 
   // 이전에 스크롤 시 카드가 사라지는 효과(opacity/scale)를 적용했으나,
   // 카드 DB 가독성을 해쳐 제거함. (관련 CSS animation-timeline: view() 도 제거됨)
-
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
@@ -244,7 +249,9 @@ function CardsPage() {
               resetPage();
             }}
           >
-            <SelectTrigger><SelectValue placeholder={t("cards.type")} /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue placeholder={t("cards.type")} />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("cards.typeAll")}</SelectItem>
               <SelectItem value="leader">{t("cards.typeLeader")}</SelectItem>
@@ -260,11 +267,15 @@ function CardsPage() {
               resetPage();
             }}
           >
-            <SelectTrigger><SelectValue placeholder={t("cards.set")} /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue placeholder={t("cards.set")} />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("cards.setAll")}</SelectItem>
               {sets.map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -275,7 +286,9 @@ function CardsPage() {
               resetPage();
             }}
           >
-            <SelectTrigger><SelectValue placeholder={t("cards.color")} /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue placeholder={t("cards.color")} />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("cards.colorAll")}</SelectItem>
               {(COLORS_BY_GAME[game] || []).map((c) => (
@@ -298,9 +311,7 @@ function CardsPage() {
             }}
             className="gap-1"
           >
-            <Star
-              className={`h-4 w-4 ${favOnly ? "fill-current" : ""}`}
-            />
+            <Star className={`h-4 w-4 ${favOnly ? "fill-current" : ""}`} />
             {t("cards.favoritesOnly")}
           </Button>
         </div>
@@ -366,15 +377,7 @@ function CardsPage() {
   );
 }
 
-function CardTile({
-  card,
-  isFav,
-  onClick,
-}: {
-  card: Card;
-  isFav: boolean;
-  onClick: () => void;
-}) {
+function CardTile({ card, isFav, onClick }: { card: Card; isFav: boolean; onClick: () => void }) {
   const { t, language } = useI18n();
   return (
     <li className="group relative scroll-reveal-card">
@@ -385,7 +388,7 @@ function CardTile({
         <div className="relative aspect-[5/7] w-full bg-muted">
           {(() => {
             const u = normalizeImageUrl(card.image_url);
-            const src = u ? displayImageSrc(u) ?? null : null;
+            const src = u ? (displayImageSrc(u) ?? null) : null;
             return <CardThumb src={src} name={card.name} noImageLabel={t("cards.noImage")} />;
           })()}
           {card.type === "leader" && (
@@ -398,9 +401,7 @@ function CardTile({
           )}
         </div>
         <div className="p-2">
-          <p className="truncate text-[11px] text-muted-foreground">
-            {card.code}
-          </p>
+          <p className="truncate text-[11px] text-muted-foreground">{card.code}</p>
           <p className="truncate text-sm font-medium">{card.name}</p>
           <div className="mt-1 flex flex-wrap gap-1">
             {card.colors.map((c) => (
@@ -576,217 +577,228 @@ function CardDetailDialog({
 
   return (
     <>
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
-        {card && (
-          <>
-            <DialogHeader>
-              <p className="text-xs text-muted-foreground">{card.code}</p>
-              <DialogTitle className="flex items-center gap-2">
-                {card.name}
-                <button
-                  onClick={toggleFav}
-                  aria-label={t("cards.favoritesOnly")}
-                  className="ml-auto rounded-md p-1 hover:bg-muted"
-                >
-                  <Star
-                    className={`h-5 w-5 ${
-                      isFav
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "text-muted-foreground"
-                    }`}
-                  />
-                </button>
-              </DialogTitle>
-            </DialogHeader>
-            {isAdmin && (
-              <div className="flex justify-end gap-1.5">
-                <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
-                  <Pencil className="h-3.5 w-3.5 mr-1" />{t("common.edit")}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-destructive hover:text-destructive"
-                  onClick={() => setConfirmDelete(true)}
-                >
-                  <Trash2 className="h-3.5 w-3.5 mr-1" />{t("common.delete")}
-                </Button>
-              </div>
-            )}
-            <div className="grid gap-4 sm:grid-cols-[200px_1fr]">
-              <div>
-                {displayUrl ? (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+          {card && (
+            <>
+              <DialogHeader>
+                <p className="text-xs text-muted-foreground">{card.code}</p>
+                <DialogTitle className="flex items-center gap-2">
+                  {card.name}
                   <button
-                    type="button"
-                    onClick={() => setZoomOpen(true)}
-                    className="block aspect-[5/7] w-full overflow-hidden rounded-md bg-muted cursor-zoom-in"
-                    title="크게 보기"
+                    onClick={toggleFav}
+                    aria-label={t("cards.favoritesOnly")}
+                    className="ml-auto rounded-md p-1 hover:bg-muted"
                   >
-                    <img
-                      src={displayImageSrc(displayUrl)}
-                      alt={card.name}
-                      className="h-full w-full object-cover"
+                    <Star
+                      className={`h-5 w-5 ${
+                        isFav ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
+                      }`}
                     />
                   </button>
-                ) : (
-                  <div className="aspect-[5/7] w-full overflow-hidden rounded-md bg-muted">
-                    <div className="flex h-full items-center justify-center text-muted-foreground">
-                      <ImageOff className="h-8 w-8" />
-                    </div>
-                  </div>
-                )}
-                {gallery.length > 1 && (
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {gallery.map((g) => (
-                      <button
-                        key={g.url}
-                        type="button"
-                        onClick={() => setActiveUrl(g.url)}
-                        title={g.label}
-                        className={`relative h-14 w-10 overflow-hidden rounded border ${
-                          displayUrl === g.url
-                            ? "border-primary ring-1 ring-primary"
-                            : "border-border"
-                        }`}
-                      >
-                        <img src={displayImageSrc(g.url)} alt={g.label} className="h-full w-full object-cover" />
-                        <span className="absolute inset-x-0 bottom-0 truncate bg-background/80 px-0.5 text-[8px] leading-3">
-                          {g.label}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div className="space-y-2 text-sm">
-                <div className="flex flex-wrap gap-1">
-                  <Badge>{isDtcg && ex.category ? ex.category : getCardTypeLabel(card.type)}</Badge>
-                  {isDtcg && ex.form && <Badge>{ex.form}</Badge>}
-                  {card.colors.map((c) => (
-                    <Badge key={c}>{colorLabel(card.game as Game, c, language)}</Badge>
-                  ))}
-                  {card.rarity && <Badge>{card.rarity}</Badge>}
+                </DialogTitle>
+              </DialogHeader>
+              {isAdmin && (
+                <div className="flex justify-end gap-1.5">
+                  <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
+                    <Pencil className="h-3.5 w-3.5 mr-1" />
+                    {t("common.edit")}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => setConfirmDelete(true)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 mr-1" />
+                    {t("common.delete")}
+                  </Button>
                 </div>
-                {isDtcg ? (
-                  <>
-                    <Stat label="DP" value={card.power?.toLocaleString()} />
-                    <Stat label="등장 코스트" value={card.cost} />
-                    <Stat label="진화 코스트 1" value={ex.evo_cost_1} />
-                    <Stat label="진화 코스트 2" value={ex.evo_cost_2} />
-                    <Stat label={t("cards.attribute")} value={card.attribute} />
-                    <Stat label={t("cards.set")} value={card.set_code} />
-                  </>
-                ) : (
-                  <>
-                    <Stat label={card.type === "leader" ? t("cards.life") : t("cards.cost")} value={card.cost} />
-                    <Stat label={t("cards.power")} value={card.power?.toLocaleString()} />
-                    <Stat label={t("cards.counter")} value={card.counter?.toLocaleString()} />
-                    <Stat label={t("cards.attribute")} value={card.attribute} />
-                    <Stat label={t("cards.set")} value={card.set_code} />
-                  </>
-                )}
-                {card.traits && card.traits.length > 0 && (
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground">{isDtcg ? "유형" : t("cards.traits")}</p>
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {card.traits.map((t) => (
-                        <Badge key={t}>{t}</Badge>
+              )}
+              <div className="grid gap-4 sm:grid-cols-[200px_1fr]">
+                <div>
+                  {displayUrl ? (
+                    <button
+                      type="button"
+                      onClick={() => setZoomOpen(true)}
+                      className="block aspect-[5/7] w-full overflow-hidden rounded-md bg-muted cursor-zoom-in"
+                      title="크게 보기"
+                    >
+                      <img
+                        src={displayImageSrc(displayUrl)}
+                        alt={card.name}
+                        className="h-full w-full object-cover"
+                      />
+                    </button>
+                  ) : (
+                    <div className="aspect-[5/7] w-full overflow-hidden rounded-md bg-muted">
+                      <div className="flex h-full items-center justify-center text-muted-foreground">
+                        <ImageOff className="h-8 w-8" />
+                      </div>
+                    </div>
+                  )}
+                  {gallery.length > 1 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {gallery.map((g) => (
+                        <button
+                          key={g.url}
+                          type="button"
+                          onClick={() => setActiveUrl(g.url)}
+                          title={g.label}
+                          className={`relative h-14 w-10 overflow-hidden rounded border ${
+                            displayUrl === g.url
+                              ? "border-primary ring-1 ring-primary"
+                              : "border-border"
+                          }`}
+                        >
+                          <img
+                            src={displayImageSrc(g.url)}
+                            alt={g.label}
+                            className="h-full w-full object-cover"
+                          />
+                          <span className="absolute inset-x-0 bottom-0 truncate bg-background/80 px-0.5 text-[8px] leading-3">
+                            {g.label}
+                          </span>
+                        </button>
                       ))}
                     </div>
+                  )}
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex flex-wrap gap-1">
+                    <Badge>
+                      {isDtcg && ex.category ? ex.category : getCardTypeLabel(card.type)}
+                    </Badge>
+                    {isDtcg && ex.form && <Badge>{ex.form}</Badge>}
+                    {card.colors.map((c) => (
+                      <Badge key={c}>{colorLabel(card.game as Game, c, language)}</Badge>
+                    ))}
+                    {card.rarity && <Badge>{card.rarity}</Badge>}
                   </div>
-                )}
-                {isDtcg && (ex.text_top || ex.text_bottom) ? (
-                  <>
-                    {ex.text_top && (
-                      <div>
-                        <p className="text-xs font-semibold text-muted-foreground">상단 텍스트</p>
-                        <p className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-2 text-sm leading-relaxed">{ex.text_top}</p>
+                  {isDtcg ? (
+                    <>
+                      <Stat label="DP" value={card.power?.toLocaleString()} />
+                      <Stat label="등장 코스트" value={card.cost} />
+                      <Stat label="진화 코스트 1" value={ex.evo_cost_1} />
+                      <Stat label="진화 코스트 2" value={ex.evo_cost_2} />
+                      <Stat label={t("cards.attribute")} value={card.attribute} />
+                      <Stat label={t("cards.set")} value={card.set_code} />
+                    </>
+                  ) : (
+                    <>
+                      <Stat
+                        label={card.type === "leader" ? t("cards.life") : t("cards.cost")}
+                        value={card.cost}
+                      />
+                      <Stat label={t("cards.power")} value={card.power?.toLocaleString()} />
+                      <Stat label={t("cards.counter")} value={card.counter?.toLocaleString()} />
+                      <Stat label={t("cards.attribute")} value={card.attribute} />
+                      <Stat label={t("cards.set")} value={card.set_code} />
+                    </>
+                  )}
+                  {card.traits && card.traits.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground">
+                        {isDtcg ? "유형" : t("cards.traits")}
+                      </p>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {card.traits.map((t) => (
+                          <Badge key={t}>{t}</Badge>
+                        ))}
                       </div>
-                    )}
-                    {ex.text_bottom && (
-                      <div>
-                        <p className="text-xs font-semibold text-muted-foreground">하단 텍스트</p>
-                        <p className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-2 text-sm leading-relaxed">{ex.text_bottom}</p>
-                      </div>
-                    )}
-                  </>
-                ) : card.effect ? (
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground">
-                      {t("cards.effect")}
-                    </p>
-                    <p className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-2 text-sm leading-relaxed">
-                      {card.effect}
-                    </p>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-
-            <div className="mt-4 border-t border-border pt-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold">
-                  {t("cards.reviewsTitle")}{" "}
-                  <span className="font-normal text-muted-foreground">
-                    ({reviews.length})
-                  </span>
-                </h3>
-                {avg !== null && (
-                  <span className="flex items-center gap-1 text-sm">
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    {avg.toFixed(1)}
-                  </span>
-                )}
-              </div>
-              {user ? (
-                <ReviewForm
-                  cardCode={card.code}
-                  existing={myReview}
-                  onSaved={() =>
-                    qc.invalidateQueries({
-                      queryKey: ["card-reviews", card.code],
-                    })
-                  }
-                />
-              ) : (
-                <p className="mt-3 text-sm text-muted-foreground">
-                  {t("cards.ratingRequiredLogin")}
-                </p>
-              )}
-              <ul className="mt-3 space-y-2">
-                {reviews.length === 0 ? (
-                  <li className="text-sm text-muted-foreground">
-                    {t("cards.firstReviewPrompt")}
-                  </li>
-                ) : (
-                  reviews.map((r) => (
-                    <li
-                      key={r.id}
-                      className="rounded-md border border-border bg-card p-3 text-sm"
-                    >
-                      <div className="flex items-center gap-2">
-                        <RatingStars value={r.rating} />
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(r.created_at).toLocaleDateString(
-                            language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US"
-                          )}
-                        </span>
-                      </div>
-                      {r.body && (
-                        <p className="mt-1 whitespace-pre-wrap text-foreground/90">
-                          {r.body}
-                        </p>
+                    </div>
+                  )}
+                  {isDtcg && (ex.text_top || ex.text_bottom) ? (
+                    <>
+                      {ex.text_top && (
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground">상단 텍스트</p>
+                          <p className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-2 text-sm leading-relaxed">
+                            {ex.text_top}
+                          </p>
+                        </div>
                       )}
-                    </li>
-                  ))
+                      {ex.text_bottom && (
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground">하단 텍스트</p>
+                          <p className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-2 text-sm leading-relaxed">
+                            {ex.text_bottom}
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  ) : card.effect ? (
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground">
+                        {t("cards.effect")}
+                      </p>
+                      <p className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-2 text-sm leading-relaxed">
+                        {card.effect}
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="mt-4 border-t border-border pt-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold">
+                    {t("cards.reviewsTitle")}{" "}
+                    <span className="font-normal text-muted-foreground">({reviews.length})</span>
+                  </h3>
+                  {avg !== null && (
+                    <span className="flex items-center gap-1 text-sm">
+                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      {avg.toFixed(1)}
+                    </span>
+                  )}
+                </div>
+                {user ? (
+                  <ReviewForm
+                    cardCode={card.code}
+                    existing={myReview}
+                    onSaved={() =>
+                      qc.invalidateQueries({
+                        queryKey: ["card-reviews", card.code],
+                      })
+                    }
+                  />
+                ) : (
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    {t("cards.ratingRequiredLogin")}
+                  </p>
                 )}
-              </ul>
-            </div>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
+                <ul className="mt-3 space-y-2">
+                  {reviews.length === 0 ? (
+                    <li className="text-sm text-muted-foreground">
+                      {t("cards.firstReviewPrompt")}
+                    </li>
+                  ) : (
+                    reviews.map((r) => (
+                      <li
+                        key={r.id}
+                        className="rounded-md border border-border bg-card p-3 text-sm"
+                      >
+                        <div className="flex items-center gap-2">
+                          <RatingStars value={r.rating} />
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(r.created_at).toLocaleDateString(
+                              language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US",
+                            )}
+                          </span>
+                        </div>
+                        {r.body && (
+                          <p className="mt-1 whitespace-pre-wrap text-foreground/90">{r.body}</p>
+                        )}
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {editing && card && (
         <EditCardDialog
@@ -799,7 +811,12 @@ function CardDetailDialog({
         />
       )}
 
-      <AlertDialog open={confirmDelete} onOpenChange={(o) => { if (!o && !deleting) setConfirmDelete(false); }}>
+      <AlertDialog
+        open={confirmDelete}
+        onOpenChange={(o) => {
+          if (!o && !deleting) setConfirmDelete(false);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("cards.deleteConfirmTitle")}</AlertDialogTitle>
@@ -878,10 +895,7 @@ function ReviewForm({
   const remove = async () => {
     if (!user || !existing) return;
     if (!confirm(t("cards.toastDeleteReviewConfirm"))) return;
-    const { error } = await supabase
-      .from("card_reviews")
-      .delete()
-      .eq("id", existing.id);
+    const { error } = await supabase.from("card_reviews").delete().eq("id", existing.id);
     if (error) toast.error(error.message);
     else {
       toast.success(t("cards.toastReviewDeleted"));
@@ -918,27 +932,14 @@ function ReviewForm({
   );
 }
 
-function RatingInput({
-  value,
-  onChange,
-}: {
-  value: number;
-  onChange: (n: number) => void;
-}) {
+function RatingInput({ value, onChange }: { value: number; onChange: (n: number) => void }) {
   return (
     <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map((n) => (
-        <button
-          key={n}
-          type="button"
-          onClick={() => onChange(n)}
-          aria-label={`${n}점`}
-        >
+        <button key={n} type="button" onClick={() => onChange(n)} aria-label={`${n}점`}>
           <Star
             className={`h-5 w-5 ${
-              n <= value
-                ? "fill-yellow-400 text-yellow-400"
-                : "text-muted-foreground"
+              n <= value ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
             }`}
           />
         </button>
@@ -954,9 +955,7 @@ function RatingStars({ value }: { value: number }) {
         <Star
           key={n}
           className={`h-3.5 w-3.5 ${
-            n <= value
-              ? "fill-yellow-400 text-yellow-400"
-              : "text-muted-foreground/40"
+            n <= value ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/40"
           }`}
         />
       ))}

@@ -115,8 +115,7 @@ function CollectionPage() {
     [scopedCards, owned],
   );
   const haveTotal = useMemo(
-    () =>
-      scopedCards.reduce((s, c) => s + (owned.get(c.code) ?? 0), 0),
+    () => scopedCards.reduce((s, c) => s + (owned.get(c.code) ?? 0), 0),
     [scopedCards, owned],
   );
 
@@ -124,9 +123,7 @@ function CollectionPage() {
     const term = q.trim().toLowerCase();
     if (!term) return scopedCards;
     return scopedCards.filter(
-      (c) =>
-        c.name.toLowerCase().includes(term) ||
-        c.code.toLowerCase().includes(term),
+      (c) => c.name.toLowerCase().includes(term) || c.code.toLowerCase().includes(term),
     );
   }, [scopedCards, q]);
 
@@ -172,10 +169,7 @@ function CollectionPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
-      <PageHeader
-        title={t("collection.title")}
-        description={t("collection.descAuth")}
-      >
+      <PageHeader title={t("collection.title")} description={t("collection.descAuth")}>
         <Button asChild variant="outline" size="sm">
           <Link to="/packs">{t("collection.packSimulator")}</Link>
         </Button>
@@ -234,15 +228,9 @@ function CollectionPage() {
         ) : (
           <ul className="mt-3 space-y-2">
             {setProgress.map(([set, p]) => (
-              <li
-                key={set}
-                className="rounded-lg border border-border bg-card p-3"
-              >
+              <li key={set} className="rounded-lg border border-border bg-card p-3">
                 <div className="flex items-center justify-between text-sm">
-                  <button
-                    onClick={() => setSetCode(set)}
-                    className="font-medium hover:underline"
-                  >
+                  <button onClick={() => setSetCode(set)} className="font-medium hover:underline">
                     {set}
                   </button>
                   <span className="text-muted-foreground">
@@ -308,9 +296,7 @@ function CollectionPage() {
                       </span>
                     )}
                   </div>
-                  <p className="mt-1 truncate text-[11px] text-muted-foreground">
-                    {c.code}
-                  </p>
+                  <p className="mt-1 truncate text-[11px] text-muted-foreground">{c.code}</p>
                   <p className="truncate text-sm font-medium">{c.name}</p>
                   <div className="mt-2 flex items-center justify-between gap-1">
                     <Button
@@ -323,9 +309,7 @@ function CollectionPage() {
                     >
                       <Minus className="h-3 w-3" />
                     </Button>
-                    <span className="min-w-6 text-center text-sm tabular-nums">
-                      {qty}
-                    </span>
+                    <span className="min-w-6 text-center text-sm tabular-nums">{qty}</span>
                     <Button
                       size="icon"
                       variant="outline"

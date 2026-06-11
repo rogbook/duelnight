@@ -10,9 +10,7 @@ const DRAFT_LANG_KEY = "duelnight.i18n.locale";
 
 // 타입 세이프한 중첩 키 자동 추출 유틸리티 타입 (2단계 고정으로 성능 및 재귀 깊이 제약 완화)
 type NestedKeys<T> = {
-  [K in keyof T]: T[K] extends object
-    ? `${K & string}.${keyof T[K] & string}`
-    : K & string;
+  [K in keyof T]: T[K] extends object ? `${K & string}.${keyof T[K] & string}` : K & string;
 }[keyof T];
 
 export type TranslationKey = NestedKeys<typeof ko>;
@@ -22,7 +20,6 @@ interface LanguageContextType {
   setLanguage: (lang: Language) => void;
   t: (key: TranslationKey, params?: Record<string, string | number> | string) => string;
 }
-
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
@@ -94,14 +91,12 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     // 파라미터 보간 처리: {key} → params[key]
     if (params && typeof params === "object") {
       return value.replace(/\{(\w+)\}/g, (_, k) =>
-        params[k] !== undefined ? String(params[k]) : `{${k}}`
+        params[k] !== undefined ? String(params[k]) : `{${k}}`,
       );
     }
 
     return value;
   };
-
-
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t }}>

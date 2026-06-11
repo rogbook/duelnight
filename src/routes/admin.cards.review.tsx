@@ -17,21 +17,35 @@ export const Route = createFileRoute("/admin/cards/review")({
   head: () => ({
     meta: [
       { title: "카드 검수 큐 — 관리자 — DuelNight" },
-      { name: "description", content: "사용자가 제출한 카드를 검토·승인하고, 변경 이력을 확인합니다." },
+      {
+        name: "description",
+        content: "사용자가 제출한 카드를 검토·승인하고, 변경 이력을 확인합니다.",
+      },
     ],
   }),
   component: ReviewPage,
 });
 
 type PendingCard = {
-  code: string; name: string; set_code: string; game: string; type: string;
-  image_url: string | null; submitted_by: string | null; created_at: string;
-  rarity: string | null; colors: string[];
+  code: string;
+  name: string;
+  set_code: string;
+  game: string;
+  type: string;
+  image_url: string | null;
+  submitted_by: string | null;
+  created_at: string;
+  rarity: string | null;
+  colors: string[];
 };
 
 type AuditRow = {
-  id: string; card_code: string; action: string; actor_id: string | null;
-  created_at: string; note: string | null;
+  id: string;
+  card_code: string;
+  action: string;
+  actor_id: string | null;
+  created_at: string;
+  note: string | null;
   before_data: Record<string, unknown> | null;
   after_data: Record<string, unknown> | null;
 };
@@ -41,7 +55,11 @@ function ReviewPage() {
   const { isAdmin, isLoading } = useIsAdmin();
 
   if (loading || isLoading) {
-    return <div className="mx-auto max-w-6xl px-6 py-8"><PageHeader title="카드 검수 큐" description="권한 확인 중…" /></div>;
+    return (
+      <div className="mx-auto max-w-6xl px-6 py-8">
+        <PageHeader title="카드 검수 큐" description="권한 확인 중…" />
+      </div>
+    );
   }
   if (!user || !isAdmin) {
     return (
@@ -49,10 +67,17 @@ function ReviewPage() {
         <PageHeader title="카드 검수 큐" description="관리자 전용" />
         <Card className="mt-6">
           <CardHeader>
-            <div className="flex items-center gap-2"><Lock className="h-5 w-5" /><CardTitle>접근 권한이 없습니다</CardTitle></div>
+            <div className="flex items-center gap-2">
+              <Lock className="h-5 w-5" />
+              <CardTitle>접근 권한이 없습니다</CardTitle>
+            </div>
             <CardDescription>관리자만 사용할 수 있어요.</CardDescription>
           </CardHeader>
-          <CardContent><Button asChild variant="outline"><Link to="/cards">카드 DB 둘러보기</Link></Button></CardContent>
+          <CardContent>
+            <Button asChild variant="outline">
+              <Link to="/cards">카드 DB 둘러보기</Link>
+            </Button>
+          </CardContent>
         </Card>
       </div>
     );
@@ -68,11 +93,20 @@ function ReviewPage() {
         <TabsList>
           <TabsTrigger value="queue">카드 검수</TabsTrigger>
           <TabsTrigger value="illusts">일러스트 검수</TabsTrigger>
-          <TabsTrigger value="logs"><History className="h-4 w-4 mr-1" />감사 로그</TabsTrigger>
+          <TabsTrigger value="logs">
+            <History className="h-4 w-4 mr-1" />
+            감사 로그
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="queue"><PendingQueue /></TabsContent>
-        <TabsContent value="illusts"><PendingIllusts /></TabsContent>
-        <TabsContent value="logs"><AuditLogs /></TabsContent>
+        <TabsContent value="queue">
+          <PendingQueue />
+        </TabsContent>
+        <TabsContent value="illusts">
+          <PendingIllusts />
+        </TabsContent>
+        <TabsContent value="logs">
+          <AuditLogs />
+        </TabsContent>
       </Tabs>
     </div>
   );
@@ -92,22 +126,38 @@ function PendingQueue() {
       .order("created_at", { ascending: true })
       .limit(200);
     setBusy(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     setItems((data ?? []) as PendingCard[]);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   const review = async (code: string, approve: boolean) => {
     const note = notes[code]?.trim() || null;
-    const { error } = await supabase.rpc("review_card", { _code: code, _approve: approve, _note: note ?? undefined });
-    if (error) { toast.error(error.message); return; }
+    const { error } = await supabase.rpc("review_card", {
+      _code: code,
+      _approve: approve,
+      _note: note ?? undefined,
+    });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success(approve ? `${code} 승인됨` : `${code} 반려됨`);
-    setItems(prev => prev.filter(p => p.code !== code));
+    setItems((prev) => prev.filter((p) => p.code !== code));
   };
 
   if (busy && items.length === 0) {
-    return <Card><CardContent className="py-8 text-center text-muted-foreground">불러오는 중…</CardContent></Card>;
+    return (
+      <Card>
+        <CardContent className="py-8 text-center text-muted-foreground">불러오는 중…</CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -115,19 +165,31 @@ function PendingQueue() {
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle className="text-base">대기 중 {items.length}건</CardTitle>
-          <CardDescription>승인된 카드는 즉시 공개됩니다. 반려는 카드를 숨기지만 데이터는 보존돼요.</CardDescription>
+          <CardDescription>
+            승인된 카드는 즉시 공개됩니다. 반려는 카드를 숨기지만 데이터는 보존돼요.
+          </CardDescription>
         </div>
         <Button variant="outline" size="sm" onClick={load} disabled={busy}>
-          <RefreshCw className={`h-4 w-4 mr-1 ${busy ? "animate-spin" : ""}`} />새로고침
+          <RefreshCw className={`h-4 w-4 mr-1 ${busy ? "animate-spin" : ""}`} />
+          새로고침
         </Button>
       </CardHeader>
       <CardContent className="space-y-3">
-        {items.length === 0 && <p className="text-sm text-muted-foreground py-6 text-center">대기 중인 카드가 없습니다.</p>}
-        {items.map(it => (
+        {items.length === 0 && (
+          <p className="text-sm text-muted-foreground py-6 text-center">
+            대기 중인 카드가 없습니다.
+          </p>
+        )}
+        {items.map((it) => (
           <div key={it.code} className="flex gap-3 rounded-md border p-3">
-            {(() => { const u = normalizeImageUrl(it.image_url); return u
-              ? <img src={u} alt="" className="h-28 w-20 rounded object-cover bg-muted" />
-              : <div className="h-28 w-20 rounded bg-muted" />; })()}
+            {(() => {
+              const u = normalizeImageUrl(it.image_url);
+              return u ? (
+                <img src={u} alt="" className="h-28 w-20 rounded object-cover bg-muted" />
+              ) : (
+                <div className="h-28 w-20 rounded bg-muted" />
+              );
+            })()}
             <div className="flex-1 min-w-0 space-y-1.5">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-mono text-xs">{it.code}</span>
@@ -140,20 +202,23 @@ function PendingQueue() {
                 </span>
               </div>
               <div className="text-xs text-muted-foreground">
-                세트 {it.set_code} · 색상 {it.colors?.join(", ") || "-"} · 제출자 {it.submitted_by?.slice(0, 8) ?? "-"}
+                세트 {it.set_code} · 색상 {it.colors?.join(", ") || "-"} · 제출자{" "}
+                {it.submitted_by?.slice(0, 8) ?? "-"}
               </div>
               <div className="flex gap-2 pt-1">
                 <Input
                   value={notes[it.code] ?? ""}
-                  onChange={e => setNotes(n => ({ ...n, [it.code]: e.target.value }))}
+                  onChange={(e) => setNotes((n) => ({ ...n, [it.code]: e.target.value }))}
                   placeholder="검수 메모 (선택)"
                   className="h-8 text-xs"
                 />
                 <Button size="sm" onClick={() => review(it.code, true)}>
-                  <Check className="h-4 w-4 mr-1" />승인
+                  <Check className="h-4 w-4 mr-1" />
+                  승인
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => review(it.code, false)}>
-                  <X className="h-4 w-4 mr-1" />반려
+                  <X className="h-4 w-4 mr-1" />
+                  반려
                 </Button>
               </div>
             </div>
@@ -165,8 +230,12 @@ function PendingQueue() {
 }
 
 type PendingIllust = {
-  id: string; card_code: string; image_url: string;
-  variant_label: string | null; submitted_by: string | null; created_at: string;
+  id: string;
+  card_code: string;
+  image_url: string;
+  variant_label: string | null;
+  submitted_by: string | null;
+  created_at: string;
 };
 
 function PendingIllusts() {
@@ -183,15 +252,22 @@ function PendingIllusts() {
       .order("created_at", { ascending: true })
       .limit(200);
     setBusy(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     setItems((data ?? []) as PendingIllust[]);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   const review = async (id: string, approve: boolean) => {
     const note = notes[id]?.trim() || null;
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     const { error } = await supabase
       .from("card_illustrations")
       .update({
@@ -201,9 +277,12 @@ function PendingIllusts() {
         review_note: note,
       })
       .eq("id", id);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success(approve ? "승인됨" : "반려됨");
-    setItems(prev => prev.filter(p => p.id !== id));
+    setItems((prev) => prev.filter((p) => p.id !== id));
   };
 
   return (
@@ -214,17 +293,30 @@ function PendingIllusts() {
           <CardDescription>같은 카드에 대한 추가 일러스트(얼터/패러랠 등) 검수.</CardDescription>
         </div>
         <Button variant="outline" size="sm" onClick={load} disabled={busy}>
-          <RefreshCw className={`h-4 w-4 mr-1 ${busy ? "animate-spin" : ""}`} />새로고침
+          <RefreshCw className={`h-4 w-4 mr-1 ${busy ? "animate-spin" : ""}`} />
+          새로고침
         </Button>
       </CardHeader>
       <CardContent className="space-y-3">
-        {items.length === 0 && <p className="text-sm text-muted-foreground py-6 text-center">대기 중인 일러스트가 없습니다.</p>}
-        {items.map(it => (
+        {items.length === 0 && (
+          <p className="text-sm text-muted-foreground py-6 text-center">
+            대기 중인 일러스트가 없습니다.
+          </p>
+        )}
+        {items.map((it) => (
           <div key={it.id} className="flex gap-3 rounded-md border p-3">
-            <img src={normalizeImageUrl(it.image_url) ?? it.image_url} alt="" className="h-28 w-20 rounded object-cover bg-muted" />
+            <img
+              src={normalizeImageUrl(it.image_url) ?? it.image_url}
+              alt=""
+              className="h-28 w-20 rounded object-cover bg-muted"
+            />
             <div className="flex-1 min-w-0 space-y-1.5">
               <div className="flex flex-wrap items-center gap-2">
-                <Link to="/cards/$code" params={{ code: it.card_code }} className="font-mono text-xs hover:underline">
+                <Link
+                  to="/cards/$code"
+                  params={{ code: it.card_code }}
+                  className="font-mono text-xs hover:underline"
+                >
                   {it.card_code}
                 </Link>
                 {it.variant_label && <Badge variant="secondary">{it.variant_label}</Badge>}
@@ -238,15 +330,17 @@ function PendingIllusts() {
               <div className="flex gap-2 pt-1">
                 <Input
                   value={notes[it.id] ?? ""}
-                  onChange={e => setNotes(n => ({ ...n, [it.id]: e.target.value }))}
+                  onChange={(e) => setNotes((n) => ({ ...n, [it.id]: e.target.value }))}
                   placeholder="검수 메모 (선택)"
                   className="h-8 text-xs"
                 />
                 <Button size="sm" onClick={() => review(it.id, true)}>
-                  <Check className="h-4 w-4 mr-1" />승인
+                  <Check className="h-4 w-4 mr-1" />
+                  승인
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => review(it.id, false)}>
-                  <X className="h-4 w-4 mr-1" />반려
+                  <X className="h-4 w-4 mr-1" />
+                  반려
                 </Button>
               </div>
             </div>
@@ -265,7 +359,8 @@ function AuditLogs() {
 
   const load = async () => {
     setBusy(true);
-    let req = supabase.from("card_audit_logs")
+    let req = supabase
+      .from("card_audit_logs")
       .select("id,card_code,action,actor_id,created_at,note,before_data,after_data")
       .order("created_at", { ascending: false })
       .limit(200);
@@ -273,18 +368,27 @@ function AuditLogs() {
     if (q.trim()) req = req.ilike("card_code", `%${q.trim()}%`);
     const { data, error } = await req;
     setBusy(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     setLogs((data ?? []) as AuditRow[]);
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [filter]);
+  useEffect(() => {
+    load(); /* eslint-disable-next-line */
+  }, [filter]);
 
   const actionColor = (a: string) =>
-    a === "approved" ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" :
-    a === "rejected" ? "bg-destructive/15 text-destructive" :
-    a === "deleted" ? "bg-orange-500/15 text-orange-700 dark:text-orange-400" :
-    a === "created" ? "bg-blue-500/15 text-blue-700 dark:text-blue-400" :
-    "bg-muted text-muted-foreground";
+    a === "approved"
+      ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+      : a === "rejected"
+        ? "bg-destructive/15 text-destructive"
+        : a === "deleted"
+          ? "bg-orange-500/15 text-orange-700 dark:text-orange-400"
+          : a === "created"
+            ? "bg-blue-500/15 text-blue-700 dark:text-blue-400"
+            : "bg-muted text-muted-foreground";
 
   return (
     <Card>
@@ -294,10 +398,18 @@ function AuditLogs() {
           <CardDescription>최근 200건. 카드 코드/액션으로 필터링.</CardDescription>
         </div>
         <div className="flex gap-2">
-          <Input value={q} onChange={e => setQ(e.target.value)} placeholder="카드 코드 검색"
-                 className="h-8 w-40" onKeyDown={e => e.key === "Enter" && load()} />
-          <select value={filter} onChange={e => setFilter(e.target.value)}
-                  className="h-8 rounded-md border bg-background px-2 text-sm">
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="카드 코드 검색"
+            className="h-8 w-40"
+            onKeyDown={(e) => e.key === "Enter" && load()}
+          />
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="h-8 rounded-md border bg-background px-2 text-sm"
+          >
             <option value="all">전체</option>
             <option value="created">생성</option>
             <option value="updated">수정</option>
@@ -323,19 +435,33 @@ function AuditLogs() {
               </tr>
             </thead>
             <tbody>
-              {logs.map(l => (
+              {logs.map((l) => (
                 <tr key={l.id} className="border-b border-border/40">
-                  <td className="px-3 py-1.5 whitespace-nowrap">{new Date(l.created_at).toLocaleString("ko-KR")}</td>
+                  <td className="px-3 py-1.5 whitespace-nowrap">
+                    {new Date(l.created_at).toLocaleString("ko-KR")}
+                  </td>
                   <td className="px-3 py-1.5">
-                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${actionColor(l.action)}`}>{l.action}</span>
+                    <span
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${actionColor(l.action)}`}
+                    >
+                      {l.action}
+                    </span>
                   </td>
                   <td className="px-3 py-1.5 font-mono">{l.card_code}</td>
-                  <td className="px-3 py-1.5 font-mono text-muted-foreground">{l.actor_id?.slice(0, 8) ?? "-"}</td>
-                  <td className="px-3 py-1.5 text-muted-foreground"><DiffSummary log={l} /></td>
+                  <td className="px-3 py-1.5 font-mono text-muted-foreground">
+                    {l.actor_id?.slice(0, 8) ?? "-"}
+                  </td>
+                  <td className="px-3 py-1.5 text-muted-foreground">
+                    <DiffSummary log={l} />
+                  </td>
                 </tr>
               ))}
               {logs.length === 0 && (
-                <tr><td colSpan={5} className="text-center py-6 text-muted-foreground">로그가 없습니다.</td></tr>
+                <tr>
+                  <td colSpan={5} className="text-center py-6 text-muted-foreground">
+                    로그가 없습니다.
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
@@ -347,8 +473,10 @@ function AuditLogs() {
 
 function DiffSummary({ log }: { log: AuditRow }) {
   if (log.note) return <span>“{log.note}”</span>;
-  if (log.action === "created") return <span>새 카드: {(log.after_data?.name as string) ?? ""}</span>;
-  if (log.action === "deleted") return <span>삭제됨: {(log.before_data?.name as string) ?? ""}</span>;
+  if (log.action === "created")
+    return <span>새 카드: {(log.after_data?.name as string) ?? ""}</span>;
+  if (log.action === "deleted")
+    return <span>삭제됨: {(log.before_data?.name as string) ?? ""}</span>;
   const before = log.before_data ?? {};
   const after = log.after_data ?? {};
   const changes: string[] = [];
@@ -359,5 +487,10 @@ function DiffSummary({ log }: { log: AuditRow }) {
     }
   }
   if (changes.length === 0) return <span>변경 없음</span>;
-  return <span>{changes.slice(0, 3).join(" · ")}{changes.length > 3 ? ` +${changes.length - 3}` : ""}</span>;
+  return (
+    <span>
+      {changes.slice(0, 3).join(" · ")}
+      {changes.length > 3 ? ` +${changes.length - 3}` : ""}
+    </span>
+  );
 }

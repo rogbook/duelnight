@@ -31,7 +31,9 @@ export type IcsEvent = {
 
 export function buildIcs(ev: IcsEvent): string {
   const dtStart = toIcsDate(ev.startsAt);
-  const dtEnd = toIcsDate(ev.endsAt ?? new Date(new Date(ev.startsAt).getTime() + 60 * 60 * 1000).toISOString());
+  const dtEnd = toIcsDate(
+    ev.endsAt ?? new Date(new Date(ev.startsAt).getTime() + 60 * 60 * 1000).toISOString(),
+  );
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",

@@ -79,19 +79,12 @@ export function BottomTabBar() {
   const [moreOpen, setMoreOpen] = useState(false);
   const unreadDm = useUnreadDmCount();
 
-  const filteredMoreItems = moreItems.filter(
-    (item) => !(item.url === "/store" && !user),
-  );
-  const allItems = [
-    ...primaryTabs,
-    ...filteredMoreItems,
-    ...(isAdmin ? adminMoreItems : []),
-  ];
+  const filteredMoreItems = moreItems.filter((item) => !(item.url === "/store" && !user));
+  const allItems = [...primaryTabs, ...filteredMoreItems, ...(isAdmin ? adminMoreItems : [])];
   const activeUrl = useActiveUrl(allItems);
-  const isMoreActive =
-    [...filteredMoreItems, ...(isAdmin ? adminMoreItems : [])].some(
-      (it) => it.url === activeUrl,
-    );
+  const isMoreActive = [...filteredMoreItems, ...(isAdmin ? adminMoreItems : [])].some(
+    (it) => it.url === activeUrl,
+  );
 
   return (
     <>
@@ -141,9 +134,7 @@ export function BottomTabBar() {
       <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
         <SheetContent side="bottom" className="max-h-[75vh] rounded-t-2xl px-4 pb-6">
           <SheetHeader className="pb-4 pt-2">
-            <SheetTitle className="text-left text-sm font-semibold">
-              {t("nav.more")}
-            </SheetTitle>
+            <SheetTitle className="text-left text-sm font-semibold">{t("nav.more")}</SheetTitle>
           </SheetHeader>
           <div className="grid grid-cols-4 gap-2">
             {filteredMoreItems.map((item) => {

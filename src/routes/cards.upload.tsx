@@ -61,9 +61,7 @@ function CardsUploadPage() {
             <Lock className="h-5 w-5 text-muted-foreground" />
             <CardTitle>{t("cards.noPermissionTitle")}</CardTitle>
           </div>
-          <CardDescription>
-            {t("cards.noPermissionDesc")}
-          </CardDescription>
+          <CardDescription>{t("cards.noPermissionDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Button asChild variant="outline">

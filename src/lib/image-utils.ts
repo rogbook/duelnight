@@ -69,11 +69,19 @@ export async function rotateAndCropToWebp(
   const out = document.createElement("canvas");
   out.width = outW;
   out.height = outH;
-  out.getContext("2d")!.drawImage(
-    stage,
-    Math.round(c.x * rW), Math.round(c.y * rH), cropPxW, cropPxH,
-    0, 0, outW, outH,
-  );
+  out
+    .getContext("2d")!
+    .drawImage(
+      stage,
+      Math.round(c.x * rW),
+      Math.round(c.y * rH),
+      cropPxW,
+      cropPxH,
+      0,
+      0,
+      outW,
+      outH,
+    );
 
   const outBlob: Blob | null = await new Promise((res) =>
     out.toBlob((b) => res(b), "image/webp", quality),

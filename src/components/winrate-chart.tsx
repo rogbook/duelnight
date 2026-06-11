@@ -1,12 +1,5 @@
 import { useMemo } from "react";
-import {
-  Line,
-  LineChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  ResponsiveContainer,
-} from "recharts";
+import { Line, LineChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from "recharts";
 import {
   ChartContainer,
   ChartTooltip,
@@ -50,13 +43,7 @@ const bucketKey = (iso: string, unit: ChartUnit): string => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 };
 
-export function WinRateChart({
-  rows,
-  unit = "day",
-}: {
-  rows: Match[];
-  unit?: ChartUnit;
-}) {
+export function WinRateChart({ rows, unit = "day" }: { rows: Match[]; unit?: ChartUnit }) {
   const { data, config, series } = useMemo(() => {
     if (rows.length === 0) {
       return {
@@ -126,9 +113,7 @@ export function WinRateChart({
           point.rolling =
             window.length === 0
               ? 0
-              : Math.round(
-                  (window.reduce((a, b) => a + b, 0) / window.length) * 1000,
-                ) / 10;
+              : Math.round((window.reduce((a, b) => a + b, 0) / window.length) * 1000) / 10;
         } else {
           const t = tallies.get(s.key)!;
           point[s.key] = t.d === 0 ? 0 : Math.round((t.w / t.d) * 1000) / 10;
@@ -177,9 +162,7 @@ export function WinRateChart({
             tickFormatter={(v: number) => `${v}%`}
             width={36}
           />
-          <ChartTooltip
-            content={<ChartTooltipContent formatter={(v) => `${v}%`} />}
-          />
+          <ChartTooltip content={<ChartTooltipContent formatter={(v) => `${v}%`} />} />
           <ChartLegend content={<ChartLegendContent />} />
           {series.map((s) => (
             <Line

@@ -20,7 +20,14 @@ interface Props {
   iconOnly?: boolean;
 }
 
-export function StartDmButton({ userId, label, variant = "outline", size = "sm", className, iconOnly }: Props) {
+export function StartDmButton({
+  userId,
+  label,
+  variant = "outline",
+  size = "sm",
+  className,
+  iconOnly,
+}: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { t } = useI18n();

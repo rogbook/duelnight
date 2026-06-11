@@ -70,12 +70,19 @@ function MenuSelect<T extends string>({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button type="button" variant="outline" className={`justify-between font-normal ${className ?? ""}`}>
+        <Button
+          type="button"
+          variant="outline"
+          className={`justify-between font-normal ${className ?? ""}`}
+        >
           <span className="truncate">{selected?.label ?? placeholder ?? "…"}</span>
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="min-w-[var(--radix-dropdown-menu-trigger-width)]">
+      <DropdownMenuContent
+        align="start"
+        className="min-w-[var(--radix-dropdown-menu-trigger-width)]"
+      >
         {options.map((option) => (
           <DropdownMenuItem
             key={option.value}
@@ -121,7 +128,10 @@ function LfgPage() {
   const { t } = useI18n();
   const { games, labelOf } = useGames();
 
-  const GAME_OPTIONS: MenuOption<Game>[] = games.map((g) => ({ value: g.code, label: labelOf(g.code) }));
+  const GAME_OPTIONS: MenuOption<Game>[] = games.map((g) => ({
+    value: g.code,
+    label: labelOf(g.code),
+  }));
   const CATEGORY_OPTIONS: MenuOption<Category>[] = [
     { value: "friendly", label: t("lfg.categoryFriendly") },
     { value: "tier", label: t("lfg.categoryTier") },
@@ -151,7 +161,9 @@ function LfgPage() {
     queryFn: async () => {
       let q = supabase
         .from("lfg_posts")
-        .select("id, user_id, game, title, location, meet_at, body, status, category, store_id, updated_at, games_count, duration_minutes, quick_match, created_at")
+        .select(
+          "id, user_id, game, title, location, meet_at, body, status, category, store_id, updated_at, games_count, duration_minutes, quick_match, created_at",
+        )
         .order("created_at", { ascending: false });
       if (game !== "all") q = q.eq("game", game);
       if (category !== "all") q = q.eq("category", category);
@@ -166,7 +178,9 @@ function LfgPage() {
       const [profsRes, storesRes] = await Promise.all([
         userIds.length
           ? supabase.from("profiles").select("id, display_name, username").in("id", userIds)
-          : Promise.resolve({ data: [] as { id: string; display_name: string | null; username: string | null }[] }),
+          : Promise.resolve({
+              data: [] as { id: string; display_name: string | null; username: string | null }[],
+            }),
         storeIds.length
           ? supabase.from("stores").select("id, name, address").in("id", storeIds)
           : Promise.resolve({ data: [] as { id: string; name: string; address: string | null }[] }),
@@ -176,7 +190,7 @@ function LfgPage() {
       return rows.map((r) => ({
         ...r,
         profiles: profMap.get(r.user_id) ?? null,
-        store: r.store_id ? storeMap.get(r.store_id) ?? null : null,
+        store: r.store_id ? (storeMap.get(r.store_id) ?? null) : null,
       })) as Post[];
     },
   });
@@ -193,16 +207,17 @@ function LfgPage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl px-6 py-8">
-      <PageHeader
-        title={t("lfg.title")}
-        description={t("lfg.desc")}
-      >
+      <PageHeader title={t("lfg.title")} description={t("lfg.desc")}>
         {user ? (
           <Button size="sm" onClick={() => setShowForm((v) => !v)}>
             {showForm ? (
-              <><X className="mr-1 h-4 w-4" /> {t("lfg.closeBtn")}</>
+              <>
+                <X className="mr-1 h-4 w-4" /> {t("lfg.closeBtn")}
+              </>
             ) : (
-              <><Plus className="mr-1 h-4 w-4" /> {t("lfg.writeBtn")}</>
+              <>
+                <Plus className="mr-1 h-4 w-4" /> {t("lfg.writeBtn")}
+              </>
             )}
           </Button>
         ) : (
@@ -213,9 +228,24 @@ function LfgPage() {
       </PageHeader>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <MenuSelect value={game} options={FILTER_GAME_OPTIONS} onChange={setGame} className="w-[120px]" />
-        <MenuSelect value={category} options={FILTER_CATEGORY_OPTIONS} onChange={setCategory} className="w-[140px]" />
-        <MenuSelect value={status} options={STATUS_OPTIONS} onChange={setStatus} className="w-[120px]" />
+        <MenuSelect
+          value={game}
+          options={FILTER_GAME_OPTIONS}
+          onChange={setGame}
+          className="w-[120px]"
+        />
+        <MenuSelect
+          value={category}
+          options={FILTER_CATEGORY_OPTIONS}
+          onChange={setCategory}
+          className="w-[140px]"
+        />
+        <MenuSelect
+          value={status}
+          options={STATUS_OPTIONS}
+          onChange={setStatus}
+          className="w-[120px]"
+        />
       </div>
 
       {user && showForm && (
@@ -234,11 +264,18 @@ function LfgPage() {
           {t("lfg.loginRequiredNote").split("로그인").length > 1 ? (
             <>
               {t("lfg.loginRequiredNote").split("로그인")[0]}
-              <Link to="/login" className="font-medium text-primary underline">{t("common.login")}</Link>
+              <Link to="/login" className="font-medium text-primary underline">
+                {t("common.login")}
+              </Link>
               {t("lfg.loginRequiredNote").split("로그인")[1]}
             </>
           ) : (
-            <>{t("lfg.loginRequiredNote")} <Link to="/login" className="font-medium text-primary underline">{t("common.login")}</Link></>
+            <>
+              {t("lfg.loginRequiredNote")}{" "}
+              <Link to="/login" className="font-medium text-primary underline">
+                {t("common.login")}
+              </Link>
+            </>
           )}
         </div>
       )}
@@ -258,11 +295,7 @@ function LfgPage() {
 
       {regularPosts.length === 0 && quickMatches.length === 0 ? (
         <div className="mt-6">
-          <EmptyState
-            icon={Users}
-            title={t("lfg.emptyTitle")}
-            description={t("lfg.emptyDesc")}
-          />
+          <EmptyState icon={Users} title={t("lfg.emptyTitle")} description={t("lfg.emptyDesc")} />
         </div>
       ) : (
         <ul className="mt-6 space-y-3">
@@ -300,7 +333,12 @@ function PostCard({
         highlight ? "border-amber-500/50 bg-amber-500/5" : "border-border"
       } ${closed ? "opacity-70" : ""}`}
     >
-      <Link to="/lfg/$id" params={{ id: p.id }} className="absolute inset-0 rounded-lg" aria-label={`${p.title}`} />
+      <Link
+        to="/lfg/$id"
+        params={{ id: p.id }}
+        className="absolute inset-0 rounded-lg"
+        aria-label={`${p.title}`}
+      />
       <div className="pointer-events-none relative z-10 flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
@@ -317,9 +355,7 @@ function PostCard({
             )}
             <span
               className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
-                closed
-                  ? "bg-muted text-muted-foreground"
-                  : "bg-emerald-500/15 text-emerald-600"
+                closed ? "bg-muted text-muted-foreground" : "bg-emerald-500/15 text-emerald-600"
               }`}
             >
               {closed ? t("lfg.statusClosed") : t("lfg.statusOpen")}
@@ -494,10 +530,7 @@ function InlineLfgForm({
   };
 
   return (
-    <form
-      onSubmit={submit}
-      className="mt-6 space-y-3 rounded-lg border border-border bg-card p-4"
-    >
+    <form onSubmit={submit} className="mt-6 space-y-3 rounded-lg border border-border bg-card p-4">
       <div className="flex items-center gap-2">
         <Plus className="h-4 w-4 text-primary" />
         <h2 className="text-sm font-semibold">{t("lfg.newPost")}</h2>
@@ -506,11 +539,19 @@ function InlineLfgForm({
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="flex flex-col gap-1.5">
           <Label>{t("lfg.fieldGame")}</Label>
-          <MenuSelect value={form.game} options={gameOptions} onChange={(v) => setForm({ ...form, game: v, store_id: "" })} />
+          <MenuSelect
+            value={form.game}
+            options={gameOptions}
+            onChange={(v) => setForm({ ...form, game: v, store_id: "" })}
+          />
         </div>
         <div className="flex flex-col gap-1.5">
           <Label>{t("lfg.fieldCategory")}</Label>
-          <MenuSelect value={form.category} options={categoryOptions} onChange={(v) => setForm({ ...form, category: v })} />
+          <MenuSelect
+            value={form.category}
+            options={categoryOptions}
+            onChange={(v) => setForm({ ...form, category: v })}
+          />
         </div>
         <div className="flex flex-col gap-1.5">
           <Label>{t("lfg.fieldDateTime")}</Label>

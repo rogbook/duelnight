@@ -31,9 +31,24 @@ const BRAND = {
 type TcgGame = string;
 
 const GAME_THEME: Record<TcgGame, { label: string; from: string; to: string; accent: string }> = {
-  optcg: { label: "ONE PIECE", from: "from-rose-600/80", to: "to-amber-500/70", accent: "text-amber-300" },
-  ptcg: { label: "Pokémon", from: "from-yellow-500/80", to: "to-sky-500/70", accent: "text-yellow-300" },
-  dtcg: { label: "Digimon", from: "from-indigo-600/80", to: "to-fuchsia-500/70", accent: "text-fuchsia-300" },
+  optcg: {
+    label: "ONE PIECE",
+    from: "from-rose-600/80",
+    to: "to-amber-500/70",
+    accent: "text-amber-300",
+  },
+  ptcg: {
+    label: "Pokémon",
+    from: "from-yellow-500/80",
+    to: "to-sky-500/70",
+    accent: "text-yellow-300",
+  },
+  dtcg: {
+    label: "Digimon",
+    from: "from-indigo-600/80",
+    to: "to-fuchsia-500/70",
+    accent: "text-fuchsia-300",
+  },
 };
 
 interface ReleaseRow {
@@ -48,7 +63,8 @@ interface ReleaseRow {
 
 export const Route = createFileRoute("/intro")({
   head: () => {
-    const saved = typeof window !== "undefined" ? localStorage.getItem("duelnight.i18n.locale") : "ko";
+    const saved =
+      typeof window !== "undefined" ? localStorage.getItem("duelnight.i18n.locale") : "ko";
     const tagline =
       saved === "ja"
         ? "ワンピース・ポケモン・デジモンTCGプレイヤーのためのオールインワンハブ"
@@ -84,7 +100,12 @@ function IntroPage() {
     if (user) navigate({ to: "/" });
     else setLoginOpen(true);
   };
-  const enterLabel = language === "en" ? "Enter Dashboard" : language === "ja" ? "ダッシュボードへ" : "솔루션 들어가기";
+  const enterLabel =
+    language === "en"
+      ? "Enter Dashboard"
+      : language === "ja"
+        ? "ダッシュボードへ"
+        : "솔루션 들어가기";
 
   const proPrice = language === "en" ? "$4.99" : language === "ja" ? "¥500" : "₩4,900";
   const creditPrice = language === "en" ? "$0.99~" : language === "ja" ? "¥100~" : "₩1,000~";
@@ -92,12 +113,48 @@ function IntroPage() {
     language === "en" ? "View Rankings" : language === "ja" ? "ランキングを見る" : "랭킹 보기";
 
   const features = [
-    { icon: BarChart3, title: t("intro.featureTitle1"), desc: t("intro.featureDesc1"), color: "text-amber-300", glow: "bg-amber-500/15" },
-    { icon: ScanLine, title: t("intro.featureTitle2"), desc: t("intro.featureDesc2"), color: "text-sky-300", glow: "bg-sky-500/15" },
-    { icon: Trophy, title: t("intro.featureTitle3"), desc: t("intro.featureDesc3"), color: "text-fuchsia-300", glow: "bg-fuchsia-500/15" },
-    { icon: Calendar, title: t("intro.featureTitle4"), desc: t("intro.featureDesc4"), color: "text-emerald-300", glow: "bg-emerald-500/15" },
-    { icon: Users, title: t("intro.featureTitle5"), desc: t("intro.featureDesc5"), color: "text-rose-300", glow: "bg-rose-500/15" },
-    { icon: Sparkles, title: t("intro.featureTitle6"), desc: t("intro.featureDesc6"), color: "text-violet-300", glow: "bg-violet-500/15" },
+    {
+      icon: BarChart3,
+      title: t("intro.featureTitle1"),
+      desc: t("intro.featureDesc1"),
+      color: "text-amber-300",
+      glow: "bg-amber-500/15",
+    },
+    {
+      icon: ScanLine,
+      title: t("intro.featureTitle2"),
+      desc: t("intro.featureDesc2"),
+      color: "text-sky-300",
+      glow: "bg-sky-500/15",
+    },
+    {
+      icon: Trophy,
+      title: t("intro.featureTitle3"),
+      desc: t("intro.featureDesc3"),
+      color: "text-fuchsia-300",
+      glow: "bg-fuchsia-500/15",
+    },
+    {
+      icon: Calendar,
+      title: t("intro.featureTitle4"),
+      desc: t("intro.featureDesc4"),
+      color: "text-emerald-300",
+      glow: "bg-emerald-500/15",
+    },
+    {
+      icon: Users,
+      title: t("intro.featureTitle5"),
+      desc: t("intro.featureDesc5"),
+      color: "text-rose-300",
+      glow: "bg-rose-500/15",
+    },
+    {
+      icon: Sparkles,
+      title: t("intro.featureTitle6"),
+      desc: t("intro.featureDesc6"),
+      color: "text-violet-300",
+      glow: "bg-violet-500/15",
+    },
   ];
 
   return (
@@ -220,11 +277,20 @@ function IntroPage() {
         {/* FEATURES */}
         <section className="mx-auto w-full max-w-6xl px-4 pb-20 sm:px-6">
           <div className="mb-8 text-center">
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{t("intro.gameIntegrated")}</h2>
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              {t("intro.gameIntegrated")}
+            </h2>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((f) => (
-              <FeatureTile key={f.title} icon={f.icon} title={f.title} desc={f.desc} color={f.color} glow={f.glow} />
+              <FeatureTile
+                key={f.title}
+                icon={f.icon}
+                title={f.title}
+                desc={f.desc}
+                color={f.color}
+                glow={f.glow}
+              />
             ))}
           </div>
         </section>
@@ -233,7 +299,9 @@ function IntroPage() {
         <section id="pricing" className="scroll-mt-20 border-t border-white/5 bg-white/[0.02]">
           <div className="mx-auto w-full max-w-6xl px-4 py-20 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">{t("intro.pricingTitle")}</h2>
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                {t("intro.pricingTitle")}
+              </h2>
               <p className="mt-3 text-foreground/60">{t("intro.pricingDesc")}</p>
               <p className="mt-1 text-xs text-amber-400">{t("intro.pricingTestNotice")}</p>
             </div>
@@ -293,7 +361,9 @@ function IntroPage() {
         <section className="mx-auto w-full max-w-6xl px-4 py-20 sm:px-6">
           <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-rose-600/20 via-fuchsia-600/10 to-indigo-600/20 px-6 py-14 text-center">
             <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-amber-500/20 blur-3xl" />
-            <h2 className="relative text-3xl font-bold tracking-tight sm:text-4xl">{t("intro.bottomCtaTitle")}</h2>
+            <h2 className="relative text-3xl font-bold tracking-tight sm:text-4xl">
+              {t("intro.bottomCtaTitle")}
+            </h2>
             <p className="relative mt-3 text-foreground/60">{t("intro.bottomCtaDesc")}</p>
             <button
               type="button"
@@ -308,7 +378,9 @@ function IntroPage() {
 
         <footer className="border-t border-white/5">
           <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-3 px-4 py-6 text-xs text-foreground/40 sm:flex-row sm:px-6">
-            <div>{t("intro.footerCopyright").replace("{year}", String(new Date().getFullYear()))}</div>
+            <div>
+              {t("intro.footerCopyright").replace("{year}", String(new Date().getFullYear()))}
+            </div>
             <div className="flex items-center gap-3">
               <Link to="/login" className="hover:text-foreground/70">
                 {t("common.login")}
@@ -341,7 +413,9 @@ function FeatureTile({
 }) {
   return (
     <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition-colors hover:border-white/20 hover:bg-white/[0.05]">
-      <div className={`pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full ${glow} blur-2xl`} />
+      <div
+        className={`pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full ${glow} blur-2xl`}
+      />
       <div className={`relative grid h-10 w-10 place-items-center rounded-xl bg-white/5 ${color}`}>
         <Icon className="h-5 w-5" />
       </div>
@@ -451,8 +525,13 @@ function ReleaseTicker() {
   const dateLocale = language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US";
   const releaseLabel = language === "ja" ? "発売" : language === "en" ? "Release" : "발매";
   const headerLabel =
-    language === "ja" ? "新規発売スケジュール" : language === "en" ? "New Release Schedule" : "신규 발매 일정";
-  const detailLabel = language === "ja" ? "詳細を見る" : language === "en" ? "View details" : "자세히 보기";
+    language === "ja"
+      ? "新規発売スケジュール"
+      : language === "en"
+        ? "New Release Schedule"
+        : "신규 발매 일정";
+  const detailLabel =
+    language === "ja" ? "詳細を見る" : language === "en" ? "View details" : "자세히 보기";
   const current = Math.min(idx, releases.length - 1);
 
   return (
@@ -461,7 +540,11 @@ function ReleaseTicker() {
         {releases.map((r, i) => {
           const theme = GAME_THEME[r.game] ?? GAME_THEME.optcg;
           const d = new Date(r.early_release_at ?? r.starts_at);
-          const dateStr = d.toLocaleDateString(dateLocale, { year: "numeric", month: "2-digit", day: "2-digit" });
+          const dateStr = d.toLocaleDateString(dateLocale, {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          });
           return (
             <div
               key={r.id}
@@ -514,7 +597,9 @@ function ReleaseTicker() {
         {/* 상단 라벨 */}
         <div className="pointer-events-none absolute left-5 top-4 z-10 flex items-center gap-2 sm:left-8">
           <Flame className="h-4 w-4 text-orange-400" />
-          <span className="text-xs font-semibold uppercase tracking-wider text-white/80">{headerLabel}</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-white/80">
+            {headerLabel}
+          </span>
         </div>
 
         {/* 인디케이터 */}

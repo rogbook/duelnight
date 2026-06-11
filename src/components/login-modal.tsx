@@ -7,12 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useI18n } from "@/i18n/language-context";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 // 자주 노출되는 흔한 비밀번호 — Supabase 누출 비밀번호 보호와 별개로 클라이언트에서 선차단
 const COMMON_PASSWORDS = new Set([
@@ -35,8 +30,7 @@ function checkPasswordRules(password: string) {
   const length = password.length >= 8;
   const letter = /[a-zA-Z]/.test(password);
   const number = /\d/.test(password);
-  const notCommon =
-    password.length > 0 && !COMMON_PASSWORDS.has(password.toLowerCase());
+  const notCommon = password.length > 0 && !COMMON_PASSWORDS.has(password.toLowerCase());
   return {
     length,
     letter,
@@ -142,9 +136,7 @@ export function LoginModal({
           <DialogTitle className="text-left text-xl">
             {mode === "signin" ? t("auth.loginTitle") : t("auth.signupTitle")}
           </DialogTitle>
-          <p className="mt-1 text-left text-sm text-muted-foreground">
-            {t("auth.loginDesc")}
-          </p>
+          <p className="mt-1 text-left text-sm text-muted-foreground">{t("auth.loginDesc")}</p>
         </DialogHeader>
 
         <div className="px-6 pb-6">
@@ -207,11 +199,7 @@ export function LoginModal({
                 </ul>
               )}
             </div>
-            <Button
-              type="submit"
-              disabled={busy || signupBlocked}
-              className="mt-1"
-            >
+            <Button type="submit" disabled={busy || signupBlocked} className="mt-1">
               {busy
                 ? t("auth.processing")
                 : mode === "signin"
@@ -226,9 +214,7 @@ export function LoginModal({
               onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
               className="text-muted-foreground hover:text-foreground"
             >
-              {mode === "signin"
-                ? t("auth.toggleSignup")
-                : t("auth.toggleSignin")}
+              {mode === "signin" ? t("auth.toggleSignup") : t("auth.toggleSignin")}
             </button>
             {mode === "signin" && (
               <button

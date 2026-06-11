@@ -7,39 +7,34 @@ async function getAuthenticatedUserId() {
   const request = getRequest();
   const authHeader = request?.headers?.get("authorization");
   if (!authHeader?.startsWith("Bearer ")) throw new Error("Unauthorized");
-  
+
   const token = authHeader.replace("Bearer ", "");
-  const supabase = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_PUBLISHABLE_KEY!
-  );
-  
+  const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!);
+
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) throw new Error("Unauthorized");
   return data.user.id;
 }
 
-export const getDriveAuthUrlFn = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const userId = await getAuthenticatedUserId();
-    const { getGoogleAuthUrl } = await import("./google-drive.server");
-    const url = await getGoogleAuthUrl(userId);
-    return { url };
-  });
+export const getDriveAuthUrlFn = createServerFn({ method: "GET" }).handler(async () => {
+  const userId = await getAuthenticatedUserId();
+  const { getGoogleAuthUrl } = await import("./google-drive.server");
+  const url = await getGoogleAuthUrl(userId);
+  return { url };
+});
 
-export const getDriveConnectionFn = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const userId = await getAuthenticatedUserId();
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
-      .from("user_drive_tokens")
-      .select("connected_email, updated_at")
-      .eq("user_id", userId)
-      .single();
+export const getDriveConnectionFn = createServerFn({ method: "GET" }).handler(async () => {
+  const userId = await getAuthenticatedUserId();
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("user_drive_tokens")
+    .select("connected_email, updated_at")
+    .eq("user_id", userId)
+    .single();
 
-    if (error || !data) return { connected: false };
-    return { connected: true, email: data.connected_email, updatedAt: data.updated_at };
-  });
+  if (error || !data) return { connected: false };
+  return { connected: true, email: data.connected_email, updatedAt: data.updated_at };
+});
 
 export const listDriveFolderFn = createServerFn({ method: "POST" })
   .inputValidator((d: { folderUrl: string }) => d)
@@ -63,9 +58,12 @@ export const listDriveFolderFn = createServerFn({ method: "POST" })
 
     const fid = folderId(folderUrl);
     const query = `'${fid}' in parents and mimeType contains 'image/' and trashed = false`;
-    const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,thumbnailLink,mimeType)&pageSize=100`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const res = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,thumbnailLink,mimeType)&pageSize=100`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
 
     if (!res.ok) {
       const err = await res.json();
@@ -76,32 +74,28 @@ export const listDriveFolderFn = createServerFn({ method: "POST" })
     return { files: driveData.files };
   });
 
-export const disconnectDriveFn = createServerFn({ method: "POST" })
-  .handler(async () => {
-    const userId = await getAuthenticatedUserId();
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: tokenData } = await supabaseAdmin
-      .from("user_drive_tokens")
-      .select("access_token")
-      .eq("user_id", userId)
-      .single();
+export const disconnectDriveFn = createServerFn({ method: "POST" }).handler(async () => {
+  const userId = await getAuthenticatedUserId();
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: tokenData } = await supabaseAdmin
+    .from("user_drive_tokens")
+    .select("access_token")
+    .eq("user_id", userId)
+    .single();
 
-    if (tokenData?.access_token) {
-      // 토큰을 URL 쿼리에 노출하면 프록시/액세스 로그에 그대로 남는다 → POST 본문으로 전송.
-      await fetch("https://oauth2.googleapis.com/revoke", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({ token: tokenData.access_token }),
-      });
-    }
+  if (tokenData?.access_token) {
+    // 토큰을 URL 쿼리에 노출하면 프록시/액세스 로그에 그대로 남는다 → POST 본문으로 전송.
+    await fetch("https://oauth2.googleapis.com/revoke", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ token: tokenData.access_token }),
+    });
+  }
 
-    await supabaseAdmin
-      .from("user_drive_tokens")
-      .delete()
-      .eq("user_id", userId);
+  await supabaseAdmin.from("user_drive_tokens").delete().eq("user_id", userId);
 
-    return { success: true };
-  });
+  return { success: true };
+});
 
 const MAX_DRIVE_IMPORT_BATCH = 50;
 const DRIVE_FILE_ID_RE = /^[a-zA-Z0-9_-]{8,128}$/;
@@ -126,25 +120,31 @@ export const importDriveFilesFn = createServerFn({ method: "POST" })
     const { fileIds } = data;
     const { getValidAccessToken } = await import("./google-drive.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    
+
     const token = await getValidAccessToken(userId);
     if (!token) throw new Error("Google Drive not connected");
 
     const results = [];
     for (const fileId of fileIds) {
       try {
-        const metaRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=name,mimeType`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const metaRes = await fetch(
+          `https://www.googleapis.com/drive/v3/files/${fileId}?fields=name,mimeType`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
         if (!metaRes.ok) continue;
         const meta = await metaRes.json();
 
         // 이미지 파일만 허용 (버킷 오용·임의 파일 적재 방지)
         if (!meta?.mimeType || !String(meta.mimeType).startsWith("image/")) continue;
 
-        const contentRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const contentRes = await fetch(
+          `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
         if (!contentRes.ok) continue;
         const buffer = await contentRes.arrayBuffer();
 
@@ -164,9 +164,9 @@ export const importDriveFilesFn = createServerFn({ method: "POST" })
 
         if (uploadError) continue;
 
-        const { data: { publicUrl } } = supabaseAdmin.storage
-          .from("card-images")
-          .getPublicUrl(fileName);
+        const {
+          data: { publicUrl },
+        } = supabaseAdmin.storage.from("card-images").getPublicUrl(fileName);
 
         results.push({ id: fileId, name: meta.name, url: publicUrl });
       } catch (err) {
