@@ -33,7 +33,7 @@ export const Route = createFileRoute("/api/card-ocr")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const apiKey = process.env.LOVABLE_API_KEY;
+        const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
           return new Response(JSON.stringify({ error: "AI 게이트웨이 미설정" }), {
             status: 500,
@@ -80,11 +80,11 @@ export const Route = createFileRoute("/api/card-ocr")({
         const imageUrl = payload.image_b64 ?? payload.image_url!;
 
         try {
-          const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          const res = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
             body: JSON.stringify({
-              model: "google/gemini-2.5-flash",
+              model: "gemini-2.5-flash",
               messages: [
                 { role: "system", content: SYSTEM },
                 {

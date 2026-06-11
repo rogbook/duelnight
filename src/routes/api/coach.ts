@@ -58,7 +58,7 @@ export const Route = createFileRoute("/api/coach")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const apiKey = process.env.LOVABLE_API_KEY;
+        const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
           return new Response(JSON.stringify({ error: "AI 게이트웨이가 설정되지 않았습니다." }), {
             status: 500,
@@ -113,14 +113,14 @@ export const Route = createFileRoute("/api/coach")({
         const user = `다음은 사용자의 최근 전적 요약입니다(JSON):\n${JSON.stringify(payload)}`;
 
         try {
-          const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          const res = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${apiKey}`,
             },
             body: JSON.stringify({
-              model: "google/gemini-2.5-flash",
+              model: "gemini-2.5-flash",
               messages: [
                 { role: "system", content: system },
                 { role: "user", content: user },
@@ -139,7 +139,7 @@ export const Route = createFileRoute("/api/coach")({
           if (res.status === 402) {
             return new Response(
               JSON.stringify({
-                error: "AI 크레딧이 부족합니다. 워크스페이스 설정에서 충전해 주세요.",
+                error: "AI 크레딧이 부족합니다.",
               }),
               { status: 402, headers: corsHeaders },
             );

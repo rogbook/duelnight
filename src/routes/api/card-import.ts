@@ -6,7 +6,7 @@ import { z } from "zod";
  * 카드 자동 등록 — 공식 카드리스트 URL 가져오기 (Phase 1.5)
  *
  * 동작: 관리자가 입력한 카드 페이지 URL을 서버에서 fetch → HTML을 텍스트로 정리
- *       (카드 이미지는 [IMG:url] 토큰으로 보존) → Lovable AI 게이트웨이(Gemini)로
+ *       (카드 이미지는 [IMG:url] 토큰으로 보존) → Google Gemini API로
  *       cards 스키마에 맞춰 구조화하여 반환.
  * 설계: docs/CARD_IMPORT_PROPOSAL.md
  *
@@ -117,7 +117,7 @@ export const Route = createFileRoute("/api/card-import")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const apiKey = process.env.LOVABLE_API_KEY;
+        const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
           return new Response(JSON.stringify({ error: "AI 게이트웨이 미설정" }), {
             status: 500,
@@ -243,11 +243,11 @@ export const Route = createFileRoute("/api/card-import")({
 
         // 2) Gemini 게이트웨이로 구조화
         try {
-          const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          const res = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
             body: JSON.stringify({
-              model: "google/gemini-2.5-flash",
+              model: "gemini-2.5-flash",
               messages: [
                 { role: "system", content: SYSTEM },
                 {
