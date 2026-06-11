@@ -82,7 +82,7 @@ DB 변경 여부: (있으면 Claude 요청 사항 명시)
 | ESLint 전체 실패 해결 — CRLF/Prettier 줄바꿈 정규화(.gitattributes) | **Codex** | 대기 |
 | UI_USABILITY_REPORT.md 지적 항목 코드 반영 | **Antigravity** | 대기 |
 | Cloudflare 배포 연결 | Claude(설계) + 사용자(계정 연결) | 대기 |
-| 유출 키 종결 — 새 secret key 발급·교체 후 구 키 삭제 | 사용자 + Claude | 대기 |
+| ~~유출 키 종결~~ | 사용자 + Claude | ✅ **완료 (2026-06-11)** — 새 secret key 발급·세 폴더 배포, 구 키 폐기. 유출 키 실호출 401 확인(캐시 커밋에서 추출 테스트). 사고 종결 |
 
 ## 5. 참고 문서
 
