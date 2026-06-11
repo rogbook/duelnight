@@ -73,16 +73,16 @@ DB 변경 여부: (있으면 Claude 요청 사항 명시)
 - 키·시크릿 값을 코드, 문서, 커밋 메시지, 로그 출력에 쓰지 않는다.
 - 기존 Lovable DB(`tgybttphkmesgfbtgftt`)는 테스터 운영 중인 **원본** — 읽기(이관용)만 허용, 쓰기·삭제 금지.
 
-## 4. 현재 진행 중인 핸드오프 (2026-06-10 저녁 갱신)
+## 4. 현재 진행 중인 핸드오프 (2026-06-11 갱신)
 
 | 작업 | 담당 | 상태 |
 |---|---|---|
 | ~~이미지 이관 (910개)~~ | Codex | ✅ **완료** — SHA-256 전수 검증, 경쟁 처리 보완(d7a1079)까지 main 병합. Claude 검증 통과 |
-| DB 행 데이터 동기화 스크립트 (옛 DB→새 DB, 재실행 가능 + 이미지 URL 재작성) | **Claude** | 다음 작업 (내일) |
+| ~~DB 행 데이터 동기화 스크립트~~ | Claude | ✅ **완료** — `bun run sync-db`, 1차 실행 4,212건 반영·실패 0. 상세: [docs/DB_ROW_SYNC_GUIDE.md](./docs/DB_ROW_SYNC_GUIDE.md). 컷오버 때 재실행 |
 | ESLint 전체 실패 해결 — CRLF/Prettier 줄바꿈 정규화(.gitattributes) | **Codex** | 대기 |
 | UI_USABILITY_REPORT.md 지적 항목 코드 반영 | **Antigravity** | 대기 |
 | Cloudflare 배포 연결 | Claude(설계) + 사용자(계정 연결) | 대기 |
-| 유출 키 종결 — 새 secret key 발급·교체 후 구 키 삭제 | 사용자 + Claude | 대기 |
+| ~~유출 키 종결~~ | 사용자 + Claude | ✅ **완료 (2026-06-11)** — 새 secret key 발급·세 폴더 배포, 구 키 폐기. 유출 키 실호출 401 확인(캐시 커밋에서 추출 테스트). 사고 종결 |
 
 ## 5. 참고 문서
 
