@@ -100,7 +100,7 @@ type MigrationReport = {
   };
 };
 
-function loadLocalEnv(): void {
+export function loadLocalEnv(): void {
   for (const file of [".env.local", ".dev.vars"]) {
     const fullPath = path.resolve(process.cwd(), file);
     if (!fs.existsSync(fullPath)) continue;

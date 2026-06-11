@@ -12,7 +12,9 @@
     "format": "prettier --write .",
     "verify:deck-detail": "bun scripts/verify-deck-detail.ts",
     "migrate-images": "bun scripts/migrate-images.ts",
-    "test:migrate-images": "bun test scripts/migrate-images.test.ts"
+    "test:migrate-images": "bun test scripts/migrate-images.test.ts",
+    "sync-db": "bun scripts/sync-from-lovable.ts",
+    "test:sync-db": "bun test scripts/sync-from-lovable.test.ts"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.25.5",
