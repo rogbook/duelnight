@@ -67,3 +67,15 @@
 - **Redirect URI** 오타에 주의하세요. (반드시 `auth/v1/callback`으로 끝나야 합니다.)
 - **보안**: Client Secret은 절대로 클라이언트 코드에 직접 노출되지 않도록 하세요. (Supabase 대시보드에만 입력하면 됩니다.)
 - **Lovable 협업**: Supabase 설정을 변경한 후에는 Lovable 환경에서도 세션이 정상적으로 유지되는지 확인하세요.
+
+---
+
+## 5. 구글 (Google) — ✅ 설정 완료 (2026-06-11)
+
+- Google Cloud 프로젝트 `DuelNight` → Auth Platform → Web client 생성
+  - JavaScript origins: `https://duelnight.mick-kwon.workers.dev`
+  - Redirect URI: `https://nrtdhkjeziknmafauypv.supabase.co/auth/v1/callback`
+- Supabase → Authentication → Providers → Google: Enabled (Client ID/Secret 입력)
+- URL Configuration: Site URL = 베타 주소, Redirect URLs에 `베타주소/**`
+- 코드: Lovable 인증 제거, `supabase.auth.signInWithOAuth({provider:"google"})` 사용 (da4caad)
+- 도메인 구매 후: Google 클라이언트의 origins와 Supabase Site URL에 새 도메인 추가 필요
