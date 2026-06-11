@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -116,12 +115,12 @@ export function LoginModal({
   const signInWithGoogle = async () => {
     setBusy(true);
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}/intro`,
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${window.location.origin}/intro` },
       });
-      if (result.error) throw result.error;
-      if (result.redirected) return;
-      onOpenChange(false);
+      if (error) throw error;
+      // 성공 시 구글 로그인 화면으로 리다이렉트되므로 추가 처리 불필요
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
