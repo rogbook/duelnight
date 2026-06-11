@@ -80,7 +80,7 @@ DB 변경 여부: (있으면 Claude 요청 사항 명시)
 | ~~이미지 이관 (910개)~~ | Codex | ✅ **완료** — SHA-256 전수 검증, 경쟁 처리 보완(d7a1079)까지 main 병합. Claude 검증 통과 |
 | ~~DB 행 데이터 동기화 스크립트~~ | Claude | ✅ **완료** — `bun run sync-db`, 1차 실행 4,212건 반영·실패 0. 상세: [docs/DB_ROW_SYNC_GUIDE.md](./docs/DB_ROW_SYNC_GUIDE.md). 컷오버 때 재실행 |
 | ESLint 전체 실패 해결 — CRLF/Prettier 줄바꿈 정규화(.gitattributes) | **Codex** | 대기 |
-| UI_USABILITY_REPORT.md 지적 항목 코드 반영 | **Antigravity** | 대기 |
+| ~~UI_USABILITY_REPORT.md 지적 항목 코드 반영~~ | Antigravity | ✅ **완료 (2026-06-11)** — usability-fixes + 카드 목록 최적화(디바운스·번호형 페이지네이션·스켈레톤·PWA 배너) Claude 검토·결함 2건 수정 후 main 병합 |
 | Cloudflare 배포 연결 | Claude(설계) + 사용자(계정 연결) | 대기 |
 | ~~유출 키 종결~~ | 사용자 + Claude | ✅ **완료 (2026-06-11)** — 새 secret key 발급·세 폴더 배포, 구 키 폐기. 유출 키 실호출 401 확인(캐시 커밋에서 추출 테스트). 사고 종결 |
 

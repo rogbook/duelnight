@@ -1,5 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 import {
   ArrowLeft,
   Swords,
@@ -48,6 +56,7 @@ function SimulatorMatchRoomPage() {
   const { p1, p2, mode = "manual" } = Route.useSearch();
   const navigate = useNavigate();
   useI18n();
+  const isMobile = useIsMobile();
 
   const [loading, setLoading] = useState(true);
   const [loadingText, setLoadingText] = useState("대국 정보 불러오는 중...");
@@ -358,31 +367,64 @@ function SimulatorMatchRoomPage() {
         </div>
       )}
 
-      {/* ── 로그(접이식) ── */}
-      <div className="rounded-2xl border border-border bg-card/60 overflow-hidden">
-        <button
-          onClick={() => setLogOpen((o) => !o)}
-          className="w-full p-3 flex items-center justify-between hover:bg-accent/40 transition-colors"
-        >
-          <span className="text-xs font-black uppercase tracking-wider flex items-center gap-2">
-            <ScrollText className="h-4 w-4 text-primary" /> 대국 로그
-          </span>
-          <span className="text-[10px] text-muted-foreground">{logOpen ? "닫기 ▲" : `열기 ▼ (${gameState.log.length})`}</span>
-        </button>
-        {logOpen && (
-          <div className="max-h-[38vh] overflow-y-auto p-3 space-y-2 font-mono text-[11px] leading-relaxed border-t border-border">
-            {gameState.log.map((evt, idx) => (
-              <div key={idx} className="border-b border-border/20 pb-1.5">
-                <span className="text-[10px] text-muted-foreground select-none">
-                  [T{evt.turn} {evt.player.toUpperCase()}]
-                </span>{" "}
-                <span className="text-foreground/90">{formatEventLog(evt)}</span>
-              </div>
-            ))}
-            <div ref={logEndRef} />
-          </div>
-        )}
-      </div>
+      {/* ── 로그(접이식 / 모바일은 드로어) ── */}
+      {isMobile ? (
+        <Drawer open={logOpen} onOpenChange={setLogOpen}>
+          <DrawerTrigger asChild>
+            <button
+              className="w-full p-3 flex items-center justify-between rounded-2xl border border-border bg-card/60 hover:bg-accent/40 transition-colors"
+            >
+              <span className="text-xs font-black uppercase tracking-wider flex items-center gap-2">
+                <ScrollText className="h-4 w-4 text-primary" /> 대국 로그
+              </span>
+              <span className="text-[10px] text-muted-foreground">{`열기 ▼ (${gameState.log.length})`}</span>
+            </button>
+          </DrawerTrigger>
+          <DrawerContent className="px-4 pb-6 max-h-[85vh]">
+            <DrawerHeader className="px-0">
+              <DrawerTitle className="text-sm font-black uppercase tracking-wider flex items-center gap-2">
+                <ScrollText className="h-4 w-4 text-primary" /> 대국 로그 ({gameState.log.length})
+              </DrawerTitle>
+            </DrawerHeader>
+            <div className="overflow-y-auto my-2 space-y-2 font-mono text-[11px] leading-relaxed border-t border-border pt-3">
+              {gameState.log.map((evt, idx) => (
+                <div key={idx} className="border-b border-border/20 pb-1.5">
+                  <span className="text-[10px] text-muted-foreground select-none">
+                    [T{evt.turn} {evt.player.toUpperCase()}]
+                  </span>{" "}
+                  <span className="text-foreground/90">{formatEventLog(evt)}</span>
+                </div>
+              ))}
+              <div ref={logEndRef} />
+            </div>
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <div className="rounded-2xl border border-border bg-card/60 overflow-hidden">
+          <button
+            onClick={() => setLogOpen((o) => !o)}
+            className="w-full p-3 flex items-center justify-between hover:bg-accent/40 transition-colors"
+          >
+            <span className="text-xs font-black uppercase tracking-wider flex items-center gap-2">
+              <ScrollText className="h-4 w-4 text-primary" /> 대국 로그
+            </span>
+            <span className="text-[10px] text-muted-foreground">{logOpen ? "닫기 ▲" : `열기 ▼ (${gameState.log.length})`}</span>
+          </button>
+          {logOpen && (
+            <div className="max-h-[38vh] overflow-y-auto p-3 space-y-2 font-mono text-[11px] leading-relaxed border-t border-border">
+              {gameState.log.map((evt, idx) => (
+                <div key={idx} className="border-b border-border/20 pb-1.5">
+                  <span className="text-[10px] text-muted-foreground select-none">
+                    [T{evt.turn} {evt.player.toUpperCase()}]
+                  </span>{" "}
+                  <span className="text-foreground/90">{formatEventLog(evt)}</span>
+                </div>
+              ))}
+              <div ref={logEndRef} />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── 하단 고정 액션 바 ── */}
       {!isTerminalResult && (selectedCardActions.length > 0 || boardActions.length > 0) && (
@@ -470,7 +512,7 @@ function PlayerSide({
 
   // 벤치(캐릭터 5슬롯)
   const bench = (
-    <div className="flex items-center justify-start lg:justify-center gap-1.5 overflow-x-auto py-0.5">
+    <div className="flex items-center justify-start lg:justify-center gap-2 overflow-x-auto py-0.5">
       {Array.from({ length: 5 }).map((_, i) =>
         chars[i] ? <BattleUnit key={chars[i].iid} unit={chars[i]} /> : <EmptySlot key={i} />,
       )}
@@ -498,7 +540,7 @@ function PlayerSide({
 
   return (
     <div
-      className={`relative px-3 sm:px-5 py-2 sm:py-3 flex flex-col gap-1.5 ${
+      className={`relative px-2.5 sm:px-5 py-2 sm:py-3 flex flex-col gap-1.5 ${
         isOpponent
           ? "bg-gradient-to-b from-orange-400/10 to-transparent"
           : "bg-gradient-to-t from-sky-400/10 to-transparent"
