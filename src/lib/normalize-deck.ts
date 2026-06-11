@@ -9,7 +9,10 @@ export type Game = string;
 // Aliases include Korean, English, romanizations, and common typos.
 const SYNONYMS: Record<Game, Array<{ canonical: string; aliases: string[] }>> = {
   optcg: [
-    { canonical: "적 루피", aliases: ["적루피", "빨강루피", "빨간루피", "red luffy", "redluffy", "루피적", "r루피"] },
+    {
+      canonical: "적 루피",
+      aliases: ["적루피", "빨강루피", "빨간루피", "red luffy", "redluffy", "루피적", "r루피"],
+    },
     { canonical: "흑 루피", aliases: ["흑루피", "검은루피", "black luffy", "blackluffy"] },
     { canonical: "황 루피", aliases: ["황루피", "노랑루피", "yellow luffy"] },
     { canonical: "녹 조로", aliases: ["녹조로", "초록조로", "green zoro", "조로녹"] },
@@ -32,7 +35,10 @@ const SYNONYMS: Record<Game, Array<{ canonical: string; aliases: string[] }>> = 
     { canonical: "코라이돈 ex", aliases: ["코라이돈ex", "koraidon ex", "koraidonex"] },
     { canonical: "기라티나 VSTAR", aliases: ["기라티나vstar", "giratina vstar", "기라vstar"] },
     { canonical: "로스트 박스", aliases: ["로스트박스", "lost box", "lostbox"] },
-    { canonical: "팔데아 케천 ex", aliases: ["팔데아케천", "팔데아 케천", "armarouge ex", "팔데아 케천ex"] },
+    {
+      canonical: "팔데아 케천 ex",
+      aliases: ["팔데아케천", "팔데아 케천", "armarouge ex", "팔데아 케천ex"],
+    },
     { canonical: "테라파고스 ex", aliases: ["테라파고스ex", "terapagos ex", "terapagosex"] },
     { canonical: "이상해꽃 ex", aliases: ["이상해꽃ex", "venusaur ex"] },
     { canonical: "거북왕 ex", aliases: ["거북왕ex", "blastoise ex"] },
@@ -60,7 +66,10 @@ const stripKey = (s: string): string =>
 
 // Compact form for display: collapse internal whitespace, trim ends.
 const tidyDisplay = (s: string): string =>
-  s.normalize("NFKC").replace(/[\s\u3000]+/g, " ").trim();
+  s
+    .normalize("NFKC")
+    .replace(/[\s\u3000]+/g, " ")
+    .trim();
 
 const aliasIndex = new Map<Game, Map<string, string>>();
 for (const game of Object.keys(SYNONYMS) as Game[]) {

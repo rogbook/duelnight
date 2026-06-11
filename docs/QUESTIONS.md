@@ -17,5 +17,6 @@
 ---
 
 ### [2026-06-11] Antigravity — 카드 검색 디바운스·페이지네이션 (상태: ✅ 답변됨)
+
 **질문:** ① 검색에 300ms 디바운스 도입 ② 페이지네이션을 번호형(« 1 2 3 … 160 »)으로 변경해도 되는지
 **답변(Claude):** 둘 다 승인. 조건: ① 새 패키지 금지 — `src/components/cards/card-uploader.tsx` 379행의 setTimeout 패턴과 동일 방식으로 ② 직접 만들지 말고 기존 `src/components/ui/pagination.tsx`(shadcn) 재사용, 모바일 폭 말줄임(…) 확인. (채팅으로 이미 전달된 건 — 기록용)

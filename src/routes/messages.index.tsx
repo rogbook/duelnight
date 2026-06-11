@@ -63,7 +63,9 @@ function Avatar({ profile, size = 44 }: { profile?: DMProfile; size?: number }) 
 function OnlineDot({ userId }: { userId: string }) {
   const online = useIsOnline(userId);
   if (!online) return null;
-  return <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-card bg-green-500" />;
+  return (
+    <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-card bg-green-500" />
+  );
 }
 
 function MessagesInboxPage() {
@@ -103,7 +105,11 @@ function MessagesInboxPage() {
   }, [user, qc]);
 
   if (loading) {
-    return <Shell t={t}><p className="text-sm text-muted-foreground">{t("common.loading", "불러오는 중…")}</p></Shell>;
+    return (
+      <Shell t={t}>
+        <p className="text-sm text-muted-foreground">{t("common.loading", "불러오는 중…")}</p>
+      </Shell>
+    );
   }
 
   if (!user) {
@@ -158,7 +164,9 @@ function MessagesInboxPage() {
                         {timeAgo(c.last_message_at, t)}
                       </span>
                     </div>
-                    <p className={`truncate text-xs ${unread ? "text-foreground" : "text-muted-foreground"}`}>
+                    <p
+                      className={`truncate text-xs ${unread ? "text-foreground" : "text-muted-foreground"}`}
+                    >
                       {mine && <span className="text-muted-foreground">{t("dm.youPrefix")} </span>}
                       {c.last_message ?? t("dm.noMessages")}
                     </p>

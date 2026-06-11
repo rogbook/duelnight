@@ -47,7 +47,12 @@ export function NotificationBell() {
       .channel(`notif-${user.id}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${user.id}`,
+        },
         () => refetch(),
       )
       .subscribe();
@@ -138,10 +143,7 @@ export function NotificationBell() {
           )}
         </ul>
         <div className="border-t border-border p-2 text-center">
-          <Link
-            to="/notifications"
-            className="text-xs text-primary hover:underline"
-          >
+          <Link to="/notifications" className="text-xs text-primary hover:underline">
             전체 보기
           </Link>
         </div>

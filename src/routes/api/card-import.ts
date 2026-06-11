@@ -31,7 +31,8 @@ function hostBlocked(host: string): boolean {
   if (h === "localhost" || h.endsWith(".local") || h.endsWith(".internal")) return true;
   if (h === "metadata.google.internal" || h === "169.254.169.254") return true;
   if (h === "0.0.0.0" || h === "::1") return true;
-  if (/^127\./.test(h) || /^10\./.test(h) || /^192\.168\./.test(h) || /^169\.254\./.test(h)) return true;
+  if (/^127\./.test(h) || /^10\./.test(h) || /^192\.168\./.test(h) || /^169\.254\./.test(h))
+    return true;
   if (/^172\.(1[6-9]|2\d|3[01])\./.test(h)) return true;
   return false;
 }
@@ -118,47 +119,78 @@ export const Route = createFileRoute("/api/card-import")({
       POST: async ({ request }) => {
         const apiKey = process.env.LOVABLE_API_KEY;
         if (!apiKey) {
-          return new Response(JSON.stringify({ error: "AI 게이트웨이 미설정" }), { status: 500, headers: corsHeaders });
+          return new Response(JSON.stringify({ error: "AI 게이트웨이 미설정" }), {
+            status: 500,
+            headers: corsHeaders,
+          });
         }
 
         const authHeader = request.headers.get("authorization");
         if (!authHeader?.startsWith("Bearer ")) {
-          return new Response(JSON.stringify({ error: "로그인이 필요합니다." }), { status: 401, headers: corsHeaders });
+          return new Response(JSON.stringify({ error: "로그인이 필요합니다." }), {
+            status: 401,
+            headers: corsHeaders,
+          });
         }
 
         // 카드 가져오기는 호출당 비용이 가장 큰 기능 → 관리자 전용으로 제한
         const token = authHeader.replace("Bearer ", "");
         const { createClient } = await import("@supabase/supabase-js");
-        const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
-          global: { headers: { Authorization: `Bearer ${token}` } },
-        });
+        const supabase = createClient(
+          process.env.SUPABASE_URL!,
+          process.env.SUPABASE_PUBLISHABLE_KEY!,
+          {
+            global: { headers: { Authorization: `Bearer ${token}` } },
+          },
+        );
         const { data: userData } = await supabase.auth.getUser();
         if (!userData?.user) {
-          return new Response(JSON.stringify({ error: "로그인이 필요합니다." }), { status: 401, headers: corsHeaders });
+          return new Response(JSON.stringify({ error: "로그인이 필요합니다." }), {
+            status: 401,
+            headers: corsHeaders,
+          });
         }
-        const { data: isAdmin } = await supabase.rpc("has_role", { _role: "admin", _user_id: userData.user.id });
+        const { data: isAdmin } = await supabase.rpc("has_role", {
+          _role: "admin",
+          _user_id: userData.user.id,
+        });
         if (isAdmin !== true) {
-          return new Response(JSON.stringify({ error: "관리자만 사용할 수 있습니다." }), { status: 403, headers: corsHeaders });
+          return new Response(JSON.stringify({ error: "관리자만 사용할 수 있습니다." }), {
+            status: 403,
+            headers: corsHeaders,
+          });
         }
 
         let payload: z.infer<typeof InputSchema>;
         try {
           payload = InputSchema.parse(await request.json());
         } catch {
-          return new Response(JSON.stringify({ error: "잘못된 요청 형식 (url 필요)" }), { status: 400, headers: corsHeaders });
+          return new Response(JSON.stringify({ error: "잘못된 요청 형식 (url 필요)" }), {
+            status: 400,
+            headers: corsHeaders,
+          });
         }
 
         let target: URL;
         try {
           target = new URL(payload.url);
         } catch {
-          return new Response(JSON.stringify({ error: "올바른 URL이 아닙니다." }), { status: 400, headers: corsHeaders });
+          return new Response(JSON.stringify({ error: "올바른 URL이 아닙니다." }), {
+            status: 400,
+            headers: corsHeaders,
+          });
         }
         if (target.protocol !== "https:" && target.protocol !== "http:") {
-          return new Response(JSON.stringify({ error: "http/https URL만 허용됩니다." }), { status: 400, headers: corsHeaders });
+          return new Response(JSON.stringify({ error: "http/https URL만 허용됩니다." }), {
+            status: 400,
+            headers: corsHeaders,
+          });
         }
         if (hostBlocked(target.hostname)) {
-          return new Response(JSON.stringify({ error: "내부/사설 주소는 허용되지 않습니다." }), { status: 400, headers: corsHeaders });
+          return new Response(JSON.stringify({ error: "내부/사설 주소는 허용되지 않습니다." }), {
+            status: 400,
+            headers: corsHeaders,
+          });
         }
 
         // 1) 대상 페이지 HTML fetch (브라우저처럼)
@@ -176,24 +208,35 @@ export const Route = createFileRoute("/api/card-import")({
           });
           if (res.status === 403 || res.status === 401) {
             return new Response(
-              JSON.stringify({ error: `원본 사이트가 접근을 차단했습니다 (${res.status}). 봇 차단으로 자동 수집이 불가할 수 있습니다.` }),
+              JSON.stringify({
+                error: `원본 사이트가 접근을 차단했습니다 (${res.status}). 봇 차단으로 자동 수집이 불가할 수 있습니다.`,
+              }),
               { status: 502, headers: corsHeaders },
             );
           }
           if (!res.ok) {
-            return new Response(JSON.stringify({ error: `페이지를 불러오지 못했습니다 (${res.status})` }), { status: 502, headers: corsHeaders });
+            return new Response(
+              JSON.stringify({ error: `페이지를 불러오지 못했습니다 (${res.status})` }),
+              { status: 502, headers: corsHeaders },
+            );
           }
           html = await res.text();
         } catch (e) {
           console.error("card-import fetch error", e);
-          return new Response(JSON.stringify({ error: "페이지 요청 실패 (시간 초과 또는 네트워크 오류)" }), { status: 502, headers: corsHeaders });
+          return new Response(
+            JSON.stringify({ error: "페이지 요청 실패 (시간 초과 또는 네트워크 오류)" }),
+            { status: 502, headers: corsHeaders },
+          );
         }
 
         const ogImage = extractOgImage(html, target.toString());
         const text = htmlToText(html, target.toString()).slice(0, 20000);
         if (text.replace(/\[IMG:[^\]]*\]/g, "").trim().length < 40) {
           return new Response(
-            JSON.stringify({ error: "페이지에서 텍스트를 찾지 못했습니다. 동적(JS) 로딩 페이지일 수 있어 자동 추출이 어렵습니다." }),
+            JSON.stringify({
+              error:
+                "페이지에서 텍스트를 찾지 못했습니다. 동적(JS) 로딩 페이지일 수 있어 자동 추출이 어렵습니다.",
+            }),
             { status: 422, headers: corsHeaders },
           );
         }
@@ -216,12 +259,23 @@ export const Route = createFileRoute("/api/card-import")({
             }),
           });
 
-          if (res.status === 429) return new Response(JSON.stringify({ error: "요청이 많습니다. 잠시 후 다시 시도." }), { status: 429, headers: corsHeaders });
-          if (res.status === 402) return new Response(JSON.stringify({ error: "AI 크레딧이 부족합니다." }), { status: 402, headers: corsHeaders });
+          if (res.status === 429)
+            return new Response(JSON.stringify({ error: "요청이 많습니다. 잠시 후 다시 시도." }), {
+              status: 429,
+              headers: corsHeaders,
+            });
+          if (res.status === 402)
+            return new Response(JSON.stringify({ error: "AI 크레딧이 부족합니다." }), {
+              status: 402,
+              headers: corsHeaders,
+            });
           if (!res.ok) {
             const txt = await res.text();
             console.error("card-import gateway error", res.status, txt);
-            return new Response(JSON.stringify({ error: "카드 정보 추출 실패" }), { status: 502, headers: corsHeaders });
+            return new Response(JSON.stringify({ error: "카드 정보 추출 실패" }), {
+              status: 502,
+              headers: corsHeaders,
+            });
           }
 
           const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
@@ -261,15 +315,23 @@ export const Route = createFileRoute("/api/card-import")({
 
           if (cards.length === 0) {
             return new Response(
-              JSON.stringify({ error: "카드 정보를 찾지 못했습니다. 개별 카드 상세 페이지 URL을 사용해 보세요." }),
+              JSON.stringify({
+                error: "카드 정보를 찾지 못했습니다. 개별 카드 상세 페이지 URL을 사용해 보세요.",
+              }),
               { status: 422, headers: corsHeaders },
             );
           }
 
-          return new Response(JSON.stringify({ cards, source_url: target.toString() }), { status: 200, headers: corsHeaders });
+          return new Response(JSON.stringify({ cards, source_url: target.toString() }), {
+            status: 200,
+            headers: corsHeaders,
+          });
         } catch (e) {
           console.error("card-import route error", e);
-          return new Response(JSON.stringify({ error: "AI 서버 오류" }), { status: 500, headers: corsHeaders });
+          return new Response(JSON.stringify({ error: "AI 서버 오류" }), {
+            status: 500,
+            headers: corsHeaders,
+          });
         }
       },
     },

@@ -135,23 +135,17 @@ function ProfilePage() {
       bio: form.bio.trim() || null,
       primary_game: (form.primary_game || null) as Game | null,
     };
-    const { error } = await supabase
-      .from("profiles")
-      .upsert(payload, { onConflict: "id" });
+    const { error } = await supabase.from("profiles").upsert(payload, { onConflict: "id" });
     setSaving(false);
     if (error) {
-      toast.error(
-        error.code === "23505" ? t("profile.usernameTaken") : error.message,
-      );
+      toast.error(error.code === "23505" ? t("profile.usernameTaken") : error.message);
       return;
     }
     toast.success(t("profile.saveSuccess"));
     qc.invalidateQueries({ queryKey: ["profile"] });
   };
 
-  const initials = (form.display_name || user.email || "?")
-    .slice(0, 2)
-    .toUpperCase();
+  const initials = (form.display_name || user.email || "?").slice(0, 2).toUpperCase();
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">
@@ -163,9 +157,7 @@ function ProfilePage() {
           <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium">
-            {form.display_name || user.email}
-          </p>
+          <p className="truncate text-sm font-medium">{form.display_name || user.email}</p>
           <p className="truncate text-xs text-muted-foreground">
             {form.username ? `@${form.username}` : user.email}
           </p>
@@ -202,11 +194,15 @@ function ProfilePage() {
               setForm({ ...form, primary_game: v === "none" ? "" : (v as Game) })
             }
           >
-            <SelectTrigger id="primary_game"><SelectValue /></SelectTrigger>
+            <SelectTrigger id="primary_game">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="none">{t("profile.noPrimaryGame")}</SelectItem>
               {gameOptions.map((g) => (
-                <SelectItem key={g.code} value={g.code}>{labelOf(g.code)}</SelectItem>
+                <SelectItem key={g.code} value={g.code}>
+                  {labelOf(g.code)}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>

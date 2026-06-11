@@ -52,8 +52,6 @@ export function getCardMeta(code: string) {
   );
 }
 
-
-
 const meta: EngineMeta = {
   gameCode: "optcg",
   zoneLabels: {
@@ -90,7 +88,11 @@ function expandRecipe(recipe: DeckRecipe): string[] {
   return out;
 }
 
-function buildPlayer(id: PlayerId, recipe: DeckRecipe, seed: string): { state: PlayerState; nextSeed: string } {
+function buildPlayer(
+  id: PlayerId,
+  recipe: DeckRecipe,
+  seed: string,
+): { state: PlayerState; nextSeed: string } {
   const zones = emptyZones();
 
   // 리더 배치 및 라이프 설정
@@ -188,13 +190,21 @@ export const optcgEngine: ITcgEngine = {
         const meta = getCardMeta(card.code);
         // 캐릭터의 경우 counterValue가 1000, 2000인 것들
         if (meta.type === "character" && meta.counterValue > 0) {
-          actions.push({ type: "play_counter", iid: card.iid, targetIid: state.pendingResponse.defenderIid });
+          actions.push({
+            type: "play_counter",
+            iid: card.iid,
+            targetIid: state.pendingResponse.defenderIid,
+          });
         }
         // 이벤트 카운터의 경우 지불 DON!! 이 있고, counter 효과 스키마 보유한 것
         if (meta.type === "event" && meta.cost <= me.donActive) {
           const hasCounterEffect = meta.effects?.some((e) => e.trigger === "counter");
           if (hasCounterEffect) {
-            actions.push({ type: "play_counter", iid: card.iid, targetIid: state.pendingResponse.defenderIid });
+            actions.push({
+              type: "play_counter",
+              iid: card.iid,
+              targetIid: state.pendingResponse.defenderIid,
+            });
           }
         }
       }
@@ -202,7 +212,8 @@ export const optcgEngine: ITcgEngine = {
       // 2. 블로커 사용 가능 선언 (배틀필드의 액티브 상태인 blocker 키워드 캐릭터)
       for (const card of me.zones.secondary) {
         const meta = getCardMeta(card.code);
-        const hasBlocker = meta.effects?.some((e) => e.trigger === "on_block") || card.counters.keyword_blocker;
+        const hasBlocker =
+          meta.effects?.some((e) => e.trigger === "on_block") || card.counters.keyword_blocker;
         if (hasBlocker && !card.rested) {
           actions.push({ type: "use_blocker", blockerIid: card.iid });
         }
@@ -253,10 +264,12 @@ export const optcgEngine: ITcgEngine = {
       for (const attacker of myAttackers) {
         // 소환된 턴의 공격 제한 해제(Rush 키워드 검사)
         const meta = getCardMeta(attacker.code);
-        const hasRush = meta.effects?.some((e: any) => e.trigger === "on_play" && e.id === "rush") || attacker.counters.keyword_rush;
-        const isSummonSickness = attacker.iid.startsWith(`${player}-c`) && !hasRush && attacker.counters.summon_sick === 1;
+        const hasRush =
+          meta.effects?.some((e: any) => e.trigger === "on_play" && e.id === "rush") ||
+          attacker.counters.keyword_rush;
+        const isSummonSickness =
+          attacker.iid.startsWith(`${player}-c`) && !hasRush && attacker.counters.summon_sick === 1;
 
-        
         if (!isSummonSickness) {
           for (const target of oppTargets) {
             actions.push({ type: "attack", attackerIid: attacker.iid, targetIid: target.iid });
@@ -320,7 +333,11 @@ export const optcgEngine: ITcgEngine = {
       target.zones.secondary = target.zones.secondary.map(cleanAttachedDon);
 
       // 모든 아군 카드 활성 상태로 릴리즈
-      const refreshUnit = (u: CardInstance): CardInstance => ({ ...u, rested: false, counters: { ...u.counters, summon_sick: 0 } });
+      const refreshUnit = (u: CardInstance): CardInstance => ({
+        ...u,
+        rested: false,
+        counters: { ...u.counters, summon_sick: 0 },
+      });
       target.zones.primary = target.zones.primary.map(refreshUnit);
       target.zones.secondary = target.zones.secondary.map(refreshUnit);
 
@@ -358,8 +375,10 @@ export const optcgEngine: ITcgEngine = {
 
       const nextHand = [...player.zones.hand];
       const [card] = nextHand.splice(idx, 1);
-      const nextSecondary: CardInstance[] = [...player.zones.secondary, { ...card, counters: { ...card.counters, summon_sick: 1 } }];
-
+      const nextSecondary: CardInstance[] = [
+        ...player.zones.secondary,
+        { ...card, counters: { ...card.counters, summon_sick: 1 } },
+      ];
 
       const nextPlayers = { ...state.players };
       nextPlayers[me] = {
@@ -372,9 +391,11 @@ export const optcgEngine: ITcgEngine = {
       let nextState: GameState = {
         ...state,
         players: nextPlayers,
-        log: [...state.log, { turn: state.turn, player: me, type: "play_character", payload: { code: card.code } }],
+        log: [
+          ...state.log,
+          { turn: state.turn, player: me, type: "play_character", payload: { code: card.code } },
+        ],
       };
-
 
       // 등장시(on_play) 효과 발동 연산
       const meta = getCardMeta(card.code);
@@ -434,7 +455,15 @@ export const optcgEngine: ITcgEngine = {
       return {
         ...state,
         players: nextPlayers,
-        log: [...state.log, { turn: state.turn, player: me, type: "attach_don", payload: { targetIid, count: action.count } }],
+        log: [
+          ...state.log,
+          {
+            turn: state.turn,
+            player: me,
+            type: "attach_don",
+            payload: { targetIid, count: action.count },
+          },
+        ],
       };
     }
 
@@ -466,7 +495,8 @@ export const optcgEngine: ITcgEngine = {
       let defenderCard: CardInstance | null = null;
       const targetIid = action.targetIid;
       if (opp.zones.primary[0]?.iid === targetIid) defenderCard = opp.zones.primary[0];
-      if (!defenderCard) defenderCard = opp.zones.secondary.find((c) => c.iid === targetIid) ?? null;
+      if (!defenderCard)
+        defenderCard = opp.zones.secondary.find((c) => c.iid === targetIid) ?? null;
 
       if (!defenderCard) return state;
 
@@ -484,13 +514,20 @@ export const optcgEngine: ITcgEngine = {
         appliedModifiers: [] as { source: string; delta: number }[],
       };
 
-
       return {
         ...state,
         players: nextPlayers,
         pendingResponse,
         phase: "attack_declared",
-        log: [...state.log, { turn: state.turn, player: me, type: "attack_declared", payload: { attackerIid, targetIid } }],
+        log: [
+          ...state.log,
+          {
+            turn: state.turn,
+            player: me,
+            type: "attack_declared",
+            payload: { attackerIid, targetIid },
+          },
+        ],
       };
     }
 
@@ -532,7 +569,10 @@ export const optcgEngine: ITcgEngine = {
         ...state,
         players: nextPlayers,
         pendingResponse: nextResponse,
-        log: [...state.log, { turn: state.turn, player: defenderPid, type: "use_blocker", payload: { blockerIid } }],
+        log: [
+          ...state.log,
+          { turn: state.turn, player: defenderPid, type: "use_blocker", payload: { blockerIid } },
+        ],
       };
     }
 
@@ -580,14 +620,25 @@ export const optcgEngine: ITcgEngine = {
         ...state,
         players: nextPlayers,
         pendingResponse: nextResponse,
-        log: [...state.log, { turn: state.turn, player: defenderPid, type: "play_counter", payload: { code: card.code } }],
+        log: [
+          ...state.log,
+          {
+            turn: state.turn,
+            player: defenderPid,
+            type: "play_counter",
+            payload: { code: card.code },
+          },
+        ],
       };
-
 
       if (meta.type === "event") {
         const counterEffect = meta.effects?.find((e) => e.trigger === "counter");
         if (counterEffect) {
-          const ctx: EffectContext = { state: nextState, controller: defenderPid, sourceIid: card.iid };
+          const ctx: EffectContext = {
+            state: nextState,
+            controller: defenderPid,
+            sourceIid: card.iid,
+          };
           nextState = applyEffect(ctx, counterEffect);
         }
       }
@@ -609,7 +660,6 @@ export const optcgEngine: ITcgEngine = {
         pendingResponse: null,
         phase: "main",
       };
-
 
       const defenderPid = response.defenderPlayer;
       const attackerPid: PlayerId = defenderPid === "p1" ? "p2" : "p1";
@@ -633,14 +683,23 @@ export const optcgEngine: ITcgEngine = {
 
             nextState.log = [
               ...nextState.log,
-              { turn: state.turn, player: defenderPid, type: "damage_taken", payload: { leftLife: life.length } },
+              {
+                turn: state.turn,
+                player: defenderPid,
+                type: "damage_taken",
+                payload: { leftLife: life.length },
+              },
             ];
 
             // 라이프 트리거(Trigger) 효과 발동 연산
             const meta = getCardMeta(damagedCard.code);
             const triggerEffect = meta.effects?.find((e) => e.trigger === "on_trigger");
             if (triggerEffect) {
-              const ctx: EffectContext = { state: nextState, controller: defenderPid, sourceIid: damagedCard.iid };
+              const ctx: EffectContext = {
+                state: nextState,
+                controller: defenderPid,
+                sourceIid: damagedCard.iid,
+              };
               nextState = applyEffect(ctx, triggerEffect);
             }
           } else {
@@ -662,7 +721,12 @@ export const optcgEngine: ITcgEngine = {
 
             nextState.log = [
               ...nextState.log,
-              { turn: state.turn, player: defenderPid, type: "character_ko", payload: { code: koCard.code } },
+              {
+                turn: state.turn,
+                player: defenderPid,
+                type: "character_ko",
+                payload: { code: koCard.code },
+              },
             ];
           }
         }
@@ -690,7 +754,11 @@ export const optcgEngine: ITcgEngine = {
     // 2. 덱 고갈 패배 판정
     for (const pid of ["p1", "p2"] as PlayerId[]) {
       const player = state.players[pid];
-      if (player.zones.deck.length === 0 && player.zones.hand.length === 0 && player.zones.secondary.length === 0) {
+      if (
+        player.zones.deck.length === 0 &&
+        player.zones.hand.length === 0 &&
+        player.zones.secondary.length === 0
+      ) {
         const winner: PlayerId = pid === "p1" ? "p2" : "p1";
         return { winner };
       }

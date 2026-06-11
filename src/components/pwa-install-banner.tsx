@@ -32,11 +32,7 @@ export function PwaInstallBanner() {
         : "홈 화면에 앱으로 추가하면 오프라인 지원 및 더욱 쾌적한 화면으로 이용할 수 있습니다.";
 
   const installText =
-    language === "ja"
-      ? "インストール"
-      : language === "en"
-        ? "Install App"
-        : "앱 설치";
+    language === "ja" ? "インストール" : language === "en" ? "Install App" : "앱 설치";
 
   const iosGuideText =
     language === "ja"

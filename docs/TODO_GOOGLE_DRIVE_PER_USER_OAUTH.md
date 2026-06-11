@@ -43,6 +43,7 @@ GOOGLE_DRIVE_CLIENT_SECRET
 ## 4. 구현 체크리스트
 
 ### 4-1. DB 마이그레이션
+
 - [ ] `user_drive_tokens` 테이블 생성
   - `user_id uuid PK references auth.users on delete cascade`
   - `access_token text not null`
@@ -56,18 +57,21 @@ GOOGLE_DRIVE_CLIENT_SECRET
 - [ ] **보안 메모**: 토큰은 평문 저장됨. 가능하면 `pgsodium` 또는 KMS로 암호화 검토.
 
 ### 4-2. 서버 라우트 (TanStack Start, `src/routes/api/drive/`)
+
 - [ ] `auth.ts` — `GET /api/drive/auth` : `state`(CSRF 방지) 생성 후 Google authorize URL로 redirect
 - [ ] `callback.ts` — `GET /auth/google-drive/callback` : `code` → token 교환, `user_drive_tokens` upsert, `/cards/upload?drive=connected` 로 redirect
-- [ ] `list-folder.ts` — `POST /api/drive/list-folder` : `{ folder_url }` 받아 folderId 추출, Drive API `files.list` 호출 (image/* 필터, pageSize 100), 만료 시 refresh
+- [ ] `list-folder.ts` — `POST /api/drive/list-folder` : `{ folder_url }` 받아 folderId 추출, Drive API `files.list` 호출 (image/\* 필터, pageSize 100), 만료 시 refresh
 - [ ] `import.ts` — `POST /api/drive/import` : `{ file_ids[] }` 받아 각 파일 다운로드(`alt=media`) → WebP 변환 → `card-images` 버킷 업로드 → `{ rows: [{ code, set_code, image_url }] }` 반환
 - [ ] `disconnect.ts` — `POST /api/drive/disconnect` : 본인 토큰 행 삭제 + Google `revoke` 호출
 
 ### 4-3. 공통 헬퍼 (`src/lib/google-drive.server.ts`)
+
 - [ ] `getValidAccessToken(userId)` : 만료 시 refresh, DB 갱신
 - [ ] `extractFolderId(url)` : `/folders/{id}` / `?id={id}` 패턴 파싱
 - [ ] `driveFetch(token, path, init?)` : 공통 fetch 래퍼
 
 ### 4-4. UI 통합 (`src/components/cards/card-uploader.tsx`)
+
 - [ ] Tabs에 **"Google Drive"** 탭 추가
 - [ ] 미연결 상태: "내 Google Drive 연결" 버튼 → `/api/drive/auth` 이동
 - [ ] 연결 상태: 연결된 이메일 표시 + "연결 해제" 버튼
@@ -76,6 +80,7 @@ GOOGLE_DRIVE_CLIENT_SECRET
 - [ ] `?drive=connected` 쿼리 파라미터 도착 시 toast 표시 + 쿼리 정리
 
 ### 4-5. 보안·UX 체크
+
 - [ ] OAuth `state`로 CSRF 방어 (서명된 JWT 또는 short-lived 쿠키)
 - [ ] Refresh token 회전 시 새 값 저장
 - [ ] 한 번에 가져오는 파일 수 제한 (50건/요청)
@@ -83,6 +88,7 @@ GOOGLE_DRIVE_CLIENT_SECRET
 - [ ] Token revoke 실패해도 DB에서는 삭제
 
 ### 4-6. 테스트 시나리오
+
 - [ ] 신규 연결 → 폴더 미리보기 → 5건 가져오기 → 행 추가 확인
 - [ ] 토큰 만료 시 refresh 자동 동작
 - [ ] 비공개 파일도 본인 권한이면 가져와짐 (커넥터 방식과의 차별점)
@@ -92,6 +98,7 @@ GOOGLE_DRIVE_CLIENT_SECRET
 ## 5. 대안
 
 구현 비용이 계속 부담된다면:
+
 - **A안 (관리자 전용)**: Lovable `google_drive` 커넥터로 전환 — 운영자 1명의 드라이브만 쓸 수 있지만 구현 30분.
 - **B안 (단순 업로드)**: Drive 연동을 포기하고 현재의 "이미지 대량 업로드" + OCR 흐름만 유지.
 

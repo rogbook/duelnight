@@ -148,8 +148,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         { name: "twitter:site", content: "@decklog" },
         { name: "twitter:title", content: "DuelNight" },
         { name: "twitter:description", content: desc },
-        { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/857ef3a9-8c7c-4842-9944-a368d5ef04d9/id-preview-dadce6dc--91f6cdde-f492-45b3-be3f-4b2dc70d4752.lovable.app-1778568615627.png" },
-        { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/857ef3a9-8c7c-4842-9944-a368d5ef04d9/id-preview-dadce6dc--91f6cdde-f492-45b3-be3f-4b2dc70d4752.lovable.app-1778568615627.png" },
+        {
+          property: "og:image",
+          content:
+            "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/857ef3a9-8c7c-4842-9944-a368d5ef04d9/id-preview-dadce6dc--91f6cdde-f492-45b3-be3f-4b2dc70d4752.lovable.app-1778568615627.png",
+        },
+        {
+          name: "twitter:image",
+          content:
+            "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/857ef3a9-8c7c-4842-9944-a368d5ef04d9/id-preview-dadce6dc--91f6cdde-f492-45b3-be3f-4b2dc70d4752.lovable.app-1778568615627.png",
+        },
       ],
       links: [
         {
@@ -219,50 +227,23 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider onAuthChange={handleAuthChange}>
         <ThemeProvider>
-        <LanguageProvider>
-        <OnlinePresenceProvider>
-          {isBare ? (
-            <>
-              <EnvBanner />
-              <main className="min-h-screen bg-background">
-                <Outlet />
-              </main>
-              <Toaster />
-            </>
-          ) : renderMobile ? (
-            <div className="flex min-h-screen w-full flex-col bg-background">
-              <EnvBanner />
-              <header
-                className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-background/80 px-4 backdrop-blur"
-                style={{ paddingTop: "env(safe-area-inset-top)" }}
-              >
-                <BackButton />
-                <div className="flex-1" />
-                <ThemeToggle />
-                <LanguageSelector />
-                <NotificationBell />
-                <AuthHeaderButton />
-              </header>
-              <main
-                className="flex-1"
-                style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 3.5rem)" }}
-              >
-                <Outlet />
-              </main>
-              <BottomTabBar />
-              <Toaster />
-            </div>
-          ) : (
-            <SidebarProvider>
-              <div className="flex min-h-screen w-full bg-background">
-                <AppSidebar />
-                <div className="flex flex-1 flex-col">
+          <LanguageProvider>
+            <OnlinePresenceProvider>
+              {isBare ? (
+                <>
+                  <EnvBanner />
+                  <main className="min-h-screen bg-background">
+                    <Outlet />
+                  </main>
+                  <Toaster />
+                </>
+              ) : renderMobile ? (
+                <div className="flex min-h-screen w-full flex-col bg-background">
                   <EnvBanner />
                   <header
-                    className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-background/80 px-2 backdrop-blur sm:h-14 sm:gap-3 sm:px-4"
+                    className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-background/80 px-4 backdrop-blur"
                     style={{ paddingTop: "env(safe-area-inset-top)" }}
                   >
-                    <SidebarTrigger />
                     <BackButton />
                     <div className="flex-1" />
                     <ThemeToggle />
@@ -270,16 +251,43 @@ function RootComponent() {
                     <NotificationBell />
                     <AuthHeaderButton />
                   </header>
-                  <main className="flex-1">
+                  <main
+                    className="flex-1"
+                    style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 3.5rem)" }}
+                  >
                     <Outlet />
                   </main>
+                  <BottomTabBar />
+                  <Toaster />
                 </div>
-              </div>
-              <Toaster />
-            </SidebarProvider>
-          )}
-        </OnlinePresenceProvider>
-        </LanguageProvider>
+              ) : (
+                <SidebarProvider>
+                  <div className="flex min-h-screen w-full bg-background">
+                    <AppSidebar />
+                    <div className="flex flex-1 flex-col">
+                      <EnvBanner />
+                      <header
+                        className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-background/80 px-2 backdrop-blur sm:h-14 sm:gap-3 sm:px-4"
+                        style={{ paddingTop: "env(safe-area-inset-top)" }}
+                      >
+                        <SidebarTrigger />
+                        <BackButton />
+                        <div className="flex-1" />
+                        <ThemeToggle />
+                        <LanguageSelector />
+                        <NotificationBell />
+                        <AuthHeaderButton />
+                      </header>
+                      <main className="flex-1">
+                        <Outlet />
+                      </main>
+                    </div>
+                  </div>
+                  <Toaster />
+                </SidebarProvider>
+              )}
+            </OnlinePresenceProvider>
+          </LanguageProvider>
         </ThemeProvider>
       </AuthProvider>
     </QueryClientProvider>

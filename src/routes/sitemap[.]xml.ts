@@ -29,25 +29,24 @@ export const Route = createFileRoute("/sitemap.xml")({
           { path: "/login", changefreq: "yearly", priority: "0.3" },
         ];
 
-        const [{ data: cards }, { data: decks }, { data: anns }] =
-          await Promise.all([
-            supabase
-              .from("cards")
-              .select("code, updated_at")
-              .order("updated_at", { ascending: false })
-              .limit(1000),
-            supabase
-              .from("decks")
-              .select("id, updated_at")
-              .eq("is_public", true)
-              .order("updated_at", { ascending: false })
-              .limit(500),
-            supabase
-              .from("announcements")
-              .select("id, updated_at")
-              .order("updated_at", { ascending: false })
-              .limit(500),
-          ]);
+        const [{ data: cards }, { data: decks }, { data: anns }] = await Promise.all([
+          supabase
+            .from("cards")
+            .select("code, updated_at")
+            .order("updated_at", { ascending: false })
+            .limit(1000),
+          supabase
+            .from("decks")
+            .select("id, updated_at")
+            .eq("is_public", true)
+            .order("updated_at", { ascending: false })
+            .limit(500),
+          supabase
+            .from("announcements")
+            .select("id, updated_at")
+            .order("updated_at", { ascending: false })
+            .limit(500),
+        ]);
 
         for (const c of cards ?? []) {
           entries.push({

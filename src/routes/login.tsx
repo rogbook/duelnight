@@ -10,9 +10,19 @@ import { toast } from "sonner";
 import { useI18n } from "@/i18n/language-context";
 
 const COMMON_PASSWORDS = new Set([
-  "password","password1","12345678","123456789","1234567890",
-  "qwerty123","qwertyuiop","11111111","00000000","abcdefgh",
-  "iloveyou","admin123","letmein1",
+  "password",
+  "password1",
+  "12345678",
+  "123456789",
+  "1234567890",
+  "qwerty123",
+  "qwertyuiop",
+  "11111111",
+  "00000000",
+  "abcdefgh",
+  "iloveyou",
+  "admin123",
+  "letmein1",
 ]);
 
 function checkPasswordRules(password: string) {
@@ -25,13 +35,22 @@ function checkPasswordRules(password: string) {
 
 function PwRule({ ok, children }: { ok: boolean; children: React.ReactNode }) {
   return (
-    <li className={ok ? "flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400" : "flex items-center gap-1.5 text-muted-foreground"}>
-      {ok ? <Check className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> : <X className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />}
+    <li
+      className={
+        ok
+          ? "flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400"
+          : "flex items-center gap-1.5 text-muted-foreground"
+      }
+    >
+      {ok ? (
+        <Check className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+      ) : (
+        <X className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+      )}
       <span>{children}</span>
     </li>
   );
 }
-
 
 export const Route = createFileRoute("/login")({
   head: () => {
@@ -62,7 +81,6 @@ function LoginPage() {
   const pwRules = checkPasswordRules(password);
   const signupBlocked = mode === "signup" && !pwRules.valid;
 
-
   const forgotPassword = async () => {
     const target = email.trim();
     if (!target) {
@@ -92,7 +110,6 @@ function LoginPage() {
     try {
       if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({
-
           email,
           password,
           options: { emailRedirectTo: `${window.location.origin}/` },
@@ -141,9 +158,7 @@ function LoginPage() {
       <h1 className="text-2xl font-semibold tracking-tight">
         {mode === "signin" ? t("auth.loginTitle") : t("auth.signupTitle")}
       </h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        {t("auth.loginDesc")}
-      </p>
+      <p className="mt-1 text-sm text-muted-foreground">{t("auth.loginDesc")}</p>
 
       <div className="mt-6 flex flex-col gap-2">
         <Button
@@ -192,7 +207,11 @@ function LoginPage() {
             aria-describedby={mode === "signup" ? "pw-rules" : undefined}
           />
           {mode === "signup" && (
-            <ul id="pw-rules" className="mt-1 flex flex-col gap-1 text-xs" aria-label={t("auth.passwordHint")}>
+            <ul
+              id="pw-rules"
+              className="mt-1 flex flex-col gap-1 text-xs"
+              aria-label={t("auth.passwordHint")}
+            >
               <PwRule ok={pwRules.length}>{t("auth.pwRuleLength")}</PwRule>
               <PwRule ok={pwRules.letter}>{t("auth.pwRuleLetter")}</PwRule>
               <PwRule ok={pwRules.number}>{t("auth.pwRuleNumber")}</PwRule>
@@ -201,18 +220,19 @@ function LoginPage() {
           )}
         </div>
         <Button type="submit" disabled={busy || signupBlocked} className="mt-2">
-          {busy ? t("auth.processing") : mode === "signin" ? t("auth.loginTitle") : t("auth.signupTitle")}
+          {busy
+            ? t("auth.processing")
+            : mode === "signin"
+              ? t("auth.loginTitle")
+              : t("auth.signupTitle")}
         </Button>
-
       </form>
       <div className="mt-4 flex items-center justify-between gap-2 text-xs">
         <button
           onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
           className="text-muted-foreground hover:text-foreground"
         >
-          {mode === "signin"
-            ? t("auth.toggleSignup")
-            : t("auth.toggleSignin")}
+          {mode === "signin" ? t("auth.toggleSignup") : t("auth.toggleSignin")}
         </button>
         {mode === "signin" && (
           <button

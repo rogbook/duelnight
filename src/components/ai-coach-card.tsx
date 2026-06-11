@@ -102,8 +102,7 @@ export function AiCoachCard({
 
   if (!enoughData) return null;
 
-  const turnGap =
-    Math.round((stats.first.winRate - stats.second.winRate) * 1000) / 10;
+  const turnGap = Math.round((stats.first.winRate - stats.second.winRate) * 1000) / 10;
 
   return (
     <section className="mt-6 rounded-lg border border-border bg-card p-4">
@@ -111,8 +110,8 @@ export function AiCoachCard({
         <Sparkles className="h-4 w-4 text-foreground" />
         <h3 className="text-sm font-medium">AI 코칭 요약</h3>
         <span className="text-[10px] text-muted-foreground">
-          {game === "all" ? "전체 게임" : ""} · 최근{" "}
-          {period === "all" ? "전체" : `${period}일`} · {rows.length}판
+          {game === "all" ? "전체 게임" : ""} · 최근 {period === "all" ? "전체" : `${period}일`} ·{" "}
+          {rows.length}판
         </span>
         <button
           type="button"
@@ -159,10 +158,8 @@ export function AiCoachCard({
             {stats.topOpponents[0] && (
               <li>
                 가장 자주 만난 상대:{" "}
-                <span className="text-foreground">
-                  {stats.topOpponents[0].opponent}
-                </span>{" "}
-                ({stats.topOpponents[0].count}회)
+                <span className="text-foreground">{stats.topOpponents[0].opponent}</span> (
+                {stats.topOpponents[0].count}회)
               </li>
             )}
           </ul>

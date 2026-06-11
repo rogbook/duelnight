@@ -1,6 +1,18 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useMemo, useEffect } from "react";
-import { Gamepad, Plus, Trash2, Pencil, ArrowLeft, Play, Sparkles, Layers, Search, Check, Info } from "lucide-react";
+import {
+  Gamepad,
+  Plus,
+  Trash2,
+  Pencil,
+  ArrowLeft,
+  Play,
+  Sparkles,
+  Layers,
+  Search,
+  Check,
+  Info,
+} from "lucide-react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -9,7 +21,13 @@ import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { PREBUILT_DECKS, type PrebuiltDeck } from "@/lib/simulator/prebuilt-decks";
 import type { Tables } from "@/integrations/supabase/types";
@@ -81,8 +99,14 @@ function SimulatorIndexPage() {
 
   // 모든 사용 가능한 덱 목록 (유저 덱 + 프리빌트 덱)
   const allAvailableDecks = useMemo(() => {
-    const list: { id: string; name: string; isPrebuilt: boolean; recipe: any; leaderCode: string | null }[] = [];
-    
+    const list: {
+      id: string;
+      name: string;
+      isPrebuilt: boolean;
+      recipe: any;
+      leaderCode: string | null;
+    }[] = [];
+
     // 유저 덱
     for (const d of userDecks) {
       list.push({
@@ -112,7 +136,10 @@ function SimulatorIndexPage() {
   useEffect(() => {
     if (allAvailableDecks.length > 0) {
       if (!p1DeckId) setP1DeckId(allAvailableDecks[0].id);
-      if (!p2DeckId) setP2DeckId(allAvailableDecks.length > 1 ? allAvailableDecks[1].id : allAvailableDecks[0].id);
+      if (!p2DeckId)
+        setP2DeckId(
+          allAvailableDecks.length > 1 ? allAvailableDecks[1].id : allAvailableDecks[0].id,
+        );
     }
   }, [allAvailableDecks, p1DeckId, p2DeckId]);
 
@@ -182,7 +209,7 @@ function SimulatorIndexPage() {
     }
 
     // 선택된 덱 검증 (카드가 50장 투입되고 리더가 지정되어 있어야 함)
-    const validateDeck = (deck: typeof allAvailableDecks[0] | undefined, pName: string) => {
+    const validateDeck = (deck: (typeof allAvailableDecks)[0] | undefined, pName: string) => {
       if (!deck) return false;
       const cards = deck.recipe?.cards ?? [];
       const leaderCode = deck.leaderCode || deck.recipe?.leaderCode;
@@ -193,7 +220,9 @@ function SimulatorIndexPage() {
         return false;
       }
       if (total !== 50) {
-        toast.warning(`${pName}의 카드 수가 ${total}장입니다. (원피스 카드 게임 규칙상 50장이어야 대국 가능하지만, 시뮬레이션 시작은 허용합니다)`);
+        toast.warning(
+          `${pName}의 카드 수가 ${total}장입니다. (원피스 카드 게임 규칙상 50장이어야 대국 가능하지만, 시뮬레이션 시작은 허용합니다)`,
+        );
       }
       return true;
     };
@@ -335,7 +364,11 @@ function SimulatorIndexPage() {
               </div>
 
               {/* 시작 버튼 */}
-              <Button onClick={handleStartBattle} size="lg" className="w-full h-11 text-xs font-bold flex items-center justify-center gap-2">
+              <Button
+                onClick={handleStartBattle}
+                size="lg"
+                className="w-full h-11 text-xs font-bold flex items-center justify-center gap-2"
+              >
                 <Play className="h-4 w-4 fill-current" /> 대국 시작하기
               </Button>
             </div>
@@ -346,7 +379,10 @@ function SimulatorIndexPage() {
             <h3 className="text-sm font-bold text-muted-foreground">체험용 기본 덱</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {PREBUILT_DECKS.map((pd) => (
-                <div key={pd.id} className="rounded-xl border border-border bg-card/40 p-4 shadow-sm">
+                <div
+                  key={pd.id}
+                  className="rounded-xl border border-border bg-card/40 p-4 shadow-sm"
+                >
                   <div className="flex items-start justify-between">
                     <div>
                       <h4 className="text-xs font-bold">{pd.name}</h4>
@@ -391,13 +427,18 @@ function SimulatorIndexPage() {
 
                 {userDecks.length === 0 ? (
                   <div className="py-8 text-center rounded-xl border border-dashed border-border bg-muted/10">
-                    <p className="text-xs text-muted-foreground">생성된 시뮬레이터 덱이 없습니다.</p>
+                    <p className="text-xs text-muted-foreground">
+                      생성된 시뮬레이터 덱이 없습니다.
+                    </p>
                   </div>
                 ) : (
                   <ul className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
                     {userDecks.map((d) => {
                       const recipeCards = (d.recipe as any)?.cards ?? [];
-                      const count = recipeCards.reduce((acc: number, c: any) => acc + c.quantity, 0);
+                      const count = recipeCards.reduce(
+                        (acc: number, c: any) => acc + c.quantity,
+                        0,
+                      );
                       return (
                         <li
                           key={d.id}
@@ -440,7 +481,8 @@ function SimulatorIndexPage() {
             ) : (
               <div className="py-10 text-center rounded-xl border border-dashed border-border bg-muted/10">
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  로그인하시면 나만의 카드 컬렉션을 활용해<br />
+                  로그인하시면 나만의 카드 컬렉션을 활용해
+                  <br />
                   직접 커스텀 시뮬레이터 덱을 구축할 수 있습니다.
                 </p>
                 <Link
@@ -456,11 +498,18 @@ function SimulatorIndexPage() {
           {/* 정보 팁 박스 */}
           <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-xs text-amber-800 dark:text-amber-300">
             <h4 className="font-bold flex items-center gap-1.5">
-              <Info className="h-4 w-4 text-amber-600 dark:text-amber-400" /> 시뮬레이터 덱 규칙 안내
+              <Info className="h-4 w-4 text-amber-600 dark:text-amber-400" /> 시뮬레이터 덱 규칙
+              안내
             </h4>
             <ul className="mt-2 space-y-1.5 list-disc pl-4 leading-relaxed text-[11px]">
-              <li>시뮬레이터 덱은 반드시 1장의 리더 카드와 50장의 덱 카드로 구성되어야 완벽한 덱이 됩니다.</li>
-              <li>"보유 카드만 보기" 기능을 켜면, 팩 시뮬레이터에서 개봉하여 나의 컬렉션에 등록된 수량만큼만 덱에 카드를 투입할 수 있습니다.</li>
+              <li>
+                시뮬레이터 덱은 반드시 1장의 리더 카드와 50장의 덱 카드로 구성되어야 완벽한 덱이
+                됩니다.
+              </li>
+              <li>
+                "보유 카드만 보기" 기능을 켜면, 팩 시뮬레이터에서 개봉하여 나의 컬렉션에 등록된
+                수량만큼만 덱에 카드를 투입할 수 있습니다.
+              </li>
               <li>동일한 카드는 덱에 최대 4장까지 투입할 수 있습니다.</li>
             </ul>
           </div>
@@ -473,7 +522,13 @@ function SimulatorIndexPage() {
 // ──────────────────────────────────────────────────────────
 // 덱 편집기 (SimulatorRecipeEditor) 컴포넌트 실구현
 // ──────────────────────────────────────────────────────────
-function SimulatorRecipeEditor({ deck, onSaveComplete }: { deck: SimulatorDeck; onSaveComplete: () => void }) {
+function SimulatorRecipeEditor({
+  deck,
+  onSaveComplete,
+}: {
+  deck: SimulatorDeck;
+  onSaveComplete: () => void;
+}) {
   const qc = useQueryClient();
   const { user } = useAuth();
 
@@ -494,7 +549,9 @@ function SimulatorRecipeEditor({ deck, onSaveComplete }: { deck: SimulatorDeck; 
   }, [deck]);
 
   const [leaderCode, setLeaderCode] = useState<string | null>(initialRecipe.leaderCode);
-  const [deckCards, setDeckCards] = useState<{ card_code: string; quantity: number }[]>(initialRecipe.cards);
+  const [deckCards, setDeckCards] = useState<{ card_code: string; quantity: number }[]>(
+    initialRecipe.cards,
+  );
   const [isSaving, setIsSaving] = useState(false);
 
   // 카드 메타데이터 캐시 로드용 쿼리
@@ -590,7 +647,9 @@ function SimulatorRecipeEditor({ deck, onSaveComplete }: { deck: SimulatorDeck; 
     if (filterOwnedOnly && user) {
       const ownedQty = owned.get(card.code) ?? 0;
       if (currentQty >= ownedQty) {
-        toast.error(`보유 수량(${ownedQty}장)을 초과하여 추가할 수 없습니다. 팩 시뮬레이터에서 팩을 더 개봉해 보세요.`);
+        toast.error(
+          `보유 수량(${ownedQty}장)을 초과하여 추가할 수 없습니다. 팩 시뮬레이터에서 팩을 더 개봉해 보세요.`,
+        );
         return;
       }
     }
@@ -610,7 +669,9 @@ function SimulatorRecipeEditor({ deck, onSaveComplete }: { deck: SimulatorDeck; 
     setDeckCards((prev) => {
       const existing = prev.find((c) => c.card_code === card.code);
       if (existing) {
-        return prev.map((c) => (c.card_code === card.code ? { ...c, quantity: c.quantity + 1 } : c));
+        return prev.map((c) =>
+          c.card_code === card.code ? { ...c, quantity: c.quantity + 1 } : c,
+        );
       }
       return [...prev, { card_code: card.code, quantity: 1 }];
     });
@@ -623,7 +684,7 @@ function SimulatorRecipeEditor({ deck, onSaveComplete }: { deck: SimulatorDeck; 
         .map((c) => {
           if (c.card_code === code) {
             const nextQty = c.quantity + delta;
-            
+
             // 보유 수량 증가 시 검증
             if (delta > 0 && filterOwnedOnly && user) {
               const ownedQty = owned.get(code) ?? 0;
@@ -718,7 +779,9 @@ function SimulatorRecipeEditor({ deck, onSaveComplete }: { deck: SimulatorDeck; 
 
             {/* 리더 카드 표시 슬롯 */}
             <div className="mb-4">
-              <span className="block text-[10px] font-bold text-muted-foreground mb-1">리더 카드</span>
+              <span className="block text-[10px] font-bold text-muted-foreground mb-1">
+                리더 카드
+              </span>
               {leaderCode ? (
                 <div className="flex items-center justify-between p-2.5 rounded-lg border border-primary bg-primary/5">
                   <div className="min-w-0 flex-1">
@@ -745,7 +808,9 @@ function SimulatorRecipeEditor({ deck, onSaveComplete }: { deck: SimulatorDeck; 
 
             {/* 덱 카드 투입 목록 */}
             <div>
-              <span className="block text-[10px] font-bold text-muted-foreground mb-1.5">덱 투입 카드</span>
+              <span className="block text-[10px] font-bold text-muted-foreground mb-1.5">
+                덱 투입 카드
+              </span>
               {deckCards.length === 0 ? (
                 <div className="py-12 text-center text-xs text-muted-foreground">
                   오른쪽 카드 목록에서 카드를 추가해 주세요.
@@ -756,7 +821,10 @@ function SimulatorRecipeEditor({ deck, onSaveComplete }: { deck: SimulatorDeck; 
                     const card = cardMetaMap[dc.card_code];
                     const ownedQty = owned.get(dc.card_code) ?? 0;
                     return (
-                      <li key={dc.card_code} className="flex items-center justify-between py-2 text-xs">
+                      <li
+                        key={dc.card_code}
+                        className="flex items-center justify-between py-2 text-xs"
+                      >
                         <div className="min-w-0 flex-1 pr-3">
                           <span className="font-semibold block truncate">
                             {card?.name || dc.card_code}
@@ -884,7 +952,10 @@ function SimulatorRecipeEditor({ deck, onSaveComplete }: { deck: SimulatorDeck; 
                     onChange={(e) => setFilterOwnedOnly(e.target.checked)}
                     className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
                   />
-                  <Label htmlFor="sim-filter-owned-only" className="text-[11px] font-medium text-muted-foreground whitespace-nowrap cursor-pointer select-none">
+                  <Label
+                    htmlFor="sim-filter-owned-only"
+                    className="text-[11px] font-medium text-muted-foreground whitespace-nowrap cursor-pointer select-none"
+                  >
                     보유 카드만 보기
                   </Label>
                 </div>
@@ -895,10 +966,14 @@ function SimulatorRecipeEditor({ deck, onSaveComplete }: { deck: SimulatorDeck; 
           {/* 카드 목록 결과 */}
           <div className="border border-border rounded-xl p-3 bg-card/20 max-h-[460px] overflow-y-auto">
             {isFetching && (
-              <p className="text-xs text-center py-12 text-muted-foreground">카드를 조회하는 중...</p>
+              <p className="text-xs text-center py-12 text-muted-foreground">
+                카드를 조회하는 중...
+              </p>
             )}
             {!isFetching && filteredResults.length === 0 && (
-              <p className="text-xs text-center py-12 text-muted-foreground">검색 결과가 없습니다.</p>
+              <p className="text-xs text-center py-12 text-muted-foreground">
+                검색 결과가 없습니다.
+              </p>
             )}
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
@@ -907,25 +982,30 @@ function SimulatorRecipeEditor({ deck, onSaveComplete }: { deck: SimulatorDeck; 
                 const ownedQty = owned.get(card.code) ?? 0;
                 const isLeader = card.type === "leader";
                 const activeLeader = leaderCode === card.code;
-                
+
                 return (
                   <button
                     key={card.code}
                     onClick={() => addCard(card)}
                     className={`group relative text-left rounded-lg overflow-hidden border p-1.5 transition-all bg-card hover:ring-2 hover:ring-primary/45 ${
-                      isLeader 
-                        ? activeLeader 
-                          ? "border-primary bg-primary/5 ring-1 ring-primary" 
+                      isLeader
+                        ? activeLeader
+                          ? "border-primary bg-primary/5 ring-1 ring-primary"
                           : "border-border/60 hover:border-primary/40"
-                        : qtyInDeck > 0 
-                          ? "border-primary/70" 
+                        : qtyInDeck > 0
+                          ? "border-primary/70"
                           : "border-border/60 hover:border-border"
                     }`}
                   >
                     {/* 카드 이미지 (있는 경우) */}
                     <div className="aspect-[2/3] w-full rounded bg-muted/40 overflow-hidden relative border border-border/10">
                       {card.image_url ? (
-                        <img src={card.image_url} alt={card.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" loading="lazy" />
+                        <img
+                          src={card.image_url}
+                          alt={card.name}
+                          className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                          loading="lazy"
+                        />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center p-2 text-[10px] text-muted-foreground text-center">
                           {card.name}

@@ -4,7 +4,13 @@ import type { Database } from "@/integrations/supabase/types";
 import { useUniqueSets } from "@/hooks/use-unique-sets";
 import { useI18n } from "@/i18n/language-context";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { normalizeImageUrl } from "@/components/cards/card-uploader";
@@ -16,7 +22,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, Save, FolderOpen, ImageOff, ArrowRight, Trash2, Plus, Gamepad2, Pencil, X } from "lucide-react";
+import {
+  Loader2,
+  Save,
+  FolderOpen,
+  ImageOff,
+  ArrowRight,
+  Trash2,
+  Plus,
+  Gamepad2,
+  Pencil,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -196,12 +213,10 @@ export function SetConfigView() {
 
     setDeletingSet(true);
     try {
-      await supabase
-        .from("card_sets")
-        .upsert([{ name: "미분류", game: activeGame }], {
-          onConflict: "game,name",
-          ignoreDuplicates: true,
-        });
+      await supabase.from("card_sets").upsert([{ name: "미분류", game: activeGame }], {
+        onConflict: "game,name",
+        ignoreDuplicates: true,
+      });
 
       const { error: updErr } = await supabase
         .from("cards")
@@ -281,7 +296,7 @@ export function SetConfigView() {
       if (error) throw error;
       toast.success("게임이 삭제되었습니다.");
       await fetchGames();
-      setActiveGame(games[0]?.code !== activeGameRow.code ? games[0]?.code ?? "" : "");
+      setActiveGame(games[0]?.code !== activeGameRow.code ? (games[0]?.code ?? "") : "");
     } catch (e) {
       toast.error("게임 삭제 실패: " + (e as Error).message);
     } finally {
@@ -381,17 +396,23 @@ export function SetConfigView() {
         >
           <Plus className="h-3 w-3 mr-1" /> 게임 추가
         </Button>
-        {activeGameRow && !activeGameRow.is_builtin && !BUILTIN_GAME_CODES.has(activeGameRow.code) && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleDeleteGame}
-            disabled={deletingGame}
-            className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10"
-          >
-            {deletingGame ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
-          </Button>
-        )}
+        {activeGameRow &&
+          !activeGameRow.is_builtin &&
+          !BUILTIN_GAME_CODES.has(activeGameRow.code) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDeleteGame}
+              disabled={deletingGame}
+              className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10"
+            >
+              {deletingGame ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Trash2 className="h-3 w-3" />
+              )}
+            </Button>
+          )}
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
@@ -499,7 +520,11 @@ export function SetConfigView() {
                       className="h-7 w-7 p-0 text-primary hover:bg-primary/10 rounded-full shrink-0"
                       title="저장"
                     >
-                      {savingRename ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-4 w-4" />}
+                      {savingRename ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4" />
+                      )}
                     </Button>
                     <Button
                       variant="ghost"
@@ -601,7 +626,9 @@ export function SetConfigView() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-bold text-muted-foreground/80">{c.code}</span>
+                          <span className="text-xs font-bold text-muted-foreground/80">
+                            {c.code}
+                          </span>
                           <span className="truncate text-xs font-semibold text-foreground/90">
                             {c.name}
                           </span>
@@ -621,9 +648,7 @@ export function SetConfigView() {
                         </div>
                         <Select
                           value={currentEditVal}
-                          onValueChange={(v) =>
-                            setEditedSets((prev) => ({ ...prev, [c.code]: v }))
-                          }
+                          onValueChange={(v) => setEditedSets((prev) => ({ ...prev, [c.code]: v }))}
                         >
                           <SelectTrigger className="h-7 text-xs w-28 bg-background border-border/80">
                             <SelectValue placeholder="세트 선택" />
@@ -711,7 +736,11 @@ export function SetConfigView() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setGameDialogOpen(false)} disabled={creatingGame}>
+            <Button
+              variant="outline"
+              onClick={() => setGameDialogOpen(false)}
+              disabled={creatingGame}
+            >
               취소
             </Button>
             <Button onClick={handleCreateGame} disabled={creatingGame}>

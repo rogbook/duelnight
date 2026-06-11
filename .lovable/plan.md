@@ -9,6 +9,7 @@
 ## 0a단계 — 스펙 문서 OPTCG로 보정 (즉시)
 
 `docs/SIMULATOR_SPEC.md` 수정:
+
 - 1차 타깃: PTCG → **OPTCG**
 - ZoneKind 매핑 OPTCG 기준 명시 (primary=리더, secondary=캐릭터, resource=DON!!, graveyard=트래시)
 - Action 타입을 OPTCG 액션으로 교체 (`play_character`, `attach_don`, `attack_with_card`, `play_event`, `counter` 등)
@@ -20,6 +21,7 @@
 `docs/SIMULATOR_SAMPLE_CARDS.md` 신규. DB에 있는 OPTCG 카드 중 대표 30장 추출 후 DSL로 표현.
 
 **카테고리 (목표 분포)**
+
 - 리더 4장 (단색·다색, 카운터 상시 능력 포함)
 - 캐릭터 — 일반 8장 (다양한 코스트·파워)
 - 캐릭터 — On Play 효과 6장 (드로우/서치/제거/부스트)
@@ -28,6 +30,7 @@
 - 카운터 카드 4장 (+1000, +2000, 트리거 카운터)
 
 **판정 기준**
+
 - 30장 중 **27장(90%) 이상 DSL로 표현 가능** → 게이트 통과 → 1단계 진행
 - 표현 불가 카드 3장 초과 → DSL 액션·트리거 보강 후 재검증
 - 표현 불가 카드는 사유 명시 (어떤 trigger·action·target이 부족했는지)
@@ -37,6 +40,7 @@
 ## 1단계 — TS 인터페이스 코드화
 
 `src/lib/simulator/` 디렉토리:
+
 ```
 types.ts              ITcgEngine, GameState, Action, OPTCGAction
 rng.ts                결정론적 RNG (seedrandom)
@@ -55,6 +59,7 @@ ai/
 ## 2단계 — 팩 → user_collection 연동
 
 `src/routes/packs.tsx`:
+
 - 팩 개봉 결과를 `user_collection`에 upsert (card_code 기준 quantity 누적)
 - 비로그인 시 토스트 + 로그인 모달
 - 희귀도별 등장 연출 강화
@@ -65,6 +70,7 @@ ai/
 `docs/DB_WORKFLOW.md` §3 포맷 준수.
 
 **변경 내용**
+
 - `cards.effects jsonb DEFAULT '[]'::jsonb` 추가 (기존 `extra`와 별개)
 - `simulator_decks` 테이블 신규
   - id, user_id, game(text), name, recipe(jsonb), is_public, created_at, updated_at
@@ -77,6 +83,7 @@ ai/
 ## 4단계 — OPTCG 엔진 + 가치함수 AI
 
 OPTCG 핵심 규칙 구현:
+
 - 리더 5000~6000 파워, LP=5
 - 캐릭터 최대 5장, 코스트=DON!! 소모
 - DON!! 어태치(+1000), 공격 시 1회 차감 없음 (영구 부여)
@@ -84,6 +91,7 @@ OPTCG 핵심 규칙 구현:
 - 인터럽트 처리 모델 (액션 큐 + 응답 단계)
 
 가치함수 feature (OPTCG)
+
 - `lp_diff` 양 측 LP 차이
 - `board_power_sum` 보드 파워 총합
 - `don_progress` 활성 DON!! 수
@@ -107,14 +115,14 @@ AI vs AI 자동 대전 러너 + 결과 로그.
 
 ## 협업 분담
 
-| 단계 | 담당 |
-|---|---|
-| 0a (스펙 OPTCG 보정) | Antigravity |
-| 0b (샘플 30장 검증) | Antigravity, **게이트 통과 필수** |
-| 1 (TS 코드) | Antigravity |
-| 2 (packs upsert) | Antigravity |
-| 3 (DB 마이그레이션) | **Lovable** |
-| 4-5 (엔진/AI/UI) | Antigravity |
+| 단계                 | 담당                              |
+| -------------------- | --------------------------------- |
+| 0a (스펙 OPTCG 보정) | Antigravity                       |
+| 0b (샘플 30장 검증)  | Antigravity, **게이트 통과 필수** |
+| 1 (TS 코드)          | Antigravity                       |
+| 2 (packs upsert)     | Antigravity                       |
+| 3 (DB 마이그레이션)  | **Lovable**                       |
+| 4-5 (엔진/AI/UI)     | Antigravity                       |
 
 ## 권장 첫 액션
 

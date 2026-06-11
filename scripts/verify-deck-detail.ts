@@ -16,11 +16,9 @@
  */
 import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL =
-  process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL;
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL;
 const SUPABASE_KEY =
-  process.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
-  process.env.SUPABASE_PUBLISHABLE_KEY;
+  process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
   console.error("✖ SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY 환경변수가 필요합니다.");
@@ -57,7 +55,9 @@ async function pickDeckId(): Promise<string | null> {
 async function run() {
   const deckId = await pickDeckId();
   if (!deckId) {
-    console.error("✖ 검증할 덱이 없습니다. 공개 덱이 1개 이상 필요하거나 인자로 deckId를 넘기세요.");
+    console.error(
+      "✖ 검증할 덱이 없습니다. 공개 덱이 1개 이상 필요하거나 인자로 deckId를 넘기세요.",
+    );
     process.exit(2);
   }
   console.log(`\n▶ 검증 대상 deckId = ${deckId}\n`);
@@ -68,7 +68,11 @@ async function run() {
     .select("*")
     .eq("id", deckId)
     .maybeSingle();
-  check(!deckErr && !!deck, "decks SELECT (RLS 통과)", deckErr?.message ?? (deck ? `name="${deck.name}" game=${deck.game}` : "행 없음"));
+  check(
+    !deckErr && !!deck,
+    "decks SELECT (RLS 통과)",
+    deckErr?.message ?? (deck ? `name="${deck.name}" game=${deck.game}` : "행 없음"),
+  );
   if (!deck) return finish();
 
   // 2) 덱 카드
@@ -76,7 +80,11 @@ async function run() {
     .from("deck_cards")
     .select("*")
     .eq("deck_id", deckId);
-  check(!dcErr && Array.isArray(deckCards), "deck_cards SELECT", dcErr?.message ?? `${deckCards?.length ?? 0}개 행`);
+  check(
+    !dcErr && Array.isArray(deckCards),
+    "deck_cards SELECT",
+    dcErr?.message ?? `${deckCards?.length ?? 0}개 행`,
+  );
   if (!deckCards) return finish();
 
   if (deckCards.length === 0) {
@@ -90,13 +98,19 @@ async function run() {
     .from("cards")
     .select("code, name, image_url")
     .in("code", codes);
-  check(!cardErr, "cards.in(code, ...) SELECT", cardErr?.message ?? `${cards?.length ?? 0}/${codes.length} 매칭`);
+  check(
+    !cardErr,
+    "cards.in(code, ...) SELECT",
+    cardErr?.message ?? `${cards?.length ?? 0}/${codes.length} 매칭`,
+  );
   const matched = new Set((cards ?? []).map((c) => c.code));
   const missingCodes = codes.filter((c) => !matched.has(c));
   check(
     missingCodes.length === 0,
     "모든 deck_cards.card_code 가 cards 테이블에 존재",
-    missingCodes.length ? `누락 ${missingCodes.length}개: ${missingCodes.slice(0, 5).join(", ")}${missingCodes.length > 5 ? " …" : ""}` : "OK",
+    missingCodes.length
+      ? `누락 ${missingCodes.length}개: ${missingCodes.slice(0, 5).join(", ")}${missingCodes.length > 5 ? " …" : ""}`
+      : "OK",
   );
 
   // 4) 이미지 결손율
@@ -118,7 +132,11 @@ async function run() {
       .eq("type", "leader")
       .limit(1)
       .maybeSingle();
-    check(!leaderErr && !!leader, `optcg leader 카드 조회 ("${deck.leader}")`, leaderErr?.message ?? (leader ? `code=${leader.code}` : "리더 카드 없음"));
+    check(
+      !leaderErr && !!leader,
+      `optcg leader 카드 조회 ("${deck.leader}")`,
+      leaderErr?.message ?? (leader ? `code=${leader.code}` : "리더 카드 없음"),
+    );
   }
 
   return finish();

@@ -10,13 +10,13 @@
 
 지금 Lovable이 묶어서 해주던 것 → 독립하면 이렇게 나뉩니다.
 
-| 기능 | 지금(Lovable) | 독립 후 |
-|---|---|---|
-| 코드 보관 | GitHub(이미 내 것) | 그대로 |
-| 화면 미리보기 | Lovable 옆창 | **내 컴퓨터 `npm run dev`** → 브라우저 localhost |
-| 배포(라이브) | Lovable 자동 | **Cloudflare**(GitHub 연결 시 자동) |
-| DB·로그인 | Lovable Cloud의 Supabase | **내 Supabase 프로젝트** |
-| AI 기능 | Lovable AI 게이트웨이 | **구글 Gemini 키** 직접 |
+| 기능          | 지금(Lovable)            | 독립 후                                          |
+| ------------- | ------------------------ | ------------------------------------------------ |
+| 코드 보관     | GitHub(이미 내 것)       | 그대로                                           |
+| 화면 미리보기 | Lovable 옆창             | **내 컴퓨터 `npm run dev`** → 브라우저 localhost |
+| 배포(라이브)  | Lovable 자동             | **Cloudflare**(GitHub 연결 시 자동)              |
+| DB·로그인     | Lovable Cloud의 Supabase | **내 Supabase 프로젝트**                         |
+| AI 기능       | Lovable AI 게이트웨이    | **구글 Gemini 키** 직접                          |
 
 총 4단계: **① 내 컴퓨터 셋업 → ② Supabase 이관 → ③ AI 키 교체 → ④ Cloudflare 연결**.
 계정 만들기·버튼 누르기는 [나], 코드·설정 파일은 [클로드]가 합니다.
@@ -24,6 +24,7 @@
 ---
 
 ## 사전 준비 — 만들 계정 (전부 무료 구간 있음)
+
 - [ ] **GitHub** 계정 (이미 있음: `rogbook/tcg-hub`)
 - [ ] **Cloudflare** 계정 — 배포용 (dash.cloudflare.com)
 - [ ] **Supabase** 계정 — DB/로그인용 (supabase.com)
@@ -53,7 +54,8 @@
 5. **[나] `.env` 파일 만들기** — 프로젝트 폴더에 `.env` 파일을 만들고 키들을 넣음(값은 2~3단계에서 받음). **[클로드]가 어떤 키가 필요한지 빈 양식을 만들어 드림.**
 
 > 필요한 키 목록(미리 참고):
-> - 화면용(VITE_): `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (필수) / `VITE_STRIPE_PUBLISHABLE_KEY`, `VITE_PORTONE_USER_CODE`(결제 시)
+>
+> - 화면용(VITE\_): `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (필수) / `VITE_STRIPE_PUBLISHABLE_KEY`, `VITE_PORTONE_USER_CODE`(결제 시)
 > - 서버용(비밀): `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (필수) / `GEMINI_API_KEY`(AI) / `STRIPE_SECRET_KEY`, `PORTONE_API_KEY`, `PORTONE_API_SECRET`, `GOOGLE_DRIVE_CLIENT_ID`, `GOOGLE_DRIVE_CLIENT_SECRET`, `APP_URL`(선택)
 
 ---
@@ -67,7 +69,7 @@
    - `Project URL` → `SUPABASE_URL` / `VITE_SUPABASE_URL`
    - `anon public` 키 → `SUPABASE_PUBLISHABLE_KEY` / `VITE_SUPABASE_PUBLISHABLE_KEY`
    - `service_role` 키(비밀!) → `SUPABASE_SERVICE_ROLE_KEY`
-   → `.env`에 붙여넣기.
+     → `.env`에 붙여넣기.
 3. **[클로드/나] 구조 만들기** — 우리 저장소의 `supabase/migrations/*.sql`을 새 프로젝트에 실행하면 테이블·RLS·함수가 그대로 생깁니다.
    - 쉬운 방법: Supabase 대시보드 **SQL Editor**에 마이그레이션 내용을 순서대로 붙여 실행. **[클로드]가 "하나로 합친 설치용 SQL"을 만들어 드리면** 복붙 한 번이면 됩니다.
 4. **[나] 데이터 옮기기** — 기존(Lovable) Supabase에서 데이터 내보내 새 프로젝트로 가져오기.
@@ -107,18 +109,21 @@
 ---
 
 ## 5. 전환 후 일상 운영 (비개발자 기준)
+
 - **수정**: 내 컴퓨터에서 클로드와 작업 → `npm run dev`로 확인 → GitHub에 올리면(push) **자동 배포**.
 - **DB 변경**: 이제 내가 주인이라 Supabase 대시보드/SQL로 직접(또는 [클로드]가 SQL 작성).
 - **비용**: 초기엔 대부분 **무료 구간**. 트래픽/사용량 늘면 Supabase·Cloudflare·Gemini 각각 소액 과금(전에 만든 `AI_GATEWAY_COST_SIMULATION.md` 참고).
 - **확인 위치**: 배포 상태=Cloudflare, DB/로그인=Supabase, AI 사용량=Google.
 
 ## 6. 주의/리스크 (미리 알고 가기)
+
 - **로그인 사용자·스토리지 이관**이 가장 번거롭다 → 사용자 적을 때 옮기는 게 유리.
 - **결제(Stripe/PortOne)**: 키를 새로 넣고 웹훅 주소를 새 도메인으로 다시 등록해야 함.
 - **AI**: Lovable 무료 크레딧($1/월)은 사라짐 → Gemini 정가 적용(여전히 매우 저렴).
 - **프리뷰**: Lovable 옆창 같은 즉시 미리보기는 없음 → 내 컴퓨터 `npm run dev`로 대체.
 
 ## 7. 안전한 순서(롤백 대비)
+
 1. 1~3단계까지 **내 컴퓨터에서만** 완성·테스트(Lovable은 그대로 운영).
 2. 4단계로 **새 도메인에 배포**해 한동안 병행 운영하며 확인.
 3. 문제없으면 그때 Lovable 의존을 정리.
@@ -126,6 +131,7 @@
 ---
 
 ## 클로드가 바로 만들어 줄 수 있는 것 (요청만 하세요)
+
 - `.env` **빈 양식 파일**(필요한 키 주석 포함)
 - 마이그레이션을 **하나로 합친 "설치용 SQL"**(복붙 한 번)
 - 데이터 **이관 순서 목록** + (필요시) 스토리지 복사 스크립트

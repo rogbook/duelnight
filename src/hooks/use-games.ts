@@ -17,9 +17,30 @@ export interface GameOption {
 }
 
 const FALLBACK_GAMES: GameOption[] = [
-  { code: "optcg", label_ko: "원피스", label_en: "One Piece", label_ja: "ワンピース", sort_order: 10, is_builtin: true },
-  { code: "ptcg", label_ko: "포켓몬", label_en: "Pokemon", label_ja: "ポケモン", sort_order: 20, is_builtin: true },
-  { code: "dtcg", label_ko: "디지몬", label_en: "Digimon", label_ja: "デジモン", sort_order: 30, is_builtin: true },
+  {
+    code: "optcg",
+    label_ko: "원피스",
+    label_en: "One Piece",
+    label_ja: "ワンピース",
+    sort_order: 10,
+    is_builtin: true,
+  },
+  {
+    code: "ptcg",
+    label_ko: "포켓몬",
+    label_en: "Pokemon",
+    label_ja: "ポケモン",
+    sort_order: 20,
+    is_builtin: true,
+  },
+  {
+    code: "dtcg",
+    label_ko: "디지몬",
+    label_en: "Digimon",
+    label_ja: "デジモン",
+    sort_order: 30,
+    is_builtin: true,
+  },
 ];
 
 export function gameLabelFrom(games: GameOption[], code: string, language: string): string {

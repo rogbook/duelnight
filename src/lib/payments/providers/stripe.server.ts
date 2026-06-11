@@ -14,7 +14,9 @@ import type { CheckoutResult, VerifyResult } from "../types";
 function getStripeInstance() {
   const secretKey = process.env.STRIPE_SECRET_KEY;
   if (!secretKey) {
-    throw new Error("Stripe Secret Key is not configured in STRIPE_SECRET_KEY environment variable.");
+    throw new Error(
+      "Stripe Secret Key is not configured in STRIPE_SECRET_KEY environment variable.",
+    );
   }
   return new Stripe(secretKey, {
     apiVersion: "2025-02-24.accredited" as any, // Using safe type casting to bypass strict compilation

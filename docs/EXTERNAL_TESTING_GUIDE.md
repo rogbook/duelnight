@@ -8,12 +8,14 @@
 ## 1. 테스트 URL 발급 절차
 
 ### Share Preview 링크 생성
+
 1. Lovable 에디터 우측 상단 **Share** 버튼 클릭 (모바일은 우측 하단 `...`)
 2. **Share preview** 선택 → 공개 링크 생성
 3. 링크 형태: `https://preview--<id>.lovable.app/...`
 4. **유효기간: 7일** (만료 시 같은 절차로 재발급)
 
 ### 테스터 안내 템플릿
+
 ```
 안녕하세요, DuelNight 베타 테스트에 참여해주셔서 감사합니다.
 
@@ -30,11 +32,11 @@
 
 ## 2. 테스터 계정 생성 규칙 (필수)
 
-| 항목 | 규칙 | 예시 |
-|------|------|------|
-| 이메일 | `test+<닉네임>@duelnight.app` 또는 `qa_<번호>@<도메인>` | `test+alice@duelnight.app` |
-| 닉네임 | `[TEST]` 또는 `qa_` prefix | `[TEST]앨리스`, `qa_user01` |
-| 카드덱/대회명 | `TEST_` prefix | `TEST_엘드라조 데모` |
+| 항목          | 규칙                                                    | 예시                        |
+| ------------- | ------------------------------------------------------- | --------------------------- |
+| 이메일        | `test+<닉네임>@duelnight.app` 또는 `qa_<번호>@<도메인>` | `test+alice@duelnight.app`  |
+| 닉네임        | `[TEST]` 또는 `qa_` prefix                              | `[TEST]앨리스`, `qa_user01` |
+| 카드덱/대회명 | `TEST_` prefix                                          | `TEST_엘드라조 데모`        |
 
 → 실유저와 시각적으로 구분되며, 테스트 종료 후 prefix로 **일괄 식별/정리** 가능.
 
@@ -66,6 +68,7 @@
 ## 5. 테스트 종료 후 정리 절차
 
 ### 5-1. 테스트 데이터 조회 (SQL 예시)
+
 Lovable Cloud → SQL Editor에서 실행:
 
 ```sql
@@ -87,11 +90,13 @@ SELECT * FROM public.tournaments WHERE name LIKE 'TEST\_%' ESCAPE '\';
 ```
 
 ### 5-2. 일괄 삭제
+
 1. 위 조회 결과를 백업 (CSV export)
 2. **참조 관계가 있는 자식 테이블부터 삭제** (덱 → 프로필 → auth.users 순)
 3. 삭제는 마이그레이션을 통해 진행 (실DB 직접 DELETE 지양)
 
 ### 5-3. 사후 리뷰
+
 - 발견된 이슈를 GitHub Issues 또는 노션에 정리
 - 우선순위 분류 (Critical / High / Normal / Nice-to-have)
 - 다음 빌드 일정에 반영
@@ -108,6 +113,7 @@ SELECT * FROM public.tournaments WHERE name LIKE 'TEST\_%' ESCAPE '\';
 **브라우저/기기**: Chrome 125 / iPhone 15 Safari
 
 **재현 경로**:
+
 1. 로그인 → 대회 페이지 이동
 2. '참가하기' 버튼 클릭
 3. ...
@@ -122,5 +128,6 @@ SELECT * FROM public.tournaments WHERE name LIKE 'TEST\_%' ESCAPE '\';
 ---
 
 ## 관련 문서
+
 - [배포 프로세스](./DEPLOY_PROCESS.md)
 - [협업 가이드](./COLLABORATION_GUIDE.md)

@@ -1,11 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { fmtPctVal } from "@/lib/match-stats";
 import { useGames } from "@/hooks/use-games";
@@ -122,9 +117,7 @@ export function OpponentDetailDialog({
               </div>
             )}
 
-            {profile?.bio && (
-              <p className="text-sm text-muted-foreground">{profile.bio}</p>
-            )}
+            {profile?.bio && <p className="text-sm text-muted-foreground">{profile.bio}</p>}
 
             {ratings.length > 0 && (
               <section>
@@ -137,13 +130,9 @@ export function OpponentDetailDialog({
                       key={r.game}
                       className="rounded-md border border-border bg-card p-2 text-center"
                     >
-                      <p className="text-[10px] text-muted-foreground">
-                        {labelOf(r.game)}
-                      </p>
+                      <p className="text-[10px] text-muted-foreground">{labelOf(r.game)}</p>
                       <p className="text-lg font-semibold tabular-nums">{r.rating}</p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {r.matches_count}판
-                      </p>
+                      <p className="text-[10px] text-muted-foreground">{r.matches_count}판</p>
                     </li>
                   ))}
                 </ul>
@@ -164,14 +153,10 @@ export function OpponentDetailDialog({
                       <span className="truncate">
                         {d.name}
                         {d.leader && (
-                          <span className="ml-1.5 text-xs text-muted-foreground">
-                            · {d.leader}
-                          </span>
+                          <span className="ml-1.5 text-xs text-muted-foreground">· {d.leader}</span>
                         )}
                       </span>
-                      <span className="text-[10px] text-muted-foreground">
-                        {labelOf(d.game)}
-                      </span>
+                      <span className="text-[10px] text-muted-foreground">{labelOf(d.game)}</span>
                     </li>
                   ))}
                 </ul>

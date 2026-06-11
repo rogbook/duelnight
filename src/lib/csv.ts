@@ -30,9 +30,7 @@ export function matchesToCsv(rows: Match[]): string {
 
 export function matchesToJson(rows: Match[]): string {
   return JSON.stringify(
-    rows.map((m) =>
-      Object.fromEntries(HEADERS.map((h) => [h, (m as Row)[h]])),
-    ),
+    rows.map((m) => Object.fromEntries(HEADERS.map((h) => [h, (m as Row)[h]]))),
     null,
     2,
   );
@@ -127,9 +125,7 @@ export function parseImport(text: string): ImportRow[] {
       return arr
         .map((o) =>
           normalizeRow(
-            Object.fromEntries(
-              Object.entries(o ?? {}).map(([k, v]) => [k, String(v ?? "")]),
-            ),
+            Object.fromEntries(Object.entries(o ?? {}).map(([k, v]) => [k, String(v ?? "")])),
           ),
         )
         .filter((x): x is ImportRow => !!x);

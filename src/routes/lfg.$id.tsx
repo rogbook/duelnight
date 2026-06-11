@@ -16,12 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { GAME_LABEL } from "@/lib/match-stats";
 import type { Database } from "@/integrations/supabase/types";
@@ -45,7 +40,9 @@ export const Route = createFileRoute("/lfg/$id")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
       .from("lfg_posts")
-      .select("id, user_id, game, title, location, meet_at, body, status, category, store_id, updated_at, games_count, duration_minutes, quick_match, created_at")
+      .select(
+        "id, user_id, game, title, location, meet_at, body, status, category, store_id, updated_at, games_count, duration_minutes, quick_match, created_at",
+      )
       .eq("id", params.id)
       .maybeSingle();
     if (error) throw error;
@@ -77,7 +74,10 @@ export const Route = createFileRoute("/lfg/$id")({
       ja: "場所未定",
     };
     const title = `${p.title} — LFG · DuelNight`;
-    const desc = (p.body ?? `${GAME_LABEL[p.game]} · ${p.location ?? noLocationTexts[locale] ?? noLocationTexts.ko}`)
+    const desc = (
+      p.body ??
+      `${GAME_LABEL[p.game]} · ${p.location ?? noLocationTexts[locale] ?? noLocationTexts.ko}`
+    )
       .replace(/\s+/g, " ")
       .slice(0, 150);
     const url = `${SITE}/lfg/${p.id}`;
@@ -94,12 +94,15 @@ export const Route = createFileRoute("/lfg/$id")({
     };
   },
   component: LfgDetailPage,
-  notFoundComponent: () => {
+  notFoundComponent: function LfgNotFound() {
     const { t } = useI18n();
     return (
       <div className="mx-auto max-w-3xl px-6 py-16 text-center">
         <h1 className="text-2xl font-semibold">{t("lfg.notFoundTitle")}</h1>
-        <Link to="/lfg" className="mt-4 inline-flex items-center gap-1 text-sm text-primary hover:underline">
+        <Link
+          to="/lfg"
+          className="mt-4 inline-flex items-center gap-1 text-sm text-primary hover:underline"
+        >
           <ArrowLeft className="h-4 w-4" /> {t("lfg.backToListLfg")}
         </Link>
       </div>
@@ -125,7 +128,13 @@ function LfgDetailPage() {
   const { data: post = initialPost, refetch: refetchPost } = useQuery({
     queryKey: ["lfg-post", initialPost.id],
     queryFn: async () => {
-      const { data } = await supabase.from("lfg_posts").select("id, user_id, game, title, location, meet_at, body, status, category, store_id, updated_at, games_count, duration_minutes, quick_match, created_at").eq("id", initialPost.id).maybeSingle();
+      const { data } = await supabase
+        .from("lfg_posts")
+        .select(
+          "id, user_id, game, title, location, meet_at, body, status, category, store_id, updated_at, games_count, duration_minutes, quick_match, created_at",
+        )
+        .eq("id", initialPost.id)
+        .maybeSingle();
       return (data ?? initialPost) as Post;
     },
     initialData: initialPost,
@@ -165,7 +174,9 @@ function LfgDetailPage() {
           .from("profiles")
           .select("id, display_name, username")
           .in("id", ids);
-        map = new Map((profs ?? []).map((p) => [p.id, { display_name: p.display_name, username: p.username }]));
+        map = new Map(
+          (profs ?? []).map((p) => [p.id, { display_name: p.display_name, username: p.username }]),
+        );
       }
       return rows.map((r) => ({ ...r, profile: map.get(r.user_id) ?? null })) as Participant[];
     },
@@ -214,7 +225,10 @@ function LfgDetailPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-8">
-      <Link to="/lfg" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+      <Link
+        to="/lfg"
+        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+      >
         <ArrowLeft className="h-3.5 w-3.5" /> LFG
       </Link>
 
@@ -274,7 +288,8 @@ function LfgDetailPage() {
           )}
           {post.duration_minutes != null && (
             <span className="inline-flex items-center gap-1">
-              <Tag className="h-3.5 w-3.5" /> {t("lfg.durationMinutes", { minutes: post.duration_minutes })}
+              <Tag className="h-3.5 w-3.5" />{" "}
+              {t("lfg.durationMinutes", { minutes: post.duration_minutes })}
             </span>
           )}
         </div>
@@ -286,7 +301,6 @@ function LfgDetailPage() {
         )}
 
         <ContactDetails postId={post.id} isAuthor={isAuthor} myStatus={myParticipant?.status} />
-
 
         <div className="mt-6 flex flex-wrap gap-2">
           {!user && (
@@ -313,7 +327,11 @@ function LfgDetailPage() {
               ) : null}
 
               {!post.quick_match && (
-                <StartDmButton userId={post.user_id} variant="outline" label={t("lfg.chatWithAuthor")} />
+                <StartDmButton
+                  userId={post.user_id}
+                  variant="outline"
+                  label={t("lfg.chatWithAuthor")}
+                />
               )}
             </>
           )}
@@ -327,20 +345,27 @@ function LfgDetailPage() {
         {acceptedCount > 0 && (
           <p className="mt-3 text-xs text-muted-foreground">
             {t("lfg.acceptedCount", { count: acceptedCount })}
-            {post.games_count ? ` · ${t("lfg.gamesCountScheduled", { count: post.games_count })}` : ""}
+            {post.games_count
+              ? ` · ${t("lfg.gamesCountScheduled", { count: post.games_count })}`
+              : ""}
           </p>
         )}
       </div>
 
       {isAuthor && (
         <section className="mt-6 rounded-lg border border-border bg-card p-4">
-          <h2 className="mb-3 text-sm font-semibold">{t("lfg.participantsSection", { count: participants.length })}</h2>
+          <h2 className="mb-3 text-sm font-semibold">
+            {t("lfg.participantsSection", { count: participants.length })}
+          </h2>
           {participants.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("lfg.noParticipants")}</p>
           ) : (
             <ul className="space-y-2">
               {participants.map((p) => (
-                <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border p-3">
+                <li
+                  key={p.id}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border p-3"
+                >
                   <div className="min-w-0">
                     <div className="text-sm font-medium">
                       {p.profile?.display_name || p.profile?.username || t("lfg.anonymous")}
@@ -357,12 +382,20 @@ function LfgDetailPage() {
                       <StartDmButton userId={p.user_id} variant="ghost" size="icon" iconOnly />
                     )}
                     {p.status !== "accepted" && (
-                      <Button size="sm" variant="outline" onClick={() => updateParticipant(p.id, "accepted")}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => updateParticipant(p.id, "accepted")}
+                      >
                         <Check className="mr-1 h-4 w-4" /> {t("lfg.accept")}
                       </Button>
                     )}
                     {p.status !== "rejected" && (
-                      <Button size="sm" variant="ghost" onClick={() => updateParticipant(p.id, "rejected")}>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => updateParticipant(p.id, "rejected")}
+                      >
                         <XIcon className="mr-1 h-4 w-4" /> {t("lfg.reject")}
                       </Button>
                     )}
@@ -373,7 +406,6 @@ function LfgDetailPage() {
           )}
         </section>
       )}
-
     </div>
   );
 }
@@ -474,4 +506,3 @@ function ContactDetails({
     </div>
   );
 }
-

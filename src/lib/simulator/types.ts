@@ -9,21 +9,21 @@
 export type PlayerId = "p1" | "p2";
 
 export type ZoneKind =
-  | "primary"     // OPTCG=리더 / DTCG=배틀존
-  | "secondary"   // OPTCG=캐릭터 에리어 / DTCG=벤치
-  | "resource"    // OPTCG=DON!! / PTCG=에너지
-  | "graveyard"   // 트래시
+  | "primary" // OPTCG=리더 / DTCG=배틀존
+  | "secondary" // OPTCG=캐릭터 에리어 / DTCG=벤치
+  | "resource" // OPTCG=DON!! / PTCG=에너지
+  | "graveyard" // 트래시
   | "hand"
   | "deck"
-  | "life";       // OPTCG=라이프 / DTCG=시큐리티 / PTCG=사이드
+  | "life"; // OPTCG=라이프 / DTCG=시큐리티 / PTCG=사이드
 
 export interface CardInstance {
-  iid: string;                         // 게임 내 고유 인스턴스 ID
-  code: string;                        // cards.code 참조
+  iid: string; // 게임 내 고유 인스턴스 ID
+  code: string; // cards.code 참조
   rested: boolean;
-  power?: number;                      // 수정자 반영 후 현재 파워
-  attached: CardInstance[];            // 부착 카드/DON!! 토큰
-  counters: Record<string, number>;    // damage, power_mod, status_flags 등
+  power?: number; // 수정자 반영 후 현재 파워
+  attached: CardInstance[]; // 부착 카드/DON!! 토큰
+  counters: Record<string, number>; // damage, power_mod, status_flags 등
 }
 
 export interface Zones {
@@ -39,23 +39,16 @@ export interface Zones {
 export interface PlayerState {
   id: PlayerId;
   zones: Zones;
-  donDeck: number;        // OPTCG: 남은 DON!! 덱 (보통 10)
-  donActive: number;      // 액티브 DON!!
-  donRested: number;      // 레스트 DON!!
+  donDeck: number; // OPTCG: 남은 DON!! 덱 (보통 10)
+  donActive: number; // 액티브 DON!!
+  donRested: number; // 레스트 DON!!
   turnFlags: {
-    activatedThisTurn: string[];     // iid 목록 (Activate:Main 1회 제한)
+    activatedThisTurn: string[]; // iid 목록 (Activate:Main 1회 제한)
     donAttachedThisTurn: number;
   };
 }
 
-export type TurnPhase =
-  | "refresh"
-  | "draw"
-  | "don"
-  | "main"
-  | "attack_declared"
-  | "end"
-  | "ended";
+export type TurnPhase = "refresh" | "draw" | "don" | "main" | "attack_declared" | "end" | "ended";
 
 export interface PendingResponse {
   kind: "counter_window";
@@ -113,7 +106,7 @@ export type Action = OPTCGAction;
 
 export interface DeckRecipe {
   game: "optcg" | "dtcg" | "ptcg";
-  leaderCode?: string;            // OPTCG 전용
+  leaderCode?: string; // OPTCG 전용
   cards: { card_code: string; quantity: number }[];
 }
 
@@ -125,10 +118,7 @@ export interface EngineMeta {
   startingHandSize: number;
 }
 
-export type TerminalResult =
-  | { winner: PlayerId }
-  | { draw: true }
-  | null;
+export type TerminalResult = { winner: PlayerId } | { draw: true } | null;
 
 export interface ITcgEngine<S extends GameState = GameState> {
   init(decks: [DeckRecipe, DeckRecipe], seed: string): S;

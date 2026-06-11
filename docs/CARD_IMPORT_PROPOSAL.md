@@ -10,6 +10,7 @@
 ## ⚠️ 0. 저작권 / 약관 (가장 먼저 결정 필요)
 
 digimoncard.co.kr 하단 고지:
+
 > "이 홈페이지에 게재된 모든 그림, 텍스트, 데이터의 무단 사용 및 전재를 금합니다."
 > 이미지: `SAMPLE` 워터마크 + `©Akiyoshi Hongo, Toei Animation` / 대원미디어·반다이 저작권.
 
@@ -23,11 +24,11 @@ digimoncard.co.kr 하단 고지:
 
 ## 1. 결정이 필요한 항목 (대표 보고용)
 
-| # | 항목 | 선택지 |
-|---|------|--------|
-| 1 | **이미지/저작권** | (A) 텍스트만 추출·이미지는 보류(자체/공식 라이선스) **〈권장〉** / (B) 원본 URL 핫링크+출처표기(재호스팅 X) / (C) 스토리지에 복사(리스크 감수) |
-| 2 | **디지몬 전용 스키마** | (A) `extra JSONB` 컬럼 1개 추가 **〈권장〉** / (B) 전용 nullable 컬럼(level/form/evolution_cost/sub_type) / (C) 기존 컬럼에 매핑 |
-| 3 | **진행 범위** | (A) Phase 1(단일 URL) / (B) Phase 1+2(대량) / (C) 설계만 |
+| #   | 항목                   | 선택지                                                                                                                                         |
+| --- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **이미지/저작권**      | (A) 텍스트만 추출·이미지는 보류(자체/공식 라이선스) **〈권장〉** / (B) 원본 URL 핫링크+출처표기(재호스팅 X) / (C) 스토리지에 복사(리스크 감수) |
+| 2   | **디지몬 전용 스키마** | (A) `extra JSONB` 컬럼 1개 추가 **〈권장〉** / (B) 전용 nullable 컬럼(level/form/evolution_cost/sub_type) / (C) 기존 컬럼에 매핑               |
+| 3   | **진행 범위**          | (A) Phase 1(단일 URL) / (B) Phase 1+2(대량) / (C) 설계만                                                                                       |
 
 ---
 
@@ -52,12 +53,14 @@ digimoncard.co.kr 하단 고지:
 ```
 
 ### 재사용 가능한 기존 자산
+
 - `cards` 테이블 + `card_status` enum(`pending`/`approved`/`rejected`, 기본 `approved`)
 - 검수 큐 UI: `src/routes/admin.cards.review.tsx`, 관리: `admin.cards.manage.tsx`
 - AI 게이트웨이: `src/routes/api/card-ocr.ts` (Lovable AI Gateway · `google/gemini-2.5-flash`)
 - 서버 라우트 패턴: `src/routes/api/*.ts` (`server.handlers.POST`, Bearer 인증, env: `LOVABLE_API_KEY`/`SUPABASE_URL`/`SUPABASE_PUBLISHABLE_KEY`)
 
 ### 신규로 필요한 것
+
 - 서버 라우트 1개: `src/routes/api/card-import.ts`
 - 관리자 UI 1개: "URL로 가져오기" 패널(또는 `cards.upload.tsx`에 탭 추가)
 - (스키마 확장 선택 시) 마이그레이션 1개
@@ -66,22 +69,24 @@ digimoncard.co.kr 하단 고지:
 
 ## 3. 필드 매핑 (디지몬 상세 → `cards`)
 
-| 사이트 필드 | cards 컬럼 | 비고 |
-|---|---|---|
-| 카드번호 `BT14-012` | `code` | UNIQUE 키(멱등 upsert 기준) |
-| 입수정보 `BTK-21` | `set_code` | 코드 접두(BT14)와 수록 부스터(BTK-21)가 다를 수 있음 |
-| 카드명 `그레이몬` | `name` | 한국어 |
-| 색(프레임) 적색 | `colors[]` | red/blue/... 매핑 |
-| DP `5000` | `power` | 디지몬 DP = power 재사용 |
-| 등장 코스트 `5` | `cost` | |
-| 레어도 `R` | `rarity` | |
-| 속성 `백신종` | `attribute` | |
-| 상단+하단 텍스트 | `effect` | 결합 저장 |
-| 이미지 | `image_url` | ※ 저작권 결정에 종속 |
-| game | `game='dtcg'` | 고정 |
+| 사이트 필드         | cards 컬럼    | 비고                                                 |
+| ------------------- | ------------- | ---------------------------------------------------- |
+| 카드번호 `BT14-012` | `code`        | UNIQUE 키(멱등 upsert 기준)                          |
+| 입수정보 `BTK-21`   | `set_code`    | 코드 접두(BT14)와 수록 부스터(BTK-21)가 다를 수 있음 |
+| 카드명 `그레이몬`   | `name`        | 한국어                                               |
+| 색(프레임) 적색     | `colors[]`    | red/blue/... 매핑                                    |
+| DP `5000`           | `power`       | 디지몬 DP = power 재사용                             |
+| 등장 코스트 `5`     | `cost`        |                                                      |
+| 레어도 `R`          | `rarity`      |                                                      |
+| 속성 `백신종`       | `attribute`   |                                                      |
+| 상단+하단 텍스트    | `effect`      | 결합 저장                                            |
+| 이미지              | `image_url`   | ※ 저작권 결정에 종속                                 |
+| game                | `game='dtcg'` | 고정                                                 |
 
 ### ⚠️ 스키마 갭 — 디지몬 고유 항목
+
 현재 `cards`/`card_type` enum은 **원피스(OPTCG) 기준**. 다음 디지몬 항목이 들어갈 자리가 없음:
+
 - **형태**(성숙기/완전체…), **레벨**(Lv.4), **진화 코스트**(Lv.3~2), **유형**(공룡형 등), 카드 분류(디지몬/테이머/옵션/디지타마)
 
 → `extra JSONB`(권장) 또는 전용 nullable 컬럼 추가 필요. (마이그레이션 1개)
@@ -91,7 +96,7 @@ digimoncard.co.kr 하단 고지:
 ## 4. 도전 과제 / 리스크
 
 - **상세가 AJAX 모달**일 가능성: XE/Rhymix 내부 엔드포인트(`document_srl`)를 찾아야 함.
-  *현재 개발 샌드박스는 외부 네트워크가 차단돼 실제 페이지 구조 확인 불가* → 구현 착수 시 페이지 1건 실측 선행 필요.
+  _현재 개발 샌드박스는 외부 네트워크가 차단돼 실제 페이지 구조 확인 불가_ → 구현 착수 시 페이지 1건 실측 선행 필요.
 - 사이트 HTML 변경 시 파서 깨짐 → Gemini 폴백 + 실패 로깅으로 완충.
 - 다국어: 이 사이트는 한국어만 → en/ja 카드명은 별도 소스 필요.
 - 저작권(상기 0번).

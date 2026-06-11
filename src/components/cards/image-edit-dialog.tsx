@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { RotateCcw, RotateCw, Save, X } from "lucide-react";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { rotateAndCropToWebp } from "@/lib/image-utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,7 +38,9 @@ export function ImageEditDialog({ open, imageUrl, setCode, cardCode, onClose, on
   useEffect(() => {
     if (!open || !imageUrl) return;
     let alive = true;
-    setRotation(0); setCrop(null); setBmp(null);
+    setRotation(0);
+    setCrop(null);
+    setBmp(null);
     (async () => {
       try {
         const res = await fetch(imageUrl);
@@ -42,7 +51,9 @@ export function ImageEditDialog({ open, imageUrl, setCode, cardCode, onClose, on
         toast.error("이미지를 불러올 수 없습니다");
       }
     })();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [open, imageUrl]);
 
   // 회전 시 캔버스에 그리기
@@ -102,7 +113,9 @@ export function ImageEditDialog({ open, imageUrl, setCode, cardCode, onClose, on
       const uid = auth.user?.id;
       const path = uid ? `user-uploads/${uid}/${folder}/${filename}` : `${folder}/${filename}`;
       const { error } = await supabase.storage.from("card-images").upload(path, file, {
-        contentType: "image/webp", cacheControl: "3600", upsert: false,
+        contentType: "image/webp",
+        cacheControl: "3600",
+        upsert: false,
       });
       if (error) throw error;
       const { data: pub } = supabase.storage.from("card-images").getPublicUrl(path);
@@ -117,7 +130,12 @@ export function ImageEditDialog({ open, imageUrl, setCode, cardCode, onClose, on
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) onClose();
+      }}
+    >
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>이미지 회전 · 크롭</DialogTitle>
@@ -127,17 +145,29 @@ export function ImageEditDialog({ open, imageUrl, setCode, cardCode, onClose, on
         </DialogHeader>
 
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => setRotation(r => ((r + 270) % 360) as 0 | 90 | 180 | 270)} disabled={!bmp}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setRotation((r) => ((r + 270) % 360) as 0 | 90 | 180 | 270)}
+            disabled={!bmp}
+          >
             <RotateCcw className="h-4 w-4 mr-1" />좌 90°
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setRotation(r => ((r + 90) % 360) as 0 | 90 | 180 | 270)} disabled={!bmp}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setRotation((r) => ((r + 90) % 360) as 0 | 90 | 180 | 270)}
+            disabled={!bmp}
+          >
             <RotateCw className="h-4 w-4 mr-1" />우 90°
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setCrop(null)} disabled={!crop}>
-            <X className="h-4 w-4 mr-1" />크롭 해제
+            <X className="h-4 w-4 mr-1" />
+            크롭 해제
           </Button>
           <span className="text-xs text-muted-foreground self-center ml-auto">
-            회전 {rotation}°{crop && ` · 크롭 ${(crop.w * 100).toFixed(0)}×${(crop.h * 100).toFixed(0)}%`}
+            회전 {rotation}°
+            {crop && ` · 크롭 ${(crop.w * 100).toFixed(0)}×${(crop.h * 100).toFixed(0)}%`}
           </span>
         </div>
 
@@ -173,9 +203,12 @@ export function ImageEditDialog({ open, imageUrl, setCode, cardCode, onClose, on
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose} disabled={busy}>취소</Button>
+          <Button variant="ghost" onClick={onClose} disabled={busy}>
+            취소
+          </Button>
           <Button onClick={save} disabled={busy || !bmp}>
-            <Save className="h-4 w-4 mr-1" />{busy ? "저장 중…" : "저장"}
+            <Save className="h-4 w-4 mr-1" />
+            {busy ? "저장 중…" : "저장"}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -7,7 +7,10 @@ const CLIENT_SECRET = process.env.GOOGLE_DRIVE_CLIENT_SECRET;
 const REDIRECT_URI = `${process.env.APP_URL || "http://localhost:3000"}/auth/google-drive/callback`;
 
 export async function getGoogleAuthUrl(userId: string) {
-  const scopes = ["https://www.googleapis.com/auth/drive.readonly", "https://www.googleapis.com/auth/userinfo.email"];
+  const scopes = [
+    "https://www.googleapis.com/auth/drive.readonly",
+    "https://www.googleapis.com/auth/userinfo.email",
+  ];
 
   // CSRF 방어: 서버에서 nonce 생성 및 저장. 콜백에서만 검증 가능.
   const nonce = crypto.randomUUID() + crypto.randomUUID().replace(/-/g, "");
@@ -20,21 +23,26 @@ export async function getGoogleAuthUrl(userId: string) {
 
   const state = encodeURIComponent(JSON.stringify({ nonce }));
 
-  return `https://accounts.google.com/o/oauth2/v2/auth?` +
+  return (
+    `https://accounts.google.com/o/oauth2/v2/auth?` +
     `client_id=${CLIENT_ID}&` +
     `redirect_uri=${REDIRECT_URI}&` +
     `response_type=code&` +
     `scope=${scopes.join(" ")}&` +
     `access_type=offline&` +
     `prompt=consent&` +
-    `state=${state}`;
+    `state=${state}`
+  );
 }
 
 /**
  * Nonce를 검증하고 1회성으로 소비(삭제)한 뒤, 연결된 user_id를 반환합니다.
  * 만료(15분) 또는 미존재 시 null 반환.
  */
-export async function consumeOAuthState(nonce: string, provider = "google_drive"): Promise<string | null> {
+export async function consumeOAuthState(
+  nonce: string,
+  provider = "google_drive",
+): Promise<string | null> {
   if (!nonce) return null;
   const { data, error } = await supabaseAdmin
     .from("oauth_states")

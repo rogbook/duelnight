@@ -9,8 +9,8 @@ import { nextInt } from "../rng";
 
 export interface EffectContext {
   state: GameState;
-  controller: PlayerId;          // 효과를 발동한 플레이어
-  sourceIid: string | null;      // 효과 발생원 카드 인스턴스
+  controller: PlayerId; // 효과를 발동한 플레이어
+  sourceIid: string | null; // 효과 발생원 카드 인스턴스
 }
 
 export type ActionHandler = (ctx: EffectContext, action: EffectAction) => GameState;
@@ -134,7 +134,8 @@ const handlers: Record<EffectAction["kind"], ActionHandler> = {
   // 손패 폐기
   discard_hand(ctx, action) {
     if (action.kind !== "discard_hand") return ctx.state;
-    const targetPid = action.who === "self" ? ctx.controller : (ctx.controller === "p1" ? "p2" : "p1");
+    const targetPid =
+      action.who === "self" ? ctx.controller : ctx.controller === "p1" ? "p2" : "p1";
     const player = ctx.state.players[targetPid];
     const hand = [...player.zones.hand];
     const graveyard = [...player.zones.graveyard]; // 원본 불변(순수성): 복사본에 push
@@ -174,11 +175,21 @@ const handlers: Record<EffectAction["kind"], ActionHandler> = {
     return ctx.state; // 메타 데이터 통합 후 실물 카드 필터 적용 예정
   },
 
-  look_deck(ctx, _action) { return ctx.state; },
-  look_life(ctx, _action) { return ctx.state; },
-  add_to_life(ctx, _action) { return ctx.state; },
-  modify_damage(ctx, _action) { return ctx.state; },
-  choose_one(ctx, _action) { return ctx.state; },
+  look_deck(ctx, _action) {
+    return ctx.state;
+  },
+  look_life(ctx, _action) {
+    return ctx.state;
+  },
+  add_to_life(ctx, _action) {
+    return ctx.state;
+  },
+  modify_damage(ctx, _action) {
+    return ctx.state;
+  },
+  choose_one(ctx, _action) {
+    return ctx.state;
+  },
 
   // KO 처리
   ko_target(ctx, action) {
@@ -293,7 +304,7 @@ const handlers: Record<EffectAction["kind"], ActionHandler> = {
 
     const targetIid = targets[0]; // 한 개체에만 부착
     const player = ctx.state.players[ctx.controller];
-    
+
     // 플레이어 액티브 DON!! 검증 및 차감
     if (player.donActive < action.count) return ctx.state; // DON!! 부족
 
@@ -333,7 +344,7 @@ const handlers: Record<EffectAction["kind"], ActionHandler> = {
   return_don_to_deck(ctx, action) {
     if (action.kind !== "return_don_to_deck") return ctx.state;
     const player = ctx.state.players[ctx.controller];
-    
+
     // 간이 구현: 액티브/레스트 돈!! 차감하여 DON!! 덱으로 회송
     const countToReturn = Math.min(action.count, player.donActive + player.donRested);
     let activeSub = 0;

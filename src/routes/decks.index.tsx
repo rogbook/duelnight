@@ -182,13 +182,15 @@ function DecksPage() {
                 </div>
               </div>
               {d.notes && (
-                <p className="mt-3 line-clamp-2 text-xs text-muted-foreground">
-                  {d.notes}
-                </p>
+                <p className="mt-3 line-clamp-2 text-xs text-muted-foreground">{d.notes}</p>
               )}
               <div className="mt-4 flex items-center justify-between text-[10px] text-muted-foreground border-t border-border/40 pt-3">
                 <span>{d.is_public ? t("decks.public") : t("decks.private")}</span>
-                <span>{new Date(d.updated_at).toLocaleDateString(language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US")}</span>
+                <span>
+                  {new Date(d.updated_at).toLocaleDateString(
+                    language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US",
+                  )}
+                </span>
               </div>
             </li>
           ))}
@@ -241,9 +243,7 @@ function DeckGameTabs({
         >
           {g.label}
           {g.id !== "all" && counts.get(g.id) ? (
-            <span className="ml-1 text-[10px] opacity-70">
-              {counts.get(g.id)}
-            </span>
+            <span className="ml-1 text-[10px] opacity-70">{counts.get(g.id)}</span>
           ) : null}
         </button>
       ))}

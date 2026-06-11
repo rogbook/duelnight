@@ -172,9 +172,7 @@ export function parseStorageObjectPath(
     `/storage/v1/object/sign/${bucket}/`,
     `/storage/v1/object/authenticated/${bucket}/`,
   ];
-  const prefix = prefixes.find((candidate) =>
-    parsed.pathname.startsWith(candidate),
-  );
+  const prefix = prefixes.find((candidate) => parsed.pathname.startsWith(candidate));
   if (!prefix) return null;
 
   try {
@@ -201,11 +199,7 @@ export function parseArgs(args: string[]): CliOptions {
     concurrency: DEFAULT_CONCURRENCY,
     maxBytes: DEFAULT_MAX_BYTES,
     limit: null,
-    reportPath: path.join(
-      "backups",
-      "image-migration",
-      `report-${timestamp}.json`,
-    ),
+    reportPath: path.join("backups", "image-migration", `report-${timestamp}.json`),
     help: false,
   };
 
@@ -293,10 +287,7 @@ DuelNight card-images 증분 이관
 `);
 }
 
-function metadataString(
-  metadata: JsonObject | null,
-  ...keys: string[]
-): string | null {
+function metadataString(metadata: JsonObject | null, ...keys: string[]): string | null {
   for (const key of keys) {
     const value = metadata?.[key];
     if (typeof value === "string" && value) return value;
@@ -318,10 +309,7 @@ function isFolder(item: ListedObject): boolean {
   return item.id === null && item.metadata === null;
 }
 
-async function listFolder(
-  client: SupabaseClient,
-  folder: string,
-): Promise<ListedObject[]> {
+async function listFolder(client: SupabaseClient, folder: string): Promise<ListedObject[]> {
   const results: ListedObject[] = [];
 
   for (let offset = 0; ; offset += PAGE_SIZE) {
@@ -331,9 +319,7 @@ async function listFolder(
       sortBy: { column: "name", order: "asc" },
     });
     if (error) {
-      throw new Error(
-        `Storage 목록 조회 실패 (${folder || "/"}): ${error.message}`,
-      );
+      throw new Error(`Storage 목록 조회 실패 (${folder || "/"}): ${error.message}`);
     }
 
     const page = (data ?? []) as ListedObject[];
@@ -344,17 +330,12 @@ async function listFolder(
   return results;
 }
 
-async function listObjectsRecursive(
-  client: SupabaseClient,
-  folder = "",
-): Promise<StorageObject[]> {
+async function listObjectsRecursive(client: SupabaseClient, folder = ""): Promise<StorageObject[]> {
   const objects: StorageObject[] = [];
   const entries = await listFolder(client, folder);
 
   for (const entry of entries) {
-    const objectPath = normalizeStoragePath(
-      folder ? `${folder}/${entry.name}` : entry.name,
-    );
+    const objectPath = normalizeStoragePath(folder ? `${folder}/${entry.name}` : entry.name);
     if (isFolder(entry)) {
       objects.push(...(await listObjectsRecursive(client, objectPath)));
       continue;
@@ -363,12 +344,7 @@ async function listObjectsRecursive(
     objects.push({
       path: objectPath,
       size: metadataSize(entry.metadata),
-      contentType: metadataString(
-        entry.metadata,
-        "mimetype",
-        "contentType",
-        "content-type",
-      ),
+      contentType: metadataString(entry.metadata, "mimetype", "contentType", "content-type"),
     });
   }
 
@@ -392,14 +368,10 @@ function assertValidImage(
 ): string {
   const normalizedType = normalizeContentType(contentType);
   if (!normalizedType || !ALLOWED_IMAGE_TYPES.has(normalizedType)) {
-    throw new Error(
-      `${objectPath}: 허용되지 않은 MIME type (${contentType ?? "없음"})`,
-    );
+    throw new Error(`${objectPath}: 허용되지 않은 MIME type (${contentType ?? "없음"})`);
   }
   if (byteLength <= 0 || byteLength > maxBytes) {
-    throw new Error(
-      `${objectPath}: 파일 크기 ${byteLength} bytes가 허용 범위를 벗어났습니다.`,
-    );
+    throw new Error(`${objectPath}: 파일 크기 ${byteLength} bytes가 허용 범위를 벗어났습니다.`);
   }
   return normalizedType;
 }
@@ -432,9 +404,7 @@ async function verifyTargetObject(
 ): Promise<string> {
   const downloaded = await downloadObject(target, object, maxBytes);
   if (downloaded.hash !== sourceHash) {
-    throw new Error(
-      `SHA-256 불일치 (source=${sourceHash}, target=${downloaded.hash})`,
-    );
+    throw new Error(`SHA-256 불일치 (source=${sourceHash}, target=${downloaded.hash})`);
   }
   return downloaded.hash;
 }
@@ -455,12 +425,7 @@ async function mapConcurrent<T, R>(
     }
   }
 
-  await Promise.all(
-    Array.from(
-      { length: Math.min(concurrency, values.length) },
-      runWorker,
-    ),
-  );
+  await Promise.all(Array.from({ length: Math.min(concurrency, values.length) }, runWorker));
   return results;
 }
 
@@ -499,11 +464,7 @@ async function processObject(
       };
     }
 
-    const downloaded = await downloadObject(
-      source,
-      sourceObject,
-      options.maxBytes,
-    );
+    const downloaded = await downloadObject(source, sourceObject, options.maxBytes);
 
     if (sameSize && shouldVerifyExisting && targetObject) {
       const targetHash = await verifyTargetObject(
@@ -530,14 +491,12 @@ async function processObject(
       };
     }
 
-    const { error } = await target.storage.from(BUCKET).upload(
-      sourceObject.path,
-      Buffer.from(downloaded.buffer),
-      {
+    const { error } = await target.storage
+      .from(BUCKET)
+      .upload(sourceObject.path, Buffer.from(downloaded.buffer), {
         contentType: downloaded.contentType,
         upsert: targetObject !== undefined,
-      },
-    );
+      });
     if (error) {
       if (isAlreadyExistsError(error)) {
         const targetHash = await verifyTargetObject(
@@ -586,10 +545,7 @@ async function fetchImageRows(target: SupabaseClient): Promise<ImageRow[]> {
 
   for (const table of ["cards", "card_illustrations"] as const) {
     for (let from = 0; ; from += DB_PAGE_SIZE) {
-      const select =
-        table === "cards"
-          ? "id, code, image_url"
-          : "id, card_code, image_url";
+      const select = table === "cards" ? "id, code, image_url" : "id, card_code, image_url";
       const { data, error } = await target
         .from(table)
         .select(select)
@@ -597,18 +553,13 @@ async function fetchImageRows(target: SupabaseClient): Promise<ImageRow[]> {
         .range(from, from + DB_PAGE_SIZE - 1);
       if (error) throw new Error(`${table} 조회 실패: ${error.message}`);
 
-      const page = (data ?? []) as unknown as Array<
-        Record<string, string | null>
-      >;
+      const page = (data ?? []) as unknown as Array<Record<string, string | null>>;
       for (const row of page) {
         if (!row.image_url || !row.id) continue;
         rows.push({
           id: row.id,
           image_url: row.image_url,
-          label:
-            table === "cards"
-              ? (row.code ?? row.id)
-              : (row.card_code ?? row.id),
+          label: table === "cards" ? (row.code ?? row.id) : (row.card_code ?? row.id),
           table,
         });
       }
@@ -628,10 +579,7 @@ async function updateDatabaseUrls(
   const results: DatabaseUpdateResult[] = [];
 
   for (const row of rows) {
-    const objectPath = parseStorageObjectPath(
-      row.image_url,
-      sourceProjectRef,
-    );
+    const objectPath = parseStorageObjectPath(row.image_url, sourceProjectRef);
     if (!objectPath || !verifiedPaths.has(objectPath)) {
       results.push({
         table: row.table,
@@ -642,9 +590,7 @@ async function updateDatabaseUrls(
       continue;
     }
 
-    const { data: publicUrl } = target.storage
-      .from(BUCKET)
-      .getPublicUrl(objectPath);
+    const { data: publicUrl } = target.storage.from(BUCKET).getPublicUrl(objectPath);
     const { data, error } = await target
       .from(row.table)
       .update({ image_url: publicUrl.publicUrl })
@@ -681,32 +627,16 @@ async function updateDatabaseUrls(
   return results;
 }
 
-function reportSummary(report: MigrationReport): NonNullable<
-  MigrationReport["summary"]
-> {
+function reportSummary(report: MigrationReport): NonNullable<MigrationReport["summary"]> {
   return {
-    copied: report.copyResults.filter((item) => item.status === "copied")
-      .length,
-    overwritten: report.copyResults.filter(
-      (item) => item.status === "overwritten",
-    ).length,
-    planned: report.copyResults.filter((item) =>
-      item.status.startsWith("planned-"),
-    ).length,
-    skipped: report.copyResults.filter(
-      (item) => item.status === "skipped-same-size",
-    ).length,
-    verified: report.copyResults.filter(
-      (item) => item.status === "verified-existing",
-    ).length,
-    failed: report.copyResults.filter((item) => item.status === "failed")
-      .length,
-    databaseUpdated: report.databaseUpdates.filter(
-      (item) => item.status === "updated",
-    ).length,
-    databaseFailed: report.databaseUpdates.filter(
-      (item) => item.status === "failed",
-    ).length,
+    copied: report.copyResults.filter((item) => item.status === "copied").length,
+    overwritten: report.copyResults.filter((item) => item.status === "overwritten").length,
+    planned: report.copyResults.filter((item) => item.status.startsWith("planned-")).length,
+    skipped: report.copyResults.filter((item) => item.status === "skipped-same-size").length,
+    verified: report.copyResults.filter((item) => item.status === "verified-existing").length,
+    failed: report.copyResults.filter((item) => item.status === "failed").length,
+    databaseUpdated: report.databaseUpdates.filter((item) => item.status === "updated").length,
+    databaseFailed: report.databaseUpdates.filter((item) => item.status === "failed").length,
   };
 }
 
@@ -747,8 +677,7 @@ async function run(): Promise<void> {
     return;
   }
 
-  const sourceUrl =
-    process.env.SOURCE_SUPABASE_URL?.trim() || DEFAULT_SOURCE_URL;
+  const sourceUrl = process.env.SOURCE_SUPABASE_URL?.trim() || DEFAULT_SOURCE_URL;
   const sourceKey = requireEnv("SOURCE_SUPABASE_PUBLISHABLE_KEY");
   const targetUrl = requireEnv("SUPABASE_URL");
   const targetKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
@@ -793,22 +722,16 @@ async function run(): Promise<void> {
   };
 
   try {
-    console.log(
-      `[${report.mode}] ${sourceProjectRef}/${BUCKET} -> ${targetProjectRef}/${BUCKET}`,
-    );
+    console.log(`[${report.mode}] ${sourceProjectRef}/${BUCKET} -> ${targetProjectRef}/${BUCKET}`);
     await assertTargetBucketExists(target);
 
     console.log("원본 Storage 목록을 재귀 조회합니다...");
     const allSourceObjects = await listObjectsRecursive(source);
     const sourceObjects =
-      options.limit === null
-        ? allSourceObjects
-        : allSourceObjects.slice(0, options.limit);
+      options.limit === null ? allSourceObjects : allSourceObjects.slice(0, options.limit);
     console.log("대상 Storage 목록을 재귀 조회합니다...");
     const targetObjects = await listObjectsRecursive(target);
-    const targetMap = new Map(
-      targetObjects.map((object) => [object.path, object]),
-    );
+    const targetMap = new Map(targetObjects.map((object) => [object.path, object]));
 
     report.sourceObjectCount = allSourceObjects.length;
     report.targetObjectCount = targetObjects.length;
@@ -827,20 +750,14 @@ async function run(): Promise<void> {
           targetMap.get(object.path),
           options,
         );
-        console.log(
-          `[${index + 1}/${sourceObjects.length}] ${result.status}: ${result.path}`,
-        );
+        console.log(`[${index + 1}/${sourceObjects.length}] ${result.status}: ${result.path}`);
         return result;
       },
     );
 
-    const copyFailures = report.copyResults.filter(
-      (result) => result.status === "failed",
-    );
+    const copyFailures = report.copyResults.filter((result) => result.status === "failed");
     if (copyFailures.length > 0) {
-      throw new Error(
-        `${copyFailures.length}개 파일 처리 실패. DB URL은 변경하지 않았습니다.`,
-      );
+      throw new Error(`${copyFailures.length}개 파일 처리 실패. DB URL은 변경하지 않았습니다.`);
     }
 
     if (options.execute && !options.skipDatabaseUpdate) {
@@ -850,11 +767,7 @@ async function run(): Promise<void> {
           .map((result) => result.path),
       );
       console.log("대상 DB의 이전 프로젝트 image_url을 재작성합니다...");
-      report.databaseUpdates = await updateDatabaseUrls(
-        target,
-        sourceProjectRef,
-        verifiedPaths,
-      );
+      report.databaseUpdates = await updateDatabaseUrls(target, sourceProjectRef, verifiedPaths);
       const databaseFailures = report.databaseUpdates.filter(
         (result) => result.status === "failed",
       );
@@ -878,9 +791,7 @@ async function run(): Promise<void> {
 
 if (import.meta.main) {
   run().catch((error) => {
-    console.error(
-      `이미지 이관 실패: ${error instanceof Error ? error.message : String(error)}`,
-    );
+    console.error(`이미지 이관 실패: ${error instanceof Error ? error.message : String(error)}`);
     process.exitCode = 1;
   });
 }

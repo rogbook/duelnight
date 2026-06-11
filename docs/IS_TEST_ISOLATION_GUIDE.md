@@ -1,5 +1,5 @@
 # DuelNight 배포 환경별 데이터 격리 가이드 (`is_test`)
-   
+
 > **최종 수정**: 2026-05-22  
 > **적용 범위**: Lovable (스키마 반영) + Antigravity (쿼리 필터 적용) + Claude (검증)
 
@@ -19,8 +19,8 @@
                         └─── [ Lovable Preview (QA) ] ───> SELECT * FROM table WHERE is_test = true
 ```
 
-* **원칙 1**: 데이터 삽입(INSERT) 시 현재 접속 도메인이 Preview/로컬 환경이면 `is_test = true`, 정식 운영 도메인이면 `is_test = false`를 부여합니다.
-* **원칙 2**: 데이터 조회(SELECT) 시 환경에 맞게 `is_test` 필터를 강제 적용하여 상호 환경의 데이터가 섞이지 않도록 차단합니다.
+- **원칙 1**: 데이터 삽입(INSERT) 시 현재 접속 도메인이 Preview/로컬 환경이면 `is_test = true`, 정식 운영 도메인이면 `is_test = false`를 부여합니다.
+- **원칙 2**: 데이터 조회(SELECT) 시 환경에 맞게 `is_test` 필터를 강제 적용하여 상호 환경의 데이터가 섞이지 않도록 차단합니다.
 
 ---
 
@@ -33,20 +33,20 @@
 
 ```sql
 -- 1. decks 테이블에 is_test 컬럼 추가 및 기본값 설정
-ALTER TABLE public.decks 
+ALTER TABLE public.decks
 ADD COLUMN is_test BOOLEAN NOT NULL DEFAULT false;
 
 -- 2. matches 테이블에 is_test 컬럼 추가 및 기본값 설정
-ALTER TABLE public.matches 
+ALTER TABLE public.matches
 ADD COLUMN is_test BOOLEAN NOT NULL DEFAULT false;
 
 -- 3. lfg_posts 테이블에 is_test 컬럼 추가 및 기본값 설정
-ALTER TABLE public.lfg_posts 
+ALTER TABLE public.lfg_posts
 ADD COLUMN is_test BOOLEAN NOT NULL DEFAULT false;
 
 -- 4. announcements 테이블에 is_test 컬럼 추가 및 기본값 설정
 -- (Preview 단계에서 기획자가 미리 테스트 공지를 올려볼 수 있도록 격리)
-ALTER TABLE public.announcements 
+ALTER TABLE public.announcements
 ADD COLUMN is_test BOOLEAN NOT NULL DEFAULT false;
 
 -- 5. RLS 정책 보완 (필요한 경우)
@@ -76,7 +76,7 @@ export function isTestEnvironment(): boolean {
   }
 
   const hostname = window.location.hostname;
-  
+
   // 로컬 개발 환경 및 Lovable Preview 서브도메인 검사
   return (
     hostname === "localhost" ||
@@ -115,15 +115,13 @@ import { isTestEnvironment } from "@/utils/env";
 
 const handleCreateDeck = async (deckData: any) => {
   const isTest = isTestEnvironment();
-  
-  const { data, error } = await supabase
-    .from("decks")
-    .insert([
-      {
-        ...deckData,
-        is_test: isTest // 호스트 환경에 맞게 자동으로 true/false 분기 삽입
-      }
-    ]);
+
+  const { data, error } = await supabase.from("decks").insert([
+    {
+      ...deckData,
+      is_test: isTest, // 호스트 환경에 맞게 자동으로 true/false 분기 삽입
+    },
+  ]);
 };
 ```
 

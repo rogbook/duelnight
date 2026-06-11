@@ -12,12 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Database } from "@/integrations/supabase/types";
 import { useGames } from "@/hooks/use-games";
@@ -90,18 +85,21 @@ function LeaderboardPage() {
     <div className="mx-auto w-full max-w-4xl px-6 py-8">
       <PageHeader title={t("leaderboard.title")} description={t("leaderboard.desc")}>
         <Select value={game} onValueChange={(v) => setGame(v as Game)}>
-          <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[120px]">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             {games.map((g) => (
-              <SelectItem key={g.code} value={g.code}>{labelOf(g.code)}</SelectItem>
+              <SelectItem key={g.code} value={g.code}>
+                {labelOf(g.code)}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <Select
-          value={String(minTotal)}
-          onValueChange={(v) => setMinTotal(Number(v))}
-        >
-          <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
+        <Select value={String(minTotal)} onValueChange={(v) => setMinTotal(Number(v))}>
+          <SelectTrigger className="w-[120px]">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="3">{t("leaderboard.minGames3")}</SelectItem>
             <SelectItem value="5">{t("leaderboard.minGames5")}</SelectItem>
@@ -145,7 +143,11 @@ function LeaderboardPage() {
                     )}
                   </p>
                   <p className="text-[11px] text-muted-foreground">
-                    {t("leaderboard.recordLine", { total: r.total, wins: r.wins, losses: r.losses })}
+                    {t("leaderboard.recordLine", {
+                      total: r.total,
+                      wins: r.wins,
+                      losses: r.losses,
+                    })}
                     {r.draws ? t("leaderboard.drawSuffix", { draws: r.draws }) : ""}
                     {t("leaderboard.winRateSuffix", { rate: Number(r.win_rate).toFixed(1) })}
                   </p>
@@ -237,7 +239,8 @@ function UserMatchesDialog({
                 <div>
                   <p>{user.display_name || user.username || t("leaderboard.anonymous")}</p>
                   <p className="text-xs font-normal text-muted-foreground">
-                    {labelOf(game)} · ELO {user.rating} · {t("leaderboard.totalGames", { total: user.total })}
+                    {labelOf(game)} · ELO {user.rating} ·{" "}
+                    {t("leaderboard.totalGames", { total: user.total })}
                   </p>
                 </div>
               </DialogTitle>

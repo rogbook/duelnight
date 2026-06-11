@@ -10,10 +10,8 @@ import {
 
 const SOURCE_REF = "tgybttphkmesgfbtgftt";
 const TARGET_REF = "nrtdhkjeziknmafauypv";
-const sourceUrl = (p: string) =>
-  `https://${SOURCE_REF}.supabase.co/storage/v1/${p}`;
-const targetUrl = (p: string) =>
-  `https://${TARGET_REF}.supabase.co/storage/v1/${p}`;
+const sourceUrl = (p: string) => `https://${SOURCE_REF}.supabase.co/storage/v1/${p}`;
+const targetUrl = (p: string) => `https://${TARGET_REF}.supabase.co/storage/v1/${p}`;
 
 describe("rewriteStorageUrls", () => {
   test("원본 프로젝트 Storage URL을 대상 URL로 치환한다", () => {
@@ -29,9 +27,7 @@ describe("rewriteStorageUrls", () => {
   test("다른 프로젝트 URL과 일반 문자열은 건드리지 않는다", () => {
     const other = `https://example.supabase.co/storage/v1/object/x.webp`;
     expect(rewriteStorageUrls(other, SOURCE_REF, TARGET_REF)).toBe(other);
-    expect(rewriteStorageUrls("OP12-001", SOURCE_REF, TARGET_REF)).toBe(
-      "OP12-001",
-    );
+    expect(rewriteStorageUrls("OP12-001", SOURCE_REF, TARGET_REF)).toBe("OP12-001");
   });
 
   test("중첩 객체·배열(JSONB) 내부의 URL도 치환한다", () => {
@@ -45,9 +41,7 @@ describe("rewriteStorageUrls", () => {
       },
     };
     const rewritten = rewriteStorageUrls(row, SOURCE_REF, TARGET_REF);
-    expect(rewritten.extra.gallery[0]).toBe(
-      targetUrl("object/public/card-images/a.webp"),
-    );
+    expect(rewritten.extra.gallery[0]).toBe(targetUrl("object/public/card-images/a.webp"));
     expect(rewritten.extra.gallery[1]).toBe("plain");
     expect(rewritten.cost).toBe(3);
     expect(rewritten.none).toBeNull();
@@ -73,21 +67,13 @@ describe("splitByAuthUsers", () => {
       { id: "1", user_id: "known" },
       { id: "2", user_id: "unknown" },
     ];
-    const { ready, deferred } = splitByAuthUsers(
-      rows,
-      config,
-      new Set(["known"]),
-    );
+    const { ready, deferred } = splitByAuthUsers(rows, config, new Set(["known"]));
     expect(ready.map((row) => row.id)).toEqual(["1"]);
     expect(deferred.map((row) => row.id)).toEqual(["2"]);
   });
 
   test("auth 컬럼이 null이면 보류하지 않는다", () => {
-    const { ready, deferred } = splitByAuthUsers(
-      [{ id: "1", user_id: null }],
-      config,
-      new Set(),
-    );
+    const { ready, deferred } = splitByAuthUsers([{ id: "1", user_id: null }], config, new Set());
     expect(ready).toHaveLength(1);
     expect(deferred).toHaveLength(0);
   });
@@ -113,13 +99,8 @@ describe("parseArgs", () => {
   });
 
   test("--tables는 알려진 테이블만 허용한다", () => {
-    expect(parseArgs(["--tables", "cards,games"]).tables).toEqual([
-      "cards",
-      "games",
-    ]);
-    expect(() => parseArgs(["--tables", "cards,nope"])).toThrow(
-      "알 수 없는 테이블",
-    );
+    expect(parseArgs(["--tables", "cards,games"]).tables).toEqual(["cards", "games"]);
+    expect(() => parseArgs(["--tables", "cards,nope"])).toThrow("알 수 없는 테이블");
   });
 
   test("알 수 없는 옵션은 거부한다", () => {

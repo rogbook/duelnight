@@ -7,10 +7,10 @@
 
 ## 환경 구조
 
-| 환경 | URL | 갱신 방식 | 접근 권한 |
-|------|-----|----------|----------|
-| **Preview (테스트)** | `id-preview--91f6cdde-…lovable.app` | 코드 변경 시 자동 빌드 | 워크스페이스 멤버 (관리자 전용) |
-| **Published (실운영)** | `duelnight.app` | Lovable **Publish** 버튼 클릭 시에만 | 누구나 |
+| 환경                   | URL                                 | 갱신 방식                            | 접근 권한                       |
+| ---------------------- | ----------------------------------- | ------------------------------------ | ------------------------------- |
+| **Preview (테스트)**   | `id-preview--91f6cdde-…lovable.app` | 코드 변경 시 자동 빌드               | 워크스페이스 멤버 (관리자 전용) |
+| **Published (실운영)** | `duelnight.app`                     | Lovable **Publish** 버튼 클릭 시에만 | 누구나                          |
 
 ⚠ **백엔드(Cloud DB / Auth / Storage)는 두 환경이 공유합니다.**
 → Preview에서 한 마이그레이션·삭제 작업은 실 데이터에 즉시 반영됩니다.
@@ -35,6 +35,7 @@
 ```
 
 ### 단계별 책임자
+
 - **[1]~[2]** 개발자
 - **[3]** 운영 관리자 (관리자 권한 보유 멤버)
 - **[4]** 릴리스 매니저 (지정된 관리자 1인)
@@ -45,6 +46,7 @@
 ## 운영 규칙
 
 ### Publish 전 필수 체크
+
 1. `docs/QA_CHECKLIST.md` 의 모든 항목 통과
 2. 콘솔/네트워크 에러 0건
 3. DB 마이그레이션이 포함된 변경이면 → **마이그레이션 사전 검증**(아래) 완료
@@ -55,6 +57,7 @@
 8. **로그인 회귀 점검** → 로그인 후 `/stores` 이동·새로고침 시 로그인 상태가 풀리지 않는지 확인 (2026-06-02 핫픽스 회귀 방지)
 
 ### 마이그레이션 사전 검증
+
 1. Antigravity에서 로컬 Supabase 인스턴스 기동
 2. 최신 운영 스냅샷(`/mnt/documents/backups/duelnight-YYYY-MM-DD.sql`) import
 3. 새 마이그레이션 SQL 실행 → 오류·데이터 손상 점검
@@ -62,13 +65,16 @@
 5. 적용 직후 Preview에서 기능 동작 재확인
 
 ### 정기 백업
+
 - **주기**: 매주 1회 (월요일 오전 권장)
 - **방법**: Cloud → Database → Tables → Export, 또는 Antigravity에서 `pg_dump`
 - **보관 위치**: `/mnt/documents/backups/duelnight-YYYY-MM-DD.sql`
 - **보존**: 최소 4주
 
 ### PII 마스킹
+
 스냅샷을 외부 관리자/개발자에게 공유할 때는 반드시 `scripts/anonymize-snapshot.ts`(추후 작성 예정)로 다음 컬럼을 마스킹:
+
 - `profiles.username`, `profiles.display_name`
 - `auth.users.email`
 - `payments.imp_uid`, `payments.receipt_url`
@@ -78,11 +84,13 @@
 ## 롤백
 
 ### 프론트엔드 롤백
+
 1. Lovable → 우상단 버전 히스토리
 2. 정상 동작 시점 선택 → "Restore"
 3. 곧바로 **Publish** 클릭
 
 ### 백엔드 롤백
+
 - 마이그레이션은 항상 **reversible**하게 작성 (UP/DOWN SQL 둘 다 PR에 첨부)
 - 데이터 손상 시 직전 백업 스냅샷으로 복구
 

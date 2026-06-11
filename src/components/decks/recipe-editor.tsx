@@ -208,7 +208,9 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
     if ((deck as any).is_simulator && user) {
       const ownedQty = owned.get(card.code) ?? 0;
       if (getQty(card.code) >= ownedQty) {
-        toast.error(`보유 수량(${ownedQty}장)을 초과하여 추가할 수 없습니다. 팩 시뮬레이터에서 팩을 더 개봉해 보세요.`);
+        toast.error(
+          `보유 수량(${ownedQty}장)을 초과하여 추가할 수 없습니다. 팩 시뮬레이터에서 팩을 더 개봉해 보세요.`,
+        );
         return;
       }
     }
@@ -345,7 +347,6 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
                 </button>
               ));
             })}
-
           </div>
         )}
 
@@ -518,7 +519,10 @@ export function RecipeEditor({ deck }: { deck: Deck }) {
               onChange={(e) => setFilterOwnedOnly(e.target.checked)}
               className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
             />
-            <Label htmlFor="filter-owned-only" className="text-[11px] font-medium text-muted-foreground whitespace-nowrap cursor-pointer select-none">
+            <Label
+              htmlFor="filter-owned-only"
+              className="text-[11px] font-medium text-muted-foreground whitespace-nowrap cursor-pointer select-none"
+            >
               {t("decks.ownedOnly") || "보유 카드만"}
             </Label>
           </div>

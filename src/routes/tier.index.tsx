@@ -40,7 +40,11 @@ const TIER_COLOR: Record<(typeof TIERS)[number], string> = {
 type Placements = Record<(typeof TIERS)[number], string[]>;
 
 const emptyPlacements = (): Placements => ({
-  S: [], A: [], B: [], C: [], D: [],
+  S: [],
+  A: [],
+  B: [],
+  C: [],
+  D: [],
 });
 
 export const Route = createFileRoute("/tier/")({
@@ -147,10 +151,7 @@ function TierPage() {
     },
   });
 
-  const placedCodes = useMemo(
-    () => new Set(TIERS.flatMap((t) => placements[t])),
-    [placements],
-  );
+  const placedCodes = useMemo(() => new Set(TIERS.flatMap((t) => placements[t])), [placements]);
   const pool = filteredLeaders.filter((c) => !placedCodes.has(c.code));
   const cardByCode = useMemo(() => {
     const m = new Map<string, Card>();
@@ -204,14 +205,12 @@ function TierPage() {
       user_id: user.id,
       title: title.trim(),
       is_public: isPublic,
-      placements: placements as unknown as Database["public"]["Tables"]["tier_lists"]["Insert"]["placements"],
+      placements:
+        placements as unknown as Database["public"]["Tables"]["tier_lists"]["Insert"]["placements"],
       game,
     };
     if (editingId) {
-      const { error } = await supabase
-        .from("tier_lists")
-        .update(payload)
-        .eq("id", editingId);
+      const { error } = await supabase.from("tier_lists").update(payload).eq("id", editingId);
       if (error) return toast.error(error.message);
       toast.success(t("tier.saveSuccess"));
     } else {
@@ -345,9 +344,7 @@ function TierPage() {
       <section className="mt-8">
         <h2 className="text-sm font-semibold">{t("tier.leaderPool", { count: pool.length })}</h2>
         {leaders.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">
-            {t("tier.noLeaders")}
-          </p>
+          <p className="mt-2 text-sm text-muted-foreground">{t("tier.noLeaders")}</p>
         ) : (
           <div
             className="mt-3 min-h-32 rounded-lg border border-dashed border-border bg-muted/20 p-3"
@@ -557,9 +554,7 @@ function CardChip({
           </div>
         )}
       </div>
-      <p className="truncate px-1 py-0.5 text-[9px] text-muted-foreground">
-        {card.code}
-      </p>
+      <p className="truncate px-1 py-0.5 text-[9px] text-muted-foreground">{card.code}</p>
     </li>
   );
 }

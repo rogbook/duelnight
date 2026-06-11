@@ -32,7 +32,6 @@ type CardRow = Tables<"cards">;
 type DeckCard = Tables<"deck_cards">;
 type MatchRow = Tables<"matches">;
 
-
 export const Route = createFileRoute("/decks/$id")({
   head: () => {
     let locale = "ko";
@@ -203,7 +202,6 @@ function DeckDetailPage() {
 
   // ===== 여기서부터 조건부 return =====
   if (deckLoading || authLoading) {
-
     return (
       <div className="mx-auto max-w-3xl px-6 py-16 text-center text-sm text-muted-foreground">
         {t("decks.loading")}
@@ -231,9 +229,7 @@ function DeckDetailPage() {
       <div className="mx-auto max-w-3xl px-6 py-16 text-center">
         <Layers className="mx-auto h-12 w-12 text-muted-foreground opacity-20" />
         <h1 className="mt-4 text-xl font-bold">{t("decks.notFound")}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {t("decks.notFoundDesc")}
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">{t("decks.notFoundDesc")}</p>
         <Link
           to="/decks"
           className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
@@ -276,7 +272,12 @@ function DeckDetailPage() {
       const { data: newDeck, error: deckErr } = await supabase
         .from("decks")
         .insert({
-          name: language === "ko" ? `복사본: ${deck.name}` : language === "ja" ? `コピー: ${deck.name}` : `Copy of ${deck.name}`,
+          name:
+            language === "ko"
+              ? `복사본: ${deck.name}`
+              : language === "ja"
+                ? `コピー: ${deck.name}`
+                : `Copy of ${deck.name}`,
           game: deck.game,
           leader: deck.leader,
           archetype: deck.archetype,
@@ -317,7 +318,13 @@ function DeckDetailPage() {
           className="fixed inset-0 z-[100] flex items-center justify-center bg-background/90 p-4 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
-          aria-label={language === "ko" ? `${zoomCard.name} 확대 이미지` : language === "ja" ? `${zoomCard.name}拡大画像` : `${zoomCard.name} Zoomed Image`}
+          aria-label={
+            language === "ko"
+              ? `${zoomCard.name} 확대 이미지`
+              : language === "ja"
+                ? `${zoomCard.name}拡大画像`
+                : `${zoomCard.name} Zoomed Image`
+          }
           onClick={() => setZoomCard(null)}
         >
           <button
@@ -330,7 +337,13 @@ function DeckDetailPage() {
           </button>
           <img
             src={zoomCard.url}
-            alt={language === "ko" ? `${zoomCard.name} 확대` : language === "ja" ? `${zoomCard.name}拡大` : `${zoomCard.name} Zoomed`}
+            alt={
+              language === "ko"
+                ? `${zoomCard.name} 확대`
+                : language === "ja"
+                  ? `${zoomCard.name}拡大`
+                  : `${zoomCard.name} Zoomed`
+            }
             className="max-h-[88vh] max-w-[92vw] rounded-lg border border-border bg-card object-contain shadow-lg"
             onClick={(event) => event.stopPropagation()}
           />
@@ -445,7 +458,11 @@ function DeckDetailPage() {
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Calendar className="h-3 w-3" />
-                  <span>{new Date(deck.updated_at).toLocaleDateString(language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US")}</span>
+                  <span>
+                    {new Date(deck.updated_at).toLocaleDateString(
+                      language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US",
+                    )}
+                  </span>
                 </div>
               </div>
               <span className="font-bold tracking-tighter">
@@ -477,7 +494,8 @@ function DeckDetailPage() {
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            <List className="h-4 w-4" /> {t("decks.tabRecipe").replace("{count}", String(deckCards.length))}
+            <List className="h-4 w-4" />{" "}
+            {t("decks.tabRecipe").replace("{count}", String(deckCards.length))}
           </button>
           {isOwner && (
             <button
@@ -488,13 +506,13 @@ function DeckDetailPage() {
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              <Swords className="h-4 w-4" /> {t("decks.tabMatches").replace("{count}", String(deckMatches.length))}
+              <Swords className="h-4 w-4" />{" "}
+              {t("decks.tabMatches").replace("{count}", String(deckMatches.length))}
             </button>
           )}
         </div>
 
         {tab === "info" ? (
-
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
@@ -508,7 +526,9 @@ function DeckDetailPage() {
                   </div>
                   <div className="flex justify-between items-center py-2 border-b border-border/50">
                     <span className="text-xs text-muted-foreground">{t("decks.archetype")}</span>
-                    <span className="text-sm font-bold">{deck.archetype || t("decks.noArchetypeInfo")}</span>
+                    <span className="text-sm font-bold">
+                      {deck.archetype || t("decks.noArchetypeInfo")}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -530,7 +550,8 @@ function DeckDetailPage() {
             {deckCards.length > 0 && (
               <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
                 <h3 className="text-sm font-black mb-4 flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-primary" /> {t("decks.cardsInDeck").replace("{count}", String(totalCards))}
+                  <Layers className="h-4 w-4 text-primary" />{" "}
+                  {t("decks.cardsInDeck").replace("{count}", String(totalCards))}
                 </h3>
                 <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
                   {deckCards.flatMap((dc) => {
@@ -549,7 +570,13 @@ function DeckDetailPage() {
                             ? t("decks.notRegisteredDbTooltip").replace("{code}", dc.card_code)
                             : `${card?.name ?? dc.card_code} (${i + 1}/${dc.quantity})`
                         }
-                        aria-label={language === "ko" ? `${card?.name ?? dc.card_code} 확대 보기` : language === "ja" ? `${card?.name ?? dc.card_code}拡大表示` : `Zoom ${card?.name ?? dc.card_code}`}
+                        aria-label={
+                          language === "ko"
+                            ? `${card?.name ?? dc.card_code} 확대 보기`
+                            : language === "ja"
+                              ? `${card?.name ?? dc.card_code}拡大表示`
+                              : `Zoom ${card?.name ?? dc.card_code}`
+                        }
                       >
                         {card?.image_url ? (
                           <img
@@ -576,7 +603,6 @@ function DeckDetailPage() {
             )}
           </div>
         ) : tab === "recipe" ? (
-
           <div className="space-y-6">
             {isOwner && (
               <div className="mb-4">
@@ -594,7 +620,13 @@ function DeckDetailPage() {
                       type="button"
                       onClick={() => openZoom(card?.image_url, card?.name ?? dc.card_code)}
                       className="group relative aspect-[2/3] overflow-hidden rounded-lg border border-border bg-muted text-left shadow-sm transition-all hover:shadow-md hover:ring-2 hover:ring-primary/40"
-                      aria-label={language === "ko" ? `${card?.name ?? dc.card_code} 확대 보기` : language === "ja" ? `${card?.name ?? dc.card_code}拡大表示` : `Zoom ${card?.name ?? dc.card_code}`}
+                      aria-label={
+                        language === "ko"
+                          ? `${card?.name ?? dc.card_code} 확대 보기`
+                          : language === "ja"
+                            ? `${card?.name ?? dc.card_code}拡大表示`
+                            : `Zoom ${card?.name ?? dc.card_code}`
+                      }
                     >
                       {card?.image_url ? (
                         <img
@@ -631,7 +663,11 @@ function DeckDetailPage() {
               <div className="py-20 text-center rounded-2xl border-2 border-dashed border-border bg-muted/10">
                 <Layers className="mx-auto h-12 w-12 text-muted-foreground opacity-20" />
                 <p className="mt-4 text-sm text-muted-foreground">
-                  {language === "ko" ? "등록된 카드가 아직 없습니다." : language === "ja" ? "登録されたカードがまだありません。" : "No cards registered yet."}
+                  {language === "ko"
+                    ? "등록된 카드가 아직 없습니다."
+                    : language === "ja"
+                      ? "登録されたカードがまだありません。"
+                      : "No cards registered yet."}
                 </p>
               </div>
             )}
@@ -643,7 +679,6 @@ function DeckDetailPage() {
             onPeriodChange={setMatchPeriod}
           />
         )}
-
       </div>
     </div>
   );
@@ -682,7 +717,7 @@ function DeckMatchesTab({
   const matchups = useMemo(() => {
     const map = new Map<string, { wins: number; losses: number; draws: number; total: number }>();
     for (const m of filtered) {
-      const key = (m.opp_deck?.trim() || m.opp_leader?.trim() || "__unknown__");
+      const key = m.opp_deck?.trim() || m.opp_leader?.trim() || "__unknown__";
       const cur = map.get(key) ?? { wins: 0, losses: 0, draws: 0, total: 0 };
       cur.total += 1;
       if (m.result === "win") cur.wins += 1;
@@ -742,7 +777,10 @@ function DeckMatchesTab({
           label={`${t("decks.matchesWins")} / ${t("decks.matchesLosses")} / ${t("decks.matchesDraws")}`}
           value={`${stats.wins} / ${stats.losses} / ${stats.draws}`}
         />
-        <StatCard label={t("decks.matchesPeriodAll")} value={periods.find((p) => p.id === period)?.label ?? ""} />
+        <StatCard
+          label={t("decks.matchesPeriodAll")}
+          value={periods.find((p) => p.id === period)?.label ?? ""}
+        />
       </div>
 
       {filtered.length === 0 ? (
@@ -781,9 +819,7 @@ function DeckMatchesTab({
                   <div className="flex items-center gap-3 min-w-0">
                     <ResultBadge result={m.result} />
                     <span className="truncate font-medium">
-                      {m.opp_deck?.trim() ||
-                        m.opp_leader?.trim() ||
-                        t("decks.matchupUnknown")}
+                      {m.opp_deck?.trim() || m.opp_leader?.trim() || t("decks.matchupUnknown")}
                     </span>
                   </div>
                   <span className="text-xs text-muted-foreground whitespace-nowrap">
@@ -793,10 +829,7 @@ function DeckMatchesTab({
               ))}
             </ul>
             <div className="mt-4 text-right">
-              <Link
-                to="/matches"
-                className="text-xs font-medium text-primary hover:underline"
-              >
+              <Link to="/matches" className="text-xs font-medium text-primary hover:underline">
                 {t("decks.viewAllMatches")} →
               </Link>
             </div>
@@ -836,7 +869,14 @@ function MatchupList({
   winRateLabel,
 }: {
   title: string;
-  items: { name: string; total: number; wins: number; losses: number; draws: number; winRate: number }[];
+  items: {
+    name: string;
+    total: number;
+    wins: number;
+    losses: number;
+    draws: number;
+    winRate: number;
+  }[];
   tone: "strong" | "weak";
   gamesLabel: string;
   winRateLabel: string;
@@ -884,4 +924,3 @@ function ResultBadge({ result }: { result: MatchRow["result"] }) {
     </span>
   );
 }
-

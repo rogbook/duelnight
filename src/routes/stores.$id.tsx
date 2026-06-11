@@ -70,7 +70,9 @@ export const Route = createFileRoute("/stores/$id")({
         .filter(Boolean)
         .join(" · ")
         .replace(/\s+/g, " ")
-        .slice(0, 150) || defaultDescs[locale] || defaultDescs.ko;
+        .slice(0, 150) ||
+      defaultDescs[locale] ||
+      defaultDescs.ko;
     const url = `${SITE}/stores/${s.id}`;
     return {
       meta: [
@@ -179,9 +181,7 @@ function StoreDetailPage() {
             {isFav ? t("storeDetail.favActive") : t("storeDetail.favInactive")}
           </Button>
         </div>
-        {store.address && (
-          <p className="mt-2 text-sm text-foreground/90">{store.address}</p>
-        )}
+        {store.address && <p className="mt-2 text-sm text-foreground/90">{store.address}</p>}
         <div className="mt-3">
           <p className="text-xs font-medium text-muted-foreground">{t("storeDetail.gamesLabel")}</p>
           <div className="mt-1 flex flex-wrap gap-1">

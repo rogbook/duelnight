@@ -61,7 +61,10 @@ function NotificationsPage() {
   if (!user) {
     return (
       <div className="mx-auto w-full max-w-3xl px-6 py-8">
-        <PageHeader title={t("notifications.title")} description={t("notifications.loginRequired")} />
+        <PageHeader
+          title={t("notifications.title")}
+          description={t("notifications.loginRequired")}
+        />
         <Link to="/login" className="mt-4 inline-block text-sm text-primary hover:underline">
           {t("notifications.goToLogin")}
         </Link>
@@ -70,7 +73,10 @@ function NotificationsPage() {
   }
 
   const markAllRead = async () => {
-    await supabase.from("notifications").update({ read_at: new Date().toISOString() }).is("read_at", null);
+    await supabase
+      .from("notifications")
+      .update({ read_at: new Date().toISOString() })
+      .is("read_at", null);
     qc.invalidateQueries({ queryKey: ["notifications"] });
     qc.invalidateQueries({ queryKey: ["notifications-all"] });
     toast.success(t("notifications.markAllReadSuccess"));
@@ -101,7 +107,10 @@ function NotificationsPage() {
       ) : (
         <ul className="mt-6 divide-y divide-border rounded-lg border border-border bg-card">
           {data.map((n) => (
-            <li key={n.id} className={`flex items-start gap-3 p-4 ${n.read_at ? "" : "bg-accent/20"}`}>
+            <li
+              key={n.id}
+              className={`flex items-start gap-3 p-4 ${n.read_at ? "" : "bg-accent/20"}`}
+            >
               <div className="min-w-0 flex-1">
                 {n.link ? (
                   <a href={n.link} className="text-sm font-medium hover:underline">

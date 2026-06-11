@@ -109,10 +109,7 @@ export function computeStats(rows: Match[]): MatchStats {
     .sort((a, b) => b.stats.total - a.stats.total);
 
   // Matchups — incl. first/second split
-  const matchupMap = new Map<
-    string,
-    { deck: string; opponent: string; rows: Match[] }
-  >();
+  const matchupMap = new Map<string, { deck: string; opponent: string; rows: Match[] }>();
   for (const m of rows) {
     const oppRaw = m.opp_leader || m.opp_deck || "";
     const oppLabel = normalizeDeckName(oppRaw, m.game);
@@ -198,9 +195,7 @@ export interface StreakInfo {
 }
 
 export function computeStreak(rows: Match[]): StreakInfo {
-  const sorted = [...rows].sort(
-    (a, b) => +new Date(a.played_at) - +new Date(b.played_at),
-  );
+  const sorted = [...rows].sort((a, b) => +new Date(a.played_at) - +new Date(b.played_at));
   let best = 0,
     worst = 0,
     runW = 0,

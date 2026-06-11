@@ -134,7 +134,8 @@ export const ko = {
     noSavedDecks: "저장된 덱이 없습니다 — 직접 입력",
     deckPlaceholder: "예: 적 루피",
     oppSavedDeck: "상대 저장 덱",
-    noOppDecksDesc: "이 사용자가 공개한 덱이 없습니다. 직접 입력하면 상대가 나중에 자기 덱 정보를 수정할 수 있어요.",
+    noOppDecksDesc:
+      "이 사용자가 공개한 덱이 없습니다. 직접 입력하면 상대가 나중에 자기 덱 정보를 수정할 수 있어요.",
     tournamentNote: "대회 메모",
     tournamentNotePlaceholder: "라운드, 매장명, 비고 등",
     matchNote: "경기 메모",
@@ -147,7 +148,8 @@ export const ko = {
     myDeckRequiredToast: "내 덱을 선택하거나 입력해 주세요",
     recordedWithElo: "기록됨 (예상 {delta}점)",
     recordedToast: "기록됨",
-    normalizeConfirm: "기존 전적의 덱·리더 이름을 정규화 규칙으로 일괄 정리할까요? 변경된 항목만 업데이트됩니다.",
+    normalizeConfirm:
+      "기존 전적의 덱·리더 이름을 정규화 규칙으로 일괄 정리할까요? 변경된 항목만 업데이트됩니다.",
     normalizingPrepare: "정리 준비 중...",
     noNormalizingMatches: "정리할 전적이 없습니다",
     normalizingScan: "스캔 {scanned}/{total}...",
@@ -182,7 +184,8 @@ export const ko = {
     importedSuccess: "{count}건 가져옴",
     importFailed: "가져오기 실패",
     taggedMatches: "내가 상대로 태그된 경기",
-    taggedMatchesDesc: "다른 사용자가 나를 상대로 기록한 경기예요. 내 덱 정보를 채우면 통계에 반영됩니다.",
+    taggedMatchesDesc:
+      "다른 사용자가 나를 상대로 기록한 경기예요. 내 덱 정보를 채우면 통계에 반영됩니다.",
     notEntered: "미입력",
     oppSelfEditTitle: "내 덱 정보 입력",
     selectMyDeck: "내 덱 선택",
@@ -231,7 +234,8 @@ export const ko = {
   },
   intro: {
     tagline: "원피스·포켓몬·디지몬 TCG 플레이어를 위한 올인원 허브",
-    description: "전적 기록, AI 카드 OCR, 덱 빌더, 대회·발매 일정, 매장 LFG까지. 한 곳에서 끝내는 TCG 워크플로우.",
+    description:
+      "전적 기록, AI 카드 OCR, 덱 빌더, 대회·발매 일정, 매장 LFG까지. 한 곳에서 끝내는 TCG 워크플로우.",
     testing: "테스트 중",
     freeStart: "무료로 시작",
     gameIntegrated: "OPTCG · PTCG · DTCG 통합",
@@ -341,7 +345,8 @@ export const ko = {
     checkingPermission: "권한 확인 중…",
     adminOnlyFunc: "관리자 전용 기능입니다",
     noPermissionTitle: "접근 권한이 없습니다",
-    noPermissionDesc: "카드 등록·수정은 관리자만 수행할 수 있어요. 누락되었거나 잘못된 카드를 발견하면 운영자에게 문의해 주세요.",
+    noPermissionDesc:
+      "카드 등록·수정은 관리자만 수행할 수 있어요. 누락되었거나 잘못된 카드를 발견하면 운영자에게 문의해 주세요.",
     browseDb: "카드 DB 둘러보기",
     cardNotFound: "카드를 찾을 수 없어요",
     backToDb: "카드 DB로",
@@ -393,7 +398,8 @@ export const ko = {
     archetype: "아키타입",
     noArchetypeInfo: "정보 없음",
     summaryTitle: "요약",
-    summaryDesc: "이 덱은 {game} 환경에서 사용되는 덱입니다. 현재 {total}장의 카드가 등록되어 있으며, {status} 상태입니다.",
+    summaryDesc:
+      "이 덱은 {game} 환경에서 사용되는 덱입니다. 현재 {total}장의 카드가 등록되어 있으며, {status} 상태입니다.",
     cardsInDeck: "투입 카드 ({count}장)",
     notRegisteredDb: "DB 미등록",
     notRegisteredDbTooltip: "{code} — 카드 DB 미등록",
@@ -746,7 +752,8 @@ export const ko = {
     processing: "처리 중...",
     resetPasswordTitle: "비밀번호 재설정",
     resetPasswordDesc: "새 비밀번호를 입력해 주세요.",
-    resetPasswordInvalidLink: "이메일로 받은 재설정 링크에서 이 페이지로 이동해야 합니다. 링크가 만료되었을 수 있어요.",
+    resetPasswordInvalidLink:
+      "이메일로 받은 재설정 링크에서 이 페이지로 이동해야 합니다. 링크가 만료되었을 수 있어요.",
     newPasswordInput: "새 비밀번호",
     confirmNewPasswordInput: "비밀번호 확인",
     passwordMinLengthError: "비밀번호는 최소 6자 이상이어야 합니다.",
@@ -801,7 +808,8 @@ export const ko = {
     purchaseBtn: "구매하기",
     purchaseSuccess: "{name} 구매가 성공적으로 완료되었습니다!",
     secureTitle: "안전한 결제 보장",
-    secureDesc: "DuelNight는 공인된 결제사(Stripe 및 포트원)를 통해 안전한 결제 환경을 제공합니다. 사용자의 결제 정보는 암호화 처리되며 시스템에 직접 저장되지 않습니다.",
+    secureDesc:
+      "DuelNight는 공인된 결제사(Stripe 및 포트원)를 통해 안전한 결제 환경을 제공합니다. 사용자의 결제 정보는 암호화 처리되며 시스템에 직접 저장되지 않습니다.",
     bonusCredits: "+{bonus} 보너스 크레딧",
     standardPack: "일반 팩",
     priceKRW: "{price}원",
@@ -927,4 +935,3 @@ export const ko = {
     kindMatch: "매칭",
   },
 };
-

@@ -77,15 +77,15 @@ bun run migrate-images --execute
 
 ## 옵션
 
-| 옵션 | 설명 |
-|---|---|
-| `--execute` | 실제 Storage 복사와 DB URL 갱신 |
+| 옵션                | 설명                                      |
+| ------------------- | ----------------------------------------- |
+| `--execute`         | 실제 Storage 복사와 DB URL 갱신           |
 | `--verify-existing` | dry-run에서도 동일 크기 파일 SHA-256 검증 |
-| `--skip-db-update` | Storage만 처리 |
-| `--limit <n>` | 앞에서부터 n개 객체만 처리 |
-| `--concurrency <n>` | 동시 다운로드·업로드 수, 기본 4 |
-| `--max-bytes <n>` | 파일당 최대 바이트, 기본 20 MiB |
-| `--report <path>` | JSON 보고서 경로 지정 |
+| `--skip-db-update`  | Storage만 처리                            |
+| `--limit <n>`       | 앞에서부터 n개 객체만 처리                |
+| `--concurrency <n>` | 동시 다운로드·업로드 수, 기본 4           |
+| `--max-bytes <n>`   | 파일당 최대 바이트, 기본 20 MiB           |
+| `--report <path>`   | JSON 보고서 경로 지정                     |
 
 ## 완료 판정
 

@@ -13,7 +13,10 @@ export const Route = createFileRoute("/admin/cards")({
   head: () => ({
     meta: [
       { title: "카드 DB 업로드 — 관리자 — DuelNight" },
-      { name: "description", content: "엑셀·이미지·폼으로 카드 데이터를 간편하게 등록·수정합니다." },
+      {
+        name: "description",
+        content: "엑셀·이미지·폼으로 카드 데이터를 간편하게 등록·수정합니다.",
+      },
     ],
   }),
   component: AdminCardsPage,
@@ -57,21 +60,22 @@ function AdminCardsPage() {
     <div className="mx-auto w-full max-w-5xl px-6 py-8">
       <PageHeader
         title={activeTab === "upload" ? "카드 DB 업로드 (관리자)" : "세트 구성 관리 (관리자)"}
-        description={activeTab === "upload" 
-          ? "한 장씩 폼 입력 · 엑셀/CSV 업로드 · 이미지 대량 업로드 후 표에서 편집할 수 있습니다. 같은 코드는 자동 갱신됩니다."
-          : "세트별 소속 카드를 확인하고, 개별 카드들의 세트 소속 정보 이동 및 수정을 쉽고 빠르게 일괄 관리합니다."
+        description={
+          activeTab === "upload"
+            ? "한 장씩 폼 입력 · 엑셀/CSV 업로드 · 이미지 대량 업로드 후 표에서 편집할 수 있습니다. 같은 코드는 자동 갱신됩니다."
+            : "세트별 소속 카드를 확인하고, 개별 카드들의 세트 소속 정보 이동 및 수정을 쉽고 빠르게 일괄 관리합니다."
         }
       />
       <div className="mt-4 flex flex-wrap gap-2">
-        <Button 
-          variant={activeTab === "upload" ? "default" : "outline"} 
+        <Button
+          variant={activeTab === "upload" ? "default" : "outline"}
           size="sm"
           onClick={() => setActiveTab("upload")}
         >
           업로드 · 일괄 등록
         </Button>
-        <Button 
-          variant={activeTab === "set_config" ? "default" : "outline"} 
+        <Button
+          variant={activeTab === "set_config" ? "default" : "outline"}
           size="sm"
           onClick={() => setActiveTab("set_config")}
         >
@@ -88,11 +92,7 @@ function AdminCardsPage() {
         등록된 카드의 편집·삭제는 카드 DB 상세 페이지에서 관리자 전용으로 진행됩니다.
       </p>
       <div className="mt-6">
-        {activeTab === "upload" ? (
-          <CardUploader isAdmin />
-        ) : (
-          <SetConfigView />
-        )}
+        {activeTab === "upload" ? <CardUploader isAdmin /> : <SetConfigView />}
       </div>
     </div>
   );

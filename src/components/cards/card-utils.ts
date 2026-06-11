@@ -22,18 +22,34 @@ export type CardRow = {
 
 /** 한글 색상 → 영문 코드 (덱빌더와 동일 키마) */
 const COLOR_KO_TO_EN: Record<string, string> = {
-  "적": "red", "빨강": "red", "빨간색": "red", "red": "red",
-  "녹": "green", "초록": "green", "녹색": "green", "green": "green",
-  "청": "blue", "파랑": "blue", "파란색": "blue", "blue": "blue",
-  "자": "purple", "보라": "purple", "보라색": "purple", "purple": "purple",
-  "흑": "black", "검정": "black", "검은색": "black", "black": "black",
-  "황": "yellow", "노랑": "yellow", "노란색": "yellow", "yellow": "yellow",
+  적: "red",
+  빨강: "red",
+  빨간색: "red",
+  red: "red",
+  녹: "green",
+  초록: "green",
+  녹색: "green",
+  green: "green",
+  청: "blue",
+  파랑: "blue",
+  파란색: "blue",
+  blue: "blue",
+  자: "purple",
+  보라: "purple",
+  보라색: "purple",
+  purple: "purple",
+  흑: "black",
+  검정: "black",
+  검은색: "black",
+  black: "black",
+  황: "yellow",
+  노랑: "yellow",
+  노란색: "yellow",
+  yellow: "yellow",
 };
 
 export const VALID_COLORS = new Set(["red", "green", "blue", "purple", "black", "yellow"]);
-export const VALID_RARITIES = new Set([
-  "L", "C", "UC", "R", "SR", "SEC", "P", "SP", "TR", "AA",
-]);
+export const VALID_RARITIES = new Set(["L", "C", "UC", "R", "SR", "SEC", "P", "SP", "TR", "AA"]);
 const CODE_RE = /^[A-Z0-9]{2,8}-[A-Z0-9]{2,5}$/;
 
 export function normalizeColor(raw: string): string {
@@ -69,7 +85,11 @@ export function validateRow(r: CardRow): RowIssue[] {
   const issues: RowIssue[] = [];
   if (!r.code) issues.push({ field: "code", message: "코드 필수", level: "error" });
   else if (!CODE_RE.test(r.code))
-    issues.push({ field: "code", message: "코드 형식이 올바르지 않습니다 (예: OP01-001)", level: "warn" });
+    issues.push({
+      field: "code",
+      message: "코드 형식이 올바르지 않습니다 (예: OP01-001)",
+      level: "warn",
+    });
   if (!r.set_code) issues.push({ field: "set_code", message: "세트 필수", level: "error" });
   if (!r.name) issues.push({ field: "name", message: "이름 필수", level: "error" });
   for (const c of r.colors) {
@@ -103,19 +123,33 @@ export function findInternalDuplicates(rows: CardRow[]): Map<string, number[]> {
 /** 실패 행만 CSV로 다운로드 */
 export function downloadRowsAsCsv(filename: string, rows: CardRow[]) {
   const headers = [
-    "code", "set_code", "game", "name", "type", "colors",
-    "cost", "power", "counter", "attribute", "rarity", "effect", "image_url",
+    "code",
+    "set_code",
+    "game",
+    "name",
+    "type",
+    "colors",
+    "cost",
+    "power",
+    "counter",
+    "attribute",
+    "rarity",
+    "effect",
+    "image_url",
   ] as const;
   const esc = (v: unknown) => {
     const s = v == null ? "" : Array.isArray(v) ? v.join("|") : String(v);
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   const lines = [headers.join(",")];
-  for (const r of rows) lines.push(headers.map((h) => esc((r as Record<string, unknown>)[h])).join(","));
+  for (const r of rows)
+    lines.push(headers.map((h) => esc((r as Record<string, unknown>)[h])).join(","));
   const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url; a.download = filename; a.click();
+  a.href = url;
+  a.download = filename;
+  a.click();
   URL.revokeObjectURL(url);
 }
 
@@ -124,7 +158,9 @@ export function saveDraft(rows: CardRow[]) {
   try {
     if (rows.length === 0) localStorage.removeItem(DRAFT_KEY);
     else localStorage.setItem(DRAFT_KEY, JSON.stringify({ rows, savedAt: Date.now() }));
-  } catch { /* ignore quota */ }
+  } catch {
+    /* ignore quota */
+  }
 }
 export function loadDraft(): { rows: CardRow[]; savedAt: number } | null {
   try {
@@ -133,6 +169,14 @@ export function loadDraft(): { rows: CardRow[]; savedAt: number } | null {
     const parsed = JSON.parse(raw);
     if (!parsed?.rows?.length) return null;
     return parsed;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
-export function clearDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch { /* noop */ } }
+export function clearDraft() {
+  try {
+    localStorage.removeItem(DRAFT_KEY);
+  } catch {
+    /* noop */
+  }
+}

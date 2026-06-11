@@ -17,7 +17,18 @@ import {
   MobileOpponentCards,
   MobileRecentCards,
 } from "@/components/match-stat-cards";
-import { Swords, Trash2, Plus, Wand2, Pencil, Download, Upload, X, Eye, CalendarIcon } from "lucide-react";
+import {
+  Swords,
+  Trash2,
+  Plus,
+  Wand2,
+  Pencil,
+  Download,
+  Upload,
+  X,
+  Eye,
+  CalendarIcon,
+} from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -67,12 +78,7 @@ import {
 import { WinRateChart, type ChartUnit } from "@/components/winrate-chart";
 import { AiCoachCard } from "@/components/ai-coach-card";
 import { normalizeDeckName } from "@/lib/normalize-deck";
-import {
-  matchesToCsv,
-  matchesToJson,
-  parseImport,
-  downloadFile,
-} from "@/lib/csv";
+import { matchesToCsv, matchesToJson, parseImport, downloadFile } from "@/lib/csv";
 import type { Database } from "@/integrations/supabase/types";
 import { useI18n } from "@/i18n/language-context";
 
@@ -94,9 +100,20 @@ export const Route = createFileRoute("/matches")({
     // However, TanStack Route head can use window-level locale or we can keep a simple static or dynamic.
     // For simplicity, we can do a standard locale lookup if needed, but keeping Route head or updating document.title in useEffect is more reliable.
     // Let's use a standard translation or simple translation. Since head is out of React context, we can just keep the title as "전적 기록 — DuelNight" or read language-context's local storage locale.
-    const saved = typeof window !== "undefined" ? localStorage.getItem("duelnight.i18n.locale") : "ko";
-    const title = saved === "ja" ? "戦績記録 — DuelNight" : saved === "en" ? "Match Records — DuelNight" : "전적 기록 — DuelNight";
-    const desc = saved === "ja" ? "対戦結果を記録すると、デッキ・先攻後攻・マッチアップ統計が自動的に更新されます" : saved === "en" ? "Record match results to automatically calculate deck, turn, and stats" : "대전 결과를 기록하고 덱·선후공·매치업 통계를 자동 계산.";
+    const saved =
+      typeof window !== "undefined" ? localStorage.getItem("duelnight.i18n.locale") : "ko";
+    const title =
+      saved === "ja"
+        ? "戦績記録 — DuelNight"
+        : saved === "en"
+          ? "Match Records — DuelNight"
+          : "전적 기록 — DuelNight";
+    const desc =
+      saved === "ja"
+        ? "対戦結果を記録すると、デッキ・先攻後攻・マッチアップ統計が自動的に更新されます"
+        : saved === "en"
+          ? "Record match results to automatically calculate deck, turn, and stats"
+          : "대전 결과를 기록하고 덱·선후공·매치업 통계를 자동 계산.";
     return {
       meta: [
         { title },
@@ -109,7 +126,6 @@ export const Route = createFileRoute("/matches")({
   },
   component: MatchesPage,
 });
-
 
 function MatchesPage() {
   const { t } = useI18n();
@@ -124,10 +140,7 @@ function MatchesPage() {
     queryKey: ["matches", user?.id, game],
     enabled: !!user,
     queryFn: async () => {
-      let q = supabase
-        .from("matches")
-        .select("*")
-        .order("played_at", { ascending: false });
+      let q = supabase.from("matches").select("*").order("played_at", { ascending: false });
       if (game !== "all") q = q.eq("game", game);
       const { data, error } = await q;
       if (error) throw error;
@@ -158,10 +171,7 @@ function MatchesPage() {
   if (!user) {
     return (
       <div className="mx-auto max-w-6xl px-6 py-8">
-        <PageHeader
-          title={t("matches.title")}
-          description={t("matches.loginRequiredDesc")}
-        />
+        <PageHeader title={t("matches.title")} description={t("matches.loginRequiredDesc")} />
         <div className="mt-6 rounded-lg border border-dashed border-border bg-muted/30 px-6 py-16 text-center">
           <p className="text-sm text-muted-foreground">{t("matches.loginRequired")}</p>
           <Link
@@ -177,19 +187,20 @@ function MatchesPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
-      <PageHeader
-        title={t("matches.title")}
-        description={t("matches.desc")}
-      />
+      <PageHeader title={t("matches.title")} description={t("matches.desc")} />
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex flex-col gap-1">
-            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{t("matches.game")}</span>
+            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              {t("matches.game")}
+            </span>
             <GameTabs value={game} onChange={setGame} />
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{t("matches.period")}</span>
+            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              {t("matches.period")}
+            </span>
             <PeriodTabs value={period} onChange={setPeriod} />
           </div>
         </div>
@@ -200,11 +211,7 @@ function MatchesPage() {
         </div>
       </div>
 
-      <FilterBar
-        rows={periodRows}
-        value={filters}
-        onChange={setFilters}
-      />
+      <FilterBar rows={periodRows} value={filters} onChange={setFilters} />
 
       {isMobile ? (
         <MobileStatScroll stats={stats} streak={streak} />
@@ -216,9 +223,7 @@ function MatchesPage() {
         <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
           <div>
             <h3 className="text-sm font-medium">{t("matches.winRateTrend")}</h3>
-            <p className="text-xs text-muted-foreground">
-              {t("matches.winRateTrendDesc")}
-            </p>
+            <p className="text-xs text-muted-foreground">{t("matches.winRateTrendDesc")}</p>
           </div>
           <ChartUnitTabs value={chartUnit} onChange={setChartUnit} />
         </div>
@@ -289,13 +294,7 @@ function ChartUnitTabs({
   );
 }
 
-function PeriodTabs({
-  value,
-  onChange,
-}: {
-  value: Period;
-  onChange: (v: Period) => void;
-}) {
+function PeriodTabs({ value, onChange }: { value: Period; onChange: (v: Period) => void }) {
   const { t } = useI18n();
   const items: { id: Period; label: string }[] = [
     { id: "7", label: t("matches.day7") },
@@ -361,12 +360,13 @@ function StatCard({ label, pack }: { label: string; pack: RatePack }) {
   return (
     <div className="rounded-lg border border-border bg-card p-4">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
-        {fmtPct(pack)}
-      </p>
+      <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">{fmtPct(pack)}</p>
       <p className="mt-1 text-[11px] text-muted-foreground">
-        {pack.wins}{t("matches.win")} {pack.losses}{t("matches.lose")}{pack.draws ? ` ${pack.draws}${t("matches.draw")}` : ""} ·{" "}
-        {pack.total}{t("matches.playCount")}
+        {pack.wins}
+        {t("matches.win")} {pack.losses}
+        {t("matches.lose")}
+        {pack.draws ? ` ${pack.draws}${t("matches.draw")}` : ""} · {pack.total}
+        {t("matches.playCount")}
       </p>
     </div>
   );
@@ -382,7 +382,11 @@ function StatGrid({
   const { t } = useI18n();
   const cur = streak.current;
   const curLabel =
-    cur === 0 ? "—" : cur > 0 ? `${cur}${t("matches.winsStreak")} 🔥` : `${-cur}${t("matches.lossesStreak")}`;
+    cur === 0
+      ? "—"
+      : cur > 0
+        ? `${cur}${t("matches.winsStreak")} 🔥`
+        : `${-cur}${t("matches.lossesStreak")}`;
   const curClass =
     cur > 0
       ? "text-emerald-600 dark:text-emerald-400"
@@ -396,18 +400,16 @@ function StatGrid({
       <StatCard label={t("matches.secondWinRate")} pack={stats.second} />
       <div className="rounded-lg border border-border bg-card p-4">
         <p className="text-xs text-muted-foreground">{t("matches.currentStreak")}</p>
-        <p className={`mt-2 text-2xl font-semibold tracking-tight ${curClass}`}>
-          {curLabel}
-        </p>
+        <p className={`mt-2 text-2xl font-semibold tracking-tight ${curClass}`}>{curLabel}</p>
         <p className="mt-1 text-[11px] text-muted-foreground">
-          {t("matches.bestStreak")} {streak.best}{t("matches.winsStreak")} · {t("matches.worstStreak")} {streak.worst}{t("matches.lossesStreak")}
+          {t("matches.bestStreak")} {streak.best}
+          {t("matches.winsStreak")} · {t("matches.worstStreak")} {streak.worst}
+          {t("matches.lossesStreak")}
         </p>
       </div>
       <div className="rounded-lg border border-border bg-card p-4">
         <p className="text-xs text-muted-foreground">{t("matches.decksUsed")}</p>
-        <p className="mt-2 text-2xl font-semibold tracking-tight">
-          {stats.byDeck.length}
-        </p>
+        <p className="mt-2 text-2xl font-semibold tracking-tight">{stats.byDeck.length}</p>
         <p className="mt-1 text-[11px] text-muted-foreground">
           {t("matches.matchupCount").replace("{count}", String(stats.matchups.length))}
         </p>
@@ -425,9 +427,7 @@ function DeckTable({ rows }: { rows: DeckStat[] }) {
         <p className="text-[11px] text-muted-foreground">{t("matches.byDeckDesc")}</p>
       </div>
       {rows.length === 0 ? (
-        <p className="px-4 py-8 text-center text-xs text-muted-foreground">
-          {t("matches.noData")}
-        </p>
+        <p className="px-4 py-8 text-center text-xs text-muted-foreground">{t("matches.noData")}</p>
       ) : (
         <ul className="divide-y divide-border">
           {rows.map((r) => (
@@ -435,17 +435,21 @@ function DeckTable({ rows }: { rows: DeckStat[] }) {
               <div className="flex items-center justify-between gap-3">
                 <span className="truncate text-sm">{r.deck}</span>
                 <span className="text-xs text-muted-foreground">
-                  <span className="mr-2 font-medium text-foreground">
-                    {fmtPct(r.stats)}
-                  </span>
+                  <span className="mr-2 font-medium text-foreground">{fmtPct(r.stats)}</span>
                   {r.stats.wins}-{r.stats.losses}
                   {r.stats.draws ? `-${r.stats.draws}` : ""}
                 </span>
               </div>
               <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
-                <span>{t("matches.first")} {fmtPct(r.first)} ({r.first.total})</span>
-                <span>{t("matches.second")} {fmtPct(r.second)} ({r.second.total})</span>
-                <span>{t("matches.wilsonLow")} {fmtPctVal(r.stats.wilsonLow)}</span>
+                <span>
+                  {t("matches.first")} {fmtPct(r.first)} ({r.first.total})
+                </span>
+                <span>
+                  {t("matches.second")} {fmtPct(r.second)} ({r.second.total})
+                </span>
+                <span>
+                  {t("matches.wilsonLow")} {fmtPctVal(r.stats.wilsonLow)}
+                </span>
               </div>
             </li>
           ))}
@@ -478,17 +482,21 @@ function MatchupTable({ rows }: { rows: MatchupStat[] }) {
                   <span className="text-muted-foreground">{r.opponent}</span>
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  <span className="mr-2 font-medium text-foreground">
-                    {fmtPct(r.stats)}
-                  </span>
+                  <span className="mr-2 font-medium text-foreground">{fmtPct(r.stats)}</span>
                   {r.stats.wins}-{r.stats.losses}
                   {r.stats.draws ? `-${r.stats.draws}` : ""}
                 </span>
               </div>
               <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
-                <span>{t("matches.first")} {fmtPct(r.first)} ({r.first.total})</span>
-                <span>{t("matches.second")} {fmtPct(r.second)} ({r.second.total})</span>
-                <span>{t("matches.wilsonLow")} {fmtPctVal(r.stats.wilsonLow)}</span>
+                <span>
+                  {t("matches.first")} {fmtPct(r.first)} ({r.first.total})
+                </span>
+                <span>
+                  {t("matches.second")} {fmtPct(r.second)} ({r.second.total})
+                </span>
+                <span>
+                  {t("matches.wilsonLow")} {fmtPctVal(r.stats.wilsonLow)}
+                </span>
               </div>
             </li>
           ))}
@@ -551,11 +559,7 @@ function OpponentTable({
 
   // Pick a representative game from filtered set; fallback to optcg if "all"
   const dialogGame: Game =
-    game !== "all"
-      ? game
-      : (selected
-          ? matchesFor(selected.name)[0]?.game ?? "optcg"
-          : "optcg");
+    game !== "all" ? game : selected ? (matchesFor(selected.name)[0]?.game ?? "optcg") : "optcg";
 
   return (
     <div className="rounded-lg border border-border bg-card">
@@ -571,16 +575,15 @@ function OpponentTable({
             <li key={r.opponent}>
               <button
                 type="button"
-                onClick={() =>
-                  setSelected({ name: r.opponent, userId: userIdFor(r.opponent) })
-                }
+                onClick={() => setSelected({ name: r.opponent, userId: userIdFor(r.opponent) })}
                 className="block w-full px-4 py-3 text-left transition hover:bg-muted/30"
               >
                 <div className="flex items-center justify-between gap-3">
                   <span className="truncate text-sm">{r.opponent}</span>
                   <span className="text-xs text-muted-foreground">
                     <span className="mr-2 font-medium text-foreground">{fmtPct(r.stats)}</span>
-                    {r.count}{t("matches.times")} · {fmtPctVal(r.share)}
+                    {r.count}
+                    {t("matches.times")} · {fmtPctVal(r.share)}
                   </span>
                 </div>
                 <div className="mt-1 h-1.5 w-full overflow-hidden rounded bg-muted">
@@ -633,7 +636,11 @@ function RecentList({
   const { labelOf } = useGames();
   const [editing, setEditing] = useState<Match | null>(null);
   const [viewing, setViewing] = useState<Match | null>(null);
-  const [oppSelected, setOppSelected] = useState<{ name: string; userId?: string | null; game: Game } | null>(null);
+  const [oppSelected, setOppSelected] = useState<{
+    name: string;
+    userId?: string | null;
+    game: Game;
+  } | null>(null);
   const [page, setPage] = useState(1);
   const PAGE = 30;
   const totalPages = Math.max(1, Math.ceil(rows.length / PAGE));
@@ -645,12 +652,7 @@ function RecentList({
 
   // 상대 닉네임 일괄 조회
   const oppUserIds = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          rows.map((m) => m.opponent_user_id).filter((x): x is string => !!x),
-        ),
-      ),
+    () => Array.from(new Set(rows.map((m) => m.opponent_user_id).filter((x): x is string => !!x))),
     [rows],
   );
   const { data: oppProfiles } = useQuery({
@@ -673,7 +675,7 @@ function RecentList({
     return map;
   }, [oppProfiles]);
   const oppNick = (m: Match): string | null =>
-    m.opponent_user_id ? nickById.get(m.opponent_user_id) ?? null : null;
+    m.opponent_user_id ? (nickById.get(m.opponent_user_id) ?? null) : null;
   const openOpp = (m: Match) => {
     const nick = oppNick(m);
     const name = nick || m.opp_leader || m.opp_deck || "—";
@@ -708,7 +710,7 @@ function RecentList({
       onDeleted();
     }
   };
-  
+
   const localeStr = language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US";
 
   return (
@@ -754,7 +756,10 @@ function RecentList({
                     {t(`matches.event${m.event.charAt(0).toUpperCase() + m.event.slice(1)}` as any)}
                   </td>
                   <td className="px-3 py-2">{m.my_deck}</td>
-                  <td className="px-3 py-2 text-muted-foreground" onClick={(e) => e.stopPropagation()}>
+                  <td
+                    className="px-3 py-2 text-muted-foreground"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     {(() => {
                       const nick = oppNick(m);
                       const deck = m.opp_leader || m.opp_deck;
@@ -777,7 +782,9 @@ function RecentList({
                       );
                     })()}
                   </td>
-                  <td className="px-3 py-2">{m.went_first ? t("matches.first") : t("matches.second")}</td>
+                  <td className="px-3 py-2">
+                    {m.went_first ? t("matches.first") : t("matches.second")}
+                  </td>
                   <td className="px-3 py-2">
                     <ResultBadge r={m.result} />
                   </td>
@@ -937,9 +944,17 @@ function ViewMatchDialog({
               </DialogTitle>
             </DialogHeader>
             <dl className="grid grid-cols-3 gap-x-3 gap-y-3 text-sm">
-              <Row label={t("matches.datetime")} value={new Date(match.played_at).toLocaleString(localeStr)} />
+              <Row
+                label={t("matches.datetime")}
+                value={new Date(match.played_at).toLocaleString(localeStr)}
+              />
               <Row label={t("matches.game")} value={labelOf(match.game)} />
-              <Row label={t("matches.event")} value={t(`matches.event${match.event.charAt(0).toUpperCase() + match.event.slice(1)}` as any)} />
+              <Row
+                label={t("matches.event")}
+                value={t(
+                  `matches.event${match.event.charAt(0).toUpperCase() + match.event.slice(1)}` as any,
+                )}
+              />
               <Row label={t("matches.myDeck")} value={match.my_deck} />
               <div>
                 <dt className="text-xs text-muted-foreground">{t("matches.opponent")}</dt>
@@ -963,7 +978,10 @@ function ViewMatchDialog({
                   {!oppNick && !match.opp_leader && !match.opp_deck && "—"}
                 </dd>
               </div>
-              <Row label={t("matches.turn")} value={match.went_first ? t("matches.first") : t("matches.second")} />
+              <Row
+                label={t("matches.turn")}
+                value={match.went_first ? t("matches.first") : t("matches.second")}
+              />
               {match.notes && (
                 <div className="col-span-3">
                   <dt className="text-xs text-muted-foreground">{t("matches.matchNote")}</dt>
@@ -1178,9 +1196,7 @@ function ResultBadge({ r }: { r: Result }) {
   } as const;
   const label = { win: t("matches.win"), loss: t("matches.lose"), draw: t("matches.draw") }[r];
   return (
-    <span
-      className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${map[r]}`}
-    >
+    <span className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${map[r]}`}>
       {label}
     </span>
   );
@@ -1201,8 +1217,7 @@ function CanonicalHint({
   return (
     <div className="flex items-center gap-2 text-xs text-muted-foreground">
       <span>
-        {t("matches.onSave")}{" "}
-        <span className="font-medium text-foreground">{canonical}</span>
+        {t("matches.onSave")} <span className="font-medium text-foreground">{canonical}</span>
       </span>
       <button
         type="button"
@@ -1215,13 +1230,7 @@ function CanonicalHint({
   );
 }
 
-function NewMatchDialog({
-  onCreated,
-  lastMatch,
-}: {
-  onCreated: () => void;
-  lastMatch?: Match;
-}) {
+function NewMatchDialog({ onCreated, lastMatch }: { onCreated: () => void; lastMatch?: Match }) {
   const { user } = useAuth();
   const { t } = useI18n();
   const { games, labelOf } = useGames();
@@ -1318,8 +1327,7 @@ function NewMatchDialog({
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  const finalize = (raw: string) =>
-    keepRaw ? raw.trim() : normalizeDeckName(raw, form.game);
+  const finalize = (raw: string) => (keepRaw ? raw.trim() : normalizeDeckName(raw, form.game));
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1362,8 +1370,11 @@ function NewMatchDialog({
     }
     toast.success(
       opponent
-        ? t("matches.recordedWithElo").replace("{delta}", `${previewDelta >= 0 ? "+" : ""}${previewDelta}`)
-        : t("matches.recordedToast")
+        ? t("matches.recordedWithElo").replace(
+            "{delta}",
+            `${previewDelta >= 0 ? "+" : ""}${previewDelta}`,
+          )
+        : t("matches.recordedToast"),
     );
     setOpen(false);
     qc.invalidateQueries({ queryKey: ["matches"] });
@@ -1392,7 +1403,10 @@ function NewMatchDialog({
                   <Button
                     type="button"
                     variant="outline"
-                    className={cn("justify-start text-left font-normal", !form.played_at && "text-muted-foreground")}
+                    className={cn(
+                      "justify-start text-left font-normal",
+                      !form.played_at && "text-muted-foreground",
+                    )}
                   >
                     <CalendarIcon className="mr-1 h-4 w-4" />
                     {format(form.played_at, "MM/dd")}
@@ -1411,19 +1425,33 @@ function NewMatchDialog({
             </div>
             <div className="flex flex-col gap-1.5">
               <Label>{t("matches.game")}</Label>
-              <Select value={form.game} onValueChange={(v) => setForm({ ...form, game: v as Game, deck_id: "", opponent_deck_id: "" })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={form.game}
+                onValueChange={(v) =>
+                  setForm({ ...form, game: v as Game, deck_id: "", opponent_deck_id: "" })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {games.map((g) => (
-                    <SelectItem key={g.code} value={g.code}>{labelOf(g.code)}</SelectItem>
+                    <SelectItem key={g.code} value={g.code}>
+                      {labelOf(g.code)}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="flex flex-col gap-1.5">
               <Label>{t("matches.event")}</Label>
-              <Select value={form.event} onValueChange={(v) => setForm({ ...form, event: v as EventT })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={form.event}
+                onValueChange={(v) => setForm({ ...form, event: v as EventT })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="friendly">{t("matches.eventFriendly")}</SelectItem>
                   <SelectItem value="shop">{t("matches.eventShop")}</SelectItem>
@@ -1437,8 +1465,13 @@ function NewMatchDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
               <Label>{t("matches.turn")}</Label>
-              <Select value={form.went_first} onValueChange={(v) => setForm({ ...form, went_first: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={form.went_first}
+                onValueChange={(v) => setForm({ ...form, went_first: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="true">{t("matches.first")}</SelectItem>
                   <SelectItem value="false">{t("matches.second")}</SelectItem>
@@ -1447,8 +1480,13 @@ function NewMatchDialog({
             </div>
             <div className="flex flex-col gap-1.5">
               <Label>{t("matches.resultLabel")}</Label>
-              <Select value={form.result} onValueChange={(v) => setForm({ ...form, result: v as Result })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={form.result}
+                onValueChange={(v) => setForm({ ...form, result: v as Result })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="win">{t("matches.win")}</SelectItem>
                   <SelectItem value="loss">{t("matches.lose")}</SelectItem>
@@ -1473,11 +1511,14 @@ function NewMatchDialog({
                   setForm({ ...form, deck_id: v, my_deck: d?.name ?? form.my_deck });
                 }}
               >
-                <SelectTrigger><SelectValue placeholder={t("matches.selectSavedDeck")} /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue placeholder={t("matches.selectSavedDeck")} />
+                </SelectTrigger>
                 <SelectContent>
                   {decks.map((d) => (
                     <SelectItem key={d.id} value={d.id}>
-                      {d.name}{d.leader ? ` · ${d.leader}` : ""}
+                      {d.name}
+                      {d.leader ? ` · ${d.leader}` : ""}
                     </SelectItem>
                   ))}
                   <SelectItem value="manual">{t("matches.manualInput")}</SelectItem>
@@ -1489,11 +1530,17 @@ function NewMatchDialog({
                 <Input
                   value={form.my_deck}
                   onChange={(e) => setForm({ ...form, my_deck: e.target.value })}
-                  placeholder={decks.length === 0 ? t("matches.noSavedDecks") : t("matches.deckPlaceholder")}
+                  placeholder={
+                    decks.length === 0 ? t("matches.noSavedDecks") : t("matches.deckPlaceholder")
+                  }
                   required
                 />
                 {!keepRaw && (
-                  <CanonicalHint raw={form.my_deck} game={form.game} onApply={(v) => setForm({ ...form, my_deck: v })} />
+                  <CanonicalHint
+                    raw={form.my_deck}
+                    game={form.game}
+                    onApply={(v) => setForm({ ...form, my_deck: v })}
+                  />
                 )}
               </>
             )}
@@ -1517,13 +1564,18 @@ function NewMatchDialog({
             {opponent && oppDecks.length > 0 && (
               <Select
                 value={form.opponent_deck_id || "manual"}
-                onValueChange={(v) => setForm({ ...form, opponent_deck_id: v === "manual" ? "" : v })}
+                onValueChange={(v) =>
+                  setForm({ ...form, opponent_deck_id: v === "manual" ? "" : v })
+                }
               >
-                <SelectTrigger><SelectValue placeholder={t("matches.oppSavedDeck")} /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue placeholder={t("matches.oppSavedDeck")} />
+                </SelectTrigger>
                 <SelectContent>
                   {oppDecks.map((d) => (
                     <SelectItem key={d.id} value={d.id}>
-                      {d.name}{d.leader ? ` · ${d.leader}` : ""}
+                      {d.name}
+                      {d.leader ? ` · ${d.leader}` : ""}
                     </SelectItem>
                   ))}
                   <SelectItem value="manual">{t("matches.manualInput")}</SelectItem>
@@ -1531,9 +1583,7 @@ function NewMatchDialog({
               </Select>
             )}
             {opponent && oppDecks.length === 0 && (
-              <p className="text-[11px] text-muted-foreground">
-                {t("matches.noOppDecksDesc")}
-              </p>
+              <p className="text-[11px] text-muted-foreground">{t("matches.noOppDecksDesc")}</p>
             )}
 
             {!form.opponent_deck_id && (
@@ -1578,15 +1628,25 @@ function NewMatchDialog({
           {opponent && ratings && (
             <div className="rounded-md bg-muted/40 px-3 py-2 text-xs">
               <p className="text-muted-foreground">
-                {t("matches.eloPreviewTitle")} <span className="font-medium text-foreground">{ratings.me}</span> vs{" "}
+                {t("matches.eloPreviewTitle")}{" "}
+                <span className="font-medium text-foreground">{ratings.me}</span> vs{" "}
                 <span className="font-medium text-foreground">{ratings.op}</span>
               </p>
               <p className="mt-0.5">
                 {t("matches.expectedChange")}{" "}
-                <span className={cn("font-semibold", previewDelta > 0 ? "text-emerald-600" : previewDelta < 0 ? "text-rose-600" : "")}>
-                  {previewDelta > 0 ? "+" : ""}{previewDelta}{t("matches.points")}
+                <span
+                  className={cn(
+                    "font-semibold",
+                    previewDelta > 0 ? "text-emerald-600" : previewDelta < 0 ? "text-rose-600" : "",
+                  )}
+                >
+                  {previewDelta > 0 ? "+" : ""}
+                  {previewDelta}
+                  {t("matches.points")}
                 </span>
-                <span className="ml-2 text-muted-foreground">(K=32, {t("matches.expectedWinRate")} {Math.round(expected * 100)}%)</span>
+                <span className="ml-2 text-muted-foreground">
+                  (K=32, {t("matches.expectedWinRate")} {Math.round(expected * 100)}%)
+                </span>
               </p>
             </div>
           )}
@@ -1602,7 +1662,9 @@ function NewMatchDialog({
               {t("matches.keepRaw")}
             </label>
             <div className="flex gap-2">
-              <Button type="button" variant="ghost" onClick={() => setOpen(false)}>{t("common.cancel")}</Button>
+              <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+                {t("common.cancel")}
+              </Button>
               <Button type="submit">{t("common.save")}</Button>
             </div>
           </div>
@@ -1616,8 +1678,8 @@ function NewMatchDialog({
 
 const GAME_OPTIONS: { value: Game; label: string; sub: string }[] = [
   { value: "optcg", label: "원피스 TCG", sub: "ONE PIECE CARD GAME" },
-  { value: "ptcg",  label: "포켓몬 TCG", sub: "Pokémon Trading Card Game" },
-  { value: "dtcg",  label: "디지몬 TCG", sub: "Digimon Card Game" },
+  { value: "ptcg", label: "포켓몬 TCG", sub: "Pokémon Trading Card Game" },
+  { value: "dtcg", label: "디지몬 TCG", sub: "Digimon Card Game" },
 ];
 
 function NewMatchMobileDrawer({
@@ -1710,7 +1772,11 @@ function NewMatchMobileDrawer({
           key={s}
           className={cn(
             "h-1.5 rounded-full transition-all duration-200",
-            step === s ? "w-5 bg-foreground" : step > s ? "w-2.5 bg-foreground/40" : "w-2.5 bg-muted",
+            step === s
+              ? "w-5 bg-foreground"
+              : step > s
+                ? "w-2.5 bg-foreground/40"
+                : "w-2.5 bg-muted",
           )}
         />
       ))}
@@ -1772,7 +1838,7 @@ function NewMatchMobileDrawer({
                 </p>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { value: "true",  label: t("matches.first") },
+                    { value: "true", label: t("matches.first") },
                     { value: "false", label: t("matches.second") },
                   ].map((opt) => (
                     <button
@@ -1799,9 +1865,21 @@ function NewMatchMobileDrawer({
                 </p>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { value: "win",  label: t("matches.win"),  active: "bg-emerald-600 border-emerald-600 text-white" },
-                    { value: "loss", label: t("matches.lose"), active: "bg-rose-600 border-rose-600 text-white" },
-                    { value: "draw", label: t("matches.draw"), active: "bg-foreground border-foreground text-background" },
+                    {
+                      value: "win",
+                      label: t("matches.win"),
+                      active: "bg-emerald-600 border-emerald-600 text-white",
+                    },
+                    {
+                      value: "loss",
+                      label: t("matches.lose"),
+                      active: "bg-rose-600 border-rose-600 text-white",
+                    },
+                    {
+                      value: "draw",
+                      label: t("matches.draw"),
+                      active: "bg-foreground border-foreground text-background",
+                    },
                   ].map((opt) => (
                     <button
                       key={opt.value}
@@ -1809,7 +1887,9 @@ function NewMatchMobileDrawer({
                       onClick={() => setForm((f) => ({ ...f, result: opt.value as Result }))}
                       className={cn(
                         "rounded-2xl border-2 py-4 text-sm font-semibold transition-all active:scale-[0.98]",
-                        form.result === opt.value ? opt.active : "border-border hover:border-foreground/30",
+                        form.result === opt.value
+                          ? opt.active
+                          : "border-border hover:border-foreground/30",
                       )}
                     >
                       {opt.label}
@@ -1819,7 +1899,12 @@ function NewMatchMobileDrawer({
               </div>
 
               <div className="flex gap-2 pt-1">
-                <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(1)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setStep(1)}
+                >
                   ← {t("common.back")}
                 </Button>
                 <Button type="button" className="flex-1" onClick={() => setStep(3)}>
@@ -1854,7 +1939,8 @@ function NewMatchMobileDrawer({
                     <SelectContent>
                       {decks.map((d) => (
                         <SelectItem key={d.id} value={d.id}>
-                          {d.name}{d.leader ? ` · ${d.leader}` : ""}
+                          {d.name}
+                          {d.leader ? ` · ${d.leader}` : ""}
                         </SelectItem>
                       ))}
                       <SelectItem value="manual">{t("matches.manualInput")}</SelectItem>
@@ -1866,7 +1952,11 @@ function NewMatchMobileDrawer({
                     <Input
                       value={form.my_deck}
                       onChange={(e) => setForm((f) => ({ ...f, my_deck: e.target.value }))}
-                      placeholder={decks.length === 0 ? t("matches.noSavedDecks") : t("matches.deckPlaceholder")}
+                      placeholder={
+                        decks.length === 0
+                          ? t("matches.noSavedDecks")
+                          : t("matches.deckPlaceholder")
+                      }
                       autoComplete="off"
                     />
                     {!keepRaw && (
@@ -1891,7 +1981,12 @@ function NewMatchMobileDrawer({
               </label>
 
               <div className="flex gap-2 pt-1">
-                <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(2)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setStep(2)}
+                >
                   ← {t("common.back")}
                 </Button>
                 <Button type="button" className="flex-1" onClick={submit}>
@@ -1906,13 +2001,7 @@ function NewMatchMobileDrawer({
   );
 }
 
-function NewMatchButton({
-  onCreated,
-  lastMatch,
-}: {
-  onCreated: () => void;
-  lastMatch?: Match;
-}) {
+function NewMatchButton({ onCreated, lastMatch }: { onCreated: () => void; lastMatch?: Match }) {
   const isMobile = useIsMobile();
   return isMobile ? (
     <NewMatchMobileDrawer onCreated={onCreated} lastMatch={lastMatch} />
@@ -1952,12 +2041,7 @@ function NormalizeButton({ onDone }: { onDone: () => void }) {
 
   const run = async () => {
     if (!user) return;
-    if (
-      !confirm(
-        t("matches.normalizeConfirm"),
-      )
-    )
-      return;
+    if (!confirm(t("matches.normalizeConfirm"))) return;
 
     setBusy(true);
     const toastId = toast.loading(t("matches.normalizingPrepare"));
@@ -1997,12 +2081,8 @@ function NormalizeButton({ onDone }: { onDone: () => void }) {
 
         for (const m of data ?? []) {
           const myDeck = normalizeDeckName(m.my_deck, m.game) || m.my_deck;
-          const oppLeader = m.opp_leader
-            ? normalizeDeckName(m.opp_leader, m.game) || null
-            : null;
-          const oppDeck = m.opp_deck
-            ? normalizeDeckName(m.opp_deck, m.game) || null
-            : null;
+          const oppLeader = m.opp_leader ? normalizeDeckName(m.opp_leader, m.game) || null : null;
+          const oppDeck = m.opp_deck ? normalizeDeckName(m.opp_deck, m.game) || null : null;
           if (
             myDeck !== m.my_deck ||
             (oppLeader ?? null) !== (m.opp_leader ?? null) ||
@@ -2079,10 +2159,7 @@ function NormalizeButton({ onDone }: { onDone: () => void }) {
       qc.invalidateQueries({ queryKey: ["matches"] });
       onDone();
     } catch (e) {
-      toast.error(
-        e instanceof Error ? e.message : t("matches.normalizeFailed"),
-        { id: toastId },
-      );
+      toast.error(e instanceof Error ? e.message : t("matches.normalizeFailed"), { id: toastId });
     } finally {
       setBusy(false);
       setProgress(null);
@@ -2141,19 +2218,18 @@ function applyFilters(rows: Match[], f: Filters): Match[] {
   return rows.filter((m) => {
     if (f.result !== "all" && m.result !== f.result) return false;
     if (f.event !== "all" && m.event !== f.event) return false;
-    if (f.myDeck && !m.my_deck.toLowerCase().includes(f.myDeck.toLowerCase()))
-      return false;
+    if (f.myDeck && !m.my_deck.toLowerCase().includes(f.myDeck.toLowerCase())) return false;
     if (f.opp) {
       const o = `${m.opp_leader ?? ""} ${m.opp_deck ?? ""}`.toLowerCase();
       if (!o.includes(f.opp.toLowerCase())) return false;
     }
     if (f.q) {
-      const hay = `${m.my_deck} ${m.opp_leader ?? ""} ${m.opp_deck ?? ""} ${m.notes ?? ""}`.toLowerCase();
+      const hay =
+        `${m.my_deck} ${m.opp_leader ?? ""} ${m.opp_deck ?? ""} ${m.notes ?? ""}`.toLowerCase();
       if (!hay.includes(f.q.toLowerCase())) return false;
     }
     if (f.from) {
-      if (new Date(m.played_at).getTime() < new Date(f.from).getTime())
-        return false;
+      if (new Date(m.played_at).getTime() < new Date(f.from).getTime()) return false;
     }
     if (f.to) {
       // include the whole 'to' day
@@ -2185,8 +2261,7 @@ function FilterBar({
     !!value.to;
   const filteredCount = useMemo(() => applyFilters(rows, value).length, [rows, value]);
 
-  const set = <K extends keyof Filters>(k: K, v: Filters[K]) =>
-    onChange({ ...value, [k]: v });
+  const set = <K extends keyof Filters>(k: K, v: Filters[K]) => onChange({ ...value, [k]: v });
 
   return (
     <section className="mt-6 rounded-lg border border-border bg-card">
@@ -2201,7 +2276,8 @@ function FilterBar({
           </button>
           {active && (
             <span className="text-xs text-muted-foreground">
-              · {filteredCount}/{rows.length}{t("matches.countMatched")}
+              · {filteredCount}/{rows.length}
+              {t("matches.countMatched")}
             </span>
           )}
         </div>
@@ -2219,11 +2295,10 @@ function FilterBar({
         <div className="grid grid-cols-2 gap-3 border-t border-border p-4 md:grid-cols-4">
           <div className="flex flex-col gap-1">
             <Label className="text-[11px]">{t("matches.result")}</Label>
-            <Select
-              value={value.result}
-              onValueChange={(v) => set("result", v as ResultFilter)}
-            >
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <Select value={value.result} onValueChange={(v) => set("result", v as ResultFilter)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("matches.all")}</SelectItem>
                 <SelectItem value="win">{t("matches.win")}</SelectItem>
@@ -2234,11 +2309,10 @@ function FilterBar({
           </div>
           <div className="flex flex-col gap-1">
             <Label className="text-[11px]">{t("matches.event")}</Label>
-            <Select
-              value={value.event}
-              onValueChange={(v) => set("event", v as EventT | "all")}
-            >
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <Select value={value.event} onValueChange={(v) => set("event", v as EventT | "all")}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("matches.all")}</SelectItem>
                 <SelectItem value="friendly">{t("matches.eventFriendly")}</SelectItem>
@@ -2265,19 +2339,11 @@ function FilterBar({
           </div>
           <div className="flex flex-col gap-1">
             <Label className="text-[11px]">{t("matches.startDate")}</Label>
-            <Input
-              type="date"
-              value={value.from}
-              onChange={(e) => set("from", e.target.value)}
-            />
+            <Input type="date" value={value.from} onChange={(e) => set("from", e.target.value)} />
           </div>
           <div className="flex flex-col gap-1">
             <Label className="text-[11px]">{t("matches.endDate")}</Label>
-            <Input
-              type="date"
-              value={value.to}
-              onChange={(e) => set("to", e.target.value)}
-            />
+            <Input type="date" value={value.to} onChange={(e) => set("to", e.target.value)} />
           </div>
           <div className="col-span-2 flex flex-col gap-1">
             <Label className="text-[11px]">{t("matches.keyword")}</Label>
@@ -2297,13 +2363,7 @@ function FilterBar({
 // Import / Export
 // ============================================================
 
-function ImportExportButton({
-  rows,
-  onImported,
-}: {
-  rows: Match[];
-  onImported: () => void;
-}) {
+function ImportExportButton({ rows, onImported }: { rows: Match[]; onImported: () => void }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { t } = useI18n();
@@ -2402,7 +2462,10 @@ function ImportExportButton({
           </div>
           <div className="border-t border-border pt-4">
             <p className="text-xs text-muted-foreground mb-2">
-              {t("matches.importDesc").replace("{headers}", "game, event, my_deck, opp_leader, opp_deck, went_first, result, notes, played_at")}
+              {t("matches.importDesc").replace(
+                "{headers}",
+                "game, event, my_deck, opp_leader, opp_deck, went_first, result, notes, played_at",
+              )}
             </p>
             <input
               ref={fileRef}
@@ -2411,11 +2474,7 @@ function ImportExportButton({
               onChange={onFile}
               className="hidden"
             />
-            <Button
-              size="sm"
-              onClick={() => fileRef.current?.click()}
-              disabled={busy}
-            >
+            <Button size="sm" onClick={() => fileRef.current?.click()} disabled={busy}>
               <Upload className="mr-1 h-4 w-4" />
               {busy ? t("matches.importing") : t("matches.selectFile")}
             </Button>
@@ -2472,9 +2531,7 @@ function TaggedAsOpponentSection({ onSaved }: { onSaved: () => void }) {
   return (
     <section className="mt-8">
       <h2 className="text-sm font-medium">{t("matches.taggedMatches")}</h2>
-      <p className="text-[11px] text-muted-foreground">
-        {t("matches.taggedMatchesDesc")}
-      </p>
+      <p className="text-[11px] text-muted-foreground">{t("matches.taggedMatchesDesc")}</p>
       <div className="mt-3 overflow-hidden rounded-lg border border-border bg-card">
         <table className="w-full text-sm">
           <thead className="border-b border-border bg-muted/30 text-xs text-muted-foreground">
@@ -2490,7 +2547,9 @@ function TaggedAsOpponentSection({ onSaved }: { onSaved: () => void }) {
             {rows.map((m) => (
               <tr key={m.id} className="border-b border-border last:border-0">
                 <td className="px-3 py-2 text-muted-foreground">
-                  {new Date(m.played_at).toLocaleDateString(language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US")}
+                  {new Date(m.played_at).toLocaleDateString(
+                    language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US",
+                  )}
                 </td>
                 <td className="px-3 py-2">{labelOf(m.game)}</td>
                 <td className="px-3 py-2">{m.my_deck}</td>

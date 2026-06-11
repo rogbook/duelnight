@@ -33,14 +33,14 @@ bun run test:sync-db               # 단위 테스트 (17건)
 
 ## 2026-06-11 1차 실행 결과
 
-| 항목 | 결과 |
-|---|---|
-| 반영 | **4,212건** (cards 3,841 / card_sets 108 / card_illustrations 212 / stores 24 / events 11 등) |
-| 사용자 보류 | 13건 (실사용자 profiles 3, decks 10 — Auth 이관 후 재실행 시 반영) |
-| FK 보류 | 1건 (lfg_comments 1 — 부모 lfg_post가 anon 읽기 불가) |
-| 시드 정리 | 16건 + 시드 일러스트 4건은 시드 카드 삭제 시 cascade 정리 |
-| 실패 | **0건** |
-| 검증 | 옛 URL 잔존 0건 / 카드 이미지 호스트: digimoncard.co.kr 3,097 · 자체 Storage 629 · Google Drive 115 / 샘플 이미지 HTTP 200 |
+| 항목        | 결과                                                                                                                       |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------- |
+| 반영        | **4,212건** (cards 3,841 / card_sets 108 / card_illustrations 212 / stores 24 / events 11 등)                              |
+| 사용자 보류 | 13건 (실사용자 profiles 3, decks 10 — Auth 이관 후 재실행 시 반영)                                                         |
+| FK 보류     | 1건 (lfg_comments 1 — 부모 lfg_post가 anon 읽기 불가)                                                                      |
+| 시드 정리   | 16건 + 시드 일러스트 4건은 시드 카드 삭제 시 cascade 정리                                                                  |
+| 실패        | **0건**                                                                                                                    |
+| 검증        | 옛 URL 잔존 0건 / 카드 이미지 호스트: digimoncard.co.kr 3,097 · 자체 Storage 629 · Google Drive 115 / 샘플 이미지 HTTP 200 |
 
 ## 전환(컷오버) 시점 절차
 

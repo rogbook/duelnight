@@ -16,14 +16,14 @@ Lovable Cloud Supabase(`tgybttphkmesgfbtgftt`) → **내 Supabase 프로젝트**
 
 기존 DB에는 있었지만 마이그레이션 파일이 누락된 것들. **컬럼 구조는 `src/integrations/supabase/types.ts`와 일치**하지만, RLS 정책과 함수 본문은 프로젝트 패턴을 따라 재구성한 것이므로 기존 DB와 다를 수 있음:
 
-| 객체 | 종류 | 비고 |
-|---|---|---|
-| `ai_usage` | 테이블 | 본인 조회만, 쓰기는 `log_ai_usage()` 경유 |
-| `subscriptions` | 테이블 | `user_id` UNIQUE 포함(`activate_subscription`의 ON CONFLICT에 필요). billing_key는 이후 마이그레이션이 분리·제거 |
-| `lfg_comments` | 테이블 | authenticated 읽기/본인 쓰기 정책 |
-| `lfg_comment_reports` | 테이블 | 신고자+관리자 조회 정책 |
-| `grant_credits(uuid,int,uuid)` | 함수 | 크레딧 지급, service_role 전용 |
-| `process_successful_payment(…10인자)` | 함수 | 구독/크레딧 통합 처리 버전 — **본문은 추정 재구성. 결제 기능 사용 전 반드시 동작 검토 필요** |
+| 객체                                  | 종류   | 비고                                                                                                             |
+| ------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------- |
+| `ai_usage`                            | 테이블 | 본인 조회만, 쓰기는 `log_ai_usage()` 경유                                                                        |
+| `subscriptions`                       | 테이블 | `user_id` UNIQUE 포함(`activate_subscription`의 ON CONFLICT에 필요). billing_key는 이후 마이그레이션이 분리·제거 |
+| `lfg_comments`                        | 테이블 | authenticated 읽기/본인 쓰기 정책                                                                                |
+| `lfg_comment_reports`                 | 테이블 | 신고자+관리자 조회 정책                                                                                          |
+| `grant_credits(uuid,int,uuid)`        | 함수   | 크레딧 지급, service_role 전용                                                                                   |
+| `process_successful_payment(…10인자)` | 함수   | 구독/크레딧 통합 처리 버전 — **본문은 추정 재구성. 결제 기능 사용 전 반드시 동작 검토 필요**                     |
 
 ## 적용 순서 보정 (파일 타임스탬프 ≠ 실제 적용 순서였던 것들)
 

@@ -18,6 +18,7 @@
 ## 1. 배경 / 현황 진단
 
 ### 1.1 현재 아키텍처
+
 - **앱 형태**: 순수 **PWA 웹앱** (`public/manifest.webmanifest`, `display: standalone`). 네이티브 래퍼(Capacitor/RN) 없음. Cloudflare 배포(`wrangler.jsonc`).
 - **결제 코드**:
   - 클라이언트: `src/lib/payment.ts`(PortOne SDK, Stripe.js), `src/components/payment/PaymentDialog.tsx`, `src/routes/store.tsx`
@@ -29,11 +30,12 @@
   - `process_successful_payment(...)` RPC — `order_id` 기준 **멱등 적립**(중복 결제 방지)
 
 ### 1.2 핵심 제약 (사업자등록 관점)
-| 결제 수단 | 사업자등록 | 비고 |
-|-----------|:---:|------|
-| PortOne(KG이니시스/토스 등) | ✅ **필수** | 개인은 PG 계약 불가 |
-| Stripe 직접 | ✅ **필수** | 사업자/법인 정보 필요 |
-| **MoR(아래 §2)** | ❌ **불필요** | 플랫폼이 법적 판매자가 되어 대신 정산 |
+
+| 결제 수단                   |  사업자등록   | 비고                                  |
+| --------------------------- | :-----------: | ------------------------------------- |
+| PortOne(KG이니시스/토스 등) |  ✅ **필수**  | 개인은 PG 계약 불가                   |
+| Stripe 직접                 |  ✅ **필수**  | 사업자/법인 정보 필요                 |
+| **MoR(아래 §2)**            | ❌ **불필요** | 플랫폼이 법적 판매자가 되어 대신 정산 |
 
 → **결론**: 사업자등록 전 단계에서는 **MoR 방식**만이 합법적으로 디지털 재화(크레딧) 결제를 받을 수 있는 현실적 경로다.
 
@@ -48,18 +50,20 @@
 - 웹에서는 **Lemon Squeezy / Paddle / Gumroad** 가 MoR 역할.
 
 ### 2.1 환경별 "사업자등록 없이" 가능한 옵션
-| 환경 | 수단 | 사업자등록 | 수수료(대략) | 정산 | 비고 |
-|------|------|:---:|---|---|------|
-| **웹** | **Lemon Squeezy** (현 Stripe 소유) | ❌ | ~5% + 건당 | Wise/PayPal/은행 | 개인 판매자 가입 가능. **한국 거주 가입·정산 수단 확인 필요** |
-| 웹 | Paddle | ❌ | ~5% + 건당 | 은행/PayPal | KYC가 다소 엄격 |
-| 웹 | Gumroad | ❌ | ~10% | PayPal 등 | 개인 친화적, 수수료 높음 |
-| **앱(iOS)** | **Apple IAP** | ❌ | 15~30% | 개인 은행 | 개인 개발자 $99/년. 네이티브 앱 필요 |
-| **앱(Android)** | **Google Play Billing** | ❌* | 15~30% | 개인 은행 | $25 1회. *세금정보 필요, 개인 가능. 네이티브 앱 필요 |
-| 웹 | PortOne/Stripe **직접** | ✅ | ~2~3% | 사업자 계좌 | **사업자등록 후 단계** |
+
+| 환경            | 수단                               | 사업자등록 | 수수료(대략) | 정산             | 비고                                                          |
+| --------------- | ---------------------------------- | :--------: | ------------ | ---------------- | ------------------------------------------------------------- |
+| **웹**          | **Lemon Squeezy** (현 Stripe 소유) |     ❌     | ~5% + 건당   | Wise/PayPal/은행 | 개인 판매자 가입 가능. **한국 거주 가입·정산 수단 확인 필요** |
+| 웹              | Paddle                             |     ❌     | ~5% + 건당   | 은행/PayPal      | KYC가 다소 엄격                                               |
+| 웹              | Gumroad                            |     ❌     | ~10%         | PayPal 등        | 개인 친화적, 수수료 높음                                      |
+| **앱(iOS)**     | **Apple IAP**                      |     ❌     | 15~30%       | 개인 은행        | 개인 개발자 $99/년. 네이티브 앱 필요                          |
+| **앱(Android)** | **Google Play Billing**            |    ❌\*    | 15~30%       | 개인 은행        | $25 1회. \*세금정보 필요, 개인 가능. 네이티브 앱 필요         |
+| 웹              | PortOne/Stripe **직접**            |     ✅     | ~2~3%        | 사업자 계좌      | **사업자등록 후 단계**                                        |
 
 > 수수료는 변동·소규모 사업자 할인 프로그램(예: Apple Small Business 15%, Google 15%)이 있으므로 가입 시 최신 정책 확인.
 
 ### 2.2 권장 선택
+
 - **웹 우선 + 사업자등록 전** → ✅ **Lemon Squeezy(웹 MoR)** 로 시작.
 - 추후 네이티브 앱(Capacitor) 출시 시 → **Apple/Google IAP** 추가.
 - 사업자등록 후 → **PortOne(국내)/Stripe(해외) 직접** 추가하여 수수료 절감.
@@ -75,12 +79,12 @@ PWA + 미연동  →  웹 MoR 연동     →  네이티브앱 + IAP  →  사업
               사업자등록 불필요   사업자등록 불필요    수수료 절감/대체
 ```
 
-| Phase | 목표 | 사업자등록 | 주요 작업 | 코드 영향 |
-|------|------|:---:|------|------|
-| **0** | 현황 | — | (완료) provider 컬럼·멱등 원장 보유 | — |
-| **1** | **웹 MoR 시작** | ❌ | Lemon Squeezy 상품 등록 + 체크아웃 + **웹훅 검증** → 기존 크레딧 적립 함수로 수렴 | provider 추상화, `lemonsqueezy` provider 추가 |
-| **2** | 앱 IAP | ❌ | Capacitor 래핑 + 스토어 consumable 상품 + **서버 영수증 검증**(Apple/Google) | `apple`/`google` provider 추가, 클라이언트 환경 분기 |
-| **3** | 직접 PG | ✅ | 사업자등록 후 PortOne/Stripe 직접 연동 활성화 | 기존 `portone`/`stripe` provider 재사용 |
+| Phase | 목표            | 사업자등록 | 주요 작업                                                                         | 코드 영향                                            |
+| ----- | --------------- | :--------: | --------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| **0** | 현황            |     —      | (완료) provider 컬럼·멱등 원장 보유                                               | —                                                    |
+| **1** | **웹 MoR 시작** |     ❌     | Lemon Squeezy 상품 등록 + 체크아웃 + **웹훅 검증** → 기존 크레딧 적립 함수로 수렴 | provider 추상화, `lemonsqueezy` provider 추가        |
+| **2** | 앱 IAP          |     ❌     | Capacitor 래핑 + 스토어 consumable 상품 + **서버 영수증 검증**(Apple/Google)      | `apple`/`google` provider 추가, 클라이언트 환경 분기 |
+| **3** | 직접 PG         |     ✅     | 사업자등록 후 PortOne/Stripe 직접 연동 활성화                                     | 기존 `portone`/`stripe` provider 재사용              |
 
 핵심: **모든 Phase가 같은 크레딧 원장으로 수렴**하므로 Phase 간 재작업이 최소화된다.
 
@@ -107,19 +111,19 @@ PWA + 미연동  →  웹 MoR 연동     →  네이티브앱 + IAP  →  사업
 ```
 
 ### 4.1 제안 인터페이스 (의사코드, 추후 구현)
+
 ```ts
 // src/lib/payments/types.ts (신규 예정)
-export type PaymentProvider =
-  | "lemonsqueezy" | "apple" | "google" | "portone" | "stripe";
+export type PaymentProvider = "lemonsqueezy" | "apple" | "google" | "portone" | "stripe";
 
 export interface VerifiedPayment {
   userId: string;
   packId: keyof typeof CREDIT_PACKS;
-  orderId: string;        // provider별 고유 주문/거래 ID → payments.order_id (멱등 키)
-  amountPaid: number;     // 실제 결제액 (위변조 검증용)
+  orderId: string; // provider별 고유 주문/거래 ID → payments.order_id (멱등 키)
+  amountPaid: number; // 실제 결제액 (위변조 검증용)
   currency: string;
   provider: PaymentProvider;
-  externalRef?: string;   // imp_uid / transactionId / subscription_id 등
+  externalRef?: string; // imp_uid / transactionId / subscription_id 등
 }
 
 export interface PaymentVerifier {
@@ -127,6 +131,7 @@ export interface PaymentVerifier {
   verify(rawPayload: unknown): Promise<VerifiedPayment>;
 }
 ```
+
 - 기존 `recordSuccessfulPayment`(`src/lib/payment.functions.ts`)를 **`grantCredits(VerifiedPayment)`** 로 일반화하여 모든 provider가 공유.
 - **금액 위변조 검증 원칙 통일**: 클라이언트가 보낸 값이 아니라 `packId`로 서버에서 산출한 기준가 = provider가 보고한 실제 결제액 비교. (이미 `verifyPortOnePayment`에 적용된 패턴을 전 provider로 확장)
 
@@ -137,10 +142,13 @@ export interface PaymentVerifier {
 > ⚠️ 마이그레이션은 Phase 1 구현 시 적용. 지금은 설계만.
 
 ### 5.1 `payments.provider` 확장
+
 - 현재 타입상 `"stripe" | "portone"` → `"lemonsqueezy" | "apple" | "google"` 추가 허용(텍스트 컬럼이라 스키마 변경 불필요, 타입/검증만 확장).
 
 ### 5.2 웹훅 멱등·감사 테이블 (신규 제안)
+
 MoR/스토어는 **웹훅(비동기 알림)** 으로 결제를 통지하므로, 재전송·중복에 대비한 이벤트 저장이 필요.
+
 ```sql
 -- 제안: payment_webhook_events
 CREATE TABLE IF NOT EXISTS public.payment_webhook_events (
@@ -154,9 +162,11 @@ CREATE TABLE IF NOT EXISTS public.payment_webhook_events (
   UNIQUE (provider, event_id)            -- 중복 웹훅 방지(멱등)
 );
 ```
+
 - 처리 흐름: 웹훅 수신 → 서명 검증 → `payment_webhook_events`에 INSERT(중복이면 skip) → `grantCredits()`(order_id 기준 2차 멱등).
 
 ### 5.3 멱등 적립 함수 재사용
+
 - 기존 `process_successful_payment` 패턴 유지. **단, 보너스 크레딧(예: 45,000원→5,000)을 정확히 반영하려면** `p_credits`를 명시 전달하는 오버로드를 사용해야 한다(원격 DB에 존재, 본문 검증 필요 — §8 참고).
 
 ---
@@ -164,6 +174,7 @@ CREATE TABLE IF NOT EXISTS public.payment_webhook_events (
 ## 6. Provider별 검증 플로우 (요약)
 
 ### 6.1 Lemon Squeezy (웹, Phase 1)
+
 1. 클라이언트: LS Checkout(상품/variant)로 결제창. `custom` 필드에 `user_id`, `pack_id` 동봉.
 2. 서버 웹훅 엔드포인트(예: `src/routes/api/payments.lemonsqueezy.ts` 신규):
    - `X-Signature` HMAC-SHA256 서명 검증(`LEMONSQUEEZY_WEBHOOK_SECRET`).
@@ -172,15 +183,18 @@ CREATE TABLE IF NOT EXISTS public.payment_webhook_events (
 3. 환불 시 크레딧 회수 정책 정의(선택).
 
 ### 6.2 Apple IAP (앱, Phase 2)
+
 - StoreKit 2 구매 → 서버에서 **App Store Server API**로 트랜잭션(JWS) 검증.
 - **App Store Server Notifications V2**(S2S 웹훅)로 환불/재구매 동기화.
 - consumable 상품 ID = `CREDIT_PACKS` 키와 매핑.
 
 ### 6.3 Google Play Billing (앱, Phase 2)
+
 - 구매 토큰 → **Play Developer API** `purchases.products.get`로 검증 후 `acknowledge`/`consume`.
 - **RTDN(Pub/Sub)** 으로 실시간 알림.
 
 ### 6.4 PortOne / Stripe (직접, Phase 3)
+
 - 기존 `verifyPortOnePayment`/`verifyStripePayment` 재사용. 사업자등록 후 PG 계약·키만 채우면 활성화.
 
 ---
@@ -196,22 +210,22 @@ CREATE TABLE IF NOT EXISTS public.payment_webhook_events (
 
 ## 8. ⚙️ 환경변수 (Phase별 추가 예정)
 
-| Phase | 변수 | 설명 |
-|------|------|------|
-| 1 | `LEMONSQUEEZY_API_KEY` | 서버 API 키 |
-| 1 | `LEMONSQUEEZY_STORE_ID` | 스토어 ID |
-| 1 | `LEMONSQUEEZY_WEBHOOK_SECRET` | 웹훅 서명 검증 |
-| 1 | `VITE_LEMONSQUEEZY_*` | 클라이언트 체크아웃 식별자(상품/variant) |
-| 2 | `APPLE_ISSUER_ID`/`APPLE_KEY_ID`/`APPLE_PRIVATE_KEY` | App Store Server API |
-| 2 | `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` | Play Developer API |
-| 3 | `PORTONE_API_KEY`/`PORTONE_API_SECRET`, `VITE_PORTONE_USER_CODE` | (기존) |
-| 3 | `STRIPE_SECRET_KEY`, `VITE_STRIPE_PUBLISHABLE_KEY` | (기존) |
+| Phase | 변수                                                             | 설명                                     |
+| ----- | ---------------------------------------------------------------- | ---------------------------------------- |
+| 1     | `LEMONSQUEEZY_API_KEY`                                           | 서버 API 키                              |
+| 1     | `LEMONSQUEEZY_STORE_ID`                                          | 스토어 ID                                |
+| 1     | `LEMONSQUEEZY_WEBHOOK_SECRET`                                    | 웹훅 서명 검증                           |
+| 1     | `VITE_LEMONSQUEEZY_*`                                            | 클라이언트 체크아웃 식별자(상품/variant) |
+| 2     | `APPLE_ISSUER_ID`/`APPLE_KEY_ID`/`APPLE_PRIVATE_KEY`             | App Store Server API                     |
+| 2     | `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`                               | Play Developer API                       |
+| 3     | `PORTONE_API_KEY`/`PORTONE_API_SECRET`, `VITE_PORTONE_USER_CODE` | (기존)                                   |
+| 3     | `STRIPE_SECRET_KEY`, `VITE_STRIPE_PUBLISHABLE_KEY`               | (기존)                                   |
 
 ---
 
 ## 9. ⚠️ 주의 / 미해결 결정 항목 (TODO)
 
-- [ ] **법률·세무**: 사업자등록 없이 시작해도 **소득은 과세 대상**(종합소득세). 한국은 계속·반복 사업 시 등록 의무가 있어, "테스트→본격화" 시점 판단은 **세무사 확인 필수**. *(본 문서는 법률/세무 조언이 아님)*
+- [ ] **법률·세무**: 사업자등록 없이 시작해도 **소득은 과세 대상**(종합소득세). 한국은 계속·반복 사업 시 등록 의무가 있어, "테스트→본격화" 시점 판단은 **세무사 확인 필수**. _(본 문서는 법률/세무 조언이 아님)_
 - [ ] **Lemon Squeezy 한국 거주 개인 판매자 가입 가능 여부 / 정산 수단(Wise·PayPal·국내 계좌) 확인.**
 - [ ] **수수료 트레이드오프 합의**: MoR ~5% / 스토어 15~30% vs 직접 PG ~2~3%. 매출 규모별 전환 시점 정의.
 - [ ] **보너스 크레딧 정확 적립**: 원격 DB의 `process_successful_payment(p_credits …)` 오버로드 본문 검증 후, 모든 provider 적립을 이 함수로 일원화(현 5-인자 버전은 `FLOOR(amount/10)`이라 보너스 누락).
@@ -222,6 +236,7 @@ CREATE TABLE IF NOT EXISTS public.payment_webhook_events (
 ---
 
 ## 10. 참고 문서
+
 - `docs/payment-integration-guide.md` — 기존 PortOne/PayPal 연동 가이드
 - `docs/GLOBAL_PAYMENT_WALKTHROUGH.md` — 글로벌 결제 흐름
 - `docs/payment-testing-guide.md` — 결제 테스트
@@ -232,6 +247,7 @@ CREATE TABLE IF NOT EXISTS public.payment_webhook_events (
 ---
 
 ### 구현 현황
+
 - ✅ **(2026-06-03) provider 추상화 리팩터링 완료** — `src/lib/payments/`로 분리. 동작 무변경(기존 Stripe/PortOne 그대로). 실제 생성된 구조는 아래.
 - ⬜ Lemon Squeezy 연동(Phase 1) — 스켈레톤만 존재(`providers/lemonsqueezy.server.ts`).
 - ⬜ `payment_webhook_events` 마이그레이션(§5.2).
@@ -253,6 +269,7 @@ src/lib/payment.functions.ts    # createServerFn 얇은 facade (인증 후 provi
 > **새 provider 추가 방법**: ① `providers/<name>.server.ts`에 검증/적립 로직 작성(또는 `PaymentVerifier` 구현) → ② 결제 결과를 `VerifiedPayment`로 정규화 → ③ `grantCredits()` 호출. 웹훅 기반(LS/Apple/Google)은 라우트(`src/routes/api/payments.<name>.ts`)에서 처리, 직접 PG는 `payment.functions.ts`에 서버 함수 래퍼 추가.
 
 ### 다음 액션 (Phase 1 착수 시)
+
 1. Lemon Squeezy 가입·상품(variant) 등록 후 `LEMONSQUEEZY_*` 환경변수 설정.
 2. 웹훅 라우트 + 서명 검증 + `lemonSqueezyVerifier.verify()` 구현 (§6.1).
 3. `payment_webhook_events` 마이그레이션 추가 (§5.2).

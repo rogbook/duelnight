@@ -1,7 +1,23 @@
 import { useEffect, useRef, useState } from "react";
-import { UploadCloud, Link2, Plus, X, Star, ArrowUp, Image as ImageIcon, Trash2 } from "lucide-react";
+import {
+  UploadCloud,
+  Link2,
+  Plus,
+  X,
+  Star,
+  ArrowUp,
+  Image as ImageIcon,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,10 +46,18 @@ type Props = {
 };
 
 const safeSegment = (s: string, fallback: string) =>
-  (s || "").trim().replace(/[^A-Za-z0-9_-]/g, "").toUpperCase() || fallback;
+  (s || "")
+    .trim()
+    .replace(/[^A-Za-z0-9_-]/g, "")
+    .toUpperCase() || fallback;
 
 export function ImageUploadDialog({
-  open, onOpenChange, initialImages, setCode, cardCode, onCommit,
+  open,
+  onOpenChange,
+  initialImages,
+  setCode,
+  cardCode,
+  onCommit,
 }: Props) {
   const [staged, setStaged] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -46,7 +70,9 @@ export function ImageUploadDialog({
   const [driveConnected, setDriveConnected] = useState(false);
   const [driveEmail, setDriveEmail] = useState<string | null>(null);
   const [driveFolderUrl, setDriveFolderUrl] = useState("");
-  const [driveFiles, setDriveFiles] = useState<Array<{ id: string; name: string; thumbnailLink?: string }>>([]);
+  const [driveFiles, setDriveFiles] = useState<
+    Array<{ id: string; name: string; thumbnailLink?: string }>
+  >([]);
   const [selectedDriveFiles, setSelectedDriveFiles] = useState<Set<string>>(new Set());
   const [driveLoading, setDriveLoading] = useState(false);
 
@@ -59,13 +85,15 @@ export function ImageUploadDialog({
       setSelectedDriveFiles(new Set());
       // 드라이브 연결 확인
       getDriveConnectionFn()
-        .then(res => {
+        .then((res) => {
           if (res) {
             setDriveConnected(res.connected);
             if (res.email) setDriveEmail(res.email);
           }
         })
-        .catch(() => { /* ignore */ });
+        .catch(() => {
+          /* ignore */
+        });
     }
   }, [open, initialImages]);
 
@@ -85,7 +113,8 @@ export function ImageUploadDialog({
       for (const original of files) {
         if (!original.type.startsWith("image/")) {
           toast.error(`${original.name}: 이미지가 아닙니다`);
-          done++; setProgress({ done, total: files.length });
+          done++;
+          setProgress({ done, total: files.length });
           continue;
         }
         try {
@@ -110,7 +139,7 @@ export function ImageUploadDialog({
         setProgress({ done, total: files.length });
       }
       if (uploaded.length) {
-        setStaged(prev => [...prev, ...uploaded]);
+        setStaged((prev) => [...prev, ...uploaded]);
         toast.success(`${uploaded.length}장 추가됨`);
       }
     } finally {
@@ -137,7 +166,7 @@ export function ImageUploadDialog({
     if (!v) return;
     const normalized = normalizeImageUrl(v);
     if (!normalized) return;
-    setStaged(prev => [...prev, normalized]);
+    setStaged((prev) => [...prev, normalized]);
     setUrlInput("");
   };
 
@@ -168,7 +197,10 @@ export function ImageUploadDialog({
 
   const importDrive = async () => {
     const targets = Array.from(selectedDriveFiles);
-    if (!targets.length) { toast.error("선택된 파일이 없습니다"); return; }
+    if (!targets.length) {
+      toast.error("선택된 파일이 없습니다");
+      return;
+    }
     setUploading(true);
     setProgress({ done: 0, total: targets.length });
     try {
@@ -181,7 +213,7 @@ export function ImageUploadDialog({
         setProgress({ done: Math.min(i + CHUNK, targets.length), total: targets.length });
       }
       if (urls.length) {
-        setStaged(prev => [...prev, ...urls]);
+        setStaged((prev) => [...prev, ...urls]);
         toast.success(`${urls.length}장 추가됨`);
         setSelectedDriveFiles(new Set());
       }
@@ -202,7 +234,7 @@ export function ImageUploadDialog({
     next.splice(to, 0, item);
     setStaged(next);
   };
-  const removeAt = (idx: number) => setStaged(prev => prev.filter((_, i) => i !== idx));
+  const removeAt = (idx: number) => setStaged((prev) => prev.filter((_, i) => i !== idx));
   const promote = (idx: number) => move(idx, 0);
 
   const commit = () => {
@@ -216,30 +248,49 @@ export function ImageUploadDialog({
         <DialogHeader>
           <DialogTitle>이미지 등록</DialogTitle>
           <DialogDescription>
-            파일 업로드 · URL · Google Drive에서 이미지를 추가하고, 아래 목록에서 순서를 변경하거나 삭제한 뒤 <b>업로드</b>를 눌러 카드에 적용하세요.
+            파일 업로드 · URL · Google Drive에서 이미지를 추가하고, 아래 목록에서 순서를 변경하거나
+            삭제한 뒤 <b>업로드</b>를 눌러 카드에 적용하세요.
           </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="file">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="file"><UploadCloud className="mr-1 h-4 w-4" />파일</TabsTrigger>
-            <TabsTrigger value="url"><Link2 className="mr-1 h-4 w-4" />URL</TabsTrigger>
-            <TabsTrigger value="drive"><ImageIcon className="mr-1 h-4 w-4" />Drive</TabsTrigger>
+            <TabsTrigger value="file">
+              <UploadCloud className="mr-1 h-4 w-4" />
+              파일
+            </TabsTrigger>
+            <TabsTrigger value="url">
+              <Link2 className="mr-1 h-4 w-4" />
+              URL
+            </TabsTrigger>
+            <TabsTrigger value="drive">
+              <ImageIcon className="mr-1 h-4 w-4" />
+              Drive
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="file" className="mt-3">
             <div
-              onDragOver={(e) => { e.preventDefault(); setDragHover(true); }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragHover(true);
+              }}
               onDragLeave={() => setDragHover(false)}
               onDrop={onDrop}
               onClick={() => fileInputRef.current?.click()}
               className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-                dragHover ? "border-primary bg-primary/5" : "border-border bg-muted/20 hover:bg-muted/30"
+                dragHover
+                  ? "border-primary bg-primary/5"
+                  : "border-border bg-muted/20 hover:bg-muted/30"
               }`}
             >
               <UploadCloud className="mx-auto h-10 w-10 text-muted-foreground mb-2" />
-              <p className="font-medium">파일을 끌어다 놓거나 <span className="text-primary underline">찾아보기</span></p>
-              <p className="text-xs text-muted-foreground mt-1">JPEG, PNG, GIF, WebP 지원 · 다중 선택 가능</p>
+              <p className="font-medium">
+                파일을 끌어다 놓거나 <span className="text-primary underline">찾아보기</span>
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                JPEG, PNG, GIF, WebP 지원 · 다중 선택 가능
+              </p>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -258,12 +309,18 @@ export function ImageUploadDialog({
               <Input
                 value={urlInput}
                 onChange={(e) => setUrlInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addUrl(); } }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addUrl();
+                  }
+                }}
                 placeholder="https://… 또는 https://drive.google.com/…"
                 className="font-mono text-xs"
               />
               <Button type="button" onClick={addUrl} disabled={!urlInput.trim()}>
-                <Plus className="mr-1 h-4 w-4" />추가
+                <Plus className="mr-1 h-4 w-4" />
+                추가
               </Button>
             </div>
             <p className="text-[11px] text-muted-foreground">
@@ -275,7 +332,9 @@ export function ImageUploadDialog({
             {!driveConnected ? (
               <div className="flex flex-col items-center justify-center py-6 border-2 border-dashed rounded-lg bg-muted/20">
                 <ImageIcon className="h-10 w-10 text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground mb-3">Google Drive 계정을 연결해야 합니다.</p>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Google Drive 계정을 연결해야 합니다.
+                </p>
                 <Button onClick={connectDrive} size="sm">
                   <Plus className="mr-1 h-4 w-4" /> Google Drive 연결
                 </Button>
@@ -284,7 +343,12 @@ export function ImageUploadDialog({
               <>
                 <div className="flex items-center justify-between p-2 border rounded-md bg-muted/10 text-xs">
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-600/20">연결됨</Badge>
+                    <Badge
+                      variant="outline"
+                      className="bg-green-500/10 text-green-600 border-green-600/20"
+                    >
+                      연결됨
+                    </Badge>
                     <span className="font-medium truncate">{driveEmail}</span>
                   </div>
                 </div>
@@ -295,46 +359,70 @@ export function ImageUploadDialog({
                     onChange={(e) => setDriveFolderUrl(e.target.value)}
                     className="text-xs"
                   />
-                  <Button onClick={previewDrive} disabled={driveLoading || !driveFolderUrl} size="sm">
+                  <Button
+                    onClick={previewDrive}
+                    disabled={driveLoading || !driveFolderUrl}
+                    size="sm"
+                  >
                     {driveLoading ? "조회중…" : "미리보기"}
                   </Button>
                 </div>
                 {driveFiles.length > 0 && (
                   <>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium">{driveFiles.length}개 발견 · {selectedDriveFiles.size}개 선택</span>
+                      <span className="text-xs font-medium">
+                        {driveFiles.length}개 발견 · {selectedDriveFiles.size}개 선택
+                      </span>
                       <div className="flex items-center gap-2">
                         <Checkbox
                           id="all-drive-dlg"
                           checked={selectedDriveFiles.size === driveFiles.length}
                           onCheckedChange={(c) => {
-                            if (c) setSelectedDriveFiles(new Set(driveFiles.map(f => f.id)));
+                            if (c) setSelectedDriveFiles(new Set(driveFiles.map((f) => f.id)));
                             else setSelectedDriveFiles(new Set());
                           }}
                         />
-                        <Label htmlFor="all-drive-dlg" className="text-xs">전체 선택</Label>
+                        <Label htmlFor="all-drive-dlg" className="text-xs">
+                          전체 선택
+                        </Label>
                       </div>
                     </div>
                     <div className="grid grid-cols-5 gap-2 max-h-48 overflow-y-auto p-1 border rounded-md bg-muted/5">
-                      {driveFiles.map(f => (
+                      {driveFiles.map((f) => (
                         <div
                           key={f.id}
-                          onClick={() => setSelectedDriveFiles(prev => {
-                            const next = new Set(prev);
-                            if (next.has(f.id)) next.delete(f.id); else next.add(f.id);
-                            return next;
-                          })}
+                          onClick={() =>
+                            setSelectedDriveFiles((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(f.id)) next.delete(f.id);
+                              else next.add(f.id);
+                              return next;
+                            })
+                          }
                           className={`relative cursor-pointer rounded border ${selectedDriveFiles.has(f.id) ? "border-primary ring-1 ring-primary" : "border-border"}`}
                         >
-                          {f.thumbnailLink
-                            ? <img src={f.thumbnailLink} alt="" className="w-full aspect-[3/4] object-cover rounded-sm" />
-                            : <div className="w-full aspect-[3/4] bg-muted rounded-sm" />}
-                          <div className="absolute bottom-0 inset-x-0 bg-black/60 text-[9px] text-white p-0.5 truncate">{f.name}</div>
+                          {f.thumbnailLink ? (
+                            <img
+                              src={f.thumbnailLink}
+                              alt=""
+                              className="w-full aspect-[3/4] object-cover rounded-sm"
+                            />
+                          ) : (
+                            <div className="w-full aspect-[3/4] bg-muted rounded-sm" />
+                          )}
+                          <div className="absolute bottom-0 inset-x-0 bg-black/60 text-[9px] text-white p-0.5 truncate">
+                            {f.name}
+                          </div>
                         </div>
                       ))}
                     </div>
-                    <Button onClick={importDrive} size="sm" disabled={uploading || selectedDriveFiles.size === 0}>
-                      <Plus className="mr-1 h-4 w-4" />선택한 {selectedDriveFiles.size}개 가져오기
+                    <Button
+                      onClick={importDrive}
+                      size="sm"
+                      disabled={uploading || selectedDriveFiles.size === 0}
+                    >
+                      <Plus className="mr-1 h-4 w-4" />
+                      선택한 {selectedDriveFiles.size}개 가져오기
                     </Button>
                   </>
                 )}
@@ -348,7 +436,9 @@ export function ImageUploadDialog({
           <div className="space-y-1.5">
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>업로드 중…</span>
-              <span>{progress.done}/{progress.total}</span>
+              <span>
+                {progress.done}/{progress.total}
+              </span>
             </div>
             <Progress value={(progress.done / progress.total) * 100} />
           </div>
@@ -358,7 +448,9 @@ export function ImageUploadDialog({
         <div className="border-t pt-3">
           <div className="flex items-center justify-between mb-2">
             <Label className="text-sm">등록 대기 ({staged.length}장)</Label>
-            <span className="text-[11px] text-muted-foreground">드래그로 순서 변경 · 첫 번째가 메인</span>
+            <span className="text-[11px] text-muted-foreground">
+              드래그로 순서 변경 · 첫 번째가 메인
+            </span>
           </div>
           {staged.length === 0 ? (
             <div className="text-center text-xs text-muted-foreground py-6 border rounded-md bg-muted/10">
@@ -370,11 +462,28 @@ export function ImageUploadDialog({
                 <div
                   key={`${u}-${i}`}
                   draggable
-                  onDragStart={(e) => { setDragIdx(i); e.dataTransfer.effectAllowed = "move"; }}
-                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; if (overIdx !== i) setOverIdx(i); }}
-                  onDragLeave={() => { if (overIdx === i) setOverIdx(null); }}
-                  onDrop={(e) => { e.preventDefault(); if (dragIdx !== null && dragIdx !== i) move(dragIdx, i); setDragIdx(null); setOverIdx(null); }}
-                  onDragEnd={() => { setDragIdx(null); setOverIdx(null); }}
+                  onDragStart={(e) => {
+                    setDragIdx(i);
+                    e.dataTransfer.effectAllowed = "move";
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                    if (overIdx !== i) setOverIdx(i);
+                  }}
+                  onDragLeave={() => {
+                    if (overIdx === i) setOverIdx(null);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (dragIdx !== null && dragIdx !== i) move(dragIdx, i);
+                    setDragIdx(null);
+                    setOverIdx(null);
+                  }}
+                  onDragEnd={() => {
+                    setDragIdx(null);
+                    setOverIdx(null);
+                  }}
                   className={`relative cursor-move transition-opacity ${dragIdx === i ? "opacity-40" : ""} ${overIdx === i && dragIdx !== i ? "ring-2 ring-primary rounded" : ""}`}
                   title="드래그하여 순서 변경"
                 >
@@ -386,7 +495,8 @@ export function ImageUploadDialog({
                   />
                   {i === 0 ? (
                     <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] px-1.5 py-0 h-4 gap-0.5">
-                      <Star className="h-2.5 w-2.5" />메인
+                      <Star className="h-2.5 w-2.5" />
+                      메인
                     </Badge>
                   ) : (
                     <button
@@ -417,9 +527,12 @@ export function ImageUploadDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={uploading}>취소</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={uploading}>
+            취소
+          </Button>
           <Button onClick={commit} disabled={uploading}>
-            <UploadCloud className="mr-1 h-4 w-4" />업로드 ({staged.length})
+            <UploadCloud className="mr-1 h-4 w-4" />
+            업로드 ({staged.length})
           </Button>
         </DialogFooter>
       </DialogContent>

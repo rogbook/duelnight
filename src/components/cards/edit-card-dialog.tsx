@@ -7,10 +7,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -25,7 +33,11 @@ type Game = string;
 type CardType = Database["public"]["Enums"]["card_type"];
 
 const TYPE_LABEL: Record<CardType, string> = {
-  leader: "리더", character: "캐릭터", event: "이벤트", stage: "스테이지", don: "DON!!",
+  leader: "리더",
+  character: "캐릭터",
+  event: "이벤트",
+  stage: "스테이지",
+  don: "DON!!",
 };
 const TYPES: CardType[] = ["leader", "character", "event", "stage", "don"];
 
@@ -33,12 +45,22 @@ const TYPES: CardType[] = ["leader", "character", "event", "stage", "don"];
 const DIGIMON_CATEGORIES = ["디지타마", "디지몬", "옵션", "테이머", "듀얼"];
 const DIGIMON_FORMS = ["유년기", "성장기", "성숙기", "완전체", "궁극체"];
 const DIGIMON_CATEGORY_TYPE: Record<string, CardType> = {
-  디지타마: "stage", 디지몬: "character", 옵션: "event", 테이머: "character", 듀얼: "character",
+  디지타마: "stage",
+  디지몬: "character",
+  옵션: "event",
+  테이머: "character",
+  듀얼: "character",
 };
 
 export function EditCardDialog({
-  card, onClose, onSaved,
-}: { card: CardRow; onClose: () => void; onSaved: () => void }) {
+  card,
+  onClose,
+  onSaved,
+}: {
+  card: CardRow;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
   const [isManualSet, setIsManualSet] = useState(false);
   const ex0 = (card.extra ?? {}) as Record<string, string>;
   const [form, setForm] = useState({
@@ -67,12 +89,13 @@ export function EditCardDialog({
   // 선택된 게임의 세트만 표시
   const { sets } = useUniqueSets(form.game);
   const { games, labelOf } = useGames();
-  const displaySets = Array.from(new Set([card.set_code, ...sets])).filter(Boolean).sort((a, b) => a.localeCompare(b));
+  const displaySets = Array.from(new Set([card.set_code, ...sets]))
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b));
   const [extraImages, setExtraImages] = useState<string[]>([]);
   const [initialAltImages, setInitialAltImages] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
-
 
   // 기존 추가 일러스트 로드
   useEffect(() => {
@@ -91,7 +114,9 @@ export function EditCardDialog({
       setExtraImages(urls);
       setInitialAltImages(urls);
     })();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [card.code]);
 
   const onSave = async () => {
@@ -105,7 +130,10 @@ export function EditCardDialog({
         const n = Number(v);
         return v.trim() === "" || !Number.isFinite(n) ? null : n;
       };
-      const colors = form.colors.split(/[,|;/]/).map((s) => s.trim()).filter(Boolean);
+      const colors = form.colors
+        .split(/[,|;/]/)
+        .map((s) => s.trim())
+        .filter(Boolean);
       const newCode = form.code.trim();
       const codeChanged = newCode !== card.code;
 
@@ -122,7 +150,6 @@ export function EditCardDialog({
         }
       }
 
-
       // 디지몬 규칙: 종류→type 매핑, 상단/하단→effect 결합, extra 저장, 카운터 제거
       const isDtcg = form.game === "dtcg";
       let typeToSave = form.type;
@@ -132,15 +159,19 @@ export function EditCardDialog({
       if (isDtcg) {
         const clean: Record<string, string> = {};
         const entries: Record<string, string> = {
-          category: form.category, form: form.formStage,
-          evo_cost_1: form.evo_cost_1, evo_cost_2: form.evo_cost_2,
-          text_top: form.text_top, text_bottom: form.text_bottom,
+          category: form.category,
+          form: form.formStage,
+          evo_cost_1: form.evo_cost_1,
+          evo_cost_2: form.evo_cost_2,
+          text_top: form.text_top,
+          text_bottom: form.text_bottom,
         };
         for (const [k, v] of Object.entries(entries)) {
           if (v && v.trim()) clean[k] = v.trim();
         }
         extraPayload = Object.keys(clean).length ? clean : null;
-        if (form.category && DIGIMON_CATEGORY_TYPE[form.category]) typeToSave = DIGIMON_CATEGORY_TYPE[form.category];
+        if (form.category && DIGIMON_CATEGORY_TYPE[form.category])
+          typeToSave = DIGIMON_CATEGORY_TYPE[form.category];
         const top = form.text_top.trim();
         const bottom = form.text_bottom.trim();
         effectToSave = [top, bottom].filter(Boolean).join("\n\n") || null;
@@ -163,7 +194,14 @@ export function EditCardDialog({
           rarity: form.rarity.trim() || null,
           effect: effectToSave,
           image_url: normalizeImageUrl(form.image_url.trim()) || null,
-          traits: Array.from(new Set(form.traits.split(/[|,;/]/).map((s) => s.trim()).filter(Boolean))),
+          traits: Array.from(
+            new Set(
+              form.traits
+                .split(/[|,;/]/)
+                .map((s) => s.trim())
+                .filter(Boolean),
+            ),
+          ),
           ...(isDtcg ? { extra: extraPayload } : {}),
         })
         .eq("id", card.id);
@@ -171,11 +209,7 @@ export function EditCardDialog({
 
       // 추가 일러스트 reconcile (메인 외의 이미지)
       const currentExtras = Array.from(
-        new Set(
-          extraImages
-            .map((u) => normalizeImageUrl(u) ?? u)
-            .filter((u): u is string => !!u),
-        ),
+        new Set(extraImages.map((u) => normalizeImageUrl(u) ?? u).filter((u): u is string => !!u)),
       );
       const initialSet = new Set(initialAltImages);
       const currentSet = new Set(currentExtras);
@@ -223,7 +257,9 @@ export function EditCardDialog({
       }
 
       setInitialAltImages(currentExtras);
-      toast.success("카드 수정 완료" + (codeChanged ? ` (코드 변경: ${card.code} → ${newCode})` : ""));
+      toast.success(
+        "카드 수정 완료" + (codeChanged ? ` (코드 변경: ${card.code} → ${newCode})` : ""),
+      );
       onSaved();
     } catch (err) {
       toast.error("저장 실패: " + (err as Error).message);
@@ -233,7 +269,12 @@ export function EditCardDialog({
   };
 
   return (
-    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog
+      open
+      onOpenChange={(o) => {
+        if (!o) onClose();
+      }}
+    >
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>카드 편집 · {card.code}</DialogTitle>
@@ -246,9 +287,15 @@ export function EditCardDialog({
           <div>
             <Label className="text-xs">게임</Label>
             <Select value={form.game} onValueChange={(v) => setForm({ ...form, game: v as Game })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
-                {games.map((g) => <SelectItem key={g.code} value={g.code}>{labelOf(g.code)}</SelectItem>)}
+                {games.map((g) => (
+                  <SelectItem key={g.code} value={g.code}>
+                    {labelOf(g.code)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -256,26 +303,57 @@ export function EditCardDialog({
             <>
               <div>
                 <Label className="text-xs">종류</Label>
-                <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                  <SelectTrigger><SelectValue placeholder="종류 선택" /></SelectTrigger>
-                  <SelectContent>{DIGIMON_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                <Select
+                  value={form.category}
+                  onValueChange={(v) => setForm({ ...form, category: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="종류 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DIGIMON_CATEGORIES.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label className="text-xs">형태</Label>
-                <Select value={form.formStage} onValueChange={(v) => setForm({ ...form, formStage: v })}>
-                  <SelectTrigger><SelectValue placeholder="형태 선택" /></SelectTrigger>
-                  <SelectContent>{DIGIMON_FORMS.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
+                <Select
+                  value={form.formStage}
+                  onValueChange={(v) => setForm({ ...form, formStage: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="형태 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DIGIMON_FORMS.map((f) => (
+                      <SelectItem key={f} value={f}>
+                        {f}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               </div>
             </>
           ) : (
             <div>
               <Label className="text-xs">종류</Label>
-              <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v as CardType })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={form.type}
+                onValueChange={(v) => setForm({ ...form, type: v as CardType })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  {TYPES.map((t) => <SelectItem key={t} value={t}>{TYPE_LABEL[t]}</SelectItem>)}
+                  {TYPES.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {TYPE_LABEL[t]}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -287,7 +365,9 @@ export function EditCardDialog({
               onChange={(e) => setForm({ ...form, code: e.target.value })}
               placeholder="예: OP01-001"
             />
-            <p className="mt-1 text-[10px] text-muted-foreground">변경 시 중복 확인 후 저장됩니다</p>
+            <p className="mt-1 text-[10px] text-muted-foreground">
+              변경 시 중복 확인 후 저장됩니다
+            </p>
           </div>
           <div>
             <Label className="text-xs flex items-center justify-between">
@@ -298,7 +378,8 @@ export function EditCardDialog({
                   onClick={() => setIsManualSet(true)}
                   className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
                 >
-                  <Keyboard className="h-3 w-3" />직접 입력
+                  <Keyboard className="h-3 w-3" />
+                  직접 입력
                 </button>
               )}
             </Label>
@@ -333,7 +414,9 @@ export function EditCardDialog({
                 </SelectTrigger>
                 <SelectContent>
                   {displaySets.map((s) => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
                   ))}
                   <SelectItem value="__NEW_SET__" className="text-primary font-medium">
                     + 직접 입력 / 신규 세트 추가
@@ -344,57 +427,101 @@ export function EditCardDialog({
           </div>
           <div>
             <Label className="text-xs">색상 (쉼표 구분)</Label>
-            <Input value={form.colors} onChange={(e) => setForm({ ...form, colors: e.target.value })} placeholder="red, blue" />
+            <Input
+              value={form.colors}
+              onChange={(e) => setForm({ ...form, colors: e.target.value })}
+              placeholder="red, blue"
+            />
           </div>
           {form.game === "dtcg" ? (
             <>
               <div>
                 <Label className="text-xs">DP</Label>
-                <Input type="number" value={form.power} onChange={(e) => setForm({ ...form, power: e.target.value })} />
+                <Input
+                  type="number"
+                  value={form.power}
+                  onChange={(e) => setForm({ ...form, power: e.target.value })}
+                />
               </div>
               <div>
                 <Label className="text-xs">등장 코스트</Label>
-                <Input type="number" value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} />
+                <Input
+                  type="number"
+                  value={form.cost}
+                  onChange={(e) => setForm({ ...form, cost: e.target.value })}
+                />
               </div>
               <div>
                 <Label className="text-xs">진화 코스트 1</Label>
-                <Input value={form.evo_cost_1} onChange={(e) => setForm({ ...form, evo_cost_1: e.target.value })} placeholder="예: Lv.3" />
+                <Input
+                  value={form.evo_cost_1}
+                  onChange={(e) => setForm({ ...form, evo_cost_1: e.target.value })}
+                  placeholder="예: Lv.3"
+                />
               </div>
               <div>
                 <Label className="text-xs">진화 코스트 2</Label>
-                <Input value={form.evo_cost_2} onChange={(e) => setForm({ ...form, evo_cost_2: e.target.value })} placeholder="예: Lv.4 / -" />
+                <Input
+                  value={form.evo_cost_2}
+                  onChange={(e) => setForm({ ...form, evo_cost_2: e.target.value })}
+                  placeholder="예: Lv.4 / -"
+                />
               </div>
               <div>
                 <Label className="text-xs">속성</Label>
-                <Input value={form.attribute} onChange={(e) => setForm({ ...form, attribute: e.target.value })} placeholder="백신종/데이터종/바이러스종" />
+                <Input
+                  value={form.attribute}
+                  onChange={(e) => setForm({ ...form, attribute: e.target.value })}
+                  placeholder="백신종/데이터종/바이러스종"
+                />
               </div>
             </>
           ) : (
             <>
               <div>
                 <Label className="text-xs">비용</Label>
-                <Input type="number" value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} />
+                <Input
+                  type="number"
+                  value={form.cost}
+                  onChange={(e) => setForm({ ...form, cost: e.target.value })}
+                />
               </div>
               <div>
                 <Label className="text-xs">파워</Label>
-                <Input type="number" value={form.power} onChange={(e) => setForm({ ...form, power: e.target.value })} />
+                <Input
+                  type="number"
+                  value={form.power}
+                  onChange={(e) => setForm({ ...form, power: e.target.value })}
+                />
               </div>
               <div>
                 <Label className="text-xs">카운터</Label>
-                <Input type="number" value={form.counter} onChange={(e) => setForm({ ...form, counter: e.target.value })} />
+                <Input
+                  type="number"
+                  value={form.counter}
+                  onChange={(e) => setForm({ ...form, counter: e.target.value })}
+                />
               </div>
               <div>
                 <Label className="text-xs">속성</Label>
-                <Input value={form.attribute} onChange={(e) => setForm({ ...form, attribute: e.target.value })} />
+                <Input
+                  value={form.attribute}
+                  onChange={(e) => setForm({ ...form, attribute: e.target.value })}
+                />
               </div>
             </>
           )}
           <div>
             <Label className="text-xs">레어도</Label>
-            <Input value={form.rarity} onChange={(e) => setForm({ ...form, rarity: e.target.value })} />
+            <Input
+              value={form.rarity}
+              onChange={(e) => setForm({ ...form, rarity: e.target.value })}
+            />
           </div>
           <div className="sm:col-span-2">
-            <Label className="text-xs">이미지 ({(form.image_url ? 1 : 0) + extraImages.length}장)</Label>
+            <Label className="text-xs">
+              이미지 ({(form.image_url ? 1 : 0) + extraImages.length}장)
+            </Label>
             <div className="mt-1 flex flex-wrap items-start gap-3">
               {form.image_url ? (
                 <div className="relative">
@@ -404,7 +531,8 @@ export function EditCardDialog({
                     className="h-32 w-24 rounded border-2 border-primary object-cover"
                   />
                   <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] px-1.5 py-0 h-4 gap-0.5">
-                    <Star className="h-2.5 w-2.5" />메인
+                    <Star className="h-2.5 w-2.5" />
+                    메인
                   </Badge>
                   <button
                     type="button"
@@ -474,27 +602,43 @@ export function EditCardDialog({
             <Input
               value={form.image_url}
               onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-              onBlur={(e) => setForm({ ...form, image_url: normalizeImageUrl(e.target.value) ?? "" })}
+              onBlur={(e) =>
+                setForm({ ...form, image_url: normalizeImageUrl(e.target.value) ?? "" })
+              }
               placeholder="https://... 또는 https://drive.google.com/file/d/.../view"
             />
           </div>
           <div className="sm:col-span-2">
-            <Label className="text-xs">{form.game === "dtcg" ? "유형 (쉼표 또는 | 로 구분)" : "특징 (쉼표 또는 | 로 구분)"}</Label>
+            <Label className="text-xs">
+              {form.game === "dtcg" ? "유형 (쉼표 또는 | 로 구분)" : "특징 (쉼표 또는 | 로 구분)"}
+            </Label>
             <Input
               value={form.traits}
               onChange={(e) => setForm({ ...form, traits: e.target.value })}
-              placeholder={form.game === "dtcg" ? "리버레이터, 파충류형" : "밀짚모자 해적단, 초신성"}
+              placeholder={
+                form.game === "dtcg" ? "리버레이터, 파충류형" : "밀짚모자 해적단, 초신성"
+              }
             />
           </div>
           {form.game === "dtcg" ? (
             <>
               <div className="sm:col-span-2">
                 <Label className="text-xs">상단 텍스트</Label>
-                <Textarea value={form.text_top} onChange={(e) => setForm({ ...form, text_top: e.target.value })} rows={3} placeholder="[등장 시] ..." />
+                <Textarea
+                  value={form.text_top}
+                  onChange={(e) => setForm({ ...form, text_top: e.target.value })}
+                  rows={3}
+                  placeholder="[등장 시] ..."
+                />
               </div>
               <div className="sm:col-span-2">
                 <Label className="text-xs">하단 텍스트</Label>
-                <Textarea value={form.text_bottom} onChange={(e) => setForm({ ...form, text_bottom: e.target.value })} rows={3} placeholder="[자신의 턴] ..." />
+                <Textarea
+                  value={form.text_bottom}
+                  onChange={(e) => setForm({ ...form, text_bottom: e.target.value })}
+                  rows={3}
+                  placeholder="[자신의 턴] ..."
+                />
               </div>
             </>
           ) : (
@@ -509,14 +653,23 @@ export function EditCardDialog({
           )}
           {form.game === "optcg" && (
             <div className="sm:col-span-2 border-t border-border pt-3">
-              <CardEffectsEditor cardId={card.id} initial={(card as { effects?: unknown }).effects} />
+              <CardEffectsEditor
+                cardId={card.id}
+                initial={(card as { effects?: unknown }).effects}
+              />
             </div>
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={saving}>취소</Button>
+          <Button variant="outline" onClick={onClose} disabled={saving}>
+            취소
+          </Button>
           <Button onClick={onSave} disabled={saving}>
-            {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
+            {saving ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-1" />
+            ) : (
+              <Save className="h-4 w-4 mr-1" />
+            )}
             저장
           </Button>
         </DialogFooter>
