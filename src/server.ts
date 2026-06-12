@@ -52,7 +52,10 @@ function isCatastrophicSsrErrorBody(body: string, responseStatus: number): boole
 
 // h3 swallows in-handler throws into a normal 500 Response with body
 // {"unhandled":true,"message":"HTTPError"} — try/catch alone never fires for those.
-async function normalizeCatastrophicSsrResponse(response: Response): Promise<Response> {
+async function normalizeCatastrophicSsrResponse(
+  request: Request,
+  response: Response,
+): Promise<Response> {
   if (response.status < 500) return response;
   const contentType = response.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json")) return response;
@@ -62,7 +65,18 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
     return response;
   }
 
-  console.error(consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`));
+  const error = consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`);
+  console.error(error);
+
+  // API 요청에는 HTML 에러 페이지 대신 JSON으로 응답 (클라이언트 fetch가 파싱 가능해야 함).
+  // message는 한 줄 요약만 노출하고 스택은 숨긴다.
+  if (new URL(request.url).pathname.startsWith("/api/")) {
+    const message = error instanceof Error ? error.message : String(error);
+    return new Response(JSON.stringify({ error: "서버 오류", detail: message.slice(0, 200) }), {
+      status: 500,
+      headers: { "content-type": "application/json" },
+    });
+  }
   return brandedErrorResponse();
 }
 
@@ -107,7 +121,7 @@ export default {
       hydrateProcessEnv(env);
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      const normalized = await normalizeCatastrophicSsrResponse(response);
+      const normalized = await normalizeCatastrophicSsrResponse(request, response);
       return applyHtmlNoCache(request, normalized);
     } catch (error) {
       console.error(error);
