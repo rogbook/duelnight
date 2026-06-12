@@ -8,5 +8,16 @@
   "assets": {
     "directory": "dist/client",
     "binding": "ASSETS"
+  },
+  // 공개 변수만 여기 둔다(브라우저 코드에 이미 노출되는 anon 값 — 커밋 안전).
+  // `wrangler deploy`는 설정에 없는 일반 변수를 매 배포마다 지우므로, 런타임에 필요한 공개 값은 반드시 여기 포함.
+  // ⚠️ 비밀값(SUPABASE_SERVICE_ROLE_KEY, GEMINI_API_KEY)은 절대 여기 넣지 말 것 — Cloudflare Secret으로만 관리(배포해도 보존됨).
+  "vars": {
+    "SUPABASE_PROJECT_ID": "nrtdhkjeziknmafauypv",
+    "SUPABASE_URL": "https://nrtdhkjeziknmafauypv.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ydGRoa2plemlrbm1hZmF1eXB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5OTQ3MzgsImV4cCI6MjA5NjU3MDczOH0.plMNUii3VIlDR2V4xhTVN0_73UER1gjJ0G1xPD_sIb0",
+    "VITE_SUPABASE_PROJECT_ID": "nrtdhkjeziknmafauypv",
+    "VITE_SUPABASE_URL": "https://nrtdhkjeziknmafauypv.supabase.co",
+    "VITE_SUPABASE_PUBLISHABLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ydGRoa2plemlrbm1hZmF1eXB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5OTQ3MzgsImV4cCI6MjA5NjU3MDczOH0.plMNUii3VIlDR2V4xhTVN0_73UER1gjJ0G1xPD_sIb0"
   }
 }
