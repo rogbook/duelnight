@@ -30,9 +30,9 @@ type Game = string;
 function ResultBadge({ r }: { r: "win" | "loss" | "draw" }) {
   const { t } = useI18n();
   const map = {
-    win: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-    loss: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
-    draw: "bg-muted text-muted-foreground",
+    win: "bg-game-win/10 text-game-win dark:text-game-win",
+    loss: "bg-game-loss/10 text-game-loss dark:text-game-loss",
+    draw: "bg-game-bg text-game-text-dim",
   } as const;
   const label = { win: t("matches.win"), loss: t("matches.lose"), draw: t("matches.draw") }[r];
   return (
@@ -57,7 +57,7 @@ function HScrollSection({
     <section className={cn("mt-5", className)}>
       <div className="mb-2">
         <h3 className="text-sm font-medium">{title}</h3>
-        {desc && <p className="mt-0.5 text-[11px] text-muted-foreground">{desc}</p>}
+        {desc && <p className="mt-0.5 text-[11px] text-game-text-dim">{desc}</p>}
       </div>
       <div className="-mx-6 overflow-x-auto scroll-smooth snap-x pb-3">
         <div className="flex gap-3 px-6">{children}</div>
@@ -80,17 +80,17 @@ function SummaryCard({
   valueClass?: string;
 }) {
   return (
-    <div className="w-44 shrink-0 snap-start rounded-2xl border border-border bg-card p-4">
-      <p className="text-[11px] text-muted-foreground">{label}</p>
+    <div className="w-44 shrink-0 snap-start rounded-2xl border border-game-line bg-game-card p-4">
+      <p className="text-[11px] text-game-text-dim">{label}</p>
       <p
         className={cn(
           "mt-2 text-2xl font-semibold tracking-tight",
-          valueClass ?? "text-foreground",
+          valueClass ?? "text-game-text",
         )}
       >
         {value}
       </p>
-      <p className="mt-1 text-[11px] text-muted-foreground">{sub}</p>
+      <p className="mt-1 text-[11px] text-game-text-dim">{sub}</p>
     </div>
   );
 }
@@ -119,9 +119,9 @@ export function MobileStatScroll({ stats, streak }: { stats: MatchStats; streak:
         : `${-cur}${t("matches.lossesStreak")}`;
   const curClass =
     cur > 0
-      ? "text-emerald-600 dark:text-emerald-400"
+      ? "text-game-win dark:text-game-win"
       : cur < 0
-        ? "text-rose-600 dark:text-rose-400"
+        ? "text-game-loss dark:text-game-loss"
         : undefined;
 
   return (
@@ -172,26 +172,26 @@ export function MobileTurnRatioCard({ stats }: { stats: MatchStats }) {
 
   return (
     <section className="mt-4">
-      <div className="rounded-2xl border border-border bg-card p-4">
+      <div className="rounded-2xl border border-game-line bg-game-card p-4">
         <h3 className="mb-3 text-sm font-medium">{t("matches.turn")}</h3>
 
         {/* Ratio bar */}
         <div className="mb-4 flex items-center gap-2 text-xs">
-          <span className="w-9 shrink-0 text-right text-muted-foreground">
+          <span className="w-9 shrink-0 text-right text-game-text-dim">
             {t("matches.first")}
           </span>
-          <div className="relative flex h-7 flex-1 overflow-hidden rounded-full bg-muted text-[10px] font-medium">
+          <div className="relative flex h-7 flex-1 overflow-hidden rounded-full bg-game-bg text-[10px] font-medium">
             <div
-              className="flex h-full items-center justify-center bg-foreground text-background"
+              className="flex h-full items-center justify-center bg-game-blue-deep text-white"
               style={{ width: `${firstPct}%` }}
             >
               {firstPct >= 18 ? `${firstPct}%` : ""}
             </div>
-            <div className="flex h-full flex-1 items-center justify-center text-muted-foreground">
+            <div className="flex h-full flex-1 items-center justify-center text-game-text-dim">
               {secondPct >= 18 ? `${secondPct}%` : ""}
             </div>
           </div>
-          <span className="w-9 shrink-0 text-muted-foreground">{t("matches.second")}</span>
+          <span className="w-9 shrink-0 text-game-text-dim">{t("matches.second")}</span>
         </div>
 
         {/* Win-rate boxes */}
@@ -200,10 +200,10 @@ export function MobileTurnRatioCard({ stats }: { stats: MatchStats }) {
             { label: t("matches.firstWinRate"), pack: stats.first },
             { label: t("matches.secondWinRate"), pack: stats.second },
           ].map(({ label, pack }) => (
-            <div key={label} className="rounded-xl bg-muted/50 p-3 text-center">
-              <p className="text-[10px] text-muted-foreground">{label}</p>
+            <div key={label} className="rounded-xl bg-game-bg/50 p-3 text-center">
+              <p className="text-[10px] text-game-text-dim">{label}</p>
               <p className="mt-0.5 text-xl font-semibold">{fmtPct(pack)}</p>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-[10px] text-game-text-dim">
                 {pack.wins}
                 {t("matches.win")} {pack.losses}
                 {t("matches.lose")} · {pack.total}
@@ -225,7 +225,7 @@ export function MobileDeckCards({ rows }: { rows: DeckStat[] }) {
     return (
       <section className="mt-5">
         <h3 className="mb-1 text-sm font-medium">{t("matches.byDeck")}</h3>
-        <p className="text-xs text-muted-foreground">{t("matches.noData")}</p>
+        <p className="text-xs text-game-text-dim">{t("matches.noData")}</p>
       </section>
     );
   }
@@ -234,22 +234,22 @@ export function MobileDeckCards({ rows }: { rows: DeckStat[] }) {
       {rows.map((r) => (
         <div
           key={r.deck}
-          className="w-52 shrink-0 snap-start rounded-2xl border border-border bg-card p-4"
+          className="w-52 shrink-0 snap-start rounded-2xl border border-game-line bg-game-card p-4"
         >
           <p className="truncate text-sm font-medium">{r.deck}</p>
           <p className="mt-2 text-2xl font-semibold tracking-tight">{fmtPct(r.stats)}</p>
-          <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-muted">
+          <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-game-bg">
             <div
-              className="h-full rounded-full bg-foreground/60 transition-[width]"
+              className="h-full rounded-full bg-game-blue-deep/60 transition-[width]"
               style={{ width: `${Math.round((r.stats.winRate ?? 0) * 100)}%` }}
             />
           </div>
-          <p className="mt-1.5 text-[11px] text-muted-foreground">
+          <p className="mt-1.5 text-[11px] text-game-text-dim">
             {r.stats.wins}-{r.stats.losses}
             {r.stats.draws ? `-${r.stats.draws}` : ""} · {r.stats.total}
             {t("matches.playCount")}
           </p>
-          <div className="mt-2 space-y-0.5 text-[11px] text-muted-foreground">
+          <div className="mt-2 space-y-0.5 text-[11px] text-game-text-dim">
             <p>
               {t("matches.first")} {fmtPct(r.first)} ({r.first.total}
               {t("matches.playCount")})
@@ -276,7 +276,7 @@ export function MobileMatchupCards({ rows }: { rows: MatchupStat[] }) {
     return (
       <section className="mt-5">
         <h3 className="mb-1 text-sm font-medium">{t("matches.matchups")}</h3>
-        <p className="text-xs text-muted-foreground">{t("matches.matchupRequired")}</p>
+        <p className="text-xs text-game-text-dim">{t("matches.matchupRequired")}</p>
       </section>
     );
   }
@@ -285,18 +285,18 @@ export function MobileMatchupCards({ rows }: { rows: MatchupStat[] }) {
       {rows.slice(0, 12).map((r) => (
         <div
           key={`${r.deck}-${r.opponent}`}
-          className="w-52 shrink-0 snap-start rounded-2xl border border-border bg-card p-4"
+          className="w-52 shrink-0 snap-start rounded-2xl border border-game-line bg-game-card p-4"
         >
-          <p className="truncate text-xs text-muted-foreground">{r.deck}</p>
-          <p className="text-[10px] text-muted-foreground">vs</p>
+          <p className="truncate text-xs text-game-text-dim">{r.deck}</p>
+          <p className="text-[10px] text-game-text-dim">vs</p>
           <p className="truncate text-sm font-medium">{r.opponent}</p>
           <p className="mt-2 text-2xl font-semibold tracking-tight">{fmtPct(r.stats)}</p>
-          <p className="mt-1 text-[11px] text-muted-foreground">
+          <p className="mt-1 text-[11px] text-game-text-dim">
             {r.stats.wins}-{r.stats.losses}
             {r.stats.draws ? `-${r.stats.draws}` : ""} · {r.stats.total}
             {t("matches.playCount")}
           </p>
-          <div className="mt-2 space-y-0.5 text-[11px] text-muted-foreground">
+          <div className="mt-2 space-y-0.5 text-[11px] text-game-text-dim">
             <p>
               {t("matches.first")} {fmtPct(r.first)} ({r.first.total})
             </p>
@@ -327,11 +327,11 @@ export function MobileEventCards({ rows }: { rows: EventStat[] }) {
       {rows.map((r) => (
         <div
           key={r.event}
-          className="w-44 shrink-0 snap-start rounded-2xl border border-border bg-card p-4"
+          className="w-44 shrink-0 snap-start rounded-2xl border border-game-line bg-game-card p-4"
         >
-          <p className="text-[11px] text-muted-foreground">{eventLabel(r.event)}</p>
+          <p className="text-[11px] text-game-text-dim">{eventLabel(r.event)}</p>
           <p className="mt-2 text-2xl font-semibold tracking-tight">{fmtPct(r.stats)}</p>
-          <p className="mt-1 text-[11px] text-muted-foreground">
+          <p className="mt-1 text-[11px] text-game-text-dim">
             {r.stats.wins}-{r.stats.losses}
             {r.stats.draws ? `-${r.stats.draws}` : ""} · {r.stats.total}
             {t("matches.playCount")}
@@ -372,7 +372,7 @@ export function MobileOpponentCards({
     <section className="mt-5">
       <div className="mb-2">
         <h3 className="text-sm font-medium">{t("matches.oppMeta")}</h3>
-        <p className="mt-0.5 text-[11px] text-muted-foreground">{t("matches.oppMetaDesc")}</p>
+        <p className="mt-0.5 text-[11px] text-game-text-dim">{t("matches.oppMetaDesc")}</p>
       </div>
       <div className="space-y-2">
         {rows.map((r) => (
@@ -380,19 +380,19 @@ export function MobileOpponentCards({
             key={r.opponent}
             type="button"
             onClick={() => setSelected({ name: r.opponent, userId: userIdFor(r.opponent) })}
-            className="w-full rounded-2xl border border-border bg-card p-4 text-left transition active:bg-muted/30"
+            className="w-full rounded-2xl border border-game-line bg-game-card p-4 text-left transition active:bg-game-bg/30"
           >
             <div className="flex items-start justify-between gap-2">
               <span className="truncate text-sm font-medium">{r.opponent}</span>
               <span className="shrink-0 text-sm font-semibold">{fmtPct(r.stats)}</span>
             </div>
-            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-game-bg">
               <div
-                className="h-full rounded-full bg-foreground/60"
+                className="h-full rounded-full bg-game-blue-deep/60"
                 style={{ width: `${Math.round(r.share * 100)}%` }}
               />
             </div>
-            <p className="mt-1.5 text-[11px] text-muted-foreground">
+            <p className="mt-1.5 text-[11px] text-game-text-dim">
               {r.count}
               {t("matches.times")} · {fmtPctVal(r.share)}
             </p>
@@ -455,11 +455,11 @@ export function MobileRecentCards({
         <div
           key={m.id}
           onClick={() => onView(m)}
-          className="cursor-pointer rounded-2xl border border-border bg-card p-4 transition active:bg-muted/30"
+          className="cursor-pointer rounded-2xl border border-game-line bg-game-card p-4 transition active:bg-game-bg/30"
         >
           {/* Header row: date · game and result badge */}
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <div className="flex items-center gap-1.5 text-[11px] text-game-text-dim">
               <span>{new Date(m.played_at).toLocaleDateString(localeStr)}</span>
               <span>·</span>
               <span>{gameLabel(m.game)}</span>
@@ -471,7 +471,7 @@ export function MobileRecentCards({
           <p className="mt-1.5 truncate text-sm font-medium">{m.my_deck}</p>
 
           {/* Opponent / turn / ELO */}
-          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-game-text-dim">
             {(() => {
               const nick = oppNick?.(m) ?? null;
               const deck = m.opp_leader || m.opp_deck;
@@ -486,7 +486,7 @@ export function MobileRecentCards({
                         e.stopPropagation();
                         onOpponentClick?.(m);
                       }}
-                      className="font-medium text-foreground hover:underline"
+                      className="font-medium text-game-text hover:underline"
                     >
                       {nick}
                     </button>
@@ -501,9 +501,9 @@ export function MobileRecentCards({
                 className={cn(
                   "font-medium",
                   m.points_delta > 0
-                    ? "text-emerald-600 dark:text-emerald-400"
+                    ? "text-game-win dark:text-game-win"
                     : m.points_delta < 0
-                      ? "text-rose-600 dark:text-rose-400"
+                      ? "text-game-loss dark:text-game-loss"
                       : "",
                 )}
               >
@@ -520,21 +520,21 @@ export function MobileRecentCards({
           >
             <button
               onClick={() => onView(m)}
-              className="text-muted-foreground transition hover:text-foreground"
+              className="text-game-text-dim transition hover:text-game-text"
               aria-label={t("matches.viewDetail")}
             >
               <Eye className="h-4 w-4" />
             </button>
             <button
               onClick={() => onEdit(m)}
-              className="text-muted-foreground transition hover:text-foreground"
+              className="text-game-text-dim transition hover:text-game-text"
               aria-label={t("common.edit")}
             >
               <Pencil className="h-4 w-4" />
             </button>
             <button
               onClick={() => onDelete(m.id)}
-              className="text-muted-foreground transition hover:text-destructive"
+              className="text-game-text-dim transition hover:text-destructive"
               aria-label={t("common.delete")}
             >
               <Trash2 className="h-4 w-4" />

@@ -83,7 +83,7 @@ function DecksPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-6xl px-6 py-8 text-sm text-muted-foreground">
+      <div className="mx-auto max-w-6xl px-6 py-8 text-sm text-game-text-dim">
         {t("decks.loading")}
       </div>
     );
@@ -93,11 +93,11 @@ function DecksPage() {
     return (
       <div className="mx-auto max-w-6xl px-6 py-8">
         <PageHeader title={t("decks.title")} description={t("decks.loginRequired")} />
-        <div className="mt-6 rounded-lg border border-dashed border-border bg-muted/30 px-6 py-16 text-center">
-          <p className="text-sm text-muted-foreground">{t("decks.loginRequired")}</p>
+        <div className="mt-6 rounded-lg border border-dashed border-game-line bg-game-bg/30 px-6 py-16 text-center">
+          <p className="text-sm text-game-text-dim">{t("decks.loginRequired")}</p>
           <Link
             to="/login"
-            className="mt-4 inline-flex items-center justify-center rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90"
+            className="mt-4 inline-flex items-center justify-center rounded-md bg-game-blue-deep px-4 py-2 text-sm font-medium text-white hover:opacity-90"
           >
             {t("decks.goToLogin")}
           </Link>
@@ -136,7 +136,7 @@ function DecksPage() {
           {decks.map((d) => (
             <li
               key={d.id}
-              className="rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/20"
+              className="rounded-lg border border-game-line bg-game-card p-4 transition-colors hover:border-primary/20"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
@@ -147,7 +147,7 @@ function DecksPage() {
                   >
                     {d.name}
                   </Link>
-                  <p className="mt-1 text-[11px] text-muted-foreground">
+                  <p className="mt-1 text-[11px] text-game-text-dim">
                     {labelOf(d.game)}
                     {d.leader ? ` · ${d.leader}` : ""}
                   </p>
@@ -164,7 +164,7 @@ function DecksPage() {
                     to="/decks/$id"
                     params={{ id: d.id }}
                     title={t("decks.recipeTooltip")}
-                    className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+                    className="rounded p-1.5 text-game-text-dim hover:bg-game-bg hover:text-game-text"
                   >
                     <Layers className="h-4 w-4" />
                   </Link>
@@ -175,16 +175,16 @@ function DecksPage() {
                   />
                   <button
                     onClick={() => onDelete(d.id)}
-                    className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-destructive"
+                    className="rounded p-1.5 text-game-text-dim hover:bg-game-bg hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
               </div>
               {d.notes && (
-                <p className="mt-3 line-clamp-2 text-xs text-muted-foreground">{d.notes}</p>
+                <p className="mt-3 line-clamp-2 text-xs text-game-text-dim">{d.notes}</p>
               )}
-              <div className="mt-4 flex items-center justify-between text-[10px] text-muted-foreground border-t border-border/40 pt-3">
+              <div className="mt-4 flex items-center justify-between text-[10px] text-game-text-dim border-t border-game-line/40 pt-3">
                 <span>{d.is_public ? t("decks.public") : t("decks.private")}</span>
                 <span>
                   {new Date(d.updated_at).toLocaleDateString(
@@ -203,7 +203,7 @@ function DecksPage() {
 function ColorChip({ game, colorId }: { game: Game; colorId: string }) {
   const { language } = useI18n();
   return (
-    <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+    <span className="inline-flex items-center gap-1 rounded bg-game-bg px-1.5 py-0.5 text-[10px] text-game-text-dim">
       <span
         className="h-2 w-2 rounded-full ring-1 ring-border"
         style={{ backgroundColor: colorHex(game, colorId) }}
@@ -229,7 +229,7 @@ function DeckGameTabs({
     ...games.map((g) => ({ id: g.code as Game | "all", label: labelOf(g.code) })),
   ];
   return (
-    <div className="inline-flex items-center gap-1 rounded-lg border border-border bg-card p-1">
+    <div className="inline-flex items-center gap-1 rounded-lg border border-game-line bg-game-card p-1">
       {items.map((g) => (
         <button
           key={g.id}
@@ -237,8 +237,8 @@ function DeckGameTabs({
           className={
             "rounded-md px-3 py-1.5 text-xs font-medium transition-colors " +
             (value === g.id
-              ? "bg-foreground text-background"
-              : "text-muted-foreground hover:text-foreground")
+              ? "bg-game-blue-deep text-white"
+              : "text-game-text-dim hover:text-game-text")
           }
         >
           {g.label}

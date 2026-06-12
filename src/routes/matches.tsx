@@ -162,7 +162,7 @@ function MatchesPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-6xl px-6 py-8 text-sm text-muted-foreground">
+      <div className="mx-auto max-w-6xl px-6 py-8 text-sm text-game-text-dim">
         {t("common.loading")}
       </div>
     );
@@ -172,11 +172,11 @@ function MatchesPage() {
     return (
       <div className="mx-auto max-w-6xl px-6 py-8">
         <PageHeader title={t("matches.title")} description={t("matches.loginRequiredDesc")} />
-        <div className="mt-6 rounded-lg border border-dashed border-border bg-muted/30 px-6 py-16 text-center">
-          <p className="text-sm text-muted-foreground">{t("matches.loginRequired")}</p>
+        <div className="mt-6 rounded-lg border border-dashed border-game-line bg-game-bg/30 px-6 py-16 text-center">
+          <p className="text-sm text-game-text-dim">{t("matches.loginRequired")}</p>
           <Link
             to="/login"
-            className="mt-4 inline-flex items-center justify-center rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90"
+            className="mt-4 inline-flex items-center justify-center rounded-md bg-game-blue-deep px-4 py-2 text-sm font-medium text-white hover:opacity-90"
           >
             {t("matches.goToLogin")}
           </Link>
@@ -192,13 +192,13 @@ function MatchesPage() {
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex flex-col gap-1">
-            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            <span className="text-[10px] font-medium uppercase tracking-wide text-game-text-dim">
               {t("matches.game")}
             </span>
             <GameTabs value={game} onChange={setGame} />
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            <span className="text-[10px] font-medium uppercase tracking-wide text-game-text-dim">
               {t("matches.period")}
             </span>
             <PeriodTabs value={period} onChange={setPeriod} />
@@ -219,11 +219,11 @@ function MatchesPage() {
         <StatGrid stats={stats} streak={streak} />
       )}
 
-      <section className="mt-6 rounded-lg border border-border bg-card">
-        <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+      <section className="mt-6 rounded-lg border border-game-line bg-game-card">
+        <div className="flex items-center justify-between gap-3 border-b border-game-line px-4 py-3">
           <div>
             <h3 className="text-sm font-medium">{t("matches.winRateTrend")}</h3>
-            <p className="text-xs text-muted-foreground">{t("matches.winRateTrendDesc")}</p>
+            <p className="text-xs text-game-text-dim">{t("matches.winRateTrendDesc")}</p>
           </div>
           <ChartUnitTabs value={chartUnit} onChange={setChartUnit} />
         </div>
@@ -274,7 +274,7 @@ function ChartUnitTabs({
     { id: "month", label: t("matches.month") },
   ];
   return (
-    <div className="inline-flex items-center gap-1 rounded-md border border-border bg-card p-0.5">
+    <div className="inline-flex items-center gap-1 rounded-md border border-game-line bg-game-card p-0.5">
       {items.map((it) => (
         <button
           key={it.id}
@@ -283,8 +283,8 @@ function ChartUnitTabs({
           className={
             "rounded px-2 py-1 text-[11px] font-medium transition-colors " +
             (value === it.id
-              ? "bg-foreground text-background"
-              : "text-muted-foreground hover:text-foreground")
+              ? "bg-game-blue-deep text-white"
+              : "text-game-text-dim hover:text-game-text")
           }
         >
           {it.label}
@@ -303,7 +303,7 @@ function PeriodTabs({ value, onChange }: { value: Period; onChange: (v: Period) 
     { id: "all", label: t("matches.all") },
   ];
   return (
-    <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1 overflow-x-auto max-w-full flex-nowrap scrollbar-none">
+    <div className="flex items-center gap-1 rounded-lg border border-game-line bg-game-card p-1 overflow-x-auto max-w-full flex-nowrap scrollbar-none">
       {items.map((p) => (
         <button
           key={p.id}
@@ -311,8 +311,8 @@ function PeriodTabs({ value, onChange }: { value: Period; onChange: (v: Period) 
           className={
             "rounded-md px-3 py-1.5 text-xs font-medium transition-colors shrink-0 " +
             (value === p.id
-              ? "bg-foreground text-background"
-              : "text-muted-foreground hover:text-foreground")
+              ? "bg-game-blue-deep text-white"
+              : "text-game-text-dim hover:text-game-text")
           }
         >
           {p.label}
@@ -336,7 +336,7 @@ function GameTabs({
     ...games.map((g) => ({ id: g.code as Game | "all", label: labelOf(g.code) })),
   ];
   return (
-    <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1 overflow-x-auto max-w-full flex-nowrap scrollbar-none">
+    <div className="flex items-center gap-1 rounded-lg border border-game-line bg-game-card p-1 overflow-x-auto max-w-full flex-nowrap scrollbar-none">
       {items.map((g) => (
         <button
           key={g.id}
@@ -344,8 +344,8 @@ function GameTabs({
           className={
             "rounded-md px-3 py-1.5 text-xs font-medium transition-colors shrink-0 " +
             (value === g.id
-              ? "bg-foreground text-background"
-              : "text-muted-foreground hover:text-foreground")
+              ? "bg-game-blue-deep text-white"
+              : "text-game-text-dim hover:text-game-text")
           }
         >
           {g.label}
@@ -358,10 +358,10 @@ function GameTabs({
 function StatCard({ label, pack }: { label: string; pack: RatePack }) {
   const { t } = useI18n();
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">{fmtPct(pack)}</p>
-      <p className="mt-1 text-[11px] text-muted-foreground">
+    <div className="rounded-lg border border-game-line bg-game-card p-4">
+      <p className="text-xs text-game-text-dim">{label}</p>
+      <p className="mt-2 text-2xl font-semibold tracking-tight text-game-text">{fmtPct(pack)}</p>
+      <p className="mt-1 text-[11px] text-game-text-dim">
         {pack.wins}
         {t("matches.win")} {pack.losses}
         {t("matches.lose")}
@@ -389,28 +389,28 @@ function StatGrid({
         : `${-cur}${t("matches.lossesStreak")}`;
   const curClass =
     cur > 0
-      ? "text-emerald-600 dark:text-emerald-400"
+      ? "text-game-win dark:text-game-win"
       : cur < 0
-        ? "text-rose-600 dark:text-rose-400"
-        : "text-foreground";
+        ? "text-game-loss dark:text-game-loss"
+        : "text-game-text";
   return (
     <section className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-5">
       <StatCard label={t("matches.overallWinRate")} pack={stats.overall} />
       <StatCard label={t("matches.firstWinRate")} pack={stats.first} />
       <StatCard label={t("matches.secondWinRate")} pack={stats.second} />
-      <div className="rounded-lg border border-border bg-card p-4">
-        <p className="text-xs text-muted-foreground">{t("matches.currentStreak")}</p>
+      <div className="rounded-lg border border-game-line bg-game-card p-4">
+        <p className="text-xs text-game-text-dim">{t("matches.currentStreak")}</p>
         <p className={`mt-2 text-2xl font-semibold tracking-tight ${curClass}`}>{curLabel}</p>
-        <p className="mt-1 text-[11px] text-muted-foreground">
+        <p className="mt-1 text-[11px] text-game-text-dim">
           {t("matches.bestStreak")} {streak.best}
           {t("matches.winsStreak")} · {t("matches.worstStreak")} {streak.worst}
           {t("matches.lossesStreak")}
         </p>
       </div>
-      <div className="rounded-lg border border-border bg-card p-4">
-        <p className="text-xs text-muted-foreground">{t("matches.decksUsed")}</p>
+      <div className="rounded-lg border border-game-line bg-game-card p-4">
+        <p className="text-xs text-game-text-dim">{t("matches.decksUsed")}</p>
         <p className="mt-2 text-2xl font-semibold tracking-tight">{stats.byDeck.length}</p>
-        <p className="mt-1 text-[11px] text-muted-foreground">
+        <p className="mt-1 text-[11px] text-game-text-dim">
           {t("matches.matchupCount").replace("{count}", String(stats.matchups.length))}
         </p>
       </div>
@@ -421,26 +421,26 @@ function StatGrid({
 function DeckTable({ rows }: { rows: DeckStat[] }) {
   const { t } = useI18n();
   return (
-    <div className="rounded-lg border border-border bg-card">
-      <div className="border-b border-border px-4 py-3">
+    <div className="rounded-lg border border-game-line bg-game-card">
+      <div className="border-b border-game-line px-4 py-3">
         <h3 className="text-sm font-medium">{t("matches.byDeck")}</h3>
-        <p className="text-[11px] text-muted-foreground">{t("matches.byDeckDesc")}</p>
+        <p className="text-[11px] text-game-text-dim">{t("matches.byDeckDesc")}</p>
       </div>
       {rows.length === 0 ? (
-        <p className="px-4 py-8 text-center text-xs text-muted-foreground">{t("matches.noData")}</p>
+        <p className="px-4 py-8 text-center text-xs text-game-text-dim">{t("matches.noData")}</p>
       ) : (
         <ul className="divide-y divide-border">
           {rows.map((r) => (
             <li key={r.deck} className="px-4 py-3">
               <div className="flex items-center justify-between gap-3">
                 <span className="truncate text-sm">{r.deck}</span>
-                <span className="text-xs text-muted-foreground">
-                  <span className="mr-2 font-medium text-foreground">{fmtPct(r.stats)}</span>
+                <span className="text-xs text-game-text-dim">
+                  <span className="mr-2 font-medium text-game-text">{fmtPct(r.stats)}</span>
                   {r.stats.wins}-{r.stats.losses}
                   {r.stats.draws ? `-${r.stats.draws}` : ""}
                 </span>
               </div>
-              <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
+              <div className="mt-1 flex items-center gap-3 text-[11px] text-game-text-dim">
                 <span>
                   {t("matches.first")} {fmtPct(r.first)} ({r.first.total})
                 </span>
@@ -462,13 +462,13 @@ function DeckTable({ rows }: { rows: DeckStat[] }) {
 function MatchupTable({ rows }: { rows: MatchupStat[] }) {
   const { t } = useI18n();
   return (
-    <div className="rounded-lg border border-border bg-card">
-      <div className="border-b border-border px-4 py-3">
+    <div className="rounded-lg border border-game-line bg-game-card">
+      <div className="border-b border-game-line px-4 py-3">
         <h3 className="text-sm font-medium">{t("matches.matchups")}</h3>
-        <p className="text-[11px] text-muted-foreground">{t("matches.matchupsDesc")}</p>
+        <p className="text-[11px] text-game-text-dim">{t("matches.matchupsDesc")}</p>
       </div>
       {rows.length === 0 ? (
-        <p className="px-4 py-8 text-center text-xs text-muted-foreground">
+        <p className="px-4 py-8 text-center text-xs text-game-text-dim">
           {t("matches.matchupRequired")}
         </p>
       ) : (
@@ -477,17 +477,17 @@ function MatchupTable({ rows }: { rows: MatchupStat[] }) {
             <li key={`${r.deck}-${r.opponent}`} className="px-4 py-3">
               <div className="flex items-center justify-between gap-3">
                 <span className="truncate text-sm">
-                  <span className="text-foreground">{r.deck}</span>
-                  <span className="mx-1.5 text-muted-foreground">vs</span>
-                  <span className="text-muted-foreground">{r.opponent}</span>
+                  <span className="text-game-text">{r.deck}</span>
+                  <span className="mx-1.5 text-game-text-dim">vs</span>
+                  <span className="text-game-text-dim">{r.opponent}</span>
                 </span>
-                <span className="text-xs text-muted-foreground">
-                  <span className="mr-2 font-medium text-foreground">{fmtPct(r.stats)}</span>
+                <span className="text-xs text-game-text-dim">
+                  <span className="mr-2 font-medium text-game-text">{fmtPct(r.stats)}</span>
                   {r.stats.wins}-{r.stats.losses}
                   {r.stats.draws ? `-${r.stats.draws}` : ""}
                 </span>
               </div>
-              <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
+              <div className="mt-1 flex items-center gap-3 text-[11px] text-game-text-dim">
                 <span>
                   {t("matches.first")} {fmtPct(r.first)} ({r.first.total})
                 </span>
@@ -509,12 +509,12 @@ function MatchupTable({ rows }: { rows: MatchupStat[] }) {
 function EventTable({ rows }: { rows: EventStat[] }) {
   const { t } = useI18n();
   return (
-    <div className="rounded-lg border border-border bg-card">
-      <div className="border-b border-border px-4 py-3">
+    <div className="rounded-lg border border-game-line bg-game-card">
+      <div className="border-b border-game-line px-4 py-3">
         <h3 className="text-sm font-medium">{t("matches.byEvent")}</h3>
       </div>
       {rows.length === 0 ? (
-        <p className="px-4 py-8 text-center text-xs text-muted-foreground">{t("matches.noData")}</p>
+        <p className="px-4 py-8 text-center text-xs text-game-text-dim">{t("matches.noData")}</p>
       ) : (
         <ul className="divide-y divide-border">
           {rows.map((r) => (
@@ -522,8 +522,8 @@ function EventTable({ rows }: { rows: EventStat[] }) {
               <span className="text-sm">
                 {t(`matches.event${r.event.charAt(0).toUpperCase() + r.event.slice(1)}` as any)}
               </span>
-              <span className="text-xs text-muted-foreground">
-                <span className="mr-2 font-medium text-foreground">{fmtPct(r.stats)}</span>
+              <span className="text-xs text-game-text-dim">
+                <span className="mr-2 font-medium text-game-text">{fmtPct(r.stats)}</span>
                 {r.stats.wins}-{r.stats.losses}
                 {r.stats.draws ? `-${r.stats.draws}` : ""}
               </span>
@@ -562,13 +562,13 @@ function OpponentTable({
     game !== "all" ? game : selected ? (matchesFor(selected.name)[0]?.game ?? "optcg") : "optcg";
 
   return (
-    <div className="rounded-lg border border-border bg-card">
-      <div className="border-b border-border px-4 py-3">
+    <div className="rounded-lg border border-game-line bg-game-card">
+      <div className="border-b border-game-line px-4 py-3">
         <h3 className="text-sm font-medium">{t("matches.oppMeta")}</h3>
-        <p className="text-[11px] text-muted-foreground">{t("matches.oppMetaDesc")}</p>
+        <p className="text-[11px] text-game-text-dim">{t("matches.oppMetaDesc")}</p>
       </div>
       {rows.length === 0 ? (
-        <p className="px-4 py-8 text-center text-xs text-muted-foreground">{t("matches.noData")}</p>
+        <p className="px-4 py-8 text-center text-xs text-game-text-dim">{t("matches.noData")}</p>
       ) : (
         <ul className="divide-y divide-border">
           {rows.map((r) => (
@@ -576,19 +576,19 @@ function OpponentTable({
               <button
                 type="button"
                 onClick={() => setSelected({ name: r.opponent, userId: userIdFor(r.opponent) })}
-                className="block w-full px-4 py-3 text-left transition hover:bg-muted/30"
+                className="block w-full px-4 py-3 text-left transition hover:bg-game-bg/30"
               >
                 <div className="flex items-center justify-between gap-3">
                   <span className="truncate text-sm">{r.opponent}</span>
-                  <span className="text-xs text-muted-foreground">
-                    <span className="mr-2 font-medium text-foreground">{fmtPct(r.stats)}</span>
+                  <span className="text-xs text-game-text-dim">
+                    <span className="mr-2 font-medium text-game-text">{fmtPct(r.stats)}</span>
                     {r.count}
                     {t("matches.times")} · {fmtPctVal(r.share)}
                   </span>
                 </div>
-                <div className="mt-1 h-1.5 w-full overflow-hidden rounded bg-muted">
+                <div className="mt-1 h-1.5 w-full overflow-hidden rounded bg-game-bg">
                   <div
-                    className="h-full bg-foreground/70"
+                    className="h-full bg-game-blue-deep/70"
                     style={{ width: `${Math.round(r.share * 100)}%` }}
                   />
                 </div>
@@ -726,9 +726,9 @@ function RecentList({
           onDelete={(id) => onDelete(id)}
         />
       ) : (
-        <div className="mt-3 overflow-hidden rounded-lg border border-border bg-card">
+        <div className="mt-3 overflow-hidden rounded-lg border border-game-line bg-game-card">
           <table className="w-full text-sm">
-            <thead className="border-b border-border bg-muted/30 text-xs text-muted-foreground">
+            <thead className="border-b border-game-line bg-game-bg/30 text-xs text-game-text-dim">
               <tr>
                 <th className="px-3 py-2 text-left font-medium">{t("matches.date")}</th>
                 <th className="px-3 py-2 text-left font-medium">{t("matches.game")}</th>
@@ -746,18 +746,18 @@ function RecentList({
                 <tr
                   key={m.id}
                   onClick={() => setViewing(m)}
-                  className="cursor-pointer border-b border-border transition hover:bg-muted/30 last:border-0"
+                  className="cursor-pointer border-b border-game-line transition hover:bg-game-bg/30 last:border-0"
                 >
-                  <td className="px-3 py-2 text-muted-foreground">
+                  <td className="px-3 py-2 text-game-text-dim">
                     {new Date(m.played_at).toLocaleDateString(localeStr)}
                   </td>
                   <td className="px-3 py-2">{labelOf(m.game)}</td>
-                  <td className="px-3 py-2 text-muted-foreground">
+                  <td className="px-3 py-2 text-game-text-dim">
                     {t(`matches.event${m.event.charAt(0).toUpperCase() + m.event.slice(1)}` as any)}
                   </td>
                   <td className="px-3 py-2">{m.my_deck}</td>
                   <td
-                    className="px-3 py-2 text-muted-foreground"
+                    className="px-3 py-2 text-game-text-dim"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {(() => {
@@ -770,13 +770,13 @@ function RecentList({
                             <button
                               type="button"
                               onClick={() => openOpp(m)}
-                              className="truncate text-left text-foreground font-medium hover:underline"
+                              className="truncate text-left text-game-text font-medium hover:underline"
                             >
                               {nick}
                             </button>
                           )}
                           {deck && (
-                            <span className="truncate text-xs text-muted-foreground">{deck}</span>
+                            <span className="truncate text-xs text-game-text-dim">{deck}</span>
                           )}
                         </div>
                       );
@@ -794,38 +794,38 @@ function RecentList({
                         className={
                           "tabular-nums text-xs font-medium " +
                           (m.points_delta > 0
-                            ? "text-emerald-600"
+                            ? "text-game-win"
                             : m.points_delta < 0
-                              ? "text-rose-600"
-                              : "text-muted-foreground")
+                              ? "text-game-loss"
+                              : "text-game-text-dim")
                         }
                       >
                         {m.points_delta > 0 ? "+" : ""}
                         {m.points_delta}
                       </span>
                     ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
+                      <span className="text-xs text-game-text-dim">—</span>
                     )}
                   </td>
                   <td className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => setViewing(m)}
-                        className="text-muted-foreground hover:text-foreground"
+                        className="text-game-text-dim hover:text-game-text"
                         aria-label={t("matches.viewDetail")}
                       >
                         <Eye className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => setEditing(m)}
-                        className="text-muted-foreground hover:text-foreground"
+                        className="text-game-text-dim hover:text-game-text"
                         aria-label={t("common.edit")}
                       >
                         <Pencil className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => onDelete(m.id)}
-                        className="text-muted-foreground hover:text-destructive"
+                        className="text-game-text-dim hover:text-destructive"
                         aria-label={t("common.delete")}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -839,7 +839,7 @@ function RecentList({
         </div>
       )}
       {totalPages > 1 && (
-        <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+        <div className="mt-3 flex items-center justify-between text-xs text-game-text-dim">
           <span>
             {t("matches.paginationTotal")
               .replace("{total}", String(rows.length))
@@ -957,7 +957,7 @@ function ViewMatchDialog({
               />
               <Row label={t("matches.myDeck")} value={match.my_deck} />
               <div>
-                <dt className="text-xs text-muted-foreground">{t("matches.opponent")}</dt>
+                <dt className="text-xs text-game-text-dim">{t("matches.opponent")}</dt>
                 <dd className="mt-0.5 text-sm">
                   {oppNick ? (
                     <button
@@ -969,7 +969,7 @@ function ViewMatchDialog({
                     </button>
                   ) : null}
                   {(match.opp_leader || match.opp_deck) && (
-                    <div className={oppNick ? "text-xs text-muted-foreground" : ""}>
+                    <div className={oppNick ? "text-xs text-game-text-dim" : ""}>
                       {`${match.opp_leader ?? ""}${
                         match.opp_leader && match.opp_deck ? " · " : ""
                       }${match.opp_deck ?? ""}`}
@@ -984,8 +984,8 @@ function ViewMatchDialog({
               />
               {match.notes && (
                 <div className="col-span-3">
-                  <dt className="text-xs text-muted-foreground">{t("matches.matchNote")}</dt>
-                  <dd className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-3 text-sm leading-relaxed">
+                  <dt className="text-xs text-game-text-dim">{t("matches.matchNote")}</dt>
+                  <dd className="mt-1 whitespace-pre-wrap rounded-md bg-game-bg/50 p-3 text-sm leading-relaxed">
                     {match.notes}
                   </dd>
                 </div>
@@ -1014,7 +1014,7 @@ function ViewMatchDialog({
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dt className="text-xs text-game-text-dim">{label}</dt>
       <dd className="mt-0.5 text-sm">{value}</dd>
     </div>
   );
@@ -1190,9 +1190,9 @@ function EditMatchDialog({
 function ResultBadge({ r }: { r: Result }) {
   const { t } = useI18n();
   const map = {
-    win: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-    loss: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
-    draw: "bg-muted text-muted-foreground",
+    win: "bg-game-win/10 text-game-win dark:text-game-win",
+    loss: "bg-game-loss/10 text-game-loss dark:text-game-loss",
+    draw: "bg-game-bg text-game-text-dim",
   } as const;
   const label = { win: t("matches.win"), loss: t("matches.lose"), draw: t("matches.draw") }[r];
   return (
@@ -1215,14 +1215,14 @@ function CanonicalHint({
   const canonical = normalizeDeckName(raw, game);
   if (!canonical || canonical === raw.trim()) return null;
   return (
-    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+    <div className="flex items-center gap-2 text-xs text-game-text-dim">
       <span>
-        {t("matches.onSave")} <span className="font-medium text-foreground">{canonical}</span>
+        {t("matches.onSave")} <span className="font-medium text-game-text">{canonical}</span>
       </span>
       <button
         type="button"
         onClick={() => onApply(canonical)}
-        className="rounded border border-border px-1.5 py-0.5 text-[10px] hover:bg-accent"
+        className="rounded border border-game-line px-1.5 py-0.5 text-[10px] hover:bg-game-bg"
       >
         {t("matches.apply")}
       </button>
@@ -1405,7 +1405,7 @@ function NewMatchDialog({ onCreated, lastMatch }: { onCreated: () => void; lastM
                     variant="outline"
                     className={cn(
                       "justify-start text-left font-normal",
-                      !form.played_at && "text-muted-foreground",
+                      !form.played_at && "text-game-text-dim",
                     )}
                   >
                     <CalendarIcon className="mr-1 h-4 w-4" />
@@ -1547,7 +1547,7 @@ function NewMatchDialog({ onCreated, lastMatch }: { onCreated: () => void; lastM
           </div>
 
           {/* 4) 상대 정보 — 사용자 태그 + 상대 덱 */}
-          <div className="space-y-2 rounded-md border border-border p-3">
+          <div className="space-y-2 rounded-md border border-game-line p-3">
             <Label>{t("matches.opponent")}</Label>
             <OpponentSearch
               selected={opponent}
@@ -1583,7 +1583,7 @@ function NewMatchDialog({ onCreated, lastMatch }: { onCreated: () => void; lastM
               </Select>
             )}
             {opponent && oppDecks.length === 0 && (
-              <p className="text-[11px] text-muted-foreground">{t("matches.noOppDecksDesc")}</p>
+              <p className="text-[11px] text-game-text-dim">{t("matches.noOppDecksDesc")}</p>
             )}
 
             {!form.opponent_deck_id && (
@@ -1626,25 +1626,25 @@ function NewMatchDialog({ onCreated, lastMatch }: { onCreated: () => void; lastM
           </div>
 
           {opponent && ratings && (
-            <div className="rounded-md bg-muted/40 px-3 py-2 text-xs">
-              <p className="text-muted-foreground">
+            <div className="rounded-md bg-game-bg/40 px-3 py-2 text-xs">
+              <p className="text-game-text-dim">
                 {t("matches.eloPreviewTitle")}{" "}
-                <span className="font-medium text-foreground">{ratings.me}</span> vs{" "}
-                <span className="font-medium text-foreground">{ratings.op}</span>
+                <span className="font-medium text-game-text">{ratings.me}</span> vs{" "}
+                <span className="font-medium text-game-text">{ratings.op}</span>
               </p>
               <p className="mt-0.5">
                 {t("matches.expectedChange")}{" "}
                 <span
                   className={cn(
                     "font-semibold",
-                    previewDelta > 0 ? "text-emerald-600" : previewDelta < 0 ? "text-rose-600" : "",
+                    previewDelta > 0 ? "text-game-win" : previewDelta < 0 ? "text-game-loss" : "",
                   )}
                 >
                   {previewDelta > 0 ? "+" : ""}
                   {previewDelta}
                   {t("matches.points")}
                 </span>
-                <span className="ml-2 text-muted-foreground">
+                <span className="ml-2 text-game-text-dim">
                   (K=32, {t("matches.expectedWinRate")} {Math.round(expected * 100)}%)
                 </span>
               </p>
@@ -1652,7 +1652,7 @@ function NewMatchDialog({ onCreated, lastMatch }: { onCreated: () => void; lastM
           )}
 
           <div className="flex items-center justify-between gap-2 pt-2">
-            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+            <label className="flex items-center gap-2 text-xs text-game-text-dim">
               <input
                 type="checkbox"
                 className="h-3.5 w-3.5"
@@ -1773,10 +1773,10 @@ function NewMatchMobileDrawer({
           className={cn(
             "h-1.5 rounded-full transition-all duration-200",
             step === s
-              ? "w-5 bg-foreground"
+              ? "w-5 bg-game-blue-deep"
               : step > s
-                ? "w-2.5 bg-foreground/40"
-                : "w-2.5 bg-muted",
+                ? "w-2.5 bg-game-blue-deep/40"
+                : "w-2.5 bg-game-bg",
           )}
         />
       ))}
@@ -1801,7 +1801,7 @@ function NewMatchMobileDrawer({
           {/* ── Step 1: 게임 선택 ── */}
           {step === 1 && (
             <div className="space-y-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <p className="text-xs font-medium uppercase tracking-wide text-game-text-dim">
                 {t("matches.game")}
               </p>
               {GAME_OPTIONS.map((g) => (
@@ -1815,13 +1815,13 @@ function NewMatchMobileDrawer({
                   className={cn(
                     "flex w-full items-center gap-4 rounded-2xl border-2 px-5 py-4 text-left transition-all active:scale-[0.98]",
                     form.game === g.value
-                      ? "border-foreground bg-accent"
-                      : "border-border hover:border-foreground/30",
+                      ? "border-foreground bg-game-bg"
+                      : "border-game-line hover:border-foreground/30",
                   )}
                 >
                   <div>
                     <p className="text-base font-semibold">{g.label}</p>
-                    <p className="text-[11px] text-muted-foreground">{g.sub}</p>
+                    <p className="text-[11px] text-game-text-dim">{g.sub}</p>
                   </div>
                 </button>
               ))}
@@ -1833,7 +1833,7 @@ function NewMatchMobileDrawer({
             <div className="space-y-5">
               {/* 선/후공 */}
               <div className="space-y-2">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <p className="text-xs font-medium uppercase tracking-wide text-game-text-dim">
                   {t("matches.turn")}
                 </p>
                 <div className="grid grid-cols-2 gap-2">
@@ -1848,8 +1848,8 @@ function NewMatchMobileDrawer({
                       className={cn(
                         "rounded-2xl border-2 py-4 text-sm font-semibold transition-all active:scale-[0.98]",
                         form.went_first === opt.value
-                          ? "border-foreground bg-foreground text-background"
-                          : "border-border hover:border-foreground/30",
+                          ? "border-foreground bg-game-blue-deep text-white"
+                          : "border-game-line hover:border-foreground/30",
                       )}
                     >
                       {opt.label}
@@ -1860,7 +1860,7 @@ function NewMatchMobileDrawer({
 
               {/* 승패 */}
               <div className="space-y-2">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <p className="text-xs font-medium uppercase tracking-wide text-game-text-dim">
                   {t("matches.resultLabel")}
                 </p>
                 <div className="grid grid-cols-3 gap-2">
@@ -1868,17 +1868,17 @@ function NewMatchMobileDrawer({
                     {
                       value: "win",
                       label: t("matches.win"),
-                      active: "bg-emerald-600 border-emerald-600 text-white",
+                      active: "bg-game-win border-game-win text-white",
                     },
                     {
                       value: "loss",
                       label: t("matches.lose"),
-                      active: "bg-rose-600 border-rose-600 text-white",
+                      active: "bg-game-loss border-game-loss text-white",
                     },
                     {
                       value: "draw",
                       label: t("matches.draw"),
-                      active: "bg-foreground border-foreground text-background",
+                      active: "bg-game-blue-deep border-foreground text-white",
                     },
                   ].map((opt) => (
                     <button
@@ -1889,7 +1889,7 @@ function NewMatchMobileDrawer({
                         "rounded-2xl border-2 py-4 text-sm font-semibold transition-all active:scale-[0.98]",
                         form.result === opt.value
                           ? opt.active
-                          : "border-border hover:border-foreground/30",
+                          : "border-game-line hover:border-foreground/30",
                       )}
                     >
                       {opt.label}
@@ -1918,7 +1918,7 @@ function NewMatchMobileDrawer({
           {step === 3 && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <p className="text-xs font-medium uppercase tracking-wide text-game-text-dim">
                   {t("matches.myDeck")}
                 </p>
                 {decks.length > 0 && (
@@ -1970,7 +1970,7 @@ function NewMatchMobileDrawer({
                 )}
               </div>
 
-              <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <label className="flex items-center gap-2 text-xs text-game-text-dim">
                 <input
                   type="checkbox"
                   className="h-3.5 w-3.5"
@@ -2264,7 +2264,7 @@ function FilterBar({
   const set = <K extends keyof Filters>(k: K, v: Filters[K]) => onChange({ ...value, [k]: v });
 
   return (
-    <section className="mt-6 rounded-lg border border-border bg-card">
+    <section className="mt-6 rounded-lg border border-game-line bg-game-card">
       <div className="flex items-center justify-between gap-3 px-4 py-3">
         <div className="flex items-center gap-2">
           <button
@@ -2275,7 +2275,7 @@ function FilterBar({
             {t("matches.filter")} {open ? t("matches.close") : t("matches.open")}
           </button>
           {active && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-game-text-dim">
               · {filteredCount}/{rows.length}
               {t("matches.countMatched")}
             </span>
@@ -2285,14 +2285,14 @@ function FilterBar({
           <button
             type="button"
             onClick={() => onChange(emptyFilters)}
-            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            className="inline-flex items-center gap-1 text-xs text-game-text-dim hover:text-game-text"
           >
             <X className="h-3 w-3" /> {t("matches.reset")}
           </button>
         )}
       </div>
       {open && (
-        <div className="grid grid-cols-2 gap-3 border-t border-border p-4 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 border-t border-game-line p-4 md:grid-cols-4">
           <div className="flex flex-col gap-1">
             <Label className="text-[11px]">{t("matches.result")}</Label>
             <Select value={value.result} onValueChange={(v) => set("result", v as ResultFilter)}>
@@ -2448,7 +2448,7 @@ function ImportExportButton({ rows, onImported }: { rows: Match[]; onImported: (
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <p className="text-xs text-muted-foreground mb-2">
+            <p className="text-xs text-game-text-dim mb-2">
               {t("matches.backupDesc").replace("{count}", String(rows.length))}
             </p>
             <div className="flex gap-2">
@@ -2460,8 +2460,8 @@ function ImportExportButton({ rows, onImported }: { rows: Match[]; onImported: (
               </Button>
             </div>
           </div>
-          <div className="border-t border-border pt-4">
-            <p className="text-xs text-muted-foreground mb-2">
+          <div className="border-t border-game-line pt-4">
+            <p className="text-xs text-game-text-dim mb-2">
               {t("matches.importDesc").replace(
                 "{headers}",
                 "game, event, my_deck, opp_leader, opp_deck, went_first, result, notes, played_at",
@@ -2531,10 +2531,10 @@ function TaggedAsOpponentSection({ onSaved }: { onSaved: () => void }) {
   return (
     <section className="mt-8">
       <h2 className="text-sm font-medium">{t("matches.taggedMatches")}</h2>
-      <p className="text-[11px] text-muted-foreground">{t("matches.taggedMatchesDesc")}</p>
-      <div className="mt-3 overflow-hidden rounded-lg border border-border bg-card">
+      <p className="text-[11px] text-game-text-dim">{t("matches.taggedMatchesDesc")}</p>
+      <div className="mt-3 overflow-hidden rounded-lg border border-game-line bg-game-card">
         <table className="w-full text-sm">
-          <thead className="border-b border-border bg-muted/30 text-xs text-muted-foreground">
+          <thead className="border-b border-game-line bg-game-bg/30 text-xs text-game-text-dim">
             <tr>
               <th className="px-3 py-2 text-left font-medium">{t("matches.date")}</th>
               <th className="px-3 py-2 text-left font-medium">{t("matches.game")}</th>
@@ -2545,15 +2545,15 @@ function TaggedAsOpponentSection({ onSaved }: { onSaved: () => void }) {
           </thead>
           <tbody>
             {rows.map((m) => (
-              <tr key={m.id} className="border-b border-border last:border-0">
-                <td className="px-3 py-2 text-muted-foreground">
+              <tr key={m.id} className="border-b border-game-line last:border-0">
+                <td className="px-3 py-2 text-game-text-dim">
                   {new Date(m.played_at).toLocaleDateString(
                     language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US",
                   )}
                 </td>
                 <td className="px-3 py-2">{labelOf(m.game)}</td>
                 <td className="px-3 py-2">{m.my_deck}</td>
-                <td className="px-3 py-2 text-muted-foreground">
+                <td className="px-3 py-2 text-game-text-dim">
                   {m.opp_leader || m.opp_deck || (
                     <span className="italic">{t("matches.notEntered")}</span>
                   )}

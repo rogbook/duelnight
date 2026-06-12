@@ -103,7 +103,7 @@ function CardThumb({
 
   if (!src || failed) {
     return (
-      <div className="flex h-full w-full flex-col items-center justify-center gap-1 px-1.5 text-center text-muted-foreground">
+      <div className="flex h-full w-full flex-col items-center justify-center gap-1 px-1.5 text-center text-game-text-dim">
         <ImageOff className="h-6 w-6" />
         <span className="line-clamp-2 text-[11px] font-medium">{failed ? name : noImageLabel}</span>
       </div>
@@ -113,8 +113,8 @@ function CardThumb({
   return (
     <div className="relative h-full w-full">
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-muted">
-          <div className="h-full w-full animate-pulse bg-muted-foreground/10" />
+        <div className="absolute inset-0 flex items-center justify-center bg-game-bg">
+          <div className="h-full w-full animate-pulse bg-game-line/10" />
         </div>
       )}
       <img
@@ -240,7 +240,7 @@ function CardsPage() {
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
       <PageHeader title={t("cards.title")} description={`${labelOf(game)} ${t("cards.desc")}`}>
-        <div className="inline-flex rounded-md border border-border bg-card p-0.5">
+        <div className="inline-flex rounded-md border border-game-line bg-game-card p-0.5">
           {games.map((g) => (
             <button
               key={g.code}
@@ -253,7 +253,7 @@ function CardsPage() {
               className={`rounded px-3 py-1 text-xs font-medium transition ${
                 game === g.code
                   ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-game-text-dim hover:text-game-text"
               }`}
             >
               {labelOf(g.code)}
@@ -262,9 +262,9 @@ function CardsPage() {
         </div>
       </PageHeader>
 
-      <div className="mt-6 space-y-4 rounded-2xl border border-border bg-card p-4">
+      <div className="mt-6 space-y-4 rounded-2xl border border-game-line bg-game-card p-4">
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-game-text-dim" />
           <Input
             value={q}
             onChange={(e) => {
@@ -278,7 +278,7 @@ function CardsPage() {
 
         {/* 타입 필터 칩 */}
         <div className="flex flex-col gap-1.5">
-          <span className="text-[11px] font-semibold text-muted-foreground">{t("cards.type")}</span>
+          <span className="text-[11px] font-semibold text-game-text-dim">{t("cards.type")}</span>
           <div className="flex gap-1.5 overflow-x-auto scrollbar-none pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
             {[
               { value: "all", label: t("cards.typeAll") },
@@ -299,7 +299,7 @@ function CardsPage() {
                   className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium border transition-all duration-200 ${
                     active
                       ? "bg-primary border-primary text-primary-foreground font-semibold shadow-sm"
-                      : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground/30"
+                      : "bg-game-bg border-game-line text-game-text-dim hover:text-game-text hover:border-game-line-accent"
                   }`}
                 >
                   {item.label}
@@ -311,7 +311,7 @@ function CardsPage() {
 
         {/* 색상 필터 칩 */}
         <div className="flex flex-col gap-1.5">
-          <span className="text-[11px] font-semibold text-muted-foreground">{t("cards.color")}</span>
+          <span className="text-[11px] font-semibold text-game-text-dim">{t("cards.color")}</span>
           <div className="flex gap-1.5 overflow-x-auto scrollbar-none pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
             <button
               type="button"
@@ -322,14 +322,14 @@ function CardsPage() {
               className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium border transition-all duration-200 ${
                 color === "all"
                   ? "bg-primary border-primary text-primary-foreground font-semibold shadow-sm"
-                  : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground/30"
+                  : "bg-game-bg border-game-line text-game-text-dim hover:text-game-text hover:border-game-line-accent"
               }`}
             >
               {t("cards.colorAll")}
             </button>
             {(COLORS_BY_GAME[game] || []).map((c) => {
               const active = color === c.id;
-              let colorClass = "bg-background border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground/30";
+              let colorClass = "bg-game-bg border-game-line text-game-text-dim hover:text-game-text hover:border-game-line-accent";
               if (active) {
                 if (c.id === "red") colorClass = "bg-red-500 border-red-500 text-white font-semibold shadow-sm";
                 else if (c.id === "blue") colorClass = "bg-blue-500 border-blue-500 text-white font-semibold shadow-sm";
@@ -399,7 +399,7 @@ function CardsPage() {
         </div>
       </div>
 
-      <p className="mt-4 text-xs text-muted-foreground">
+      <p className="mt-4 text-xs text-game-text-dim">
         {t("cards.totalCards").replace("{total}", String(total))}
         {isFetching && ` · ${t("common.loading")}`}
       </p>
@@ -544,9 +544,9 @@ function CardTile({ card, isFav, onClick }: { card: Card; isFav: boolean; onClic
     <li className="group relative scroll-reveal-card">
       <button
         onClick={onClick}
-        className="block w-full overflow-hidden rounded-2xl border border-border bg-card text-left transition-all duration-300 hover:border-primary/55 hover:-translate-y-1 hover:shadow-md"
+        className="block w-full overflow-hidden rounded-2xl border border-game-line bg-game-card text-left transition-all duration-300 hover:border-primary/55 hover:-translate-y-1 hover:shadow-md"
       >
-        <div className="relative aspect-[5/7] w-full bg-muted">
+        <div className="relative aspect-[5/7] w-full bg-game-bg">
           {(() => {
             const u = normalizeImageUrl(card.image_url);
             const src = u ? (displayImageSrc(u) ?? null) : null;
@@ -562,8 +562,8 @@ function CardTile({ card, isFav, onClick }: { card: Card; isFav: boolean; onClic
           )}
         </div>
         <div className="p-3">
-          <p className="truncate text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">{card.code}</p>
-          <p className="truncate text-sm font-semibold text-foreground mt-0.5">{card.name}</p>
+          <p className="truncate text-[10px] font-semibold tracking-wider text-game-text-dim uppercase">{card.code}</p>
+          <p className="truncate text-sm font-semibold text-game-text mt-0.5">{card.name}</p>
           <div className="mt-2 flex flex-wrap gap-1">
             {card.colors.map((c) => (
               <span
@@ -574,7 +574,7 @@ function CardTile({ card, isFav, onClick }: { card: Card; isFav: boolean; onClic
               </span>
             ))}
             {card.rarity && (
-              <span className="rounded-md bg-accent px-1.5 py-0.5 text-[10px] font-semibold text-accent-foreground">
+              <span className="rounded-md bg-game-bg px-1.5 py-0.5 text-[10px] font-semibold text-accent-foreground">
                 {card.rarity}
               </span>
             )}
@@ -584,13 +584,13 @@ function CardTile({ card, isFav, onClick }: { card: Card; isFav: boolean; onClic
               {card.traits.slice(0, 2).map((t) => (
                 <span
                   key={t}
-                  className="rounded-md border border-border bg-background px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                  className="rounded-md border border-game-line bg-game-bg px-1.5 py-0.5 text-[10px] text-game-text-dim"
                 >
                   {t}
                 </span>
               ))}
               {card.traits.length > 2 && (
-                <span className="text-[10px] text-muted-foreground font-medium self-center pl-0.5">+{card.traits.length - 2}</span>
+                <span className="text-[10px] text-game-text-dim font-medium self-center pl-0.5">+{card.traits.length - 2}</span>
               )}
             </div>
           )}
@@ -599,7 +599,7 @@ function CardTile({ card, isFav, onClick }: { card: Card; isFav: boolean; onClic
       <Link
         to="/cards/$code"
         params={{ code: card.code }}
-        className="absolute bottom-2 right-2 rounded-md bg-background px-2 py-0.5 text-[10px] font-medium text-muted-foreground opacity-0 transition group-hover:opacity-100 hover:text-foreground border border-border shadow-sm"
+        className="absolute bottom-2 right-2 rounded-md bg-game-bg px-2 py-0.5 text-[10px] font-medium text-game-text-dim opacity-0 transition group-hover:opacity-100 hover:text-game-text border border-game-line shadow-sm"
         onClick={(e) => e.stopPropagation()}
         aria-label={t("cards.detailAria")}
       >
@@ -743,17 +743,17 @@ function CardDetailDialog({
           {card && (
             <>
               <DialogHeader>
-                <p className="text-xs text-muted-foreground">{card.code}</p>
+                <p className="text-xs text-game-text-dim">{card.code}</p>
                 <DialogTitle className="flex items-center gap-2">
                   {card.name}
                   <button
                     onClick={toggleFav}
                     aria-label={t("cards.favoritesOnly")}
-                    className="ml-auto rounded-md p-1 hover:bg-muted"
+                    className="ml-auto rounded-md p-1 hover:bg-game-bg"
                   >
                     <Star
                       className={`h-5 w-5 ${
-                        isFav ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
+                        isFav ? "fill-yellow-400 text-yellow-400" : "text-game-text-dim"
                       }`}
                     />
                   </button>
@@ -782,7 +782,7 @@ function CardDetailDialog({
                     <button
                       type="button"
                       onClick={() => setZoomOpen(true)}
-                      className="block aspect-[5/7] w-full overflow-hidden rounded-md bg-muted cursor-zoom-in"
+                      className="block aspect-[5/7] w-full overflow-hidden rounded-md bg-game-bg cursor-zoom-in"
                       title="크게 보기"
                     >
                       <img
@@ -792,8 +792,8 @@ function CardDetailDialog({
                       />
                     </button>
                   ) : (
-                    <div className="aspect-[5/7] w-full overflow-hidden rounded-md bg-muted">
-                      <div className="flex h-full items-center justify-center text-muted-foreground">
+                    <div className="aspect-[5/7] w-full overflow-hidden rounded-md bg-game-bg">
+                      <div className="flex h-full items-center justify-center text-game-text-dim">
                         <ImageOff className="h-8 w-8" />
                       </div>
                     </div>
@@ -809,7 +809,7 @@ function CardDetailDialog({
                           className={`relative h-14 w-10 overflow-hidden rounded border ${
                             displayUrl === g.url
                               ? "border-primary ring-1 ring-primary"
-                              : "border-border"
+                              : "border-game-line"
                           }`}
                         >
                           <img
@@ -817,7 +817,7 @@ function CardDetailDialog({
                             alt={g.label}
                             className="h-full w-full object-cover"
                           />
-                          <span className="absolute inset-x-0 bottom-0 truncate bg-background/80 px-0.5 text-[8px] leading-3">
+                          <span className="absolute inset-x-0 bottom-0 truncate bg-game-bg/80 px-0.5 text-[8px] leading-3">
                             {g.label}
                           </span>
                         </button>
@@ -859,7 +859,7 @@ function CardDetailDialog({
                   )}
                   {card.traits && card.traits.length > 0 && (
                     <div>
-                      <p className="text-xs font-semibold text-muted-foreground">
+                      <p className="text-xs font-semibold text-game-text-dim">
                         {isDtcg ? "유형" : t("cards.traits")}
                       </p>
                       <div className="mt-1 flex flex-wrap gap-1">
@@ -873,16 +873,16 @@ function CardDetailDialog({
                     <>
                       {ex.text_top && (
                         <div>
-                          <p className="text-xs font-semibold text-muted-foreground">상단 텍스트</p>
-                          <p className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-2 text-sm leading-relaxed">
+                          <p className="text-xs font-semibold text-game-text-dim">상단 텍스트</p>
+                          <p className="mt-1 whitespace-pre-wrap rounded-md bg-game-bg/50 p-2 text-sm leading-relaxed">
                             {ex.text_top}
                           </p>
                         </div>
                       )}
                       {ex.text_bottom && (
                         <div>
-                          <p className="text-xs font-semibold text-muted-foreground">하단 텍스트</p>
-                          <p className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-2 text-sm leading-relaxed">
+                          <p className="text-xs font-semibold text-game-text-dim">하단 텍스트</p>
+                          <p className="mt-1 whitespace-pre-wrap rounded-md bg-game-bg/50 p-2 text-sm leading-relaxed">
                             {ex.text_bottom}
                           </p>
                         </div>
@@ -890,10 +890,10 @@ function CardDetailDialog({
                     </>
                   ) : card.effect ? (
                     <div>
-                      <p className="text-xs font-semibold text-muted-foreground">
+                      <p className="text-xs font-semibold text-game-text-dim">
                         {t("cards.effect")}
                       </p>
-                      <p className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-2 text-sm leading-relaxed">
+                      <p className="mt-1 whitespace-pre-wrap rounded-md bg-game-bg/50 p-2 text-sm leading-relaxed">
                         {card.effect}
                       </p>
                     </div>
@@ -901,11 +901,11 @@ function CardDetailDialog({
                 </div>
               </div>
 
-              <div className="mt-4 border-t border-border pt-4">
+              <div className="mt-4 border-t border-game-line pt-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold">
                     {t("cards.reviewsTitle")}{" "}
-                    <span className="font-normal text-muted-foreground">({reviews.length})</span>
+                    <span className="font-normal text-game-text-dim">({reviews.length})</span>
                   </h3>
                   {avg !== null && (
                     <span className="flex items-center gap-1 text-sm">
@@ -925,31 +925,31 @@ function CardDetailDialog({
                     }
                   />
                 ) : (
-                  <p className="mt-3 text-sm text-muted-foreground">
+                  <p className="mt-3 text-sm text-game-text-dim">
                     {t("cards.ratingRequiredLogin")}
                   </p>
                 )}
                 <ul className="mt-3 space-y-2">
                   {reviews.length === 0 ? (
-                    <li className="text-sm text-muted-foreground">
+                    <li className="text-sm text-game-text-dim">
                       {t("cards.firstReviewPrompt")}
                     </li>
                   ) : (
                     reviews.map((r) => (
                       <li
                         key={r.id}
-                        className="rounded-md border border-border bg-card p-3 text-sm"
+                        className="rounded-md border border-game-line bg-game-card p-3 text-sm"
                       >
                         <div className="flex items-center gap-2">
                           <RatingStars value={r.rating} />
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs text-game-text-dim">
                             {new Date(r.created_at).toLocaleDateString(
                               language === "ko" ? "ko-KR" : language === "ja" ? "ja-JP" : "en-US",
                             )}
                           </span>
                         </div>
                         {r.body && (
-                          <p className="mt-1 whitespace-pre-wrap text-foreground/90">{r.body}</p>
+                          <p className="mt-1 whitespace-pre-wrap text-game-text/90">{r.body}</p>
                         )}
                       </li>
                     ))
@@ -1001,7 +1001,7 @@ function CardDetailDialog({
       </AlertDialog>
 
       <Dialog open={zoomOpen} onOpenChange={setZoomOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-2xl p-2 bg-background/95">
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl p-2 bg-game-bg/95">
           <DialogTitle className="sr-only">{card?.name ?? "card"}</DialogTitle>
           {displayUrl && (
             <img
@@ -1100,7 +1100,7 @@ function RatingInput({ value, onChange }: { value: number; onChange: (n: number)
         <button key={n} type="button" onClick={() => onChange(n)} aria-label={`${n}점`}>
           <Star
             className={`h-5 w-5 ${
-              n <= value ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
+              n <= value ? "fill-yellow-400 text-yellow-400" : "text-game-text-dim"
             }`}
           />
         </button>
@@ -1116,7 +1116,7 @@ function RatingStars({ value }: { value: number }) {
         <Star
           key={n}
           className={`h-3.5 w-3.5 ${
-            n <= value ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/40"
+            n <= value ? "fill-yellow-400 text-yellow-400" : "text-game-text-dim/40"
           }`}
         />
       ))}
@@ -1128,7 +1128,7 @@ function Stat({ label, value }: { label: string; value?: string | number | null 
   if (value === null || value === undefined || value === "") return null;
   return (
     <div className="flex gap-3">
-      <span className="w-14 shrink-0 text-xs text-muted-foreground">{label}</span>
+      <span className="w-14 shrink-0 text-xs text-game-text-dim">{label}</span>
       <span className="text-sm">{value}</span>
     </div>
   );
@@ -1136,7 +1136,7 @@ function Stat({ label, value }: { label: string; value?: string | number | null 
 
 function Badge({ children }: { children: React.ReactNode }) {
   return (
-    <span className="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+    <span className="rounded-md bg-game-bg px-2 py-0.5 text-xs text-game-text-dim">
       {children}
     </span>
   );
