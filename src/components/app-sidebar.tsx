@@ -158,7 +158,9 @@ export function AppSidebar() {
             <img src="/favicon.png" alt="DuelNight" className="h-8 w-8 rounded-xl" />
           ) : (
             <span className="flex items-center gap-1.5">
-              <img src="/logo-dark.png" alt="DuelNight" className="h-7 w-auto" />
+              {/* 테마별 로고: 라이트=원색(남색 글자), 다크=흰색 변환본 */}
+              <img src="/logo.png" alt="DuelNight" className="h-7 w-auto dark:hidden" />
+              <img src="/logo-dark.png" alt="DuelNight" className="hidden h-7 w-auto dark:block" />
               {isAdmin && (
                 <span className="rounded bg-primary px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary-foreground">
                   Admin
