@@ -129,29 +129,30 @@
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.55 0.2 277);
 
-  --game-bg: #0d1220;
-  --game-bg-deep: #0a0e18;
-  --game-card: #13203a;
-  --game-line: #1e2940;
-  --game-line-accent: #24355c;
-  --game-text: #f5f7ff;
-  --game-text-mid: #c7d2ec;
-  --game-text-dim: #8b97b5;
-  --game-icon-idle: #5a6878;
-  --game-blue: #378add;
+  /* 게임 UI 토큰 — 라이트 테마 값 (다크 값은 .dark 블록에) */
+  --game-bg: #f2f5fb;
+  --game-bg-deep: #ffffff;
+  --game-card: #ffffff;
+  --game-line: #e3e8f3;
+  --game-line-accent: #c9d6ee;
+  --game-text: #131c33;
+  --game-text-mid: #3d4c6e;
+  --game-text-dim: #67738f;
+  --game-icon-idle: #9aa5bb;
+  --game-blue: #2b76c9;
   --game-blue-deep: #185fa5;
-  --game-gold: #efb43f;
-  --game-win: #5dca7d;
-  --game-loss: #f08a8a;
+  --game-gold: #b07c1a;
+  --game-win: #1d9e75;
+  --game-loss: #d05050;
 
-  --chip-purple-bg: #26215c;
-  --chip-purple-fg: #afa9ec;
-  --chip-teal-bg: #04342c;
-  --chip-teal-fg: #5dcaa5;
-  --chip-coral-bg: #4a1b0c;
-  --chip-coral-fg: #f0997b;
-  --chip-pink-bg: #4b1528;
-  --chip-pink-fg: #ed93b1;
+  --chip-purple-bg: #eeedfe;
+  --chip-purple-fg: #534ab7;
+  --chip-teal-bg: #e1f5ee;
+  --chip-teal-fg: #0f6e56;
+  --chip-coral-bg: #faece7;
+  --chip-coral-fg: #993c1d;
+  --chip-pink-bg: #fbeaf0;
+  --chip-pink-fg: #993556;
 }
 
 .dark {
@@ -189,6 +190,31 @@
   --sidebar-accent-foreground: oklch(0.97 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.62 0.19 277);
+
+  /* 게임 UI 토큰 — 다크 테마 값 (시안 원본) */
+  --game-bg: #0d1220;
+  --game-bg-deep: #0a0e18;
+  --game-card: #13203a;
+  --game-line: #1e2940;
+  --game-line-accent: #24355c;
+  --game-text: #f5f7ff;
+  --game-text-mid: #c7d2ec;
+  --game-text-dim: #8b97b5;
+  --game-icon-idle: #5a6878;
+  --game-blue: #378add;
+  --game-blue-deep: #185fa5;
+  --game-gold: #efb43f;
+  --game-win: #5dca7d;
+  --game-loss: #f08a8a;
+
+  --chip-purple-bg: #26215c;
+  --chip-purple-fg: #afa9ec;
+  --chip-teal-bg: #04342c;
+  --chip-teal-fg: #5dcaa5;
+  --chip-coral-bg: #4a1b0c;
+  --chip-coral-fg: #f0997b;
+  --chip-pink-bg: #4b1528;
+  --chip-pink-fg: #ed93b1;
 }
 
 @layer base {

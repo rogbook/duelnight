@@ -43,8 +43,10 @@ export function NotificationBell() {
   // Realtime
   useEffect(() => {
     if (!user) return;
+    // 채널명은 마운트 인스턴스별로 유니크해야 한다 — 모바일/PC 헤더에 벨이 동시에 떠 있을 때
+    // 같은 이름을 쓰면 이미 subscribe()된 채널이 재사용되어 .on()이 throw한다(화면 전체 크래시).
     const ch = supabase
-      .channel(`notif-${user.id}`)
+      .channel(`notif-${user.id}-${crypto.randomUUID()}`)
       .on(
         "postgres_changes",
         {
