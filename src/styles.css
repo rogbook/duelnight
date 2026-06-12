@@ -276,13 +276,57 @@
   transform: none;
 }
 
+/* Global Scrollbar Styles (PC thin scrollbar, Touch hidden scrollbar) */
+* {
+  scrollbar-width: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+}
+*::-webkit-scrollbar:horizontal {
+  display: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--game-line) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    display: block;
+    width: 8px;
+    height: 0px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--game-line);
+    border-radius: 9999px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--game-line-accent);
+  }
+
+  *::-webkit-scrollbar:horizontal {
+    display: none !important;
+  }
+}
+
 /* Scrollbar utility */
 .scrollbar-none {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }
 .scrollbar-none::-webkit-scrollbar {
-  display: none; /* Chrome, Safari and Opera */
+  display: none !important;
+}
+.scrollbar-none::-webkit-scrollbar:horizontal {
+  display: none !important;
 }
 
 /* prefers-reduced-motion 미디어 쿼리를 통해 전역 애니메이션 최적화 */
