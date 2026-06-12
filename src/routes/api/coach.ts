@@ -84,25 +84,31 @@ export const Route = createFileRoute("/api/coach")({
           });
         }
         const token = authHeader.replace("Bearer ", "");
-        const { createClient } = await import("@supabase/supabase-js");
-        const supabase = createClient(
-          process.env.SUPABASE_URL!,
-          process.env.SUPABASE_PUBLISHABLE_KEY!,
-          {
+
+        try {
+          const supabaseUrl = process.env.SUPABASE_URL;
+          const supabaseKey = process.env.SUPABASE_PUBLISHABLE_KEY;
+          if (!supabaseUrl || !supabaseKey) {
+            return new Response(
+              JSON.stringify({ error: "서버 환경변수(SUPABASE_URL/KEY)가 없습니다." }),
+              { status: 500, headers: corsHeaders },
+            );
+          }
+          const { createClient } = await import("@supabase/supabase-js");
+          const supabase = createClient(supabaseUrl, supabaseKey, {
             global: { headers: { Authorization: `Bearer ${token}` } },
-          },
-        );
-
-        const { checkAiQuota, commitAiUsage } = await import("@/lib/ai-quota.server");
-        const quota = await checkAiQuota(supabase, "coach");
-        if (!quota.ok) {
-          return new Response(JSON.stringify({ error: quota.error }), {
-            status: quota.status,
-            headers: corsHeaders,
           });
-        }
 
-        const system =
+          const { checkAiQuota, commitAiUsage } = await import("@/lib/ai-quota.server");
+          const quota = await checkAiQuota(supabase, "coach");
+          if (!quota.ok) {
+            return new Response(JSON.stringify({ error: quota.error }), {
+              status: quota.status,
+              headers: corsHeaders,
+            });
+          }
+
+          const system =
           "당신은 TCG 전적 데이터를 분석해 한국어로 간결한 코칭 인사이트를 제공하는 코치입니다. " +
           "반드시 한국어로, 마크다운 없이, 3~5개의 짧은 불릿(각 줄 앞에 '• ')으로 답하세요. " +
           "데이터 기반 사실(승률·표본수)을 먼저 짚고, 마지막 1~2개 불릿은 구체적 개선 제안을 적으세요. " +
@@ -170,12 +176,21 @@ export const Route = createFileRoute("/api/coach")({
             status: 200,
             headers: corsHeaders,
           });
+          } catch (e) {
+            console.error("coach gemini error", e);
+            return new Response(JSON.stringify({ error: "AI 서버에 연결할 수 없습니다." }), {
+              status: 500,
+              headers: corsHeaders,
+            });
+          }
         } catch (e) {
-          console.error("coach route error", e);
-          return new Response(JSON.stringify({ error: "AI 서버에 연결할 수 없습니다." }), {
-            status: 500,
-            headers: corsHeaders,
-          });
+          // 인증·할당량·DB 등 핸들러 전체에서 던져진 오류를 JSON으로 노출(원인 요약 포함)
+          console.error("coach handler error", e);
+          const detail = e instanceof Error ? e.message : String(e);
+          return new Response(
+            JSON.stringify({ error: "코치 처리 중 오류", detail: detail.slice(0, 200) }),
+            { status: 500, headers: corsHeaders },
+          );
         }
       },
     },
