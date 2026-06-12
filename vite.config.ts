@@ -12,4 +12,10 @@ export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
   },
+  // cloudflare:workers는 런타임(Workers) 전용 모듈 — 번들하지 않고 외부로 둔다.
+  vite: {
+    build: {
+      rollupOptions: { external: ["cloudflare:workers"] },
+    },
+  },
 });

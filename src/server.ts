@@ -100,17 +100,26 @@ function applyHtmlNoCache(request: Request, response: Response): Response {
   });
 }
 
-// Cloudflare Workers는 환경변수를 fetch의 env 인자로만 주므로,
-// 서버 코드 전반이 쓰는 process.env에 1회 복사한다 (없으면 supabase 클라이언트 생성이 즉시 실패).
+// Cloudflare Workers는 환경변수를 "요청 시점에" 그리고 `cloudflare:workers` 모듈로만 제공한다.
+// (fetch의 env 인자는 nitro 래퍼를 거치며 비어 옴 — 실측 확인.)
+// 서버 코드 전반이 쓰는 process.env에 1회 복사해, 기존 process.env.X 읽기를 그대로 동작시킨다.
+// 로컬(bun/vite)에서는 cloudflare:workers가 없으므로 catch 후 기존 process.env(.env.local)를 그대로 사용.
 let processEnvHydrated = false;
-function hydrateProcessEnv(env: unknown): void {
-  if (processEnvHydrated || typeof process === "undefined" || !env || typeof env !== "object") {
-    return;
-  }
-  for (const [key, value] of Object.entries(env)) {
-    if (typeof value === "string" && process.env[key] === undefined) {
-      process.env[key] = value;
+async function hydrateProcessEnv(): Promise<void> {
+  if (processEnvHydrated || typeof process === "undefined") return;
+  try {
+    const { env } = (await import(/* @vite-ignore */ "cloudflare:workers")) as {
+      env?: Record<string, unknown>;
+    };
+    if (env && typeof env === "object") {
+      for (const [key, value] of Object.entries(env)) {
+        if (typeof value === "string" && process.env[key] === undefined) {
+          process.env[key] = value;
+        }
+      }
     }
+  } catch {
+    // cloudflare:workers 미존재(로컬) → 폴백
   }
   processEnvHydrated = true;
 }
@@ -118,7 +127,7 @@ function hydrateProcessEnv(env: unknown): void {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
-      hydrateProcessEnv(env);
+      await hydrateProcessEnv();
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       const normalized = await normalizeCatastrophicSsrResponse(request, response);
