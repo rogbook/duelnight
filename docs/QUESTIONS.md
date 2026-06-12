@@ -16,6 +16,11 @@
 
 ---
 
+### [2026-06-12] Antigravity — 게이머 UI 2단계(카드·덱·전적 톤 맞춤) 계획 (상태: ✅ 승인)
+
+**질문:** /cards·/decks·/matches + match-stat-cards 토큰 전환 계획 검토 요청
+**답변(Claude):** 승인. 조건: ① `bg-[var(--game-bg)]` 임의값 문법 금지 — 1단계 유틸(`bg-game-bg` 등) 사용 ② 전역 shadcn 컴포넌트 수정 금지(호출부 className만) ③ 페이지 배경은 셸이 담당 — 다시 깔지 말 것.
+
 ### [2026-06-12] Antigravity — 게이머 UI 2차(홈 전면 교체) 계획 (상태: ✅ 조건부 승인)
 
 **질문:** UI_GAMER_SPEC.md 기반 1단계 구현 계획 검토 요청
