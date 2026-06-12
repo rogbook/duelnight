@@ -153,10 +153,13 @@ export const Route = createFileRoute("/api/coach")({
           if (!res.ok) {
             const txt = await res.text();
             console.error("AI gateway error", res.status, txt);
-            return new Response(JSON.stringify({ error: "AI 응답 생성에 실패했습니다." }), {
-              status: 502,
-              headers: corsHeaders,
-            });
+            return new Response(
+              JSON.stringify({
+                error: "AI 응답 생성에 실패했습니다.",
+                detail: `gemini ${res.status}: ${txt.slice(0, 150)}`,
+              }),
+              { status: 502, headers: corsHeaders },
+            );
           }
 
           const json = (await res.json()) as {
