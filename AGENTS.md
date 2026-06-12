@@ -88,7 +88,8 @@ DB 변경 여부: (있으면 Claude 요청 사항 명시)
 | ~~AI Gemini 전환 + 베타 서버 환경변수~~                             | Claude                           | ✅ **완료 (2026-06-12)** — Lovable 게이트웨이 제거→Gemini. CF 배포가 변수 삭제하던 문제 해결(wrangler.jsonc vars). **지역차단은 Supabase Edge Function(뭄바이) 경유로 우회** — 코치 e2e 정상. 상세: [docs/AI_GEMINI_PROXY.md](./docs/AI_GEMINI_PROXY.md) |
 | ~~구글 로그인 독립 + 관리자 계정 이전~~                             | Claude + 사용자                  | ✅ **완료 (2026-06-12)** — Lovable 인증 제거. 관리자 4명(mick.kwon 구글/권동휘/권순호/시드). 시드계정 admin@lovable.test는 외부테스트 전 삭제 예정 |
 | 게이머 UI 개편 (모바일 최우선)                                      | Antigravity                      | 1차 완료(탭바·홈·카드목록). 다음 차수: 나머지 화면 + 사용자 폰 평가 반영 |
-| 관리자 페이지(회원·요금 관리) 설계·구현                            | Claude                           | 대기 (다음 우선순위) |
+| ~~관리자 페이지(회원·요금)~~                                        | Claude                           | ✅ **완료 (2026-06-12)** — /admin/members(검색·정지·크레딧)·/admin/billing(결제·구독), RPC 5종 admin 검증 내장. 일반유저 차단 검증 |
+| 게이머 UI 2단계(카드·덱·전적 톤 맞춤)                               | Antigravity                      | 지시 전달됨 — 작업 중 |
 
 ## 5. 참고 문서
 
