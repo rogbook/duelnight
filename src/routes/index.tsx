@@ -1,25 +1,26 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Calendar,
   Library,
   Layers,
-  PackageOpen,
   Swords,
   Trophy,
-  MapPin,
   Users,
-  ArrowUpRight,
+  MessageCircle,
+  Gamepad,
 } from "lucide-react";
-import { PageHeader } from "@/components/page-header";
-import { GameFilter } from "@/components/game-filter";
-import { SeasonReport } from "@/components/season-report/season-report";
+import { ProfileBar } from "@/components/game/ProfileBar";
+import { SeasonStatWidget } from "@/components/game/SeasonStatWidget";
+import { MenuTile } from "@/components/game/MenuTile";
 import { PwaInstallBanner } from "@/components/pwa-install-banner";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { getSeasonStartISO } from "@/lib/season";
+import { getSeasonStartISO, getDaysLeftInSeason } from "@/lib/season";
 import { useI18n } from "@/i18n/language-context";
+import { getTier } from "@/lib/tier";
+import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/")({
   head: () => {
@@ -129,6 +130,62 @@ function useKpiCounts(userId: string) {
   };
 }
 
+function LeagueCard({ rating }: { rating: number | null }) {
+  const { t } = useI18n();
+  const tier = rating !== null ? getTier(rating) : null;
+
+  return (
+    <div className="bg-game-card border border-game-line rounded-2xl p-4 shadow-md flex flex-col justify-between h-full min-h-[140px]">
+      <div>
+        <span className="text-[11px] font-semibold text-game-text-dim uppercase tracking-wider block">
+          현재 리그
+        </span>
+        <div className="flex items-center gap-2 mt-2">
+          <Trophy className="h-6 w-6 text-game-gold fill-current" />
+          <span className="text-lg font-bold text-game-text">
+            {tier ? t(tier.labelKey) : "브론즈"}
+          </span>
+        </div>
+      </div>
+      <div className="text-xs font-semibold text-game-text-mid mt-auto pt-4 border-t border-game-line/30">
+        ELO 레이팅: <span className="text-game-gold">{rating ?? 1000} RP</span>
+      </div>
+    </div>
+  );
+}
+
+function TodayMatchesCard({ matches }: { matches: Tables<"matches">[] }) {
+  const todayMatches = useMemo(() => {
+    if (!matches) return [];
+    const todayStr = new Date().toLocaleDateString();
+    return matches.filter((m) => new Date(m.played_at).toLocaleDateString() === todayStr);
+  }, [matches]);
+
+  const wins = todayMatches.filter((m) => m.result === "win").length;
+  const losses = todayMatches.filter((m) => m.result === "loss").length;
+
+  return (
+    <div className="bg-game-card border border-game-line rounded-2xl p-4 shadow-md flex flex-col justify-between h-full min-h-[140px]">
+      <div>
+        <span className="text-[11px] font-semibold text-game-text-dim uppercase tracking-wider block">
+          오늘의 기록
+        </span>
+        <div className="flex items-center gap-2 mt-2">
+          <Swords className="h-5 w-5 text-game-blue" />
+          <span className="text-lg font-bold text-game-text">
+            {todayMatches.length}판 대전
+          </span>
+        </div>
+      </div>
+      <div className="flex gap-2 text-xs font-bold mt-auto pt-4 border-t border-game-line/30">
+        <span className="text-game-win">{wins}승</span>
+        <span className="text-game-text-dim">/</span>
+        <span className="text-game-loss">{losses}패</span>
+      </div>
+    </div>
+  );
+}
+
 function Dashboard() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -137,7 +194,7 @@ function Dashboard() {
   const userId = user?.id ?? "";
   const { data: primary } = usePrimaryGame(userId);
   const game = primary?.game ?? null;
-  const { data: matches } = useSeasonMatches(userId, game);
+  const { data: matches = [] } = useSeasonMatches(userId, game);
   const { data: profile } = useProfile(userId);
   const { collectionCount, deckCount } = useKpiCounts(userId);
 
@@ -151,137 +208,142 @@ function Dashboard() {
     return null;
   }
 
-  const hasSeasonData = !!game && !!matches && matches.length > 0;
   const displayName =
     profile?.display_name || profile?.username || user.email?.split("@")[0] || "Player";
 
-  const localizedShortcuts = [
-    {
-      title: t("dashboard.shortcutCalendarTitle"),
-      desc: t("dashboard.shortcutCalendarDesc"),
-      to: "/calendar",
-      icon: Calendar,
-      color: "bg-rose-500/10 text-rose-500",
-    },
-    {
-      title: t("dashboard.shortcutCardsTitle"),
-      desc: t("dashboard.shortcutCardsDesc"),
-      to: "/cards",
-      icon: Library,
-      color: "bg-violet-500/10 text-violet-500",
-      badge: collectionCount > 0 ? collectionCount.toLocaleString() : undefined,
-    },
-    {
-      title: t("dashboard.shortcutDecksTitle"),
-      desc: t("dashboard.shortcutDecksDesc"),
-      to: "/decks",
-      icon: Layers,
-      color: "bg-blue-500/10 text-blue-500",
-      badge: deckCount > 0 ? deckCount.toLocaleString() : undefined,
-    },
-    {
-      title: t("dashboard.shortcutCollectionTitle"),
-      desc: t("dashboard.shortcutCollectionDesc"),
-      to: "/collection",
-      icon: PackageOpen,
-      color: "bg-amber-500/10 text-amber-500",
-    },
-    {
-      title: t("dashboard.shortcutMatchesTitle"),
-      desc: t("dashboard.shortcutMatchesDesc"),
-      to: "/matches",
-      icon: Swords,
-      color: "bg-red-500/10 text-red-500",
-    },
-    {
-      title: t("dashboard.shortcutLeaderboardTitle"),
-      desc: t("dashboard.shortcutLeaderboardDesc"),
-      to: "/leaderboard",
-      icon: Trophy,
-      color: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-500",
-    },
-    {
-      title: t("dashboard.shortcutStoreTitle"),
-      desc: t("dashboard.shortcutStoreDesc"),
-      to: "/stores",
-      icon: MapPin,
-      color: "bg-emerald-500/10 text-emerald-500",
-    },
-    {
-      title: t("dashboard.shortcutLfgTitle"),
-      desc: t("dashboard.shortcutLfgDesc"),
-      to: "/lfg",
-      icon: Users,
-      color: "bg-cyan-500/10 text-cyan-500",
-    },
-  ];
+  const daysLeft = getDaysLeftInSeason();
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-6 py-8">
-      <PageHeader title={t("dashboard.title")} description={t("dashboard.desc")}>
-        <GameFilter />
-      </PageHeader>
-
+    <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-6 md:py-8 space-y-6">
       <PwaInstallBanner />
 
-      {/* 내 시즌 성적표 (가장 많이 한 게임 기준) */}
-      <section className="mt-6">
-        {hasSeasonData ? (
-          <SeasonReport
-            mode="me"
-            game={game!}
-            matches={matches!}
-            rating={primary?.rating ?? null}
-            displayName={displayName}
-            username={profile?.username}
-            avatarUrl={profile?.avatar_url}
+      {/* 1. 모바일 레이아웃 (<768px) */}
+      <div className="block md:hidden space-y-4">
+        <ProfileBar
+          displayName={displayName}
+          avatarUrl={profile?.avatar_url}
+          rating={primary?.rating ?? null}
+        />
+        <SeasonStatWidget matches={matches} />
+        <div className="grid grid-cols-2 gap-3">
+          <MenuTile
+            title={t("nav.cards")}
+            liveValue={`카드 ${collectionCount.toLocaleString()}장`}
+            to="/cards"
+            icon={Library}
+            colorKey="purple"
           />
-        ) : (
-          <div className="rounded-2xl border border-border bg-card p-8 text-center">
-            <Swords className="mx-auto h-8 w-8 text-muted-foreground" />
-            <p className="mt-3 text-sm font-medium">{t("seasonReport.emptyTitle")}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{t("seasonReport.emptyDesc")}</p>
-            <Link
-              to="/matches"
-              className="mt-4 inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
-            >
-              {t("seasonReport.recordFirst")}
-            </Link>
-          </div>
-        )}
-      </section>
-
-      {/* 퀵 링크 */}
-      <section className="mt-6">
-        <h2 className="text-sm font-bold text-foreground">{t("dashboard.quickLinks")}</h2>
-        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {localizedShortcuts.map((s) => (
-            <Link
-              key={s.to}
-              to={s.to}
-              className="group flex items-center gap-3 rounded-2xl border border-border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
-            >
-              <span
-                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${s.color}`}
-              >
-                <s.icon className="h-5 w-5" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <p className="text-sm font-semibold text-foreground">{s.title}</p>
-                  {s.badge && (
-                    <span className="inline-flex items-center justify-center rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
-                      {s.badge}
-                    </span>
-                  )}
-                </div>
-                <p className="mt-0.5 truncate text-xs text-muted-foreground">{s.desc}</p>
-              </div>
-              <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-            </Link>
-          ))}
+          <MenuTile
+            title={t("nav.decks")}
+            liveValue={`덱 ${deckCount}개`}
+            to="/decks"
+            icon={Layers}
+            colorKey="teal"
+          />
+          <MenuTile
+            title={t("nav.matches")}
+            liveValue={`이번 시즌 ${matches.length}판`}
+            to="/matches"
+            icon={Swords}
+            colorKey="coral"
+          />
+          <MenuTile
+            title={t("nav.lfg")}
+            desc="새 대전 상대 찾기"
+            to="/lfg"
+            icon={Users}
+            colorKey="pink"
+          />
         </div>
-      </section>
+      </div>
+
+      {/* 2. 태블릿 레이아웃 (768~1024px) */}
+      <div className="hidden md:block lg:hidden space-y-4">
+        <ProfileBar
+          displayName={displayName}
+          avatarUrl={profile?.avatar_url}
+          rating={primary?.rating ?? null}
+        />
+        <div className="grid grid-cols-[1.4fr_1fr_1fr] gap-3">
+          <SeasonStatWidget matches={matches} />
+          <LeagueCard rating={primary?.rating ?? null} />
+          <TodayMatchesCard matches={matches} />
+        </div>
+        <div className="grid grid-cols-4 gap-3">
+          <MenuTile
+            title={t("nav.cards")}
+            liveValue={`카드 ${collectionCount.toLocaleString()}장`}
+            to="/cards"
+            icon={Library}
+            colorKey="purple"
+          />
+          <MenuTile
+            title={t("nav.decks")}
+            liveValue={`덱 ${deckCount}개`}
+            to="/decks"
+            icon={Layers}
+            colorKey="teal"
+          />
+          <MenuTile
+            title={t("nav.matches")}
+            liveValue={`이번 시즌 ${matches.length}판`}
+            to="/matches"
+            icon={Swords}
+            colorKey="coral"
+          />
+          <MenuTile
+            title={t("nav.lfg")}
+            desc="새 대전 상대 찾기"
+            to="/lfg"
+            icon={Users}
+            colorKey="pink"
+          />
+        </div>
+      </div>
+
+      {/* 3. PC 레이아웃 (>1024px) */}
+      <div className="hidden lg:block space-y-6">
+        <ProfileBar
+          displayName={displayName}
+          avatarUrl={profile?.avatar_url}
+          rating={primary?.rating ?? null}
+          daysLeft={daysLeft}
+        />
+        <div className="grid grid-cols-[1.5fr_1fr] gap-4">
+          <SeasonStatWidget matches={matches} />
+          <LeagueCard rating={primary?.rating ?? null} />
+        </div>
+        <div className="grid grid-cols-4 gap-4">
+          <MenuTile
+            title={t("nav.cards")}
+            liveValue={`카드 ${collectionCount.toLocaleString()}장`}
+            to="/cards"
+            icon={Library}
+            colorKey="purple"
+          />
+          <MenuTile
+            title={t("nav.decks")}
+            liveValue={`덱 ${deckCount}개`}
+            to="/decks"
+            icon={Layers}
+            colorKey="teal"
+          />
+          <MenuTile
+            title={t("nav.matches")}
+            liveValue={`이번 시즌 ${matches.length}판`}
+            to="/matches"
+            icon={Swords}
+            colorKey="coral"
+          />
+          <MenuTile
+            title={t("nav.lfg")}
+            desc="새 대전 상대 찾기"
+            to="/lfg"
+            icon={Users}
+            colorKey="pink"
+          />
+        </div>
+      </div>
     </div>
   );
 }

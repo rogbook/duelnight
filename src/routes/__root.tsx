@@ -10,9 +10,8 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
-import { BottomTabBar } from "@/components/bottom-tab-bar";
+import { IconRail } from "@/components/game/IconRail";
+import { BottomTab } from "@/components/game/BottomTab";
 import { BackButton } from "@/components/back-button";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/sonner";
@@ -25,7 +24,6 @@ import { LanguageSelector } from "@/components/language-selector";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { OnlinePresenceProvider } from "@/hooks/use-online-presence";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 // 하이드레이션 전에 테마 클래스를 적용해 깜빡임(FOUC) 방지
 const THEME_INIT = `(function(){try{var t=localStorage.getItem('duelnight.theme')||'system';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d);}catch(e){}})();`;
@@ -218,8 +216,21 @@ function RootComponent() {
     setMounted(true);
   }, []);
 
-  const isMobile = useIsMobile();
-  const renderMobile = mounted && isMobile;
+  // 1024px 이하 해상도(모바일 및 태블릿) 감지
+  const [isMobileOrTablet, setIsMobileOrTablet] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(max-width: 1024px)");
+    const listener = (e: MediaQueryListEvent | MediaQueryList) => {
+      setIsMobileOrTablet(e.matches);
+    };
+    listener(media);
+    media.addEventListener("change", listener);
+    return () => media.removeEventListener("change", listener);
+  }, []);
+
+  const renderMobileOrTablet = mounted && isMobileOrTablet;
+  
   const handleAuthChange = useCallback(() => {
     router.invalidate();
     queryClient.invalidateQueries();
@@ -234,16 +245,16 @@ function RootComponent() {
               {isBare ? (
                 <>
                   <EnvBanner />
-                  <main className="min-h-screen bg-background">
+                  <main className="min-h-screen bg-game-bg text-game-text">
                     <Outlet />
                   </main>
                   <Toaster />
                 </>
-              ) : renderMobile ? (
-                <div className="flex min-h-screen w-full flex-col bg-background">
+              ) : renderMobileOrTablet ? (
+                <div className="flex min-h-screen w-full flex-col bg-game-bg text-game-text">
                   <EnvBanner />
                   <header
-                    className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-background/80 px-4 backdrop-blur"
+                    className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-game-line bg-game-bg-deep/80 px-4 backdrop-blur text-game-text"
                     style={{ paddingTop: "env(safe-area-inset-top)" }}
                   >
                     <BackButton />
@@ -254,39 +265,36 @@ function RootComponent() {
                     <AuthHeaderButton />
                   </header>
                   <main
-                    className="flex-1"
+                    className="flex-1 bg-game-bg"
                     style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 3.5rem)" }}
                   >
                     <Outlet />
                   </main>
-                  <BottomTabBar />
+                  <BottomTab />
                   <Toaster />
                 </div>
               ) : (
-                <SidebarProvider>
-                  <div className="flex min-h-screen w-full bg-background">
-                    <AppSidebar />
-                    <div className="flex flex-1 flex-col">
-                      <EnvBanner />
-                      <header
-                        className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-border bg-background/80 px-2 backdrop-blur sm:h-14 sm:gap-3 sm:px-4"
-                        style={{ paddingTop: "env(safe-area-inset-top)" }}
-                      >
-                        <SidebarTrigger />
-                        <BackButton />
-                        <div className="flex-1" />
-                        <ThemeToggle />
-                        <LanguageSelector />
-                        <NotificationBell />
-                        <AuthHeaderButton />
-                      </header>
-                      <main className="flex-1">
-                        <Outlet />
-                      </main>
-                    </div>
+                <div className="flex min-h-screen w-full bg-game-bg text-game-text">
+                  <IconRail />
+                  <div className="flex flex-1 flex-col overflow-x-hidden min-h-screen">
+                    <EnvBanner />
+                    <header
+                      className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-game-line bg-game-bg-deep/80 px-2 backdrop-blur sm:h-14 sm:gap-3 sm:px-4 text-game-text"
+                      style={{ paddingTop: "env(safe-area-inset-top)" }}
+                    >
+                      <BackButton />
+                      <div className="flex-1" />
+                      <ThemeToggle />
+                      <LanguageSelector />
+                      <NotificationBell />
+                      <AuthHeaderButton />
+                    </header>
+                    <main className="flex-1 bg-game-bg overflow-y-auto">
+                      <Outlet />
+                    </main>
                   </div>
                   <Toaster />
-                </SidebarProvider>
+                </div>
               )}
             </OnlinePresenceProvider>
           </LanguageProvider>
