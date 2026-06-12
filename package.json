@@ -14,7 +14,8 @@
     "migrate-images": "bun scripts/migrate-images.ts",
     "test:migrate-images": "bun test scripts/migrate-images.test.ts",
     "sync-db": "bun scripts/sync-from-lovable.ts",
-    "test:sync-db": "bun test scripts/sync-from-lovable.test.ts"
+    "test:sync-db": "bun test scripts/sync-from-lovable.test.ts",
+    "migrate-digimon": "bun scripts/migrate-digimon-images.ts"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.25.5",
