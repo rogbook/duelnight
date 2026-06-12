@@ -239,6 +239,25 @@ function AdminPage() {
 
       {amAdmin && (
         <>
+          <section className="mt-6 grid gap-3 sm:grid-cols-2">
+            <Link
+              to="/admin/members"
+              className="rounded-lg border border-border bg-card p-4 transition-colors hover:bg-accent"
+            >
+              <h2 className="text-sm font-semibold">회원관리 →</h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                회원 목록·검색, 정지/해제, 크레딧 지급
+              </p>
+            </Link>
+            <Link
+              to="/admin/billing"
+              className="rounded-lg border border-border bg-card p-4 transition-colors hover:bg-accent"
+            >
+              <h2 className="text-sm font-semibold">요금관리 →</h2>
+              <p className="mt-1 text-xs text-muted-foreground">결제 내역·구독 현황·매출 요약</p>
+            </Link>
+          </section>
+
           <section className="mt-6 rounded-lg border border-border bg-card p-4">
             <h2 className="text-sm font-semibold">관리자 권한 부여</h2>
             <p className="mt-1 text-xs text-muted-foreground">

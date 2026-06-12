@@ -48,7 +48,9 @@ import { Route as ApiCoachRouteImport } from './routes/api/coach'
 import { Route as ApiCardOcrRouteImport } from './routes/api/card-ocr'
 import { Route as ApiCardImportRouteImport } from './routes/api/card-import'
 import { Route as AnnouncementsIdRouteImport } from './routes/announcements.$id'
+import { Route as AdminMembersRouteImport } from './routes/admin.members'
 import { Route as AdminCardsRouteImport } from './routes/admin.cards'
+import { Route as AdminBillingRouteImport } from './routes/admin.billing'
 import { Route as AuthGoogleDriveCallbackRouteImport } from './routes/auth.google-drive.callback'
 import { Route as ApiDriveAuthRouteImport } from './routes/api.drive.auth'
 import { Route as AdminCardsReviewRouteImport } from './routes/admin.cards.review'
@@ -249,9 +251,19 @@ const AnnouncementsIdRoute = AnnouncementsIdRouteImport.update({
   path: '/announcements/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminMembersRoute = AdminMembersRouteImport.update({
+  id: '/admin/members',
+  path: '/admin/members',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminCardsRoute = AdminCardsRouteImport.update({
   id: '/admin/cards',
   path: '/admin/cards',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminBillingRoute = AdminBillingRouteImport.update({
+  id: '/admin/billing',
+  path: '/admin/billing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthGoogleDriveCallbackRoute = AuthGoogleDriveCallbackRouteImport.update({
@@ -292,7 +304,9 @@ export interface FileRoutesByFullPath {
   '/simulator': typeof SimulatorRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/store': typeof StoreRoute
+  '/admin/billing': typeof AdminBillingRoute
   '/admin/cards': typeof AdminCardsRouteWithChildren
+  '/admin/members': typeof AdminMembersRoute
   '/announcements/$id': typeof AnnouncementsIdRoute
   '/api/card-import': typeof ApiCardImportRoute
   '/api/card-ocr': typeof ApiCardOcrRoute
@@ -336,7 +350,9 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/store': typeof StoreRoute
+  '/admin/billing': typeof AdminBillingRoute
   '/admin/cards': typeof AdminCardsRouteWithChildren
+  '/admin/members': typeof AdminMembersRoute
   '/announcements/$id': typeof AnnouncementsIdRoute
   '/api/card-import': typeof ApiCardImportRoute
   '/api/card-ocr': typeof ApiCardOcrRoute
@@ -383,7 +399,9 @@ export interface FileRoutesById {
   '/simulator': typeof SimulatorRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/store': typeof StoreRoute
+  '/admin/billing': typeof AdminBillingRoute
   '/admin/cards': typeof AdminCardsRouteWithChildren
+  '/admin/members': typeof AdminMembersRoute
   '/announcements/$id': typeof AnnouncementsIdRoute
   '/api/card-import': typeof ApiCardImportRoute
   '/api/card-ocr': typeof ApiCardOcrRoute
@@ -431,7 +449,9 @@ export interface FileRouteTypes {
     | '/simulator'
     | '/sitemap.xml'
     | '/store'
+    | '/admin/billing'
     | '/admin/cards'
+    | '/admin/members'
     | '/announcements/$id'
     | '/api/card-import'
     | '/api/card-ocr'
@@ -475,7 +495,9 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sitemap.xml'
     | '/store'
+    | '/admin/billing'
     | '/admin/cards'
+    | '/admin/members'
     | '/announcements/$id'
     | '/api/card-import'
     | '/api/card-ocr'
@@ -521,7 +543,9 @@ export interface FileRouteTypes {
     | '/simulator'
     | '/sitemap.xml'
     | '/store'
+    | '/admin/billing'
     | '/admin/cards'
+    | '/admin/members'
     | '/announcements/$id'
     | '/api/card-import'
     | '/api/card-ocr'
@@ -568,7 +592,9 @@ export interface RootRouteChildren {
   SimulatorRoute: typeof SimulatorRouteWithChildren
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StoreRoute: typeof StoreRoute
+  AdminBillingRoute: typeof AdminBillingRoute
   AdminCardsRoute: typeof AdminCardsRouteWithChildren
+  AdminMembersRoute: typeof AdminMembersRoute
   AnnouncementsIdRoute: typeof AnnouncementsIdRoute
   ApiCardImportRoute: typeof ApiCardImportRoute
   ApiCardOcrRoute: typeof ApiCardOcrRoute
@@ -867,11 +893,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AnnouncementsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/members': {
+      id: '/admin/members'
+      path: '/admin/members'
+      fullPath: '/admin/members'
+      preLoaderRoute: typeof AdminMembersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/cards': {
       id: '/admin/cards'
       path: '/admin/cards'
       fullPath: '/admin/cards'
       preLoaderRoute: typeof AdminCardsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/billing': {
+      id: '/admin/billing'
+      path: '/admin/billing'
+      fullPath: '/admin/billing'
+      preLoaderRoute: typeof AdminBillingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/google-drive/callback': {
@@ -962,7 +1002,9 @@ const rootRouteChildren: RootRouteChildren = {
   SimulatorRoute: SimulatorRouteWithChildren,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StoreRoute: StoreRoute,
+  AdminBillingRoute: AdminBillingRoute,
   AdminCardsRoute: AdminCardsRouteWithChildren,
+  AdminMembersRoute: AdminMembersRoute,
   AnnouncementsIdRoute: AnnouncementsIdRoute,
   ApiCardImportRoute: ApiCardImportRoute,
   ApiCardOcrRoute: ApiCardOcrRoute,
