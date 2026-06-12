@@ -16,7 +16,7 @@
 | 앱 호스팅 (SSR+API)         | **Cloudflare Workers**                                                                                         | 이미 코드가 Cloudflare용으로 설정됨(`wrangler.jsonc`). GitHub 연동 시 push마다 자동 배포 | 무료(10만 요청/일) → 성장 시 $5/월                                                     |
 | DB·로그인·스토리지·실시간   | **Supabase** (`nrtdhkjeziknmafauypv`)                                                                          | 이미 스키마 이관 완료                                                                    | 무료 → 운영 본격화 시 Pro $25/월 (자동백업·복구 때문에 **정식 오픈 전 Pro 전환 권장**) |
 | AI (코치·OCR·카드 가져오기) | **Google Gemini 직접 호출**                                                                                    | Lovable 게이트웨이 대체. 호출당 ~2원 (AI_GATEWAY_COST_SIMULATION.md)                     | 사용량 과금                                                                            |
-| 도메인                      | **별도 신규 도메인 구매 후 연결 (사용자 결정 2026-06-11).** 구매 전 병행 기간은 `*.workers.dev` 무료 주소 사용 | 기존 duelnight.app(테스터 서비스)과 완전 분리                                            | 약 $10~15/년                                                                           |
+| 도메인                      | **(2026-06-12 개정) 기존 `duelnight.app`을 그대로 사용하되, 모든 개발 완료 후 컷오버 시점에 진행.** ① Lovable 구매 60일 경과 후 Cloudflare로 도메인 이전 ② 데이터 최종 이관 ③ 새 서버로 연결. 그때까지 베타는 `duelnight.mick-kwon.workers.dev` | 개발 기간 중 테스터 서비스 무중단                                            | 이전 수수료(1년 연장료 수준)                                                                           |
 
 - **환경 2단계**: `main` push → 자동 배포(베타) / 운영 도메인 전환은 수동 승인 후. Cloudflare는 브랜치별 프리뷰 URL도 자동 생성.
 - **모니터링**: Cloudflare 대시보드(트래픽/에러) + Supabase Logs/Advisors. 오류 추적 필요해지면 Sentry 무료 플랜 추가.
