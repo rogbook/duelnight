@@ -86,9 +86,25 @@ function applyHtmlNoCache(request: Request, response: Response): Response {
   });
 }
 
+// Cloudflare Workers는 환경변수를 fetch의 env 인자로만 주므로,
+// 서버 코드 전반이 쓰는 process.env에 1회 복사한다 (없으면 supabase 클라이언트 생성이 즉시 실패).
+let processEnvHydrated = false;
+function hydrateProcessEnv(env: unknown): void {
+  if (processEnvHydrated || typeof process === "undefined" || !env || typeof env !== "object") {
+    return;
+  }
+  for (const [key, value] of Object.entries(env)) {
+    if (typeof value === "string" && process.env[key] === undefined) {
+      process.env[key] = value;
+    }
+  }
+  processEnvHydrated = true;
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      hydrateProcessEnv(env);
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       const normalized = await normalizeCatastrophicSsrResponse(response);
