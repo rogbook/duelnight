@@ -262,7 +262,7 @@ function CardsPage() {
         </div>
       </PageHeader>
 
-      <div className="mt-6 space-y-3 rounded-lg border border-border bg-card p-4">
+      <div className="mt-6 space-y-4 rounded-2xl border border-border bg-card p-4">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -272,28 +272,95 @@ function CardsPage() {
               resetPage();
             }}
             placeholder={t("cards.searchPlaceholder")}
-            className="pl-9"
+            className="pl-9 h-10 rounded-xl"
           />
         </div>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <Select
-            value={type}
-            onValueChange={(v) => {
-              setType(v);
-              resetPage();
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={t("cards.type")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("cards.typeAll")}</SelectItem>
-              <SelectItem value="leader">{t("cards.typeLeader")}</SelectItem>
-              <SelectItem value="character">{t("cards.typeCharacter")}</SelectItem>
-              <SelectItem value="event">{t("cards.typeEvent")}</SelectItem>
-              <SelectItem value="stage">{t("cards.typeStage")}</SelectItem>
-            </SelectContent>
-          </Select>
+
+        {/* 타입 필터 칩 */}
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[11px] font-semibold text-muted-foreground">{t("cards.type")}</span>
+          <div className="flex gap-1.5 overflow-x-auto scrollbar-none pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
+            {[
+              { value: "all", label: t("cards.typeAll") },
+              { value: "leader", label: t("cards.typeLeader") },
+              { value: "character", label: t("cards.typeCharacter") },
+              { value: "event", label: t("cards.typeEvent") },
+              { value: "stage", label: t("cards.typeStage") },
+            ].map((item) => {
+              const active = type === item.value;
+              return (
+                <button
+                  key={item.value}
+                  type="button"
+                  onClick={() => {
+                    setType(item.value);
+                    resetPage();
+                  }}
+                  className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium border transition-all duration-200 ${
+                    active
+                      ? "bg-primary border-primary text-primary-foreground font-semibold shadow-sm"
+                      : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground/30"
+                  }`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 색상 필터 칩 */}
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[11px] font-semibold text-muted-foreground">{t("cards.color")}</span>
+          <div className="flex gap-1.5 overflow-x-auto scrollbar-none pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
+            <button
+              type="button"
+              onClick={() => {
+                setColor("all");
+                resetPage();
+              }}
+              className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium border transition-all duration-200 ${
+                color === "all"
+                  ? "bg-primary border-primary text-primary-foreground font-semibold shadow-sm"
+                  : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground/30"
+              }`}
+            >
+              {t("cards.colorAll")}
+            </button>
+            {(COLORS_BY_GAME[game] || []).map((c) => {
+              const active = color === c.id;
+              let colorClass = "bg-background border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground/30";
+              if (active) {
+                if (c.id === "red") colorClass = "bg-red-500 border-red-500 text-white font-semibold shadow-sm";
+                else if (c.id === "blue") colorClass = "bg-blue-500 border-blue-500 text-white font-semibold shadow-sm";
+                else if (c.id === "green") colorClass = "bg-emerald-600 border-emerald-600 text-white font-semibold shadow-sm";
+                else if (c.id === "yellow") colorClass = "bg-amber-400 border-amber-400 text-slate-900 font-semibold shadow-sm";
+                else if (c.id === "black") colorClass = "bg-slate-800 border-slate-800 text-white font-semibold shadow-sm";
+                else if (c.id === "purple") colorClass = "bg-purple-600 border-purple-600 text-white font-semibold shadow-sm";
+                else if (c.id === "white") colorClass = "bg-slate-200 border-slate-300 text-slate-800 font-semibold shadow-sm";
+                else {
+                  colorClass = "bg-primary border-primary text-primary-foreground font-semibold shadow-sm";
+                }
+              }
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => {
+                    setColor(c.id);
+                    resetPage();
+                  }}
+                  className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium border transition-all duration-200 ${colorClass}`}
+                >
+                  {colorLabel(game, c.id, language)}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 세트 필터(Select 유지) 및 즐겨찾기 버튼 */}
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Select
             value={setCode}
             onValueChange={(v) => {
@@ -301,7 +368,7 @@ function CardsPage() {
               resetPage();
             }}
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full h-10 rounded-xl">
               <SelectValue placeholder={t("cards.set")} />
             </SelectTrigger>
             <SelectContent>
@@ -309,25 +376,6 @@ function CardsPage() {
               {sets.map((s) => (
                 <SelectItem key={s} value={s}>
                   {s}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={color}
-            onValueChange={(v) => {
-              setColor(v);
-              resetPage();
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={t("cards.color")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("cards.colorAll")}</SelectItem>
-              {(COLORS_BY_GAME[game] || []).map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {colorLabel(game, c.id, language)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -343,7 +391,7 @@ function CardsPage() {
               setFavOnly((v) => !v);
               resetPage();
             }}
-            className="gap-1"
+            className="w-full gap-1.5 h-10 rounded-xl"
           >
             <Star className={`h-4 w-4 ${favOnly ? "fill-current" : ""}`} />
             {t("cards.favoritesOnly")}
@@ -496,7 +544,7 @@ function CardTile({ card, isFav, onClick }: { card: Card; isFav: boolean; onClic
     <li className="group relative scroll-reveal-card">
       <button
         onClick={onClick}
-        className="block w-full overflow-hidden rounded-lg border border-border bg-card text-left transition hover:border-primary"
+        className="block w-full overflow-hidden rounded-2xl border border-border bg-card text-left transition-all duration-300 hover:border-primary/55 hover:-translate-y-1 hover:shadow-md"
       >
         <div className="relative aspect-[5/7] w-full bg-muted">
           {(() => {
@@ -505,44 +553,44 @@ function CardTile({ card, isFav, onClick }: { card: Card; isFav: boolean; onClic
             return <CardThumb src={src} name={card.name} noImageLabel={t("cards.noImage")} />;
           })()}
           {card.type === "leader" && (
-            <span className="absolute left-1 top-1 rounded bg-primary px-1.5 py-0.5 text-[10px] font-bold text-primary-foreground">
+            <span className="absolute left-1.5 top-1.5 rounded-md bg-primary px-2 py-0.5 text-[10px] font-extrabold text-primary-foreground uppercase tracking-wide">
               {t("cards.typeLeader")}
             </span>
           )}
           {isFav && (
-            <Star className="absolute right-1 top-1 h-4 w-4 fill-yellow-400 text-yellow-400 drop-shadow" />
+            <Star className="absolute right-1.5 top-1.5 h-4.5 w-4.5 fill-yellow-400 text-yellow-400 drop-shadow-sm" />
           )}
         </div>
-        <div className="p-2">
-          <p className="truncate text-[11px] text-muted-foreground">{card.code}</p>
-          <p className="truncate text-sm font-medium">{card.name}</p>
-          <div className="mt-1 flex flex-wrap gap-1">
+        <div className="p-3">
+          <p className="truncate text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">{card.code}</p>
+          <p className="truncate text-sm font-semibold text-foreground mt-0.5">{card.name}</p>
+          <div className="mt-2 flex flex-wrap gap-1">
             {card.colors.map((c) => (
               <span
                 key={c}
-                className="rounded bg-muted px-1 py-px text-[10px] text-muted-foreground"
+                className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary"
               >
                 {colorLabel(card.game as Game, c, language)}
               </span>
             ))}
             {card.rarity && (
-              <span className="rounded bg-accent px-1 py-px text-[10px] text-accent-foreground">
+              <span className="rounded-md bg-accent px-1.5 py-0.5 text-[10px] font-semibold text-accent-foreground">
                 {card.rarity}
               </span>
             )}
           </div>
           {card.traits && card.traits.length > 0 && (
-            <div className="mt-1 flex flex-wrap gap-1">
-              {card.traits.slice(0, 3).map((t) => (
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {card.traits.slice(0, 2).map((t) => (
                 <span
                   key={t}
-                  className="rounded border border-border bg-background px-1 py-px text-[10px] text-muted-foreground"
+                  className="rounded-md border border-border bg-background px-1.5 py-0.5 text-[10px] text-muted-foreground"
                 >
                   {t}
                 </span>
               ))}
-              {card.traits.length > 3 && (
-                <span className="text-[10px] text-muted-foreground">+{card.traits.length - 3}</span>
+              {card.traits.length > 2 && (
+                <span className="text-[10px] text-muted-foreground font-medium self-center pl-0.5">+{card.traits.length - 2}</span>
               )}
             </div>
           )}
@@ -551,7 +599,7 @@ function CardTile({ card, isFav, onClick }: { card: Card; isFav: boolean; onClic
       <Link
         to="/cards/$code"
         params={{ code: card.code }}
-        className="absolute bottom-1 right-1 rounded bg-background/80 px-1.5 py-0.5 text-[10px] text-muted-foreground opacity-0 backdrop-blur transition group-hover:opacity-100 hover:text-foreground"
+        className="absolute bottom-2 right-2 rounded-md bg-background px-2 py-0.5 text-[10px] font-medium text-muted-foreground opacity-0 transition group-hover:opacity-100 hover:text-foreground border border-border shadow-sm"
         onClick={(e) => e.stopPropagation()}
         aria-label={t("cards.detailAria")}
       >

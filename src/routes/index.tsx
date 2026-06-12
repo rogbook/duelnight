@@ -96,9 +96,7 @@ function useProfile(userId: string) {
   });
 }
 
-function useKpi(userId: string) {
-  const { t } = useI18n();
-
+function useKpiCounts(userId: string) {
   const { data: collectionCount } = useQuery({
     queryKey: ["dashboard-collection", userId],
     queryFn: async () => {
@@ -125,18 +123,10 @@ function useKpi(userId: string) {
     enabled: !!userId,
   });
 
-  return [
-    {
-      label: t("dashboard.cards"),
-      value: collectionCount?.toLocaleString() ?? "0",
-      hint: collectionCount ? t("dashboard.cardsHint") : t("dashboard.cardsHintEmpty"),
-    },
-    {
-      label: t("dashboard.decks"),
-      value: deckCount?.toLocaleString() ?? "0",
-      hint: deckCount ? t("dashboard.decksHint") : t("dashboard.decksHintEmpty"),
-    },
-  ];
+  return {
+    collectionCount: collectionCount ?? 0,
+    deckCount: deckCount ?? 0,
+  };
 }
 
 function Dashboard() {
@@ -149,7 +139,7 @@ function Dashboard() {
   const game = primary?.game ?? null;
   const { data: matches } = useSeasonMatches(userId, game);
   const { data: profile } = useProfile(userId);
-  const kpi = useKpi(userId);
+  const { collectionCount, deckCount } = useKpiCounts(userId);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -179,6 +169,7 @@ function Dashboard() {
       to: "/cards",
       icon: Library,
       color: "bg-violet-500/10 text-violet-500",
+      badge: collectionCount > 0 ? collectionCount.toLocaleString() : undefined,
     },
     {
       title: t("dashboard.shortcutDecksTitle"),
@@ -186,6 +177,7 @@ function Dashboard() {
       to: "/decks",
       icon: Layers,
       color: "bg-blue-500/10 text-blue-500",
+      badge: deckCount > 0 ? deckCount.toLocaleString() : undefined,
     },
     {
       title: t("dashboard.shortcutCollectionTitle"),
@@ -259,26 +251,8 @@ function Dashboard() {
         )}
       </section>
 
-      {/* KPI 미니 */}
-      <section className="mt-4 grid grid-cols-2 gap-3">
-        {kpi.map((s, i) => {
-          const Icon = [Library, Layers][i] ?? Library;
-          return (
-            <div key={s.label} className="rounded-2xl border border-border bg-card p-4">
-              <div className="flex items-center gap-2">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <Icon className="h-4 w-4" />
-                </span>
-                <p className="text-xs font-medium text-muted-foreground">{s.label}</p>
-              </div>
-              <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">{s.value}</p>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">{s.hint}</p>
-            </div>
-          );
-        })}
-      </section>
-
-      <section className="mt-8">
+      {/* 퀵 링크 */}
+      <section className="mt-6">
         <h2 className="text-sm font-bold text-foreground">{t("dashboard.quickLinks")}</h2>
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {localizedShortcuts.map((s) => (
@@ -293,7 +267,14 @@ function Dashboard() {
                 <s.icon className="h-5 w-5" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-foreground">{s.title}</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-semibold text-foreground">{s.title}</p>
+                  {s.badge && (
+                    <span className="inline-flex items-center justify-center rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                      {s.badge}
+                    </span>
+                  )}
+                </div>
                 <p className="mt-0.5 truncate text-xs text-muted-foreground">{s.desc}</p>
               </div>
               <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />

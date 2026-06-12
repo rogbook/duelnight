@@ -102,10 +102,14 @@ export function BottomTabBar() {
                 className="flex flex-1 flex-col items-center justify-center gap-0.5"
               >
                 <tab.icon
-                  className={`h-5 w-5 transition-colors ${active ? "text-foreground" : "text-muted-foreground"}`}
+                  className={`h-5 w-5 transition-all duration-200 ease-out ${
+                    active ? "scale-105 text-primary" : "scale-100 text-muted-foreground hover:text-foreground"
+                  }`}
                 />
                 <span
-                  className={`text-[10px] transition-colors ${active ? "font-medium text-foreground" : "text-muted-foreground"}`}
+                  className={`text-[10px] transition-all duration-200 ease-out ${
+                    active ? "font-semibold text-primary" : "text-muted-foreground"
+                  }`}
                 >
                   {t(tab.labelKey)}
                 </span>
@@ -117,13 +121,17 @@ export function BottomTabBar() {
             className="relative flex flex-1 flex-col items-center justify-center gap-0.5"
           >
             <MoreHorizontal
-              className={`h-5 w-5 transition-colors ${isMoreActive ? "text-foreground" : "text-muted-foreground"}`}
+              className={`h-5 w-5 transition-all duration-200 ease-out ${
+                isMoreActive ? "scale-105 text-primary" : "scale-100 text-muted-foreground hover:text-foreground"
+              }`}
             />
             {unreadDm > 0 && (
               <span className="absolute right-[calc(50%-1rem)] top-1.5 h-2 w-2 rounded-full bg-primary" />
             )}
             <span
-              className={`text-[10px] transition-colors ${isMoreActive ? "font-medium text-foreground" : "text-muted-foreground"}`}
+              className={`text-[10px] transition-all duration-200 ease-out ${
+                isMoreActive ? "font-semibold text-primary" : "text-muted-foreground"
+              }`}
             >
               {t("nav.more")}
             </span>
