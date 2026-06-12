@@ -154,12 +154,11 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b">
         <Link to="/" className="flex items-center gap-2 px-2 py-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-sm font-black text-white shadow-sm">
-            D
-          </div>
-          {!collapsed && (
-            <span className="flex items-center gap-1.5 text-sm font-semibold tracking-tight">
-              DuelNight
+          {collapsed ? (
+            <img src="/favicon.png" alt="DuelNight" className="h-8 w-8 rounded-xl" />
+          ) : (
+            <span className="flex items-center gap-1.5">
+              <img src="/logo-dark.png" alt="DuelNight" className="h-7 w-auto" />
               {isAdmin && (
                 <span className="rounded bg-primary px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary-foreground">
                   Admin
