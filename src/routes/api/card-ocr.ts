@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { callGeminiProxy } from "@/lib/gemini.server";
 import "@tanstack/react-start";
 import { z } from "zod";
 
@@ -80,26 +81,22 @@ export const Route = createFileRoute("/api/card-ocr")({
         const imageUrl = payload.image_b64 ?? payload.image_url!;
 
         try {
-          const res = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-            body: JSON.stringify({
-              model: "gemini-2.5-flash",
-              messages: [
-                { role: "system", content: SYSTEM },
-                {
-                  role: "user",
-                  content: [
-                    {
-                      type: "text",
-                      text: `이 카드 이미지를 분석해 JSON으로 출력하세요.${payload.game_hint ? ` (게임: ${payload.game_hint})` : ""}`,
-                    },
-                    { type: "image_url", image_url: { url: imageUrl } },
-                  ],
-                },
-              ],
-              response_format: { type: "json_object" },
-            }),
+          const res = await callGeminiProxy(token, apiKey, {
+            model: "gemini-2.5-flash",
+            messages: [
+              { role: "system", content: SYSTEM },
+              {
+                role: "user",
+                content: [
+                  {
+                    type: "text",
+                    text: `이 카드 이미지를 분석해 JSON으로 출력하세요.${payload.game_hint ? ` (게임: ${payload.game_hint})` : ""}`,
+                  },
+                  { type: "image_url", image_url: { url: imageUrl } },
+                ],
+              },
+            ],
+            response_format: { type: "json_object" },
           });
 
           if (res.status === 429)

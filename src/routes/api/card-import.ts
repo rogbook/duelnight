@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import "@tanstack/react-start";
 import { z } from "zod";
+import { callGeminiProxy } from "@/lib/gemini.server";
 
 /**
  * 카드 자동 등록 — 공식 카드리스트 URL 가져오기 (Phase 1.5)
@@ -243,20 +244,16 @@ export const Route = createFileRoute("/api/card-import")({
 
         // 2) Gemini 게이트웨이로 구조화
         try {
-          const res = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-            body: JSON.stringify({
-              model: "gemini-2.5-flash",
-              messages: [
-                { role: "system", content: SYSTEM },
-                {
-                  role: "user",
-                  content: `${payload.game_hint ? `게임: ${payload.game_hint}\n` : ""}아래는 카드 페이지 텍스트입니다([IMG:URL]은 카드 이미지). 카드 정보를 JSON으로 추출하세요.\n\n${text}`,
-                },
-              ],
-              response_format: { type: "json_object" },
-            }),
+          const res = await callGeminiProxy(token, apiKey, {
+            model: "gemini-2.5-flash",
+            messages: [
+              { role: "system", content: SYSTEM },
+              {
+                role: "user",
+                content: `${payload.game_hint ? `게임: ${payload.game_hint}\n` : ""}아래는 카드 페이지 텍스트입니다([IMG:URL]은 카드 이미지). 카드 정보를 JSON으로 추출하세요.\n\n${text}`,
+              },
+            ],
+            response_format: { type: "json_object" },
           });
 
           if (res.status === 429)

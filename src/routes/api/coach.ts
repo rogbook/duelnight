@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import "@tanstack/react-start";
 import { z } from "zod";
+import { callGeminiProxy } from "@/lib/gemini.server";
 
 const RatePackSchema = z.object({
   wins: z.number(),
@@ -119,19 +120,12 @@ export const Route = createFileRoute("/api/coach")({
         const user = `다음은 사용자의 최근 전적 요약입니다(JSON):\n${JSON.stringify(payload)}`;
 
         try {
-          const res = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${apiKey}`,
-            },
-            body: JSON.stringify({
-              model: "gemini-2.5-flash",
-              messages: [
-                { role: "system", content: system },
-                { role: "user", content: user },
-              ],
-            }),
+          const res = await callGeminiProxy(token, apiKey, {
+            model: "gemini-2.5-flash",
+            messages: [
+              { role: "system", content: system },
+              { role: "user", content: user },
+            ],
           });
 
           if (res.status === 429) {
@@ -153,13 +147,10 @@ export const Route = createFileRoute("/api/coach")({
           if (!res.ok) {
             const txt = await res.text();
             console.error("AI gateway error", res.status, txt);
-            return new Response(
-              JSON.stringify({
-                error: "AI 응답 생성에 실패했습니다.",
-                detail: `gemini ${res.status}: ${txt.slice(0, 150)}`,
-              }),
-              { status: 502, headers: corsHeaders },
-            );
+            return new Response(JSON.stringify({ error: "AI 응답 생성에 실패했습니다." }), {
+              status: 502,
+              headers: corsHeaders,
+            });
           }
 
           const json = (await res.json()) as {
