@@ -85,6 +85,10 @@ DB 변경 여부: (있으면 Claude 요청 사항 명시)
 | ~~UI_USABILITY_REPORT.md 지적 항목 코드 반영~~                      | Antigravity                      | ✅ **완료 (2026-06-11)** — usability-fixes + 카드 목록 최적화(디바운스·번호형 페이지네이션·스켈레톤·PWA 배너) Claude 검토·결함 2건 수정 후 main 병합 |
 | ~~Cloudflare 배포 연결~~                                            | Claude + 사용자                  | ✅ **완료 (2026-06-11)** — main push마다 자동 배포. 베타 URL: https://duelnight.mick-kwon.workers.dev (SSR·카드DB·번들 검증 통과)                      |
 | ~~유출 키 종결~~                                                    | 사용자 + Claude                  | ✅ **완료 (2026-06-11)** — 새 secret key 발급·세 폴더 배포, 구 키 폐기. 유출 키 실호출 401 확인(캐시 커밋에서 추출 테스트). 사고 종결                |
+| ~~AI Gemini 전환 + 베타 서버 환경변수~~                             | Claude                           | ✅ **완료 (2026-06-12)** — Lovable 게이트웨이 제거→Gemini. CF 배포가 변수 삭제하던 문제 해결(wrangler.jsonc vars). **지역차단은 Supabase Edge Function(뭄바이) 경유로 우회** — 코치 e2e 정상. 상세: [docs/AI_GEMINI_PROXY.md](./docs/AI_GEMINI_PROXY.md) |
+| ~~구글 로그인 독립 + 관리자 계정 이전~~                             | Claude + 사용자                  | ✅ **완료 (2026-06-12)** — Lovable 인증 제거. 관리자 4명(mick.kwon 구글/권동휘/권순호/시드). 시드계정 admin@lovable.test는 외부테스트 전 삭제 예정 |
+| 게이머 UI 개편 (모바일 최우선)                                      | Antigravity                      | 1차 완료(탭바·홈·카드목록). 다음 차수: 나머지 화면 + 사용자 폰 평가 반영 |
+| 관리자 페이지(회원·요금 관리) 설계·구현                            | Claude                           | 대기 (다음 우선순위) |
 
 ## 5. 참고 문서
 
