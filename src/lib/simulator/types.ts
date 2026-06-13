@@ -48,7 +48,15 @@ export interface PlayerState {
   };
 }
 
-export type TurnPhase = "refresh" | "draw" | "don" | "main" | "attack_declared" | "end" | "ended";
+export type TurnPhase =
+  | "mulligan"
+  | "refresh"
+  | "draw"
+  | "don"
+  | "main"
+  | "attack_declared"
+  | "end"
+  | "ended";
 
 export interface PendingResponse {
   kind: "counter_window";
@@ -96,7 +104,9 @@ export type OPTCGAction =
   | { type: "pass_counter" }
   // 페이즈 전이
   | { type: "end_main" }
-  | { type: "concede" };
+  | { type: "concede" }
+  // 게임 시작 멀리건 (손패 유지/교체, 게임당 플레이어별 1회)
+  | { type: "mulligan"; redraw: boolean };
 
 export type Action = OPTCGAction;
 

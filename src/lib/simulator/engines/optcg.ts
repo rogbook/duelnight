@@ -172,7 +172,7 @@ export const optcgEngine: ITcgEngine = {
       rngSeed: p2.nextSeed,
       turn: 1,
       activePlayer: "p1",
-      phase: "main",
+      phase: "mulligan",
       pendingResponse: null,
       players: { p1: p1.state, p2: p2.state },
       log: [{ turn: 1, player: "p1", type: "game_start" }],
@@ -184,6 +184,15 @@ export const optcgEngine: ITcgEngine = {
     const me = state.players[player];
     const oppId: PlayerId = player === "p1" ? "p2" : "p1";
     const opp = state.players[oppId];
+
+    // 멀리건 단계: 현재 차례 플레이어만 손패 유지/교체 선택 (게임당 1회)
+    if (state.phase === "mulligan") {
+      if (player !== state.activePlayer) return [];
+      return [
+        { type: "mulligan", redraw: false },
+        { type: "mulligan", redraw: true },
+      ];
+    }
 
     // 카운터 윈도우 수비 상태인 경우
     if (state.pendingResponse) {
@@ -299,6 +308,34 @@ export const optcgEngine: ITcgEngine = {
         ...state,
         phase: "ended",
         log: [...state.log, { turn: state.turn, player: me, type: "concede" }],
+      };
+    }
+
+    // 멀리건: 손패 유지(keep) 또는 덱에 섞고 같은 수 재드로우(redraw). p1 → p2 순, p2 완료 시 main 진입.
+    if (action.type === "mulligan") {
+      let rngSeed = state.rngSeed;
+      let zones = player.zones;
+      if (action.redraw) {
+        const combined = [...player.zones.hand, ...player.zones.deck];
+        const { result: shuffled, nextSeed } = shuffle(combined, rngSeed);
+        rngSeed = nextSeed;
+        zones = {
+          ...player.zones,
+          hand: shuffled.slice(0, STARTING_HAND),
+          deck: shuffled.slice(STARTING_HAND),
+        };
+      }
+      const goMain = me === "p2";
+      return {
+        ...state,
+        rngSeed,
+        players: { ...state.players, [me]: { ...player, zones } },
+        activePlayer: goMain ? "p1" : oppId,
+        phase: goMain ? "main" : "mulligan",
+        log: [
+          ...state.log,
+          { turn: state.turn, player: me, type: "mulligan", payload: { redraw: action.redraw } },
+        ],
       };
     }
 
