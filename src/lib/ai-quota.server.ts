@@ -86,7 +86,7 @@ async function isUnlimitedUser(supabase: SupabaseClient, userId: string): Promis
     console.error("has_role check failed", e);
   }
   try {
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from("ai_unlimited")
       .select("user_id")
       .eq("user_id", userId)

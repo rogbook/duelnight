@@ -33,7 +33,7 @@ export type DMProfile = {
 };
 
 // types.ts에 아직 없는 테이블/함수 접근용 (서버 적용 후 정타입화 가능)
-const sb = () => supabase as any;
+const sb = () => supabase;
 
 export async function startDm(otherUserId: string): Promise<string> {
   const { data, error } = await sb().rpc("start_dm", { _other: otherUserId });

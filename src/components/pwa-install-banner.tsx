@@ -45,7 +45,7 @@ export function PwaInstallBanner() {
     // 1. 이미 앱이 standalone 모드로 실행 중인 경우 표시하지 않음
     const isStandalone =
       window.matchMedia("(display-mode: standalone)").matches ||
-      (window.navigator as any).standalone;
+      (window.navigator as Navigator & { standalone?: boolean }).standalone;
     if (isStandalone) {
       return;
     }
@@ -66,7 +66,9 @@ export function PwaInstallBanner() {
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
     // iOS Safari 대응
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    const isIOS =
+      /iPad|iPhone|iPod/.test(navigator.userAgent) &&
+      !(window as Window & { MSStream?: unknown }).MSStream;
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
     if (isIOS && isSafari && !isStandalone) {
       setIsVisible(true);

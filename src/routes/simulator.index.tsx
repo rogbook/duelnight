@@ -30,10 +30,11 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { PREBUILT_DECKS, type PrebuiltDeck } from "@/lib/simulator/prebuilt-decks";
-import type { Tables } from "@/integrations/supabase/types";
+import type { Json, Tables } from "@/integrations/supabase/types";
 import { useI18n } from "@/i18n/language-context";
 import { colorHex, colorLabel, type Game } from "@/lib/deck-colors";
 import { checkCanAdd } from "@/lib/deck-rules";
+import type { DeckRecipe } from "@/lib/simulator/types";
 
 type SimulatorDeck = Tables<"simulator_decks">;
 type CardRow = Tables<"cards">;
@@ -103,7 +104,7 @@ function SimulatorIndexPage() {
       id: string;
       name: string;
       isPrebuilt: boolean;
-      recipe: any;
+      recipe: DeckRecipe;
       leaderCode: string | null;
     }[] = [];
 
@@ -113,7 +114,7 @@ function SimulatorIndexPage() {
         id: d.id,
         name: d.name,
         isPrebuilt: false,
-        recipe: d.recipe,
+        recipe: d.recipe as Json & DeckRecipe,
         leaderCode: d.leader_code,
       });
     }
@@ -213,7 +214,7 @@ function SimulatorIndexPage() {
       if (!deck) return false;
       const cards = deck.recipe?.cards ?? [];
       const leaderCode = deck.leaderCode || deck.recipe?.leaderCode;
-      const total = cards.reduce((acc: number, c: any) => acc + c.quantity, 0);
+      const total = cards.reduce((acc, c) => acc + c.quantity, 0);
 
       if (!leaderCode) {
         toast.error(`${pName}의 리더 카드가 설정되지 않았습니다. 덱을 편집해 주세요.`);
@@ -434,11 +435,8 @@ function SimulatorIndexPage() {
                 ) : (
                   <ul className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
                     {userDecks.map((d) => {
-                      const recipeCards = (d.recipe as any)?.cards ?? [];
-                      const count = recipeCards.reduce(
-                        (acc: number, c: any) => acc + c.quantity,
-                        0,
-                      );
+                      const recipeCards = (d.recipe as Json & DeckRecipe)?.cards ?? [];
+                      const count = recipeCards.reduce((acc, c) => acc + c.quantity, 0);
                       return (
                         <li
                           key={d.id}
@@ -541,7 +539,7 @@ function SimulatorRecipeEditor({
 
   // 로컬 덱 상태 (리더 코드 & 카드 배열)
   const initialRecipe = useMemo(() => {
-    const r = deck.recipe as any;
+    const r = deck.recipe as Json & DeckRecipe;
     return {
       leaderCode: deck.leader_code || r?.leaderCode || null,
       cards: (r?.cards || []) as { card_code: string; quantity: number }[],
@@ -601,7 +599,7 @@ function SimulatorRecipeEditor({
         .limit(150);
 
       if (q.trim()) qb = qb.or(`name.ilike.%${q.trim()}%,code.ilike.%${q.trim()}%`);
-      if (filterType !== "all") qb = qb.eq("type", filterType as any);
+      if (filterType !== "all") qb = qb.eq("type", filterType as CardRow["type"]);
       if (filterColor !== "all") qb = qb.contains("colors", [filterColor]);
       if (filterSet !== "all") qb = qb.eq("set_code", filterSet);
 

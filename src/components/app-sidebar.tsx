@@ -40,7 +40,7 @@ import { useI18n, TranslationKey } from "@/i18n/language-context";
 interface SidebarItem {
   titleKey: TranslationKey;
   url: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ className?: string }>;
 }
 
 const mainItems: SidebarItem[] = [

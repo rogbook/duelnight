@@ -38,7 +38,15 @@ import {
   getBattlePower,
 } from "@/lib/simulator/engines/optcg";
 import { chooseAction } from "@/lib/simulator/ai/agent";
-import type { GameState, Action, CardInstance, PlayerId, PlayerState } from "@/lib/simulator/types";
+import type { Json } from "@/integrations/supabase/types";
+import type {
+  GameState,
+  Action,
+  CardInstance,
+  DeckRecipe,
+  PlayerId,
+  PlayerState,
+} from "@/lib/simulator/types";
 
 interface SimulatorSearchParams {
   p1?: string;
@@ -89,7 +97,7 @@ function SimulatorMatchRoomPage() {
         .eq("id", p1!)
         .single();
       if (error) throw error;
-      return data.recipe as any;
+      return data.recipe as Json & DeckRecipe;
     },
   });
 
@@ -107,7 +115,7 @@ function SimulatorMatchRoomPage() {
         .eq("id", p2!)
         .single();
       if (error) throw error;
-      return data.recipe as any;
+      return data.recipe as Json & DeckRecipe;
     },
   });
 
@@ -118,9 +126,9 @@ function SimulatorMatchRoomPage() {
     const initBattle = async () => {
       setLoadingText("카드 효과 사전 적재 중...");
       try {
-        const p1Codes = p1Deck.cards.map((c: any) => c.card_code);
+        const p1Codes = p1Deck.cards.map((c) => c.card_code);
         if (p1Deck.leaderCode) p1Codes.push(p1Deck.leaderCode);
-        const p2Codes = p2Deck.cards.map((c: any) => c.card_code);
+        const p2Codes = p2Deck.cards.map((c) => c.card_code);
         if (p2Deck.leaderCode) p2Codes.push(p2Deck.leaderCode);
 
         const allCodes = Array.from(new Set([...p1Codes, ...p2Codes]));
@@ -259,7 +267,7 @@ function SimulatorMatchRoomPage() {
       .filter(
         (a) => a.type === "play_character" || a.type === "play_event" || a.type === "play_stage",
       )
-      .map((a) => (a as any).iid as string),
+      .map((a) => a.iid),
   );
 
   return (

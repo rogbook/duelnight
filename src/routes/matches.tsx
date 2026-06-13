@@ -80,7 +80,7 @@ import { AiCoachCard } from "@/components/ai-coach-card";
 import { normalizeDeckName } from "@/lib/normalize-deck";
 import { matchesToCsv, matchesToJson, parseImport, downloadFile } from "@/lib/csv";
 import type { Database } from "@/integrations/supabase/types";
-import { useI18n } from "@/i18n/language-context";
+import { useI18n, type TranslationKey } from "@/i18n/language-context";
 
 type Game = string;
 type EventT = Database["public"]["Enums"]["match_event"];
@@ -520,7 +520,9 @@ function EventTable({ rows }: { rows: EventStat[] }) {
           {rows.map((r) => (
             <li key={r.event} className="flex items-center justify-between px-4 py-3">
               <span className="text-sm">
-                {t(`matches.event${r.event.charAt(0).toUpperCase() + r.event.slice(1)}` as any)}
+                {t(
+                  `matches.event${r.event.charAt(0).toUpperCase() + r.event.slice(1)}` as TranslationKey,
+                )}
               </span>
               <span className="text-xs text-game-text-dim">
                 <span className="mr-2 font-medium text-game-text">{fmtPct(r.stats)}</span>
@@ -753,7 +755,9 @@ function RecentList({
                   </td>
                   <td className="px-3 py-2">{labelOf(m.game)}</td>
                   <td className="px-3 py-2 text-game-text-dim">
-                    {t(`matches.event${m.event.charAt(0).toUpperCase() + m.event.slice(1)}` as any)}
+                    {t(
+                      `matches.event${m.event.charAt(0).toUpperCase() + m.event.slice(1)}` as TranslationKey,
+                    )}
                   </td>
                   <td className="px-3 py-2">{m.my_deck}</td>
                   <td className="px-3 py-2 text-game-text-dim" onClick={(e) => e.stopPropagation()}>
@@ -949,7 +953,7 @@ function ViewMatchDialog({
               <Row
                 label={t("matches.event")}
                 value={t(
-                  `matches.event${match.event.charAt(0).toUpperCase() + match.event.slice(1)}` as any,
+                  `matches.event${match.event.charAt(0).toUpperCase() + match.event.slice(1)}` as TranslationKey,
                 )}
               />
               <Row label={t("matches.myDeck")} value={match.my_deck} />

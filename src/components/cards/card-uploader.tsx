@@ -461,7 +461,9 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
   const [driveConnected, setDriveConnected] = useState(false);
   const [driveEmail, setDriveEmail] = useState<string | null>(null);
   const [driveFolderUrl, setDriveFolderUrl] = useState("");
-  const [driveFiles, setDriveFiles] = useState<any[]>([]);
+  const [driveFiles, setDriveFiles] = useState<
+    { id: string; name: string; thumbnailLink: string; mimeType: string }[]
+  >([]);
   const [selectedDriveFiles, setSelectedDriveFiles] = useState<Set<string>>(new Set());
   const [loadingDrive, setLoadingDrive] = useState(false);
 
@@ -601,7 +603,7 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
     }
   };
 
-  const ocrCache = useRef(new Map<string, any>());
+  const ocrCache = useRef(new Map<string, Record<string, unknown>>());
 
   /** 단일 행 OCR: image_url을 Gemini Vision으로 분석해 빈 필드만 채움 */
   const ocrRow = async (idx: number): Promise<boolean> => {
@@ -609,9 +611,9 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
     if (!r?.image_url) return false;
 
     try {
-      let d: any;
+      let d: Record<string, unknown>;
       if (ocrCache.current.has(r.image_url)) {
-        d = ocrCache.current.get(r.image_url);
+        d = ocrCache.current.get(r.image_url)!;
       } else {
         const res = await fetch("/api/card-ocr", {
           method: "POST",
@@ -952,7 +954,7 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
     try {
       const res = await listDriveFolderFn({ data: { folderUrl: driveFolderUrl } });
       setDriveFiles(res.files);
-      setSelectedDriveFiles(new Set(res.files.map((f: any) => f.id)));
+      setSelectedDriveFiles(new Set(res.files.map((f: { id: string }) => f.id)));
       toast.success(`이미지 ${res.files.length}건을 찾았습니다.`);
     } catch (e) {
       toast.error("목록 조회 실패: " + (e as Error).message);
@@ -1002,7 +1004,7 @@ export function CardUploader({ isAdmin, onComplete }: Props) {
   };
 
   /** 공식 카드 페이지 URL → 서버 추출 → 표에 행 추가 (검수 후 등록) */
-  const importCardToRow = (c: any): CardRow => {
+  const importCardToRow = (c: Record<string, unknown>): CardRow => {
     const row = emptyRow();
     row.game = importGame;
     if (c.code) row.code = String(c.code).toUpperCase();
