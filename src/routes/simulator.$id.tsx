@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Drawer,
@@ -24,6 +24,9 @@ import {
   Trash2,
   ScrollText,
   Sparkles,
+  Target,
+  X,
+  VolumeX,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -68,7 +71,7 @@ export const Route = createFileRoute("/simulator/$id")({
 function SimulatorMatchRoomPage() {
   const { p1, p2, mode = "manual" } = Route.useSearch();
   const navigate = useNavigate();
-  useI18n();
+  const { t } = useI18n();
   const isMobile = useIsMobile();
 
   const [loading, setLoading] = useState(true);
@@ -82,6 +85,106 @@ function SimulatorMatchRoomPage() {
   const [logOpen, setLogOpen] = useState(false);
   const autoPlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const logEndRef = useRef<HTMLDivElement | null>(null);
+
+  // 대국 보드판 컨테이너 Ref
+  const boardRef = useRef<HTMLDivElement>(null);
+
+  // UX & 연출 관련 추가 상태
+  const [selectedCardForPreview, setSelectedCardForPreview] = useState<CardInstance | null>(null);
+  const [selectedAttackerIid, setSelectedAttackerIid] = useState<string | null>(null);
+  const [activeTurnBanner, setActiveTurnBanner] = useState<{
+    text: string;
+    subText: string;
+    activePlayer: PlayerId;
+  } | null>(null);
+  const [activeAttackAnim, setActiveAttackAnim] = useState<{
+    attackerIid: string;
+    targetIid: string;
+  } | null>(null);
+  const [shakePid, setShakePid] = useState<PlayerId | null>(null);
+  const [trashGlowPid, setTrashGlowPid] = useState<PlayerId | null>(null);
+  const [svgCoords, setSvgCoords] = useState<
+    { x1: number; y1: number; x2: number; y2: number; targetIid: string }[]
+  >([]);
+
+  // 턴 전환 감지 연출
+  const prevActivePlayerRef = useRef<PlayerId | null>(null);
+  const prevTurnRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!gameState) return;
+    const currentActivePlayer = gameState.activePlayer;
+    const currentTurn = gameState.turn;
+
+    if (
+      prevActivePlayerRef.current !== currentActivePlayer ||
+      prevTurnRef.current !== currentTurn
+    ) {
+      const isP1 = currentActivePlayer === "p1";
+      const bannerText = isP1 ? t("simulator.myTurn") : t("simulator.aiTurn");
+      const bannerSubText = `TURN ${currentTurn}`;
+
+      setActiveTurnBanner({
+        text: bannerText,
+        subText: bannerSubText,
+        activePlayer: currentActivePlayer,
+      });
+
+      const timer = setTimeout(() => {
+        setActiveTurnBanner(null);
+      }, 1500);
+
+      return () => clearTimeout(timer);
+    }
+
+    prevActivePlayerRef.current = currentActivePlayer;
+    prevTurnRef.current = currentTurn;
+  }, [gameState?.activePlayer, gameState?.turn, t]);
+
+  // 로그 분석 연출 (피격 셰이크, 공격 돌진, 트래시 반짝임)
+  const prevLogLengthRef = useRef<number>(0);
+  const animTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!gameState || !gameState.log) return;
+    const currentLength = gameState.log.length;
+    const prevLength = prevLogLengthRef.current;
+
+    if (currentLength > prevLength) {
+      const newLogs = gameState.log.slice(prevLength);
+
+      // 우선순위가 가장 높은 연출 대상 1건을 추출
+      const damageLog = [...newLogs].reverse().find((l) => l.type === "damage_taken");
+      const koLog = [...newLogs].reverse().find((l) => l.type === "character_ko");
+      const attackLog = [...newLogs].reverse().find((l) => l.type === "attack_declared");
+
+      if (animTimerRef.current) {
+        clearTimeout(animTimerRef.current);
+      }
+
+      if (damageLog) {
+        setShakePid(damageLog.player); // 피해를 입은 플레이어 ID
+        animTimerRef.current = setTimeout(() => {
+          setShakePid(null);
+        }, 500);
+      } else if (koLog) {
+        setTrashGlowPid(koLog.player); // 트래시된 캐릭터 소유 플레이어 ID
+        animTimerRef.current = setTimeout(() => {
+          setTrashGlowPid(null);
+        }, 500);
+      } else if (attackLog) {
+        const { attackerIid, targetIid } = attackLog.payload || {};
+        if (attackerIid && targetIid) {
+          setActiveAttackAnim({ attackerIid, targetIid });
+          animTimerRef.current = setTimeout(() => {
+            setActiveAttackAnim(null);
+          }, 600);
+        }
+      }
+    }
+
+    prevLogLengthRef.current = currentLength;
+  }, [gameState?.log]);
 
   // 1. P1 덱 레시피 로드
   const { data: p1Deck } = useQuery({
@@ -135,7 +238,9 @@ function SimulatorMatchRoomPage() {
 
         const { data: cardRows, error } = await supabase
           .from("cards")
-          .select("code, name, cost, power, counter, type, colors, effects, image_url, traits")
+          .select(
+            "code, name, cost, power, counter, type, colors, effects, image_url, traits, effect",
+          )
           .in("code", allCodes);
 
         if (error) throw error;
@@ -151,6 +256,7 @@ function SimulatorMatchRoomPage() {
             traits: row.traits ?? [],
             effects: (row.effects as any) ?? [],
             imageUrl: row.image_url ?? null,
+            effectText: row.effect ?? null,
           };
         }
 
@@ -218,6 +324,106 @@ function SimulatorMatchRoomPage() {
     };
   }, [gameState, isAutoPlaying, speedMs]);
 
+  const handlePerformAction = (action: Action) => {
+    setSelectedHandIid(null);
+    setGameState(gameState ? optcgEngine.applyAction(gameState, action) : null);
+  };
+
+  const terminalResult = gameState ? optcgEngine.isTerminal(gameState) : null;
+  const isTerminalResult = !!terminalResult;
+  const p1State = gameState?.players.p1;
+  const p2State = gameState?.players.p2;
+  const isMyTurn = gameState?.activePlayer === "p1";
+  const myCounterWindow =
+    !!gameState?.pendingResponse && gameState.pendingResponse.defenderPlayer === "p1";
+
+  // P1 수동 가능 액션
+  const p1AvailableActions = useMemo(
+    () =>
+      gameState &&
+      !isTerminalResult &&
+      !isAutoPlaying &&
+      ((isMyTurn && !gameState.pendingResponse) || myCounterWindow)
+        ? optcgEngine.getAvailableActions(gameState, "p1")
+        : [],
+    [gameState, isTerminalResult, isAutoPlaying, isMyTurn, myCounterWindow],
+  );
+
+  // 공격 액션들
+  const attackActions = useMemo(
+    () => p1AvailableActions.filter((a) => a.type === "attack"),
+    [p1AvailableActions],
+  );
+  // 공격 가능한 아군 카드 iid 셋
+  const attackerIids = useMemo(
+    () => new Set(attackActions.map((a) => a.attackerIid)),
+    [attackActions],
+  );
+  // 현재 선택한 공격자의 공격 대상 iid 셋
+  const targetIidsForSelected = useMemo(
+    () =>
+      new Set(
+        selectedAttackerIid
+          ? attackActions
+              .filter((a) => a.attackerIid === selectedAttackerIid)
+              .map((a) => a.targetIid)
+          : [],
+      ),
+    [selectedAttackerIid, attackActions],
+  );
+
+  // SVG 화살표 좌표 계산
+  useEffect(() => {
+    if (!selectedAttackerIid || !boardRef.current) {
+      setSvgCoords([]);
+      return;
+    }
+
+    const updateCoordinates = () => {
+      if (!boardRef.current || !selectedAttackerIid) return;
+      const boardRect = boardRef.current.getBoundingClientRect();
+      const attackerEl = boardRef.current.querySelector(`[data-iid="${selectedAttackerIid}"]`);
+      if (!attackerEl) return;
+      const attackerRect = attackerEl.getBoundingClientRect();
+      const x1 = attackerRect.left + attackerRect.width / 2 - boardRect.left;
+      const y1 = attackerRect.top + attackerRect.height / 2 - boardRect.top;
+
+      const newCoords = Array.from(targetIidsForSelected)
+        .map((targetIid) => {
+          const targetEl = boardRef.current?.querySelector(`[data-iid="${targetIid}"]`);
+          if (!targetEl) return null;
+          const targetRect = targetEl.getBoundingClientRect();
+          const x2 = targetRect.left + targetRect.width / 2 - boardRect.left;
+          const y2 = targetRect.top + targetRect.height / 2 - boardRect.top;
+          return { x1, y1, x2, y2, targetIid };
+        })
+        .filter(Boolean) as { x1: number; y1: number; x2: number; y2: number; targetIid: string }[];
+
+      setSvgCoords(newCoords);
+    };
+
+    updateCoordinates();
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateCoordinates();
+    });
+    if (boardRef.current) {
+      resizeObserver.observe(boardRef.current);
+    }
+
+    window.addEventListener("resize", updateCoordinates);
+    window.addEventListener("scroll", updateCoordinates, { passive: true });
+
+    const timer = setTimeout(updateCoordinates, 150);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", updateCoordinates);
+      window.removeEventListener("scroll", updateCoordinates);
+      clearTimeout(timer);
+    };
+  }, [selectedAttackerIid, gameState, targetIidsForSelected]);
+
   if (loading || !gameState) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center gap-4">
@@ -226,27 +432,6 @@ function SimulatorMatchRoomPage() {
       </div>
     );
   }
-
-  const handlePerformAction = (action: Action) => {
-    setSelectedHandIid(null);
-    setGameState(optcgEngine.applyAction(gameState, action));
-  };
-
-  const terminalResult = optcgEngine.isTerminal(gameState);
-  const isTerminalResult = !!terminalResult;
-  const p1State = gameState.players.p1;
-  const p2State = gameState.players.p2;
-  const isMyTurn = gameState.activePlayer === "p1";
-  const myCounterWindow =
-    !!gameState.pendingResponse && gameState.pendingResponse.defenderPlayer === "p1";
-
-  // P1 수동 가능 액션
-  const p1AvailableActions =
-    !isTerminalResult &&
-    !isAutoPlaying &&
-    ((isMyTurn && !gameState.pendingResponse) || myCounterWindow)
-      ? optcgEngine.getAvailableActions(gameState, "p1")
-      : [];
 
   // 선택된 손패 카드와 연결된 플레이 액션(코스트 선택지 포함)
   const selectedCardActions = selectedHandIid
@@ -272,36 +457,106 @@ function SimulatorMatchRoomPage() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-2 sm:px-4 py-2 sm:py-4 pb-32 lg:pb-6 flex flex-col gap-3">
+    <div className="mx-auto w-full max-w-6xl px-2 sm:px-4 py-2 sm:py-4 pb-32 lg:pb-6 flex flex-col gap-3 min-h-[90vh] bg-game-bg text-game-text">
+      {/* CSS 커스텀 애니메이션 주입 */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+        @keyframes attack-p1 {
+          0% { transform: translateY(0); }
+          25% { transform: translateY(-25px) scale(1.02); }
+          75% { transform: translateY(-25px) scale(1.02); }
+          100% { transform: translateY(0); }
+        }
+        @keyframes attack-p2 {
+          0% { transform: translateY(0); }
+          25% { transform: translateY(25px) scale(1.02); }
+          75% { transform: translateY(25px) scale(1.02); }
+          100% { transform: translateY(0); }
+        }
+        .animate-attack-p1 {
+          animation: attack-p1 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+        }
+        .animate-attack-p2 {
+          animation: attack-p2 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+        }
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          15%, 45%, 75% { transform: translateX(-4px); }
+          30%, 60%, 90% { transform: translateX(4px); }
+        }
+        .animate-shake {
+          animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        @keyframes banner-in-out {
+          0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+          12% { transform: translate(-50%, -50%) scale(1.02); opacity: 1; }
+          85% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+          100% { transform: translate(-50%, -50%) scale(1.08); opacity: 0; }
+        }
+        .animate-banner {
+          animation: banner-in-out 1.5s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+        }
+        @keyframes dash {
+          to {
+            stroke-dashoffset: -40;
+          }
+        }
+        .animate-dash {
+          stroke-dasharray: 6, 6;
+          animation: dash 1.2s linear infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .animate-attack-p1, .animate-attack-p2, .animate-shake, .animate-banner, .animate-dash {
+            animation: none !important;
+            transition: none !important;
+            transform: none !important;
+          }
+          .animate-banner {
+            opacity: 1 !important;
+            transform: translate(-50%, -50%) scale(1) !important;
+            animation: none !important;
+          }
+        }
+      `,
+        }}
+      />
+
       {/* ── 상단 헤더 ── */}
-      <div className="sticky top-0 z-30 -mx-2 sm:mx-0 px-2 sm:px-0 py-2 bg-background/90 backdrop-blur flex items-center justify-between gap-2 border-b border-border/60 sm:border-0">
+      <div className="sticky top-0 z-30 -mx-2 sm:mx-0 px-2 sm:px-0 py-2 bg-game-bg/95 backdrop-blur flex items-center justify-between gap-2 border-b border-game-line sm:border-0">
         <div className="flex items-center gap-2 min-w-0">
           <Link
             to="/simulator"
-            className="p-2 border border-border rounded-lg bg-card hover:bg-accent text-muted-foreground hover:text-foreground transition-all shrink-0"
+            className="p-2 border border-game-line rounded-lg bg-game-card hover:bg-game-line-accent text-game-text-mid hover:text-game-text transition-all shrink-0"
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <div className="min-w-0">
             <h1 className="text-sm sm:text-base font-black tracking-tight flex items-center gap-1.5 truncate">
-              <Swords className="h-4 w-4 text-red-500 shrink-0" />{" "}
-              <span className="truncate">AI 대국</span>
+              <Swords className="h-4 w-4 text-game-loss shrink-0" />{" "}
+              <span className="truncate">{t("simulator.title")}</span>
             </h1>
-            <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
-              Turn {gameState.turn} · {gameState.phase === "main" ? "메인" : "전투"}
+            <p className="text-[10px] sm:text-xs text-game-text-dim truncate">
+              {t("simulator.turn", {
+                turn: gameState.turn,
+                phase:
+                  gameState.phase === "main"
+                    ? t("simulator.phaseMain")
+                    : t("simulator.phaseAttack"),
+              })}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           {mode === "auto" && (
-            <div className="flex items-center gap-0.5 bg-muted p-0.5 rounded-lg text-[11px]">
+            <div className="flex items-center gap-0.5 bg-game-card border border-game-line p-0.5 rounded-lg text-[11px]">
               <button
                 onClick={() => setIsAutoPlaying((p) => !p)}
                 className={`flex items-center gap-1 px-2 py-1.5 rounded-md font-bold transition-all ${
                   isAutoPlaying
-                    ? "bg-primary text-primary-foreground shadow"
-                    : "hover:bg-card text-muted-foreground"
+                    ? "bg-game-blue text-white shadow"
+                    : "hover:bg-game-line-accent text-game-text-dim"
                 }`}
               >
                 {isAutoPlaying ? (
@@ -310,13 +565,15 @@ function SimulatorMatchRoomPage() {
                   <Play className="h-3.5 w-3.5 fill-current" />
                 )}
               </button>
-              <div className="h-4 w-px bg-border mx-0.5" />
+              <div className="h-4 w-px bg-game-line mx-0.5" />
               {[1500, 1000, 500].map((ms) => (
                 <button
                   key={ms}
                   onClick={() => setSpeedMs(ms)}
-                  className={`px-1.5 py-1.5 rounded-md ${
-                    speedMs === ms ? "font-bold text-foreground" : "text-muted-foreground"
+                  className={`px-1.5 py-1.5 rounded-md transition-all ${
+                    speedMs === ms
+                      ? "font-bold text-game-blue bg-game-bg shadow-sm"
+                      : "text-game-text-dim hover:text-game-text"
                   }`}
                 >
                   {(ms / 1000).toFixed(1)}s
@@ -327,43 +584,114 @@ function SimulatorMatchRoomPage() {
 
           <button
             onClick={() => {
-              if (confirm("대국을 기권하고 로비로 돌아가시겠습니까?"))
-                navigate({ to: "/simulator" });
+              if (confirm(t("simulator.concedeConfirm"))) navigate({ to: "/simulator" });
             }}
-            className="flex items-center gap-1.5 px-2.5 py-2 bg-destructive/10 text-destructive hover:bg-destructive hover:text-white rounded-lg text-[11px] font-bold transition-all min-h-10"
+            className="flex items-center gap-1.5 px-2.5 py-2 bg-game-loss/10 text-game-loss border border-game-loss/20 hover:bg-game-loss hover:text-white rounded-lg text-[11px] font-bold transition-all min-h-10"
           >
-            <LogOut className="h-3.5 w-3.5" /> <span className="hidden sm:inline">기권</span>
+            <LogOut className="h-3.5 w-3.5" />{" "}
+            <span className="hidden sm:inline">{t("simulator.concede")}</span>
           </button>
         </div>
       </div>
 
       {/* ── 배틀 보드(플레이매트) ── */}
-      <div className="relative mx-auto w-full max-w-lg rounded-[2rem] border-2 border-border/50 overflow-hidden shadow-2xl bg-gradient-to-b from-orange-300/30 via-card to-sky-300/30 dark:from-orange-500/[0.15] dark:via-card dark:to-sky-500/[0.15]">
+      <div
+        ref={boardRef}
+        className={`relative mx-auto w-full max-w-lg rounded-[2rem] border-2 border-game-line overflow-hidden shadow-2xl bg-game-bg-deep transition-all duration-300 ${
+          shakePid ? "animate-shake" : ""
+        }`}
+      >
         {/* 매트 외곽 오벌 링 + 중앙 비네팅 */}
-        <div className="pointer-events-none absolute inset-2 rounded-[1.6rem] border border-white/25 dark:border-white/10" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,hsl(var(--background)/0.45))]" />
+        <div className="pointer-events-none absolute inset-2 rounded-[1.6rem] border border-game-line/30" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(0,0,0,0.35))]" />
+
+        {/* ── SVG 화살표 오버레이 ── */}
+        <svg className="pointer-events-none absolute inset-0 z-20 w-full h-full">
+          <defs>
+            <marker
+              id="arrow"
+              viewBox="0 0 10 10"
+              refX="6"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto-start-reverse"
+            >
+              <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="var(--color-game-loss, #d05050)" />
+            </marker>
+          </defs>
+          {svgCoords.map((c, idx) => {
+            const dx = c.x2 - c.x1;
+            const dy = c.y2 - c.y1;
+            const cx = (c.x1 + c.x2) / 2 + dy * 0.15;
+            const cy = (c.y1 + c.y2) / 2 - dx * 0.15;
+            const pathD = `M ${c.x1} ${c.y1} Q ${cx} ${cy} ${c.x2} ${c.y2}`;
+            return (
+              <path
+                key={idx}
+                d={pathD}
+                stroke="var(--color-game-loss, #d05050)"
+                strokeWidth="3"
+                markerEnd="url(#arrow)"
+                fill="none"
+                className="animate-dash"
+              />
+            );
+          })}
+        </svg>
 
         <div className="relative flex flex-col">
           {/* ─ 상대(AI) 진영 ─ */}
-          <PlayerSide state={p2State} isOpponent isActive={gameState.activePlayer === "p2"} />
+          <PlayerSide
+            state={p2State}
+            isOpponent
+            isActive={gameState.activePlayer === "p2"}
+            attackerIids={attackerIids}
+            targetIidsForSelected={targetIidsForSelected}
+            selectedAttackerIid={selectedAttackerIid}
+            activeAttackAnim={activeAttackAnim}
+            trashGlowPid={trashGlowPid}
+            onAttackerClick={(e, iid) => {
+              e.stopPropagation();
+              setSelectedAttackerIid((prev) => (prev === iid ? null : iid));
+            }}
+            onTargetClick={(e, targetIid) => {
+              e.stopPropagation();
+              if (!selectedAttackerIid) return;
+              const act = attackActions.find(
+                (a) => a.attackerIid === selectedAttackerIid && a.targetIid === targetIid,
+              );
+              if (act) {
+                setSelectedAttackerIid(null);
+                handlePerformAction(act);
+              }
+            }}
+            onCardPreview={(card) => setSelectedCardForPreview(card)}
+          />
 
           {/* ─ 중앙 곡선 밴드 ─ */}
-          <div className="relative z-10 mx-3 my-1 rounded-full bg-background/60 backdrop-blur-sm border border-border/50 px-3 py-1.5 shadow-lg">
+          <div
+            className={`relative z-10 mx-3 my-1 rounded-full bg-game-card/85 backdrop-blur-sm border px-3 py-1.5 shadow-lg transition-all duration-300 ${
+              myCounterWindow
+                ? "border-game-loss ring-1 ring-game-loss/30 animate-pulse-ring"
+                : "border-game-line"
+            }`}
+          >
             {gameState.pendingResponse ? (
               <CounterBand pending={gameState.pendingResponse} state={gameState} />
             ) : (
-              <div className="flex items-center justify-center gap-2 text-[11px] sm:text-xs font-bold">
+              <div className="flex items-center justify-center gap-2 text-[11px] sm:text-xs font-bold text-game-text">
                 <span
                   className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full ${
-                    isMyTurn ? "bg-blue-500/20 text-blue-500" : "bg-red-500/20 text-red-500"
+                    isMyTurn ? "bg-game-blue/20 text-game-blue" : "bg-game-loss/20 text-game-loss"
                   }`}
                 >
                   {isMyTurn ? <User className="h-3.5 w-3.5" /> : <Cpu className="h-3.5 w-3.5" />}
-                  {isMyTurn ? "내 턴" : "AI 턴..."}
+                  {isMyTurn ? t("simulator.myTurn") : t("simulator.aiTurn")}
                 </span>
                 {isMyTurn && !isTerminalResult && (
-                  <span className="text-muted-foreground hidden sm:inline">
-                    손패를 탭해 카드를 내세요
+                  <span className="text-game-text-dim hidden sm:inline">
+                    {t("simulator.tapGuide")}
                   </span>
                 )}
               </div>
@@ -378,33 +706,125 @@ function SimulatorMatchRoomPage() {
             selectedHandIid={selectedHandIid}
             playableHandIids={playableHandIids}
             onHandSelect={(iid) => setSelectedHandIid((cur) => (cur === iid ? null : iid))}
+            attackerIids={attackerIids}
+            targetIidsForSelected={targetIidsForSelected}
+            selectedAttackerIid={selectedAttackerIid}
+            activeAttackAnim={activeAttackAnim}
+            trashGlowPid={trashGlowPid}
+            onAttackerClick={(e, iid) => {
+              e.stopPropagation();
+              setSelectedAttackerIid((prev) => (prev === iid ? null : iid));
+            }}
+            onTargetClick={(e, targetIid) => {
+              e.stopPropagation();
+              if (!selectedAttackerIid) return;
+              const act = attackActions.find(
+                (a) => a.attackerIid === selectedAttackerIid && a.targetIid === targetIid,
+              );
+              if (act) {
+                setSelectedAttackerIid(null);
+                handlePerformAction(act);
+              }
+            }}
+            onCardPreview={(card) => setSelectedCardForPreview(card)}
           />
         </div>
       </div>
 
-      {/* ── 종료 배너 ── */}
+      {/* ── 턴 전환 배너 오버레이 ── */}
+      {activeTurnBanner && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+          <div
+            className={`px-8 py-6 rounded-2xl border-2 shadow-2xl animate-banner text-center ${
+              activeTurnBanner.activePlayer === "p1"
+                ? "bg-game-blue/90 border-game-blue text-white"
+                : "bg-game-loss/90 border-game-loss text-white"
+            }`}
+          >
+            <h2 className="text-3xl font-black tracking-wider uppercase drop-shadow-md">
+              {activeTurnBanner.text}
+            </h2>
+            <p className="text-sm font-bold opacity-80 mt-1">{activeTurnBanner.subText}</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── 웅장한 대국 결과 오버레이 ── */}
       {isTerminalResult && (
-        <div className="rounded-2xl border border-primary/30 bg-primary/5 p-6 text-center shadow-lg space-y-3">
-          <h2 className="text-xl font-black text-primary">🎉 대국 종료!</h2>
-          <p className="text-sm font-bold text-muted-foreground">
-            우승:{" "}
-            {"winner" in terminalResult! && terminalResult!.winner === "p1"
-              ? "🏆 나 (P1)"
-              : "🏆 AI (P2)"}
-          </p>
-          <div className="flex justify-center gap-3 pt-1">
-            <Link
-              to="/simulator"
-              className="px-4 py-2 border border-border bg-card rounded-lg text-xs font-bold hover:bg-accent"
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-md bg-game-card border border-game-line rounded-3xl p-6 shadow-2xl text-center space-y-4 animate-scale-in">
+            <div className="flex justify-center">
+              {"winner" in terminalResult! && terminalResult!.winner === "p1" ? (
+                <div className="relative">
+                  <div className="absolute -inset-1 rounded-full bg-game-gold/30 blur-md animate-pulse" />
+                  <div className="relative p-4 rounded-full bg-game-gold/10 text-game-gold border border-game-gold/30">
+                    <Sparkles className="h-10 w-10 animate-bounce" />
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 rounded-full bg-game-loss/10 text-game-loss border border-game-loss/30">
+                  <VolumeX className="h-10 w-10 animate-pulse" />
+                </div>
+              )}
+            </div>
+
+            <h2
+              className={`text-4xl font-black tracking-tight ${
+                "winner" in terminalResult! && terminalResult!.winner === "p1"
+                  ? "text-game-gold drop-shadow"
+                  : "text-game-loss"
+              }`}
             >
-              로비로
-            </Link>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-xs font-bold hover:opacity-90 shadow"
-            >
-              재대국
-            </button>
+              {"winner" in terminalResult! && terminalResult!.winner === "p1"
+                ? t("simulator.victory")
+                : t("simulator.defeat")}
+            </h2>
+
+            <div className="py-2 px-4 bg-game-bg rounded-xl space-y-1 text-sm font-bold text-game-text-mid">
+              <p>
+                {t("simulator.winner", {
+                  winner:
+                    "winner" in terminalResult! && terminalResult!.winner === "p1"
+                      ? t("simulator.me")
+                      : t("simulator.opponent"),
+                })}
+              </p>
+              <p className="text-xs text-game-text-dim">
+                {t("simulator.turnsCount", { turns: gameState.turn })}
+              </p>
+            </div>
+
+            <div className="space-y-1.5 text-left">
+              <h3 className="text-xs font-black text-game-text-dim uppercase tracking-wider">
+                {t("simulator.logSummary")}
+              </h3>
+              <div className="max-h-[140px] overflow-y-auto p-3 bg-game-bg/60 border border-game-line rounded-xl space-y-2 text-[10px] font-mono leading-relaxed">
+                {gameState.log.slice(-5).map((evt, idx) => (
+                  <div
+                    key={idx}
+                    className="border-b border-game-line/30 pb-1 last:border-b-0 last:pb-0"
+                  >
+                    <span className="text-game-text-dim">[T{evt.turn}]</span>{" "}
+                    <span className="text-game-text-mid">{formatEventLog(evt)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <Link
+                to="/simulator"
+                className="flex-1 py-3 border border-game-line bg-game-bg text-game-text hover:bg-game-line-accent rounded-xl text-xs font-black transition-colors"
+              >
+                {t("simulator.lobby")}
+              </Link>
+              <button
+                onClick={() => window.location.reload()}
+                className="flex-1 py-3 bg-game-blue text-white hover:bg-game-blue-deep rounded-xl text-xs font-black shadow-md transition-colors"
+              >
+                {t("simulator.rematch")}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -413,26 +833,29 @@ function SimulatorMatchRoomPage() {
       {isMobile ? (
         <Drawer open={logOpen} onOpenChange={setLogOpen}>
           <DrawerTrigger asChild>
-            <button className="w-full p-3 flex items-center justify-between rounded-2xl border border-border bg-card/60 hover:bg-accent/40 transition-colors">
+            <button className="w-full p-3 flex items-center justify-between rounded-2xl border border-game-line bg-game-card/60 hover:bg-game-line-accent/40 text-game-text transition-colors">
               <span className="text-xs font-black uppercase tracking-wider flex items-center gap-2">
-                <ScrollText className="h-4 w-4 text-primary" /> 대국 로그
+                <ScrollText className="h-4 w-4 text-game-blue" /> {t("simulator.log")}
               </span>
-              <span className="text-[10px] text-muted-foreground">{`열기 ▼ (${gameState.log.length})`}</span>
+              <span className="text-[10px] text-game-text-dim">
+                {t("simulator.logCount", { count: gameState.log.length })}
+              </span>
             </button>
           </DrawerTrigger>
-          <DrawerContent className="px-4 pb-6 max-h-[85vh]">
+          <DrawerContent className="px-4 pb-6 max-h-[85vh] bg-game-card border-game-line">
             <DrawerHeader className="px-0">
-              <DrawerTitle className="text-sm font-black uppercase tracking-wider flex items-center gap-2">
-                <ScrollText className="h-4 w-4 text-primary" /> 대국 로그 ({gameState.log.length})
+              <DrawerTitle className="text-sm font-black uppercase tracking-wider flex items-center gap-2 text-game-text">
+                <ScrollText className="h-4 w-4 text-game-blue" /> {t("simulator.log")} (
+                {gameState.log.length})
               </DrawerTitle>
             </DrawerHeader>
-            <div className="overflow-y-auto my-2 space-y-2 font-mono text-[11px] leading-relaxed border-t border-border pt-3">
+            <div className="overflow-y-auto my-2 space-y-2 font-mono text-[11px] leading-relaxed border-t border-game-line pt-3">
               {gameState.log.map((evt, idx) => (
-                <div key={idx} className="border-b border-border/20 pb-1.5">
-                  <span className="text-[10px] text-muted-foreground select-none">
+                <div key={idx} className="border-b border-game-line/20 pb-1.5">
+                  <span className="text-[10px] text-game-text-dim select-none">
                     [T{evt.turn} {evt.player.toUpperCase()}]
                   </span>{" "}
-                  <span className="text-foreground/90">{formatEventLog(evt)}</span>
+                  <span className="text-game-text/90">{formatEventLog(evt)}</span>
                 </div>
               ))}
               <div ref={logEndRef} />
@@ -440,26 +863,28 @@ function SimulatorMatchRoomPage() {
           </DrawerContent>
         </Drawer>
       ) : (
-        <div className="rounded-2xl border border-border bg-card/60 overflow-hidden">
+        <div className="rounded-2xl border border-game-line bg-game-card/60 overflow-hidden text-game-text">
           <button
             onClick={() => setLogOpen((o) => !o)}
-            className="w-full p-3 flex items-center justify-between hover:bg-accent/40 transition-colors"
+            className="w-full p-3 flex items-center justify-between hover:bg-game-line-accent/40 transition-colors"
           >
             <span className="text-xs font-black uppercase tracking-wider flex items-center gap-2">
-              <ScrollText className="h-4 w-4 text-primary" /> 대국 로그
+              <ScrollText className="h-4 w-4 text-game-blue" /> {t("simulator.log")}
             </span>
-            <span className="text-[10px] text-muted-foreground">
-              {logOpen ? "닫기 ▲" : `열기 ▼ (${gameState.log.length})`}
+            <span className="text-[10px] text-game-text-dim">
+              {logOpen
+                ? t("simulator.logClose")
+                : t("simulator.logCount", { count: gameState.log.length })}
             </span>
           </button>
           {logOpen && (
-            <div className="max-h-[38vh] overflow-y-auto p-3 space-y-2 font-mono text-[11px] leading-relaxed border-t border-border">
+            <div className="max-h-[38vh] overflow-y-auto p-3 space-y-2 font-mono text-[11px] leading-relaxed border-t border-game-line">
               {gameState.log.map((evt, idx) => (
-                <div key={idx} className="border-b border-border/20 pb-1.5">
-                  <span className="text-[10px] text-muted-foreground select-none">
+                <div key={idx} className="border-b border-game-line/20 pb-1.5">
+                  <span className="text-[10px] text-game-text-dim select-none">
                     [T{evt.turn} {evt.player.toUpperCase()}]
                   </span>{" "}
-                  <span className="text-foreground/90">{formatEventLog(evt)}</span>
+                  <span className="text-game-text/90">{formatEventLog(evt)}</span>
                 </div>
               ))}
               <div ref={logEndRef} />
@@ -470,50 +895,179 @@ function SimulatorMatchRoomPage() {
 
       {/* ── 하단 고정 액션 바 ── */}
       {!isTerminalResult && (selectedCardActions.length > 0 || boardActions.length > 0) && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur border-t-2 border-primary/30 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] pb-[env(safe-area-inset-bottom)]">
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-game-card/95 backdrop-blur border-t-2 border-game-blue/40 shadow-[0_-4px_20px_rgba(0,0,0,0.35)] pb-[env(safe-area-inset-bottom)]">
           <div className="mx-auto w-full max-w-6xl px-3 py-2.5 space-y-2">
             {/* 선택된 손패 카드 전용 액션 */}
             {selectedCardActions.length > 0 && (
               <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                <span className="text-[10px] font-bold text-primary shrink-0 flex items-center gap-1">
+                <span className="text-[10px] font-bold text-game-blue shrink-0 flex items-center gap-1">
                   <Sparkles className="h-3.5 w-3.5" />
-                  내기:
+                  {t("simulator.playLabel")}
                 </span>
                 {selectedCardActions.map((act, i) => (
                   <button
                     key={i}
                     onClick={() => handlePerformAction(act)}
-                    className="px-3 py-2 rounded-lg text-xs font-bold border shadow-sm min-h-10 whitespace-nowrap bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30 hover:bg-green-500 hover:text-white transition-all"
+                    className="px-3 py-2 rounded-lg text-xs font-bold border shadow-sm min-h-10 whitespace-nowrap bg-game-win/10 text-game-win border-game-win/30 hover:bg-game-win hover:text-white transition-all duration-200"
                   >
                     {getActionLabel(act, gameState)}
                   </button>
                 ))}
                 <button
                   onClick={() => setSelectedHandIid(null)}
-                  className="px-2.5 py-2 rounded-lg text-xs font-bold border border-border text-muted-foreground hover:bg-accent shrink-0"
+                  className="px-2.5 py-2 rounded-lg text-xs font-bold border border-game-line text-game-text-dim hover:bg-game-line-accent hover:text-game-text transition-all shrink-0"
                 >
-                  취소
+                  {t("simulator.cancel")}
                 </button>
               </div>
             )}
 
             {/* 보드 액션 */}
-            <div className="flex items-center gap-1.5 overflow-x-auto">
-              {boardActions.map((act, i) => (
-                <button
-                  key={i}
-                  onClick={() => handlePerformAction(act)}
-                  className={`px-3 py-2 rounded-lg text-xs font-bold border shadow-sm min-h-10 whitespace-nowrap transition-all ${getActionColorClass(
-                    act.type,
-                  )}`}
-                >
-                  {getActionLabel(act, gameState)}
-                </button>
-              ))}
+            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+              {boardActions.map((act, i) => {
+                const isCounterOrBlock = act.type === "play_counter" || act.type === "use_blocker";
+                return (
+                  <button
+                    key={i}
+                    onClick={() => handlePerformAction(act)}
+                    className={`px-3 py-2 rounded-lg text-xs font-bold border shadow-sm min-h-10 whitespace-nowrap transition-all duration-200 ${
+                      isCounterOrBlock && myCounterWindow
+                        ? "bg-game-blue text-white border-game-blue shadow-[0_0_15px_rgba(55,138,221,0.6)] animate-pulse"
+                        : getActionColorClass(act.type)
+                    }`}
+                  >
+                    {getActionLabel(act, gameState)}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
       )}
+
+      {/* ── 카드 확대 미리보기 모달 / Drawer ── */}
+      {selectedCardForPreview &&
+        (() => {
+          const meta = getCardMeta(selectedCardForPreview.code);
+          const power = getBattlePower(selectedCardForPreview);
+          const src = displayImageSrc(meta.imageUrl);
+          const isLeader = meta.type === "leader";
+
+          const previewContent = (
+            <div className="flex flex-col gap-4 text-left">
+              <div className="flex gap-4">
+                {/* 카드 이미지 / 대체 아트 */}
+                <div className="relative w-28 h-40 rounded-xl border border-game-line overflow-hidden shadow shrink-0 bg-game-bg-deep flex items-center justify-center">
+                  {src ? (
+                    <img src={src} alt={meta.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-[10px] font-extrabold text-game-text-dim text-center px-1">
+                      {meta.name}
+                    </span>
+                  )}
+                  {isLeader && (
+                    <span className="absolute top-1 right-1 bg-rose-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded shadow">
+                      LEADER
+                    </span>
+                  )}
+                </div>
+
+                {/* 메타데이터 */}
+                <div className="flex flex-col justify-between min-w-0 py-0.5">
+                  <div>
+                    <h3 className="text-base font-black text-game-text truncate">{meta.name}</h3>
+                    <p className="text-xs font-bold text-game-text-dim mt-0.5">
+                      {meta.traits.join(" / ") || "-"}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[11px] font-bold text-game-text-mid mt-2">
+                    <div>
+                      <span className="text-game-text-dim mr-1.5">{t("simulator.playCost")}:</span>
+                      <span className="text-game-blue">{meta.cost}</span>
+                    </div>
+                    {meta.power > 0 && (
+                      <div>
+                        <span className="text-game-text-dim mr-1.5">{t("simulator.power")}:</span>
+                        <span className="text-game-loss">{power}</span>
+                      </div>
+                    )}
+                    {!isLeader && (
+                      <div>
+                        <span className="text-game-text-dim mr-1.5">{t("simulator.counter")}:</span>
+                        <span className="text-game-win">+{meta.counterValue}</span>
+                      </div>
+                    )}
+                    <div>
+                      <span className="text-game-text-dim mr-1.5">{t("simulator.vs")}:</span>
+                      <span className="capitalize">{meta.type}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 효과 텍스트 */}
+              <div className="bg-game-bg border border-game-line p-3 rounded-xl">
+                <h4 className="text-xs font-black text-game-text-dim uppercase tracking-wider mb-1.5">
+                  {t("simulator.effects")}
+                </h4>
+                <p className="text-xs font-medium text-game-text-mid leading-relaxed whitespace-pre-line">
+                  {meta.effectText || t("simulator.noEffects")}
+                </p>
+              </div>
+
+              {/* 닫기 버튼 */}
+              <button
+                onClick={() => setSelectedCardForPreview(null)}
+                className="w-full py-3 bg-game-card border border-game-line hover:bg-game-line-accent text-game-text text-xs font-black rounded-xl transition-colors mt-2 shadow-sm"
+              >
+                {t("simulator.close")}
+              </button>
+            </div>
+          );
+
+          if (isMobile) {
+            return (
+              <Drawer
+                open={!!selectedCardForPreview}
+                onOpenChange={(open) => !open && setSelectedCardForPreview(null)}
+              >
+                <DrawerContent className="px-5 pb-6 bg-game-card border-game-line">
+                  <DrawerHeader className="px-0">
+                    <DrawerTitle className="text-sm font-black uppercase tracking-wider text-game-text">
+                      {t("simulator.cardPreview")}
+                    </DrawerTitle>
+                  </DrawerHeader>
+                  <div className="mt-2">{previewContent}</div>
+                </DrawerContent>
+              </Drawer>
+            );
+          }
+
+          return (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+              onClick={() => setSelectedCardForPreview(null)}
+            >
+              <div
+                className="w-full max-w-sm bg-game-card border border-game-line rounded-3xl p-6 shadow-2xl space-y-4 animate-scale-in"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex justify-between items-center border-b border-game-line pb-2">
+                  <h3 className="text-sm font-black text-game-text uppercase tracking-wider">
+                    {t("simulator.cardPreview")}
+                  </h3>
+                  <button
+                    onClick={() => setSelectedCardForPreview(null)}
+                    className="p-1 rounded-lg hover:bg-game-line-accent text-game-text-dim transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                {previewContent}
+              </div>
+            </div>
+          );
+        })()}
     </div>
   );
 }
@@ -528,6 +1082,14 @@ function PlayerSide({
   selectedHandIid,
   playableHandIids,
   onHandSelect,
+  attackerIids,
+  targetIidsForSelected,
+  selectedAttackerIid,
+  activeAttackAnim,
+  trashGlowPid,
+  onAttackerClick,
+  onTargetClick,
+  onCardPreview,
 }: {
   state: PlayerState;
   isOpponent: boolean;
@@ -535,11 +1097,20 @@ function PlayerSide({
   selectedHandIid?: string | null;
   playableHandIids?: Set<string>;
   onHandSelect?: (iid: string) => void;
+  attackerIids?: Set<string>;
+  targetIidsForSelected?: Set<string>;
+  selectedAttackerIid?: string | null;
+  activeAttackAnim?: { attackerIid: string; targetIid: string } | null;
+  trashGlowPid?: PlayerId | null;
+  onAttackerClick?: (e: React.MouseEvent, iid: string) => void;
+  onTargetClick?: (e: React.MouseEvent, iid: string) => void;
+  onCardPreview?: (card: CardInstance) => void;
 }) {
   const leader = state.zones.primary[0];
   const chars = state.zones.secondary;
   const life = state.zones.life.length;
   const donTotal = state.donActive + state.donRested;
+  const pid = isOpponent ? "p2" : "p1";
 
   // 상태 줄: 이름 배너 + 덱/트래시 + DON 배지 (상대=왼쪽 DON / 나=오른쪽 DON, 레퍼런스 배치)
   const statusRow = (
@@ -551,7 +1122,7 @@ function PlayerSide({
       )}
       <div className="flex items-center gap-1.5">
         <Pile kind="deck" count={state.zones.deck.length} />
-        <Pile kind="trash" count={state.zones.graveyard.length} />
+        <Pile kind="trash" count={state.zones.graveyard.length} glow={trashGlowPid === pid} />
       </div>
       {isOpponent ? (
         <NameBanner isOpponent isActive={isActive} life={life} />
@@ -563,9 +1134,24 @@ function PlayerSide({
 
   // 벤치(캐릭터 5슬롯)
   const bench = (
-    <div className="flex items-center justify-start lg:justify-center gap-2 overflow-x-auto py-0.5">
+    <div className="flex items-center justify-start lg:justify-center gap-2 overflow-x-auto py-0.5 scrollbar-thin">
       {Array.from({ length: 5 }).map((_, i) =>
-        chars[i] ? <BattleUnit key={chars[i].iid} unit={chars[i]} /> : <EmptySlot key={i} />,
+        chars[i] ? (
+          <BattleUnit
+            key={chars[i].iid}
+            unit={chars[i]}
+            attackerIids={attackerIids}
+            targetIidsForSelected={targetIidsForSelected}
+            selectedAttackerIid={selectedAttackerIid}
+            activeAttackAnim={activeAttackAnim}
+            onAttackerClick={onAttackerClick}
+            onTargetClick={onTargetClick}
+            onCardPreview={onCardPreview}
+            isOpponent={isOpponent}
+          />
+        ) : (
+          <EmptySlot key={i} />
+        ),
       )}
     </div>
   );
@@ -574,7 +1160,19 @@ function PlayerSide({
   const active = (
     <div className="flex justify-center py-0.5">
       {leader ? (
-        <LeaderCard unit={leader} life={life} glowing={!isOpponent} />
+        <LeaderCard
+          unit={leader}
+          life={life}
+          glowing={!isOpponent}
+          attackerIids={attackerIids}
+          targetIidsForSelected={targetIidsForSelected}
+          selectedAttackerIid={selectedAttackerIid}
+          activeAttackAnim={activeAttackAnim}
+          onAttackerClick={onAttackerClick}
+          onTargetClick={onTargetClick}
+          onCardPreview={onCardPreview}
+          isOpponent={isOpponent}
+        />
       ) : (
         <EmptySlot isLeader />
       )}
@@ -590,15 +1188,16 @@ function PlayerSide({
       selectedHandIid={selectedHandIid}
       playableHandIids={playableHandIids}
       onHandSelect={onHandSelect}
+      onCardPreview={onCardPreview}
     />
   );
 
   return (
     <div
-      className={`relative px-2.5 sm:px-5 py-2 sm:py-3 flex flex-col gap-1.5 ${
+      className={`relative px-2.5 sm:px-5 py-2 sm:py-3 flex flex-col gap-1.5 transition-all duration-300 ${
         isOpponent
-          ? "bg-gradient-to-b from-orange-400/10 to-transparent"
-          : "bg-gradient-to-t from-sky-400/10 to-transparent"
+          ? "bg-gradient-to-b from-game-loss/10 via-game-loss/5 to-transparent"
+          : "bg-gradient-to-t from-game-blue/10 via-game-blue/5 to-transparent"
       }`}
     >
       {isOpponent ? (
@@ -634,17 +1233,17 @@ function NameBanner({
 }) {
   return (
     <div
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold text-white bg-slate-800/90 shadow ${
-        isActive ? "ring-2 " + (isOpponent ? "ring-red-400" : "ring-sky-400") : ""
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold text-game-text bg-game-card/90 border border-game-line shadow ${
+        isActive ? "ring-2 " + (isOpponent ? "ring-game-loss/80" : "ring-game-blue/80") : ""
       }`}
     >
       {isOpponent ? (
-        <Cpu className="h-3.5 w-3.5 text-red-300" />
+        <Cpu className="h-3.5 w-3.5 text-game-loss" />
       ) : (
-        <User className="h-3.5 w-3.5 text-sky-300" />
+        <User className="h-3.5 w-3.5 text-game-blue" />
       )}
       <span>{isOpponent ? "AI 상대" : "나"}</span>
-      <span className="flex items-center gap-0.5 text-rose-300">
+      <span className="flex items-center gap-0.5 text-rose-500">
         <Heart className="h-3 w-3 fill-current" />
         {life}
       </span>
@@ -670,7 +1269,7 @@ function DonBadge({ active, total }: { active: number; total: number }) {
 // ──────────────────────────────────────────────────────────
 // 덱 / 트래시 더미
 // ──────────────────────────────────────────────────────────
-function Pile({ kind, count }: { kind: "deck" | "trash"; count: number }) {
+function Pile({ kind, count, glow }: { kind: "deck" | "trash"; count: number; glow?: boolean }) {
   const isDeck = kind === "deck";
   return (
     <div className="relative w-8 h-11 shrink-0" title={isDeck ? "덱" : "트래시"}>
@@ -680,19 +1279,21 @@ function Pile({ kind, count }: { kind: "deck" | "trash"; count: number }) {
         }`}
       />
       <div
-        className={`absolute inset-0 rounded-md border flex items-center justify-center ${
+        className={`absolute inset-0 rounded-md border flex items-center justify-center transition-all duration-300 ${
           isDeck
             ? "bg-gradient-to-br from-indigo-500 to-indigo-700 border-indigo-300/40"
-            : "bg-card border-border"
+            : glow
+              ? "bg-game-loss border-game-loss shadow-[0_0_15px_rgba(208,80,80,0.8)] animate-pulse text-white"
+              : "bg-game-card border-game-line text-game-text-dim"
         }`}
       >
         {isDeck ? (
           <Layers className="h-3.5 w-3.5 text-white/80" />
         ) : (
-          <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+          <Trash2 className={`h-3.5 w-3.5 ${glow ? "text-white" : "text-game-text-dim"}`} />
         )}
       </div>
-      <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 text-[8px] font-black bg-background/90 rounded px-1 border border-border">
+      <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 text-[8px] font-black bg-game-card rounded px-1 border border-game-line text-game-text">
         {count}
       </span>
     </div>
@@ -706,26 +1307,58 @@ function LeaderCard({
   unit,
   life,
   glowing,
+  attackerIids,
+  targetIidsForSelected,
+  selectedAttackerIid,
+  activeAttackAnim,
+  onAttackerClick,
+  onTargetClick,
+  onCardPreview,
+  isOpponent,
 }: {
   unit: CardInstance;
   life: number;
   glowing: boolean;
+  attackerIids?: Set<string>;
+  targetIidsForSelected?: Set<string>;
+  selectedAttackerIid?: string | null;
+  activeAttackAnim?: { attackerIid: string; targetIid: string } | null;
+  onAttackerClick?: (e: React.MouseEvent, iid: string) => void;
+  onTargetClick?: (e: React.MouseEvent, iid: string) => void;
+  onCardPreview?: (card: CardInstance) => void;
+  isOpponent?: boolean;
 }) {
   const meta = getCardMeta(unit.code);
   const power = getBattlePower(unit);
   const donAttached = unit.attached.filter((t) => t.code === "DON!!").length;
   const lowLife = life <= 1;
 
+  const isAttacking = activeAttackAnim?.attackerIid === unit.iid;
+  const isTargeted = targetIidsForSelected?.has(unit.iid);
+  const isSelectedAttacker = selectedAttackerIid === unit.iid;
+
   return (
-    <div className="relative">
-      {glowing && <div className="absolute -inset-1.5 rounded-2xl bg-cyan-400/40 blur-md" />}
+    <div
+      className={`relative transition-all duration-300 ${
+        isAttacking ? (isOpponent ? "animate-attack-p2 z-30" : "animate-attack-p1 z-30") : ""
+      }`}
+    >
+      {glowing && !isSelectedAttacker && !isTargeted && (
+        <div className="absolute -inset-1.5 rounded-2xl bg-cyan-400/30 blur-md animate-pulse" />
+      )}
       <div
-        className={`relative w-24 h-32 sm:w-28 sm:h-40 rounded-xl border-2 overflow-hidden shadow-xl ${
+        data-iid={unit.iid}
+        onClick={() => onCardPreview?.(unit)}
+        className={`relative w-24 h-32 sm:w-28 sm:h-40 rounded-xl border-2 overflow-hidden shadow-xl cursor-pointer transition-all ${
           unit.rested
-            ? "opacity-70 border-border rotate-[6deg]"
-            : glowing
-              ? "border-cyan-300"
-              : "border-primary/80"
+            ? "opacity-70 border-game-line rotate-[6deg]"
+            : isSelectedAttacker
+              ? "border-game-loss ring-4 ring-game-loss shadow-[0_0_15px_rgba(208,80,80,0.8)] scale-105"
+              : isTargeted
+                ? "border-game-loss ring-4 ring-game-loss animate-pulse shadow-[0_0_15px_rgba(208,80,80,0.8)] scale-105"
+                : glowing
+                  ? "border-cyan-400"
+                  : "border-game-line"
         }`}
         title={meta.name}
       >
@@ -747,11 +1380,44 @@ function LeaderCard({
             REST
           </span>
         )}
+
+        {/* 조준경 버튼 (공격 대상) */}
+        {isTargeted && onTargetClick && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onTargetClick(e, unit.iid);
+            }}
+            className="absolute inset-0 z-30 flex items-center justify-center bg-black/45 hover:bg-black/55 transition-colors"
+          >
+            <div className="p-2 rounded-full bg-game-loss text-white animate-bounce shadow-lg">
+              <Target className="h-6 w-6" />
+            </div>
+          </button>
+        )}
       </div>
+
+      {/* 칼 버튼 (공격 개시) */}
+      {!isOpponent && attackerIids?.has(unit.iid) && onAttackerClick && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onAttackerClick(e, unit.iid);
+          }}
+          className={`absolute -top-2 -left-2 z-30 p-1.5 rounded-full border shadow-lg transition-all ${
+            isSelectedAttacker
+              ? "bg-game-loss text-white border-game-loss scale-110"
+              : "bg-game-card text-game-loss border-game-line hover:scale-105"
+          }`}
+        >
+          <Swords className="h-4 w-4" />
+        </button>
+      )}
+
       {/* 라이프 = HP 배지(카드 우상단) */}
       <span
         className={`absolute -top-2 -right-2 flex items-center gap-0.5 text-white text-xs font-black px-1.5 py-0.5 rounded-full shadow-lg ring-2 ring-white/40 ${
-          lowLife ? "bg-destructive animate-pulse" : "bg-rose-500"
+          lowLife ? "bg-game-loss animate-pulse" : "bg-rose-500"
         }`}
       >
         <Heart className="h-3 w-3 fill-current" />
@@ -769,19 +1435,19 @@ function HandFan({
   selectedHandIid,
   playableHandIids,
   onHandSelect,
+  onCardPreview,
 }: {
   hand: CardInstance[];
   selectedHandIid?: string | null;
   playableHandIids?: Set<string>;
   onHandSelect?: (iid: string) => void;
+  onCardPreview?: (card: CardInstance) => void;
 }) {
   if (hand.length === 0) {
-    return (
-      <div className="flex justify-center py-3 text-[10px] text-muted-foreground">손패 없음</div>
-    );
+    return <div className="flex justify-center py-3 text-[10px] text-game-text-dim">손패 없음</div>;
   }
   return (
-    <div className="flex justify-center items-end overflow-x-auto pt-1">
+    <div className="flex justify-center items-end overflow-x-auto pt-1 scrollbar-none">
       <div className="flex items-end">
         {hand.map((c, i) => {
           const meta = getCardMeta(c.code);
@@ -790,17 +1456,20 @@ function HandFan({
           return (
             <button
               key={c.iid}
-              onClick={() => onHandSelect?.(c.iid)}
+              onClick={() => {
+                onHandSelect?.(c.iid);
+                onCardPreview?.(c);
+              }}
               title={meta.name}
               style={{ zIndex: selected ? 30 : i }}
-              className={`relative w-16 h-24 sm:w-[72px] sm:h-[104px] rounded-lg border-2 overflow-hidden shrink-0 shadow-lg transition-all ${
+              className={`relative w-16 h-24 sm:w-[72px] sm:h-[104px] rounded-lg border-2 overflow-hidden shrink-0 shadow-lg transition-all duration-200 ${
                 i > 0 ? "-ml-5 sm:-ml-6" : ""
               } ${
                 selected
-                  ? "border-cyan-300 ring-2 ring-cyan-300 -translate-y-3"
+                  ? "border-game-blue ring-2 ring-game-blue -translate-y-3"
                   : playable
-                    ? "border-green-400/80 hover:-translate-y-2"
-                    : "border-border/60 opacity-80"
+                    ? "border-game-blue shadow-[0_0_10px_rgba(55,138,221,0.5)] hover:-translate-y-2 cursor-pointer"
+                    : "border-game-line opacity-40 hover:-translate-y-1 cursor-pointer"
               }`}
             >
               <CardArt meta={meta} />
@@ -817,7 +1486,7 @@ function HandFan({
                 )}
               </div>
               {playable && !selected && (
-                <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-green-400 ring-1 ring-white/50" />
+                <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-game-blue ring-1 ring-white/50 animate-pulse" />
               )}
             </button>
           );
@@ -838,13 +1507,13 @@ function OppHand({ count }: { count: number }) {
           <div
             key={i}
             style={{ zIndex: i }}
-            className={`w-7 h-10 rounded-sm bg-gradient-to-br from-slate-600 to-slate-800 border border-slate-500/40 shadow ${
+            className={`w-7 h-10 rounded-sm bg-gradient-to-br from-slate-700 to-slate-900 border border-game-line/30 shadow-md ${
               i > 0 ? "-ml-3" : ""
             }`}
           />
         ))}
       </div>
-      <span className="ml-2 self-center text-[9px] font-bold text-muted-foreground">{count}</span>
+      <span className="ml-2 self-center text-[9px] font-bold text-game-text-dim">{count}</span>
     </div>
   );
 }
@@ -874,7 +1543,7 @@ function CardArt({ meta }: { meta: ReturnType<typeof getCardMeta> }) {
 function EmptySlot({ isLeader }: { isLeader?: boolean }) {
   return (
     <div
-      className={`shrink-0 rounded-lg border-2 border-dashed border-white/30 bg-white/5 dark:border-white/15 ${
+      className={`shrink-0 rounded-lg border-2 border-dashed border-game-line/30 bg-game-card/5 ${
         isLeader ? "w-24 h-32 sm:w-28 sm:h-40 rounded-xl" : "w-12 h-[68px] sm:w-14 sm:h-20"
       }`}
     />
@@ -884,16 +1553,52 @@ function EmptySlot({ isLeader }: { isLeader?: boolean }) {
 // ──────────────────────────────────────────────────────────
 // 벤치(캐릭터) 유닛 카드 — 작게 + 파워 배지 플로팅
 // ──────────────────────────────────────────────────────────
-function BattleUnit({ unit }: { unit: CardInstance }) {
+function BattleUnit({
+  unit,
+  attackerIids,
+  targetIidsForSelected,
+  selectedAttackerIid,
+  activeAttackAnim,
+  onAttackerClick,
+  onTargetClick,
+  onCardPreview,
+  isOpponent,
+}: {
+  unit: CardInstance;
+  attackerIids?: Set<string>;
+  targetIidsForSelected?: Set<string>;
+  selectedAttackerIid?: string | null;
+  activeAttackAnim?: { attackerIid: string; targetIid: string } | null;
+  onAttackerClick?: (e: React.MouseEvent, iid: string) => void;
+  onTargetClick?: (e: React.MouseEvent, iid: string) => void;
+  onCardPreview?: (card: CardInstance) => void;
+  isOpponent?: boolean;
+}) {
   const meta = getCardMeta(unit.code);
   const power = getBattlePower(unit);
   const donAttached = unit.attached.filter((t) => t.code === "DON!!").length;
 
+  const isAttacking = activeAttackAnim?.attackerIid === unit.iid;
+  const isTargeted = targetIidsForSelected?.has(unit.iid);
+  const isSelectedAttacker = selectedAttackerIid === unit.iid;
+
   return (
-    <div className="relative shrink-0">
+    <div
+      className={`relative shrink-0 transition-all duration-300 ${
+        isAttacking ? (isOpponent ? "animate-attack-p2 z-30" : "animate-attack-p1 z-30") : ""
+      }`}
+    >
       <div
-        className={`relative w-12 h-[68px] sm:w-14 sm:h-20 rounded-lg border overflow-hidden shadow-md ${
-          unit.rested ? "opacity-70 border-border rotate-[8deg]" : "border-primary/70"
+        data-iid={unit.iid}
+        onClick={() => onCardPreview?.(unit)}
+        className={`relative w-12 h-[68px] sm:w-14 sm:h-20 rounded-lg border overflow-hidden shadow-md cursor-pointer transition-all ${
+          unit.rested
+            ? "opacity-70 border-game-line rotate-[8deg]"
+            : isSelectedAttacker
+              ? "border-game-loss ring-2 ring-game-loss shadow-[0_0_10px_rgba(208,80,80,0.8)] scale-105"
+              : isTargeted
+                ? "border-game-loss ring-2 ring-game-loss animate-pulse shadow-[0_0_10px_rgba(208,80,80,0.8)] scale-105"
+                : "border-game-line"
         }`}
         title={meta.name}
       >
@@ -907,7 +1612,40 @@ function BattleUnit({ unit }: { unit: CardInstance }) {
             R
           </span>
         )}
+
+        {/* 조준경 버튼 (공격 대상) */}
+        {isTargeted && onTargetClick && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onTargetClick(e, unit.iid);
+            }}
+            className="absolute inset-0 z-30 flex items-center justify-center bg-black/45 hover:bg-black/55 transition-colors"
+          >
+            <div className="p-1 rounded-full bg-game-loss text-white animate-bounce shadow-lg">
+              <Target className="h-4 w-4" />
+            </div>
+          </button>
+        )}
       </div>
+
+      {/* 칼 버튼 (공격 개시) */}
+      {!isOpponent && attackerIids?.has(unit.iid) && onAttackerClick && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onAttackerClick(e, unit.iid);
+          }}
+          className={`absolute -top-2 -left-2 z-30 p-1 rounded-full border shadow-lg transition-all ${
+            isSelectedAttacker
+              ? "bg-game-loss text-white border-game-loss scale-110"
+              : "bg-game-card text-game-loss border-game-line hover:scale-105"
+          }`}
+        >
+          <Swords className="h-3 w-3" />
+        </button>
+      )}
+
       {/* 파워 배지(우상단 플로팅) */}
       <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[9px] font-black px-1 rounded-full shadow ring-1 ring-white/40">
         {power}
@@ -935,16 +1673,21 @@ function CounterBand({
     pending.baseDefenderPower + pending.appliedModifiers.reduce((acc, m) => acc + m.delta, 0);
   const attackerName = nameOfIid(state, pending.attackerIid);
   const isLeaderTarget = pending.defenderIid.endsWith("-leader");
+  const { t } = useI18n();
 
   return (
-    <div className="flex items-center justify-center gap-2 text-[11px] flex-wrap">
+    <div className="flex items-center justify-center gap-2 text-[11px] flex-wrap text-game-text">
       <ShieldAlert className="h-4 w-4 text-amber-500 shrink-0" />
-      <span className="font-bold text-amber-500">배틀!</span>
-      <span className="text-muted-foreground">
-        <span className="font-bold text-foreground">{attackerName}</span> 공격{" "}
-        <span className="font-black text-red-500">{pending.baseAttackerPower}</span> vs 수비{" "}
-        <span className="font-black text-blue-500">{def}</span>{" "}
-        <span className="text-[10px]">({isLeaderTarget ? "리더" : "캐릭터"} 대상)</span>
+      <span className="font-bold text-amber-500">{t("simulator.battle")}</span>
+      <span className="text-game-text-dim">
+        <span className="font-bold text-game-text">{attackerName}</span> {t("simulator.attacker")}{" "}
+        <span className="font-black text-game-loss">{pending.baseAttackerPower}</span>{" "}
+        {t("simulator.vs")} {t("simulator.defender")}{" "}
+        <span className="font-black text-game-blue">{def}</span>{" "}
+        <span className="text-[10px]">
+          ({isLeaderTarget ? t("simulator.leader") : t("simulator.character")}{" "}
+          {t("simulator.target")})
+        </span>
       </span>
     </div>
   );
