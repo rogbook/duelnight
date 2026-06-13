@@ -191,6 +191,15 @@ const deckLuffy: DeckRecipe = {
   ],
 };
 
+// 게임 시작은 멀리건 단계 → 기존 시나리오는 멀리건을 keep으로 통과시킨 뒤 main 상태에서 검증한다.
+function initToMain(decks: [DeckRecipe, DeckRecipe], s: string): GameState {
+  let st = optcgEngine.init(decks, s);
+  while (st.phase === "mulligan") {
+    st = optcgEngine.applyAction(st, { type: "mulligan", redraw: false });
+  }
+  return st;
+}
+
 console.log("=== 시뮬레이터 Phase 1A 검증 스크립트 실행 ===");
 
 const seed = "test-seed-12345";
@@ -198,7 +207,7 @@ const seed = "test-seed-12345";
 // --- 시나리오 1: 조건 불충족 효과 미발동 (노지코를 나미 외 리더로 소환 시) ---
 {
   console.log("\n[시나리오 1] 조건 불충족 효과 미발동 검증 (나미 외 리더로 노지코 소환)");
-  let state = optcgEngine.init([deckLuffy, deckNami], seed); // p1=Luffy, p2=Nami
+  let state = initToMain([deckLuffy, deckNami], seed); // p1=Luffy, p2=Nami
 
   // 강제로 상대 필드(p2)에 레스트된 코스트 5 이하 캐릭터 배치
   state.players.p2.zones.secondary.push({
@@ -240,7 +249,7 @@ const seed = "test-seed-12345";
 // --- 시나리오 2: '상대 1장 레스트'가 정확히 1장만 레스트 (이조) ---
 {
   console.log("\n[시나리오 2] '상대 1장 레스트'가 정확히 1장만 레스트 검증 (이조)");
-  let state = optcgEngine.init([deckNami, deckLuffy], seed); // p1=Nami, p2=Luffy
+  let state = initToMain([deckNami, deckLuffy], seed); // p1=Nami, p2=Luffy
 
   // 상대 필드(p2)에 액티브 캐릭터 2장 배치
   state.players.p2.zones.secondary = [
@@ -280,7 +289,7 @@ const seed = "test-seed-12345";
 // --- 시나리오 3: don_rest 4 미만 보유 시 기동 효과 발동 불가, 4 이상 시 don 차감 (루피 리더) ---
 {
   console.log("\n[시나리오 3] don_rest 비용 지불 검증 (루피 리더)");
-  const state = optcgEngine.init([deckLuffy, deckNami], seed); // p1=Luffy, p2=Nami
+  const state = initToMain([deckLuffy, deckNami], seed); // p1=Luffy, p2=Nami
 
   // 1) donActive가 3일 때 (비용 4 미만)
   state.players.p1.donActive = 3;
@@ -311,7 +320,7 @@ const seed = "test-seed-12345";
 // --- 시나리오 4: this_turn 디버프가 다음 턴 refresh 후 원복 (오타마) ---
 {
   console.log("\n[시나리오 4] this_turn 디버프 턴 종료 만료 검증 (오타마)");
-  let state = optcgEngine.init([deckNami, deckLuffy], seed); // p1=Nami, p2=Luffy
+  let state = initToMain([deckNami, deckLuffy], seed); // p1=Nami, p2=Luffy
 
   state.players.p2.zones.secondary = [
     { iid: "p2-c1", code: "C-IZO", rested: false, attached: [], counters: {}, power: 3000 },
@@ -350,7 +359,7 @@ const seed = "test-seed-12345";
 // --- 시나리오 5: 카운터 이벤트 +4000이 그 전투에만 반영되고 종료 후 흔적 없음 (거미집 그물) ---
 {
   console.log("\n[시나리오 5] 카운터 이벤트 전투 연동 및 만료 검증 (거미집 그물)");
-  let state = optcgEngine.init([deckLuffy, deckNami], seed); // p1=Luffy, p2=Nami
+  let state = initToMain([deckLuffy, deckNami], seed); // p1=Luffy, p2=Nami
 
   // p1(루피) 리더가 p2(나미) 리더를 공격 선언
   state.players.p1.donActive = 0;
@@ -408,7 +417,7 @@ const seed = "test-seed-12345";
 // --- 시나리오 6: 이벤트 사용 시 don 지불·트래시 이동·KO 적용 (항마의 상) ---
 {
   console.log("\n[시나리오 6] 이벤트 카드 메인 효과 플레이 검증 (항마의 상)");
-  let state = optcgEngine.init([deckNami, deckLuffy], seed); // p1=Nami, p2=Luffy
+  let state = initToMain([deckNami, deckLuffy], seed); // p1=Nami, p2=Luffy
 
   // 상대 필드(p2)에 코스트 6 이하 캐릭터 배치
   state.players.p2.zones.secondary = [
@@ -461,6 +470,44 @@ const seed = "test-seed-12345";
     "FAIL: 사용한 이벤트 카드가 트래시로 이동하지 않았습니다.",
   );
   console.log("-> 시나리오 6 통과");
+}
+
+// --- 시나리오 7: 멀리건 — 시작 phase·재드로우 결정론·전이 ---
+{
+  console.log("\n[시나리오 7] 멀리건 단계·재드로우·전이 검증");
+  const s0 = optcgEngine.init([deckLuffy, deckNami], seed);
+  console.assert(s0.phase === "mulligan", "FAIL: 게임 시작 phase가 mulligan이 아닙니다.");
+  console.assert(s0.activePlayer === "p1", "FAIL: 멀리건 시작 차례가 p1이 아닙니다.");
+
+  const acts = optcgEngine.getAvailableActions(s0, "p1");
+  console.assert(
+    acts.length === 2 && acts.every((a) => a.type === "mulligan"),
+    "FAIL: 멀리건 단계 가용 액션이 keep/redraw 2개가 아닙니다.",
+  );
+
+  // p1 redraw → 여전히 mulligan, 차례 p2, 손패 5장 유지
+  const s1 = optcgEngine.applyAction(s0, { type: "mulligan", redraw: true });
+  console.assert(
+    s1.phase === "mulligan" && s1.activePlayer === "p2",
+    "FAIL: p1 멀리건 후 p2 차례로 전이하지 않았습니다.",
+  );
+  console.assert(s1.players.p1.zones.hand.length === 5, "FAIL: 재드로우 후 손패가 5장이 아닙니다.");
+
+  // 결정론: 동일 시드·동일 입력이면 재드로우 결과 동일
+  const s1b = optcgEngine.applyAction(s0, { type: "mulligan", redraw: true });
+  console.assert(
+    s1.players.p1.zones.hand.map((c) => c.iid).join(",") ===
+      s1b.players.p1.zones.hand.map((c) => c.iid).join(","),
+    "FAIL: 재드로우가 결정론적이지 않습니다.",
+  );
+
+  // p2 keep → main 진입, 차례 p1
+  const s2 = optcgEngine.applyAction(s1, { type: "mulligan", redraw: false });
+  console.assert(
+    s2.phase === "main" && s2.activePlayer === "p1",
+    "FAIL: 양측 멀리건 후 main·p1으로 진입하지 않았습니다.",
+  );
+  console.log("-> 시나리오 7 통과");
 }
 
 console.log("\n*** 모든 시뮬레이터 Phase 1A 검증 시나리오 성공적으로 통과! ***");
