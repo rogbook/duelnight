@@ -26,7 +26,7 @@ import {
   Sparkles,
   Target,
   X,
-  VolumeX,
+  Skull,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -763,7 +763,7 @@ function SimulatorMatchRoomPage() {
                 </div>
               ) : (
                 <div className="p-4 rounded-full bg-game-loss/10 text-game-loss border border-game-loss/30">
-                  <VolumeX className="h-10 w-10 animate-pulse" />
+                  <Skull className="h-10 w-10 animate-pulse" />
                 </div>
               )}
             </div>
