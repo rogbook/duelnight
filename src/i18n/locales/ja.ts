@@ -991,5 +991,12 @@ export const ja = {
     mulliganKeep: "この手札で開始",
     mulliganRedraw: "引き直す",
     mulliganWait: "相手がマリガンを選択中...",
+    zoneLeader: "リーダー",
+    zoneCharacter: "キャラクター",
+    zoneStage: "ステージ",
+    zoneLife: "ライフ",
+    zoneDon: "DON!!",
+    zoneDeck: "デッキ",
+    zoneTrash: "トラッシュ",
   },
 };

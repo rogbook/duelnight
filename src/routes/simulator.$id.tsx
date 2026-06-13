@@ -1168,35 +1168,16 @@ function PlayerSide({
   onTargetClick?: (e: React.MouseEvent, iid: string) => void;
   onCardPreview?: (card: CardInstance) => void;
 }) {
+  const { t } = useI18n();
   const leader = state.zones.primary[0];
   const chars = state.zones.secondary;
   const life = state.zones.life.length;
   const donTotal = state.donActive + state.donRested;
   const pid = isOpponent ? "p2" : "p1";
 
-  // 상태 줄: 이름 배너 + 덱/트래시 + DON 배지 (상대=왼쪽 DON / 나=오른쪽 DON, 레퍼런스 배치)
-  const statusRow = (
-    <div className="flex items-center justify-between gap-2">
-      {isOpponent ? (
-        <DonBadge active={state.donActive} total={donTotal} />
-      ) : (
-        <NameBanner isOpponent={false} isActive={isActive} life={life} />
-      )}
-      <div className="flex items-center gap-1.5">
-        <Pile kind="deck" count={state.zones.deck.length} />
-        <Pile kind="trash" count={state.zones.graveyard.length} glow={trashGlowPid === pid} />
-      </div>
-      {isOpponent ? (
-        <NameBanner isOpponent isActive={isActive} life={life} />
-      ) : (
-        <DonBadge active={state.donActive} total={donTotal} />
-      )}
-    </div>
-  );
-
   // 벤치(캐릭터 5슬롯)
   const bench = (
-    <div className="flex items-center justify-start lg:justify-center gap-2 overflow-x-auto py-0.5 scrollbar-thin">
+    <div className="flex items-center justify-start lg:justify-center gap-2 overflow-x-auto py-1.5 scrollbar-thin w-full">
       {Array.from({ length: 5 }).map((_, i) =>
         chars[i] ? (
           <BattleUnit
@@ -1212,32 +1193,46 @@ function PlayerSide({
             isOpponent={isOpponent}
           />
         ) : (
-          <EmptySlot key={i} />
+          <EmptySlot key={i} label={t("simulator.zoneCharacter")} />
         ),
       )}
     </div>
   );
 
-  // 액티브(리더) — 중앙, 내 리더는 상시 글로우
-  const active = (
-    <div className="flex justify-center py-0.5">
-      {leader ? (
-        <LeaderCard
-          unit={leader}
-          life={life}
-          glowing={!isOpponent}
-          attackerIids={attackerIids}
-          targetIidsForSelected={targetIidsForSelected}
-          selectedAttackerIid={selectedAttackerIid}
-          activeAttackAnim={activeAttackAnim}
-          onAttackerClick={onAttackerClick}
-          onTargetClick={onTargetClick}
-          onCardPreview={onCardPreview}
-          isOpponent={isOpponent}
-        />
-      ) : (
-        <EmptySlot isLeader />
-      )}
+  // 리더 카드 렌더링 헬퍼
+  const leaderCardEl = leader ? (
+    <LeaderCard
+      unit={leader}
+      life={life}
+      glowing={!isOpponent}
+      attackerIids={attackerIids}
+      targetIidsForSelected={targetIidsForSelected}
+      selectedAttackerIid={selectedAttackerIid}
+      activeAttackAnim={activeAttackAnim}
+      onAttackerClick={onAttackerClick}
+      onTargetClick={onTargetClick}
+      onCardPreview={onCardPreview}
+      isOpponent={isOpponent}
+    />
+  ) : (
+    <EmptySlot isLeader label={t("simulator.zoneLeader")} />
+  );
+
+  // 메인 자원 라인: [라이프] [DON!!] [리더] [덱] [트래시]
+  const mainRow = (
+    <div className="flex flex-row items-end justify-center gap-1.5 sm:gap-2.5 py-1 w-full select-none">
+      <LifeZone count={life} />
+      <DonZone active={state.donActive} total={donTotal} />
+      <div className="relative shrink-0">{leaderCardEl}</div>
+      <Pile kind="deck" count={state.zones.deck.length} />
+      <Pile kind="trash" count={state.zones.graveyard.length} glow={trashGlowPid === pid} />
+    </div>
+  );
+
+  // 스테이지 빈 자리
+  const stageSlot = (
+    <div className={`flex w-full ${isOpponent ? "justify-start pl-8" : "justify-end pr-8"} py-0.5`}>
+      <EmptySlot label={t("simulator.zoneStage")} className="opacity-75" />
     </div>
   );
 
@@ -1254,28 +1249,43 @@ function PlayerSide({
     />
   );
 
+  // 정보 헤더 (이름 배너)
+  const infoHeader = (
+    <div className="flex items-center justify-between w-full px-2 py-0.5 select-none">
+      <NameBanner isOpponent={isOpponent} isActive={isActive} life={life} />
+      <span className="text-[10px] font-extrabold text-game-text-dim/80">
+        DON!! {state.donActive}/{donTotal}
+      </span>
+    </div>
+  );
+
   return (
     <div
-      className={`relative px-2.5 sm:px-5 py-2 sm:py-3 flex flex-col gap-1.5 transition-all duration-300 ${
+      className={`relative px-2 sm:px-4 py-3.5 flex flex-col gap-2 transition-all duration-300 ${
         isOpponent
-          ? "bg-gradient-to-b from-game-loss/10 via-game-loss/5 to-transparent"
-          : "bg-gradient-to-t from-game-blue/10 via-game-blue/5 to-transparent"
+          ? "bg-gradient-to-b from-game-loss/12 via-game-loss/4 to-transparent border-b border-game-line/15"
+          : "bg-gradient-to-t from-game-blue/12 via-game-blue/4 to-transparent border-t border-game-line/15"
       }`}
     >
+      {/* 플레이매트 가이드 패널 윤곽선 */}
+      <div className="absolute inset-1.5 rounded-3xl border border-game-line/10 bg-game-card/5 pointer-events-none select-none" />
+
       {isOpponent ? (
-        <>
+        <div className="relative z-10 flex flex-col gap-2 w-full">
           {hand}
-          {statusRow}
+          {infoHeader}
           {bench}
-          {active}
-        </>
+          {mainRow}
+          {stageSlot}
+        </div>
       ) : (
-        <>
-          {active}
+        <div className="relative z-10 flex flex-col gap-2 w-full">
+          {stageSlot}
+          {mainRow}
           {bench}
-          {statusRow}
+          {infoHeader}
           {hand}
-        </>
+        </div>
       )}
     </div>
   );
@@ -1332,31 +1342,170 @@ function DonBadge({ active, total }: { active: number; total: number }) {
 // 덱 / 트래시 더미
 // ──────────────────────────────────────────────────────────
 function Pile({ kind, count, glow }: { kind: "deck" | "trash"; count: number; glow?: boolean }) {
+  const { t } = useI18n();
   const isDeck = kind === "deck";
+  const label = isDeck ? t("simulator.zoneDeck") : t("simulator.zoneTrash");
+
+  if (count === 0) {
+    return <EmptySlot label={label} />;
+  }
+
+  // 겹친 카드 더미 효과를 위해 스택 수 계산 (최대 3개 레이어)
+  const layers = Math.min(3, Math.ceil(count / 5));
+
   return (
-    <div className="relative w-8 h-11 shrink-0" title={isDeck ? "덱" : "트래시"}>
+    <div
+      className="relative w-12 h-[68px] sm:w-14 sm:h-20 shrink-0"
+      title={isDeck ? "덱" : "트래시"}
+    >
+      {/* 바닥 스택 효과 */}
+      {Array.from({ length: layers - 1 }).map((_, idx) => {
+        const offset = (idx + 1) * 1.5;
+        return (
+          <div
+            key={idx}
+            style={{ transform: `translate(${offset}px, ${offset}px)` }}
+            className={`absolute inset-0 rounded-lg border pointer-events-none ${
+              isDeck ? "bg-indigo-950 border-indigo-800/40" : "bg-zinc-800 border-zinc-700/40"
+            }`}
+          />
+        );
+      })}
+
+      {/* 최상단 메인 카드 */}
       <div
-        className={`absolute inset-0 translate-x-0.5 translate-y-0.5 rounded-md border ${
-          isDeck ? "bg-indigo-800 border-indigo-400/40" : "bg-muted border-border"
-        }`}
-      />
-      <div
-        className={`absolute inset-0 rounded-md border flex items-center justify-center transition-all duration-300 ${
+        className={`absolute inset-0 rounded-lg border flex flex-col items-center justify-center transition-all duration-300 ${
           isDeck
-            ? "bg-gradient-to-br from-indigo-500 to-indigo-700 border-indigo-300/40"
+            ? "bg-gradient-to-br from-indigo-600 to-indigo-900 border-indigo-400/50 text-white"
             : glow
-              ? "bg-game-loss border-game-loss shadow-[0_0_15px_rgba(208,80,80,0.8)] animate-pulse text-white"
-              : "bg-game-card border-game-line text-game-text-dim"
+              ? "bg-game-loss border-game-loss shadow-[0_0_12px_rgba(208,80,80,0.8)] animate-pulse text-white"
+              : "bg-gradient-to-br from-zinc-800 to-zinc-950 border-game-line text-game-text-dim"
         }`}
       >
         {isDeck ? (
-          <Layers className="h-3.5 w-3.5 text-white/80" />
+          <Layers className="h-4 w-4 text-white/70 animate-pulse-ring" />
         ) : (
-          <Trash2 className={`h-3.5 w-3.5 ${glow ? "text-white" : "text-game-text-dim"}`} />
+          <Trash2 className={`h-4 w-4 ${glow ? "text-white" : "text-game-text-dim/80"}`} />
         )}
+
+        {/* Count 배지 */}
+        <span className="absolute bottom-1 right-1 text-[8px] font-black bg-black/75 px-1 py-0.5 rounded text-white border border-white/10 scale-90">
+          {count}
+        </span>
       </div>
-      <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 text-[8px] font-black bg-game-card rounded px-1 border border-game-line text-game-text">
-        {count}
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────
+// 라이프 카드 더미 (스택)
+// ──────────────────────────────────────────────────────────
+function LifeZone({ count }: { count: number }) {
+  const { t } = useI18n();
+  if (count === 0) {
+    return <EmptySlot label={t("simulator.zoneLife")} />;
+  }
+
+  // 라이프 수만큼 겹친 더미 렌더링 (최대 5개까지 겹쳐서 표시, 그 이상은 5개로 한계)
+  const maxRender = Math.min(count, 5);
+
+  return (
+    <div className="relative w-12 h-[68px] sm:w-14 sm:h-20 shrink-0" title={`라이프: ${count}`}>
+      {Array.from({ length: maxRender }).map((_, idx) => {
+        // 인덱스가 높을수록(최상단 카드) 우상단으로 오프셋
+        const offset = idx * 1.5;
+        const isTop = idx === maxRender - 1;
+        return (
+          <div
+            key={idx}
+            style={{
+              transform: `translate(${-offset}px, ${-offset}px)`,
+              zIndex: idx,
+            }}
+            className={`absolute inset-0 rounded-lg border transition-all duration-300 ${
+              isTop
+                ? "bg-gradient-to-br from-rose-900 via-rose-950 to-purple-950 border-rose-500/70 shadow-md"
+                : "bg-rose-950 border-rose-800/40"
+            }`}
+          >
+            {isTop && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-white/90">
+                <Heart className="h-3.5 w-3.5 fill-rose-600 text-rose-600 animate-pulse" />
+                <span className="text-[9px] font-black mt-0.5 scale-90">{count}</span>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────
+// DON!! 코스트 에리어 (미니 칩 더미)
+// ──────────────────────────────────────────────────────────
+function DonZone({ active, total }: { active: number; total: number }) {
+  const { t } = useI18n();
+  const rest = total - active;
+
+  if (total === 0) {
+    return <EmptySlot label={t("simulator.zoneDon")} />;
+  }
+
+  // w-12 h-[68px] sm:w-14 sm:h-20 영역 안에 액티브(좌)와 레스트(우) 칩을 수직으로 겹겹이 쌓아 배치
+  const activeChips = Array.from({ length: active });
+  const restChips = Array.from({ length: rest });
+
+  return (
+    <div
+      className="relative w-12 h-[68px] sm:w-14 sm:h-20 rounded-lg border border-game-line/35 bg-game-card/5 p-1 shrink-0 overflow-hidden flex justify-between gap-0.5"
+      title={`DON!! 액티브: ${active} / 토탈: ${total}`}
+    >
+      {/* 액티브 칩 스택 (좌측) */}
+      <div className="relative flex-1 h-full">
+        {activeChips.map((_, idx) => {
+          const topOffset = idx * 5; // 촘촘히 겹치기
+          return (
+            <div
+              key={idx}
+              style={{
+                top: `${topOffset}px`,
+                zIndex: idx,
+              }}
+              className="absolute left-0 right-0 h-4 rounded-[2px] bg-gradient-to-br from-yellow-300 to-amber-500 border border-yellow-200/60 shadow-sm flex items-center justify-center scale-95"
+            >
+              <span className="text-[7px] font-extrabold text-black/95 tracking-tighter scale-90">
+                DON!!
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 레스트 칩 스택 (우측, 90도 회전하여 눕힘) */}
+      <div className="relative flex-1 h-full">
+        {restChips.map((_, idx) => {
+          const topOffset = idx * 5;
+          return (
+            <div
+              key={idx}
+              style={{
+                top: `${topOffset}px`,
+                zIndex: idx,
+              }}
+              className="absolute left-0 right-0 h-4 rounded-[2px] bg-gradient-to-br from-amber-800 to-yellow-950 border border-amber-800/40 shadow-sm flex items-center justify-center scale-95 rotate-90 opacity-80"
+            >
+              <span className="text-[6px] font-bold text-amber-300/80 tracking-tighter scale-90">
+                REST
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* DON!! 덱 잔량 표기 */}
+      <span className="absolute bottom-0.5 right-0.5 text-[7px] font-black bg-black/60 text-yellow-500 px-0.5 rounded scale-75 select-none pointer-events-none">
+        {10 - total}
       </span>
     </div>
   );
@@ -1602,13 +1751,27 @@ function CardArt({ meta }: { meta: ReturnType<typeof getCardMeta> }) {
   );
 }
 
-function EmptySlot({ isLeader }: { isLeader?: boolean }) {
+function EmptySlot({
+  isLeader,
+  label,
+  className = "",
+}: {
+  isLeader?: boolean;
+  label?: string;
+  className?: string;
+}) {
   return (
     <div
-      className={`shrink-0 rounded-lg border-2 border-dashed border-game-line/30 bg-game-card/5 ${
+      className={`relative shrink-0 rounded-lg border border-dashed border-game-line/35 bg-game-card/5 flex items-center justify-center ${
         isLeader ? "w-24 h-32 sm:w-28 sm:h-40 rounded-xl" : "w-12 h-[68px] sm:w-14 sm:h-20"
-      }`}
-    />
+      } ${className}`}
+    >
+      {label && (
+        <span className="text-[9px] sm:text-[10px] font-extrabold text-game-text-dim/30 tracking-tight text-center px-0.5 select-none pointer-events-none uppercase">
+          {label}
+        </span>
+      )}
+    </div>
   );
 }
 

@@ -987,5 +987,12 @@ export const ko = {
     mulliganKeep: "이 손패로 시작",
     mulliganRedraw: "다시 뽑기",
     mulliganWait: "상대가 멀리건을 결정하는 중...",
+    zoneLeader: "리더",
+    zoneCharacter: "캐릭터",
+    zoneStage: "스테이지",
+    zoneLife: "라이프",
+    zoneDon: "DON!!",
+    zoneDeck: "덱",
+    zoneTrash: "트래시",
   },
 };
