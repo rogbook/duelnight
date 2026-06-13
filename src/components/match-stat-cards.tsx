@@ -83,10 +83,7 @@ function SummaryCard({
     <div className="w-44 shrink-0 snap-start rounded-2xl border border-game-line bg-game-card p-4">
       <p className="text-[11px] text-game-text-dim">{label}</p>
       <p
-        className={cn(
-          "mt-2 text-2xl font-semibold tracking-tight",
-          valueClass ?? "text-game-text",
-        )}
+        className={cn("mt-2 text-2xl font-semibold tracking-tight", valueClass ?? "text-game-text")}
       >
         {value}
       </p>
@@ -177,9 +174,7 @@ export function MobileTurnRatioCard({ stats }: { stats: MatchStats }) {
 
         {/* Ratio bar */}
         <div className="mb-4 flex items-center gap-2 text-xs">
-          <span className="w-9 shrink-0 text-right text-game-text-dim">
-            {t("matches.first")}
-          </span>
+          <span className="w-9 shrink-0 text-right text-game-text-dim">{t("matches.first")}</span>
           <div className="relative flex h-7 flex-1 overflow-hidden rounded-full bg-game-bg text-[10px] font-medium">
             <div
               className="flex h-full items-center justify-center bg-game-blue-deep text-white"

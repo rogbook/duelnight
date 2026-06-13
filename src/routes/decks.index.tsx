@@ -181,9 +181,7 @@ function DecksPage() {
                   </button>
                 </div>
               </div>
-              {d.notes && (
-                <p className="mt-3 line-clamp-2 text-xs text-game-text-dim">{d.notes}</p>
-              )}
+              {d.notes && <p className="mt-3 line-clamp-2 text-xs text-game-text-dim">{d.notes}</p>}
               <div className="mt-4 flex items-center justify-between text-[10px] text-game-text-dim border-t border-game-line/40 pt-3">
                 <span>{d.is_public ? t("decks.public") : t("decks.private")}</span>
                 <span>

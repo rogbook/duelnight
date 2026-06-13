@@ -39,9 +39,7 @@ const leftTabs: NavItem[] = [
   { labelKey: "nav.cards", url: "/cards", icon: Library },
 ];
 
-const rightTabs: NavItem[] = [
-  { labelKey: "nav.decks", url: "/decks", icon: Layers },
-];
+const rightTabs: NavItem[] = [{ labelKey: "nav.decks", url: "/decks", icon: Layers }];
 
 const moreItems: NavItem[] = [
   { labelKey: "nav.profile", url: "/profile", icon: User },
@@ -92,10 +90,9 @@ export function BottomTab() {
     )
     .sort((a, b) => b.url.length - a.url.length)[0]?.url;
 
-  const isMoreActive = [
-    ...filteredMoreItems,
-    ...(isAdmin ? adminMoreItems : []),
-  ].some((it) => it.url === activeUrl);
+  const isMoreActive = [...filteredMoreItems, ...(isAdmin ? adminMoreItems : [])].some(
+    (it) => it.url === activeUrl,
+  );
 
   const isMatchesActive = activeUrl === "/matches";
 
@@ -138,7 +135,9 @@ export function BottomTab() {
             <Link
               to="/matches"
               className={`absolute -top-[16px] left-1/2 -translate-x-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-game-blue-deep hover:bg-game-blue text-white shadow-lg border border-game-line-accent transition-all duration-200 active:scale-90 ${
-                isMatchesActive ? "ring-2 ring-game-blue ring-offset-2 ring-offset-game-bg-deep" : ""
+                isMatchesActive
+                  ? "ring-2 ring-game-blue ring-offset-2 ring-offset-game-bg-deep"
+                  : ""
               }`}
             >
               <Swords className="h-5 w-5" />
@@ -181,7 +180,10 @@ export function BottomTab() {
 
       {/* 전체 메뉴 Sheet 팝업 */}
       <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
-        <SheetContent side="bottom" className="max-h-[75vh] rounded-t-2xl px-4 pb-6 border-t border-game-line bg-game-card text-game-text">
+        <SheetContent
+          side="bottom"
+          className="max-h-[75vh] rounded-t-2xl px-4 pb-6 border-t border-game-line bg-game-card text-game-text"
+        >
           <SheetHeader className="pb-4 pt-2 border-b border-game-line">
             <SheetTitle className="text-left text-sm font-semibold text-game-text">
               {t("nav.more")}

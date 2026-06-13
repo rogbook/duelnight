@@ -103,7 +103,9 @@ export function BottomTabBar() {
               >
                 <tab.icon
                   className={`h-5 w-5 transition-all duration-200 ease-out ${
-                    active ? "scale-105 text-primary" : "scale-100 text-muted-foreground hover:text-foreground"
+                    active
+                      ? "scale-105 text-primary"
+                      : "scale-100 text-muted-foreground hover:text-foreground"
                   }`}
                 />
                 <span
@@ -122,7 +124,9 @@ export function BottomTabBar() {
           >
             <MoreHorizontal
               className={`h-5 w-5 transition-all duration-200 ease-out ${
-                isMoreActive ? "scale-105 text-primary" : "scale-100 text-muted-foreground hover:text-foreground"
+                isMoreActive
+                  ? "scale-105 text-primary"
+                  : "scale-100 text-muted-foreground hover:text-foreground"
               }`}
             />
             {unreadDm > 0 && (

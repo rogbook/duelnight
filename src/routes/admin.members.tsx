@@ -18,12 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 const PAGE_SIZE = 20;
@@ -191,9 +186,7 @@ function MembersPage() {
                 <TableCell>{row.display_name ?? row.username ?? "-"}</TableCell>
                 <TableCell>{fmtDate(row.created_at)}</TableCell>
                 <TableCell>{fmtDate(row.last_sign_in_at)}</TableCell>
-                <TableCell>
-                  {row.plan ? `${row.plan} (${row.sub_status})` : "-"}
-                </TableCell>
+                <TableCell>{row.plan ? `${row.plan} (${row.sub_status})` : "-"}</TableCell>
                 <TableCell className="text-right">{row.credit_balance}C</TableCell>
                 <TableCell>
                   {row.banned ? <Badge variant="destructive">정지</Badge> : "정상"}

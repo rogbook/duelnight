@@ -15,7 +15,9 @@ export function SeasonStatWidget({ matches = [] }: SeasonStatWidgetProps) {
     return (
       <div className="flex flex-col items-center justify-center bg-game-card border border-game-line rounded-2xl p-6 text-center shadow-md min-h-[140px] w-full">
         <Swords className="h-8 w-8 text-game-icon-idle mb-2" />
-        <p className="text-sm font-bold text-game-text">{t("seasonReport.emptyTitle") || "이번 시즌 대전 기록이 없습니다."}</p>
+        <p className="text-sm font-bold text-game-text">
+          {t("seasonReport.emptyTitle") || "이번 시즌 대전 기록이 없습니다."}
+        </p>
         <p className="text-xs text-game-text-dim mt-0.5 max-w-[200px]">
           {t("seasonReport.emptyDesc") || "첫 번째 대전을 기록하고 승률과 통계를 분석해보세요."}
         </p>
@@ -42,13 +44,12 @@ export function SeasonStatWidget({ matches = [] }: SeasonStatWidgetProps) {
           {t("matches.overallWinRate") || "이번 시즌 승률"}
         </span>
         <div className="flex items-baseline gap-2 mt-1.5">
-          <span className="text-3xl font-extrabold tracking-tight text-game-text">
-            {winRate}%
-          </span>
+          <span className="text-3xl font-extrabold tracking-tight text-game-text">{winRate}%</span>
           {streak.current > 0 && (
             <span className="inline-flex items-center text-xs font-bold text-game-win bg-game-win/10 px-1.5 py-0.5 rounded-md">
               <Flame className="h-3.5 w-3.5 mr-0.5 fill-current" />
-              {streak.current}{t("matches.streak") || "연승"}
+              {streak.current}
+              {t("matches.streak") || "연승"}
             </span>
           )}
           {streak.current < 0 && (

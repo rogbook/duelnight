@@ -756,10 +756,7 @@ function RecentList({
                     {t(`matches.event${m.event.charAt(0).toUpperCase() + m.event.slice(1)}` as any)}
                   </td>
                   <td className="px-3 py-2">{m.my_deck}</td>
-                  <td
-                    className="px-3 py-2 text-game-text-dim"
-                    onClick={(e) => e.stopPropagation()}
-                  >
+                  <td className="px-3 py-2 text-game-text-dim" onClick={(e) => e.stopPropagation()}>
                     {(() => {
                       const nick = oppNick(m);
                       const deck = m.opp_leader || m.opp_deck;

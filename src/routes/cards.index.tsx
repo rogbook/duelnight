@@ -329,17 +329,29 @@ function CardsPage() {
             </button>
             {(COLORS_BY_GAME[game] || []).map((c) => {
               const active = color === c.id;
-              let colorClass = "bg-game-bg border-game-line text-game-text-dim hover:text-game-text hover:border-game-line-accent";
+              let colorClass =
+                "bg-game-bg border-game-line text-game-text-dim hover:text-game-text hover:border-game-line-accent";
               if (active) {
-                if (c.id === "red") colorClass = "bg-red-500 border-red-500 text-white font-semibold shadow-sm";
-                else if (c.id === "blue") colorClass = "bg-blue-500 border-blue-500 text-white font-semibold shadow-sm";
-                else if (c.id === "green") colorClass = "bg-emerald-600 border-emerald-600 text-white font-semibold shadow-sm";
-                else if (c.id === "yellow") colorClass = "bg-amber-400 border-amber-400 text-slate-900 font-semibold shadow-sm";
-                else if (c.id === "black") colorClass = "bg-slate-800 border-slate-800 text-white font-semibold shadow-sm";
-                else if (c.id === "purple") colorClass = "bg-purple-600 border-purple-600 text-white font-semibold shadow-sm";
-                else if (c.id === "white") colorClass = "bg-slate-200 border-slate-300 text-slate-800 font-semibold shadow-sm";
+                if (c.id === "red")
+                  colorClass = "bg-red-500 border-red-500 text-white font-semibold shadow-sm";
+                else if (c.id === "blue")
+                  colorClass = "bg-blue-500 border-blue-500 text-white font-semibold shadow-sm";
+                else if (c.id === "green")
+                  colorClass =
+                    "bg-emerald-600 border-emerald-600 text-white font-semibold shadow-sm";
+                else if (c.id === "yellow")
+                  colorClass =
+                    "bg-amber-400 border-amber-400 text-slate-900 font-semibold shadow-sm";
+                else if (c.id === "black")
+                  colorClass = "bg-slate-800 border-slate-800 text-white font-semibold shadow-sm";
+                else if (c.id === "purple")
+                  colorClass = "bg-purple-600 border-purple-600 text-white font-semibold shadow-sm";
+                else if (c.id === "white")
+                  colorClass =
+                    "bg-slate-200 border-slate-300 text-slate-800 font-semibold shadow-sm";
                 else {
-                  colorClass = "bg-primary border-primary text-primary-foreground font-semibold shadow-sm";
+                  colorClass =
+                    "bg-primary border-primary text-primary-foreground font-semibold shadow-sm";
                 }
               }
               return (
@@ -562,7 +574,9 @@ function CardTile({ card, isFav, onClick }: { card: Card; isFav: boolean; onClic
           )}
         </div>
         <div className="p-3">
-          <p className="truncate text-[10px] font-semibold tracking-wider text-game-text-dim uppercase">{card.code}</p>
+          <p className="truncate text-[10px] font-semibold tracking-wider text-game-text-dim uppercase">
+            {card.code}
+          </p>
           <p className="truncate text-sm font-semibold text-game-text mt-0.5">{card.name}</p>
           <div className="mt-2 flex flex-wrap gap-1">
             {card.colors.map((c) => (
@@ -590,7 +604,9 @@ function CardTile({ card, isFav, onClick }: { card: Card; isFav: boolean; onClic
                 </span>
               ))}
               {card.traits.length > 2 && (
-                <span className="text-[10px] text-game-text-dim font-medium self-center pl-0.5">+{card.traits.length - 2}</span>
+                <span className="text-[10px] text-game-text-dim font-medium self-center pl-0.5">
+                  +{card.traits.length - 2}
+                </span>
               )}
             </div>
           )}
@@ -931,9 +947,7 @@ function CardDetailDialog({
                 )}
                 <ul className="mt-3 space-y-2">
                   {reviews.length === 0 ? (
-                    <li className="text-sm text-game-text-dim">
-                      {t("cards.firstReviewPrompt")}
-                    </li>
+                    <li className="text-sm text-game-text-dim">{t("cards.firstReviewPrompt")}</li>
                   ) : (
                     reviews.map((r) => (
                       <li
@@ -1136,8 +1150,6 @@ function Stat({ label, value }: { label: string; value?: string | number | null 
 
 function Badge({ children }: { children: React.ReactNode }) {
   return (
-    <span className="rounded-md bg-game-bg px-2 py-0.5 text-xs text-game-text-dim">
-      {children}
-    </span>
+    <span className="rounded-md bg-game-bg px-2 py-0.5 text-xs text-game-text-dim">{children}</span>
   );
 }

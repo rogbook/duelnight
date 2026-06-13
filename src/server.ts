@@ -136,10 +136,10 @@ export default {
       console.error(error);
       if (new URL(request.url).pathname.startsWith("/api/")) {
         const message = error instanceof Error ? error.message : String(error);
-        return new Response(
-          JSON.stringify({ error: "서버 오류", detail: message.slice(0, 200) }),
-          { status: 500, headers: { "content-type": "application/json" } },
-        );
+        return new Response(JSON.stringify({ error: "서버 오류", detail: message.slice(0, 200) }), {
+          status: 500,
+          headers: { "content-type": "application/json" },
+        });
       }
       return brandedErrorResponse();
     }

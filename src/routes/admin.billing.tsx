@@ -175,7 +175,12 @@ function BillingPage() {
       </div>
       {totalPages > 1 && (
         <div className="mt-3 flex items-center justify-center gap-2 text-sm">
-          <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page === 0}
+            onClick={() => setPage((p) => p - 1)}
+          >
             이전
           </Button>
           <span className="px-2 text-muted-foreground">

@@ -38,20 +38,40 @@ interface RailItem {
 
 const mainItems: RailItem[] = [
   { titleKey: "nav.dashboard", url: "/", icon: Home, descKey: "dashboard.desc" },
-  { titleKey: "nav.calendar", url: "/calendar", icon: Calendar, descKey: "dashboard.shortcutCalendarDesc" },
+  {
+    titleKey: "nav.calendar",
+    url: "/calendar",
+    icon: Calendar,
+    descKey: "dashboard.shortcutCalendarDesc",
+  },
 ];
 
 const cardItems: RailItem[] = [
   { titleKey: "nav.cards", url: "/cards", icon: Library, descKey: "dashboard.shortcutCardsDesc" },
   { titleKey: "nav.decks", url: "/decks", icon: Layers, descKey: "dashboard.shortcutDecksDesc" },
-  { titleKey: "nav.collection", url: "/collection", icon: PackageOpen, descKey: "dashboard.shortcutCollectionDesc" },
+  {
+    titleKey: "nav.collection",
+    url: "/collection",
+    icon: PackageOpen,
+    descKey: "dashboard.shortcutCollectionDesc",
+  },
   { titleKey: "nav.packs", url: "/packs", icon: Sparkles },
 ];
 
 const playItems: RailItem[] = [
-  { titleKey: "nav.matches", url: "/matches", icon: Swords, descKey: "dashboard.shortcutMatchesDesc" },
+  {
+    titleKey: "nav.matches",
+    url: "/matches",
+    icon: Swords,
+    descKey: "dashboard.shortcutMatchesDesc",
+  },
   { titleKey: "nav.simulator", url: "/simulator", icon: Gamepad },
-  { titleKey: "nav.leaderboard", url: "/leaderboard", icon: Trophy, descKey: "dashboard.shortcutLeaderboardDesc" },
+  {
+    titleKey: "nav.leaderboard",
+    url: "/leaderboard",
+    icon: Trophy,
+    descKey: "dashboard.shortcutLeaderboardDesc",
+  },
   { titleKey: "nav.tier", url: "/tier", icon: ListOrdered },
 ];
 
@@ -134,7 +154,9 @@ export function IconRail() {
         }`}
       >
         <span className="relative flex items-center justify-center">
-          <item.icon className={`h-[18px] w-[18px] transition-all duration-200 ${active ? "scale-105" : ""}`} />
+          <item.icon
+            className={`h-[18px] w-[18px] transition-all duration-200 ${active ? "scale-105" : ""}`}
+          />
           {badge > 0 && !expanded && (
             <span className="absolute -right-1.5 -top-1.5 h-2 w-2 rounded-full bg-rose-500 ring-1 ring-game-bg-deep" />
           )}
@@ -161,9 +183,14 @@ export function IconRail() {
         <TooltipTrigger asChild>
           <div>{content}</div>
         </TooltipTrigger>
-        <TooltipContent side="right" className="bg-game-card border border-game-line text-game-text p-2">
+        <TooltipContent
+          side="right"
+          className="bg-game-card border border-game-line text-game-text p-2"
+        >
           <div className="font-semibold text-xs">{tooltipText}</div>
-          {descText && <div className="text-[10px] text-game-text-dim mt-0.5 max-w-[150px]">{descText}</div>}
+          {descText && (
+            <div className="text-[10px] text-game-text-dim mt-0.5 max-w-[150px]">{descText}</div>
+          )}
         </TooltipContent>
       </Tooltip>
     );
@@ -179,7 +206,11 @@ export function IconRail() {
         {/* 상단 로고 */}
         <div className="flex h-12 items-center px-3 border-b border-game-line flex-shrink-0">
           <Link to="/" className="flex items-center gap-2">
-            <img src="/favicon.png" alt="DuelNight" className="h-6 w-6 rounded-lg border border-game-line-accent" />
+            <img
+              src="/favicon.png"
+              alt="DuelNight"
+              className="h-6 w-6 rounded-lg border border-game-line-accent"
+            />
             {expanded && (
               <span className="text-xs font-bold tracking-wider text-game-text uppercase">
                 DuelNight

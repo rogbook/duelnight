@@ -230,7 +230,7 @@ function RootComponent() {
   }, []);
 
   const renderMobileOrTablet = mounted && isMobileOrTablet;
-  
+
   const handleAuthChange = useCallback(() => {
     router.invalidate();
     queryClient.invalidateQueries();
