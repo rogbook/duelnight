@@ -4,6 +4,7 @@
 > `ITcgEngine` 인터페이스를 통해 DTCG·PTCG 등으로 확장 가능.
 
 상위 로드맵: [`.lovable/plan.md`](../.lovable/plan.md)
+게임화 로드맵(PvP·연출·효과 적재): [`SIMULATOR_GAME_PLAN.md`](./SIMULATOR_GAME_PLAN.md)
 DB 변경 절차: [`docs/DB_WORKFLOW.md`](./DB_WORKFLOW.md)
 DSL 검증 게이트: [`docs/SIMULATOR_SAMPLE_CARDS.md`](./SIMULATOR_SAMPLE_CARDS.md)
 
