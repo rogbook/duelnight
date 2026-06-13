@@ -994,5 +994,10 @@ export const en = {
     leader: "Leader",
     character: "Character",
     target: "Target",
+    mulliganTitle: "Mulligan — Opening Hand",
+    mulliganDesc: "Start with this hand? You may redraw your whole hand once at the start.",
+    mulliganKeep: "Keep this hand",
+    mulliganRedraw: "Redraw",
+    mulliganWait: "Opponent is deciding their mulligan...",
   },
 };

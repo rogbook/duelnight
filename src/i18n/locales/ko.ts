@@ -982,5 +982,10 @@ export const ko = {
     leader: "리더",
     character: "캐릭터",
     target: "대상",
+    mulliganTitle: "멀리건 — 첫 손패",
+    mulliganDesc: "이 손패로 시작할까요? 게임 시작 시 한 번만 전체를 교체할 수 있어요.",
+    mulliganKeep: "이 손패로 시작",
+    mulliganRedraw: "다시 뽑기",
+    mulliganWait: "상대가 멀리건을 결정하는 중...",
   },
 };

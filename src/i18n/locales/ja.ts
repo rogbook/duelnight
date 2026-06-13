@@ -986,5 +986,10 @@ export const ja = {
     leader: "リーダー",
     character: "キャラクター",
     target: "対象",
+    mulliganTitle: "マリガン — 初手",
+    mulliganDesc: "この手札で始めますか？ゲーム開始時に一度だけ全て引き直せます。",
+    mulliganKeep: "この手札で開始",
+    mulliganRedraw: "引き直す",
+    mulliganWait: "相手がマリガンを選択中...",
   },
 };
