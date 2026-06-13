@@ -1,6 +1,16 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Drawer,
   DrawerContent,
@@ -27,6 +37,7 @@ import {
   Target,
   X,
   Skull,
+  Copy,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -69,20 +80,33 @@ export const Route = createFileRoute("/simulator/$id")({
 });
 
 function SimulatorMatchRoomPage() {
+  const { id } = Route.useParams();
   const { p1, p2, mode = "manual" } = Route.useSearch();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { t } = useI18n();
   const isMobile = useIsMobile();
 
+  const isPvp = id !== "play";
+
   const [loading, setLoading] = useState(true);
   const [loadingText, setLoadingText] = useState("대국 정보 불러오는 중...");
 
+  // PvP 관련 추가 상태
+  const [pvpMatch, setPvpMatch] = useState<Tables<"simulator_matches"> | null>(null);
+  const [localAppliedCount, setLocalAppliedCount] = useState<number>(0);
+  const [guestSelectedDeckId, setGuestSelectedDeckId] = useState<string>("");
+  const [realtimeConnected, setRealtimeConnected] = useState<boolean>(true);
+
   // 게임 세션 상태
   const [gameState, setGameState] = useState<GameState | null>(null);
-  const [isAutoPlaying, setIsAutoPlaying] = useState(mode === "auto");
+  const [isAutoPlaying, setIsAutoPlaying] = useState(!isPvp && mode === "auto");
   const [speedMs, setSpeedMs] = useState<number>(1000); // AI 진행 속도
   const [selectedHandIid, setSelectedHandIid] = useState<string | null>(null);
   const [logOpen, setLogOpen] = useState(false);
+  const isHost = isPvp && user?.id === pvpMatch?.host_id;
+  const myPlayerId: PlayerId = isPvp ? (isHost ? "p1" : "p2") : "p1";
+  const opponentPlayerId: PlayerId = myPlayerId === "p1" ? "p2" : "p1";
   const autoPlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const logEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -106,6 +130,160 @@ function SimulatorMatchRoomPage() {
   const [svgCoords, setSvgCoords] = useState<
     { x1: number; y1: number; x2: number; y2: number; targetIid: string }[]
   >([]);
+
+  // Supabase simulator_matches 로드 및 실시간 구독
+  useEffect(() => {
+    if (!isPvp || !user) return;
+
+    let isMounted = true;
+
+    const fetchMatch = async () => {
+      setLoadingText("PvP 대국 매치 데이터 불러오는 중...");
+      try {
+        const { data, error } = await supabase
+          .from("simulator_matches")
+          .select("*")
+          .eq("id", id)
+          .single();
+
+        if (error) throw error;
+
+        if (isMounted) {
+          setPvpMatch(data);
+          const actions = (data.action_log as any) || [];
+          setLocalAppliedCount(actions.length);
+        }
+      } catch (err: any) {
+        toast.error("PvP 매치 데이터 로드 실패: " + err.message);
+        navigate({ to: "/simulator" });
+      }
+    };
+
+    fetchMatch();
+
+    // postgres_changes로 simulator_matches의 status 등 변경 실시간 감지 (호스트 대기 화면 해제용)
+    const matchChannel = supabase
+      .channel(`match-changes-${id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "simulator_matches",
+          filter: `id=eq.${id}`,
+        },
+        (payload) => {
+          if (isMounted) {
+            const updated = payload.new as Tables<"simulator_matches">;
+            setPvpMatch(updated);
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(matchChannel);
+    };
+  }, [id, isPvp, user, navigate]);
+
+  // 사용자 시뮬레이터 덱 쿼리 (게스트 덱 선택용)
+  const { data: userDecks = [] } = useQuery({
+    queryKey: ["simulator-decks", user?.id],
+    enabled: isPvp && !isHost && !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("simulator_decks")
+        .select("*")
+        .eq("user_id", user!.id)
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // 모든 사용 가능한 덱 목록
+  const allAvailableDecks = useMemo(() => {
+    if (!isPvp || isHost) return [];
+    const list: {
+      id: string;
+      name: string;
+      isPrebuilt: boolean;
+      recipe: DeckRecipe;
+      leaderCode: string | null;
+    }[] = [];
+
+    for (const d of userDecks) {
+      list.push({
+        id: d.id,
+        name: d.name,
+        isPrebuilt: false,
+        recipe: d.recipe as Json & DeckRecipe,
+        leaderCode: d.leader_code,
+      });
+    }
+
+    for (const p of PREBUILT_DECKS) {
+      list.push({
+        id: p.id,
+        name: `[기본] ${p.name}`,
+        isPrebuilt: true,
+        recipe: p.recipe,
+        leaderCode: p.leaderCode,
+      });
+    }
+
+    return list;
+  }, [userDecks, isPvp, isHost]);
+
+  // 기본 덱 선택 처리
+  useEffect(() => {
+    if (isPvp && !isHost && allAvailableDecks.length > 0 && !guestSelectedDeckId) {
+      setGuestSelectedDeckId(allAvailableDecks[0].id);
+    }
+  }, [allAvailableDecks, isPvp, isHost, guestSelectedDeckId]);
+
+  // 게스트 대국방 입장 핸들러
+  const handleGuestJoin = async () => {
+    if (!user) {
+      toast.error("로그인이 필요한 서비스입니다.");
+      return;
+    }
+    if (!guestSelectedDeckId) {
+      toast.error("플레이할 내 덱을 선택해 주세요.");
+      return;
+    }
+
+    const selectedDeck = allAvailableDecks.find((d) => d.id === guestSelectedDeckId);
+    if (!selectedDeck) return;
+
+    const leaderCode = selectedDeck.leaderCode || selectedDeck.recipe?.leaderCode;
+    if (!leaderCode) {
+      toast.error("리더 카드가 설정되지 않은 덱입니다. 덱을 편집해 주세요.");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("simulator_matches")
+        .update({
+          guest_id: user.id,
+          guest_recipe: selectedDeck.recipe as any,
+          guest_leader_code: leaderCode,
+          status: "playing",
+        })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success("대국방에 입장하였습니다!");
+      setPvpMatch(data);
+    } catch (err: any) {
+      toast.error("대국 입장 실패: " + err.message);
+    }
+  };
 
   // 턴 전환 감지 연출
   const prevActivePlayerRef = useRef<PlayerId | null>(null);
@@ -188,9 +366,12 @@ function SimulatorMatchRoomPage() {
 
   // 1. P1 덱 레시피 로드
   const { data: p1Deck } = useQuery({
-    queryKey: ["sim-match-deck-p1", p1],
-    enabled: !!p1,
+    queryKey: ["sim-match-deck-p1", p1, isPvp, pvpMatch?.host_recipe],
+    enabled: isPvp ? !!pvpMatch?.host_recipe : !!p1,
     queryFn: async () => {
+      if (isPvp) {
+        return pvpMatch!.host_recipe as any as DeckRecipe;
+      }
       if (p1!.startsWith("prebuilt-")) {
         return PREBUILT_DECKS.find((d) => d.id === p1)?.recipe ?? null;
       }
@@ -206,9 +387,12 @@ function SimulatorMatchRoomPage() {
 
   // 2. P2 덱 레시피 로드
   const { data: p2Deck } = useQuery({
-    queryKey: ["sim-match-deck-p2", p2],
-    enabled: !!p2,
+    queryKey: ["sim-match-deck-p2", p2, isPvp, pvpMatch?.guest_recipe],
+    enabled: isPvp ? !!pvpMatch?.guest_recipe : !!p2,
     queryFn: async () => {
+      if (isPvp) {
+        return pvpMatch!.guest_recipe as any as DeckRecipe;
+      }
       if (p2!.startsWith("prebuilt-")) {
         return PREBUILT_DECKS.find((d) => d.id === p2)?.recipe ?? null;
       }
@@ -225,9 +409,11 @@ function SimulatorMatchRoomPage() {
   // 3. 카드 메타데이터 캐시 적재 및 게임 초기화
   useEffect(() => {
     if (!p1Deck || !p2Deck) return;
+    if (gameState) return; // 이미 초기화되었다면 중복 초기화 방지
+    if (isPvp && (!pvpMatch || pvpMatch.status !== "playing")) return; // PvP 대기 상태면 보류
 
     const initBattle = async () => {
-      setLoadingText("카드 효과 사전 적재 중...");
+      setLoadingText(t("simulator.loadingEffects"));
       try {
         const p1Codes = p1Deck.cards.map((c) => c.card_code);
         if (p1Deck.leaderCode) p1Codes.push(p1Deck.leaderCode);
@@ -260,10 +446,20 @@ function SimulatorMatchRoomPage() {
           };
         }
 
-        const startSeed = "seed-" + Math.floor(Math.random() * 1000000);
-        const initialState = optcgEngine.init([p1Deck, p2Deck], startSeed);
+        const startSeed =
+          isPvp && pvpMatch ? pvpMatch.seed : "seed-" + Math.floor(Math.random() * 1000000);
+        let currentState = optcgEngine.init([p1Deck, p2Deck], startSeed);
 
-        setGameState(initialState);
+        // PvP 새로고침 시 기존 액션 로그 리play 복구
+        if (isPvp && pvpMatch) {
+          const actions = (pvpMatch.action_log as any) || [];
+          for (const act of actions) {
+            currentState = optcgEngine.applyAction(currentState, act);
+          }
+          setLocalAppliedCount(actions.length);
+        }
+
+        setGameState(currentState);
         setLoading(false);
       } catch (err: any) {
         toast.error("대국 준비 오류: " + err.message);
@@ -272,7 +468,7 @@ function SimulatorMatchRoomPage() {
     };
 
     initBattle();
-  }, [p1Deck, p2Deck, navigate]);
+  }, [p1Deck, p2Deck, isPvp, pvpMatch, gameState, navigate, t]);
 
   // 로그 자동 스크롤
   useEffect(() => {
@@ -324,39 +520,170 @@ function SimulatorMatchRoomPage() {
     };
   }, [gameState, isAutoPlaying, speedMs]);
 
-  const handlePerformAction = (action: Action) => {
+  // Realtime Broadcast 채널을 통한 액션 동기화 및 누락 폴백
+  useEffect(() => {
+    if (!isPvp || !gameState) return;
+
+    let isMounted = true;
+    let syncTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    // 누락 복구 폴백 함수
+    const syncWithDb = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("simulator_matches")
+          .select("action_log")
+          .eq("id", id)
+          .single();
+
+        if (error) throw error;
+        if (!isMounted) return;
+
+        const dbLog = (data.action_log as any) || [];
+        console.log(
+          "Syncing with DB. DB actions:",
+          dbLog.length,
+          "Local applied:",
+          localAppliedCount,
+        );
+
+        if (dbLog.length > localAppliedCount) {
+          setGameState((prev) => {
+            if (!prev) return prev;
+            let current = prev;
+            for (let i = localAppliedCount; i < dbLog.length; i++) {
+              current = optcgEngine.applyAction(current, dbLog[i]);
+            }
+            return current;
+          });
+          setLocalAppliedCount(dbLog.length);
+        }
+      } catch (err) {
+        console.error("Sync log fail:", err);
+      }
+    };
+
+    const channel = supabase.channel(`sim-match-${id}`, {
+      config: {
+        broadcast: {
+          self: true, // 발신자도 수신받아 로컬 처리
+        },
+      },
+    });
+
+    channel
+      .on("broadcast", { event: "game-action" }, (payload) => {
+        if (!isMounted) return;
+        const { seq, action } = payload.payload;
+        console.log(`Action received. seq: ${seq}, localCount: ${localAppliedCount}`);
+
+        if (seq === localAppliedCount) {
+          setGameState((prev) => {
+            if (!prev) return prev;
+            return optcgEngine.applyAction(prev, action);
+          });
+          setLocalAppliedCount((c) => c + 1);
+        } else if (seq > localAppliedCount) {
+          console.warn("Gap detected! seq:", seq, "applied:", localAppliedCount);
+          if (syncTimeout) clearTimeout(syncTimeout);
+          syncTimeout = setTimeout(() => {
+            if (isMounted) syncWithDb();
+          }, 1200);
+        } else {
+          console.log("Duplicate action skipped. seq:", seq);
+        }
+      })
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          setRealtimeConnected(true);
+        } else if (status === "CLOSED" || status === "CHANNEL_ERROR") {
+          setRealtimeConnected(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+      if (syncTimeout) clearTimeout(syncTimeout);
+      supabase.removeChannel(channel);
+    };
+  }, [id, isPvp, gameState, localAppliedCount]);
+
+  const handlePerformAction = async (action: Action) => {
     setSelectedHandIid(null);
-    setGameState(gameState ? optcgEngine.applyAction(gameState, action) : null);
+    setSelectedAttackerIid(null); // 공격자 선택 초기화
+
+    if (isPvp) {
+      const currentSeq = localAppliedCount;
+
+      // 1. DB action_log 비동기 append (발신자 책임)
+      try {
+        const { data: matchData } = await supabase
+          .from("simulator_matches")
+          .select("action_log")
+          .eq("id", id)
+          .single();
+
+        const currentLog = (matchData?.action_log as any[]) || [];
+        const nextLog = [...currentLog, action];
+
+        await supabase
+          .from("simulator_matches")
+          .update({ action_log: nextLog as any })
+          .eq("id", id);
+      } catch (err) {
+        console.error("DB log append error:", err);
+      }
+
+      // 2. Realtime Broadcast 전송
+      const tempChannel = supabase.channel(`sim-match-${id}`);
+      tempChannel.subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          await tempChannel.send({
+            type: "broadcast",
+            event: "game-action",
+            payload: { seq: currentSeq, action },
+          });
+          supabase.removeChannel(tempChannel);
+        }
+      });
+    } else {
+      setGameState(gameState ? optcgEngine.applyAction(gameState, action) : null);
+    }
   };
 
   const terminalResult = gameState ? optcgEngine.isTerminal(gameState) : null;
   const isTerminalResult = !!terminalResult;
   const p1State = gameState?.players.p1;
   const p2State = gameState?.players.p2;
-  const isMyTurn = gameState?.activePlayer === "p1";
+  const isMyTurn = gameState?.activePlayer === myPlayerId;
   const myCounterWindow =
-    !!gameState?.pendingResponse && gameState.pendingResponse.defenderPlayer === "p1";
+    !!gameState?.pendingResponse && gameState.pendingResponse.defenderPlayer === myPlayerId;
 
   // 멀리건 단계: 게임 시작 시 손패 유지/교체 (전용 오버레이로만 처리, 하단 액션바 숨김)
   const isMulliganPhase = gameState?.phase === "mulligan";
-  const myMulliganTurn = isMulliganPhase && isMyTurn && !isAutoPlaying;
+  const myMulliganTurn =
+    isMulliganPhase &&
+    (isPvp
+      ? optcgEngine.getAvailableActions(gameState, myPlayerId).some((a) => a.type === "mulligan")
+      : isMyTurn) &&
+    !isAutoPlaying;
 
-  // P1 수동 가능 액션
-  const p1AvailableActions = useMemo(
+  // 내 수동 가능 액션
+  const myAvailableActions = useMemo(
     () =>
       gameState &&
       !isTerminalResult &&
       !isAutoPlaying &&
       ((isMyTurn && !gameState.pendingResponse) || myCounterWindow)
-        ? optcgEngine.getAvailableActions(gameState, "p1")
+        ? optcgEngine.getAvailableActions(gameState, myPlayerId)
         : [],
-    [gameState, isTerminalResult, isAutoPlaying, isMyTurn, myCounterWindow],
+    [gameState, isTerminalResult, isAutoPlaying, isMyTurn, myCounterWindow, myPlayerId],
   );
 
   // 공격 액션들
   const attackActions = useMemo(
-    () => p1AvailableActions.filter((a) => a.type === "attack"),
-    [p1AvailableActions],
+    () => myAvailableActions.filter((a) => a.type === "attack"),
+    [myAvailableActions],
   );
   // 공격 가능한 아군 카드 iid 셋
   const attackerIids = useMemo(
@@ -428,6 +755,104 @@ function SimulatorMatchRoomPage() {
     };
   }, [selectedAttackerIid, gameState, targetIidsForSelected]);
 
+  // PvP 대기/입장 UI 가드
+  if (isPvp && pvpMatch && pvpMatch.status === "waiting") {
+    const inviteLink =
+      typeof window !== "undefined" ? `${window.location.origin}/simulator/${id}` : "";
+
+    const handleCopyLink = async () => {
+      try {
+        await navigator.clipboard.writeText(inviteLink);
+        toast.success(t("simulator.inviteLinkCopied"));
+      } catch (err: any) {
+        toast.error("복사 실패: " + err.message);
+      }
+    };
+
+    if (isHost) {
+      // 1. 호스트 대기 화면
+      return (
+        <div className="mx-auto w-full max-w-md px-4 py-12 flex flex-col items-center justify-center min-h-[60vh] text-center gap-6">
+          <div className="p-4 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-500 animate-pulse">
+            <User className="h-12 w-12" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-black text-game-text">{t("simulator.pvpSection")}</h2>
+            <p className="text-sm text-game-text-dim leading-relaxed">
+              {t("simulator.waitingGuest")}
+            </p>
+          </div>
+          <div className="w-full bg-game-card border border-game-line p-4 rounded-2xl flex flex-col gap-3">
+            <div className="text-[11px] font-mono select-all break-all bg-game-bg/60 p-3 rounded-xl border border-game-line/50 text-left text-game-text-mid">
+              {inviteLink}
+            </div>
+            <Button
+              onClick={handleCopyLink}
+              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold h-11 border-0"
+            >
+              <Copy className="h-4 w-4" /> {t("simulator.copyInviteLink")}
+            </Button>
+          </div>
+          <Link
+            to="/simulator"
+            className="text-xs text-game-text-dim hover:text-game-text transition-colors flex items-center gap-1 mt-2"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> 로비로 돌아가기
+          </Link>
+        </div>
+      );
+    } else {
+      // 2. 게스트 입장 화면
+      return (
+        <div className="mx-auto w-full max-w-md px-4 py-12 flex flex-col items-center justify-center min-h-[60vh] text-center gap-6">
+          <div className="p-4 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-500">
+            <Swords className="h-12 w-12 animate-bounce" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-black text-game-text">{t("simulator.pvpSection")}</h2>
+            <p className="text-sm text-game-text-dim leading-relaxed">
+              {t("simulator.guestJoinPrompt")}
+            </p>
+          </div>
+          <div className="w-full bg-game-card border border-game-line p-5 rounded-2xl flex flex-col gap-4">
+            <div className="space-y-1.5 text-left">
+              <Label htmlFor="pvp-guest-deck" className="text-xs font-bold text-game-text-dim">
+                {t("simulator.selectMyDeckPvp")}
+              </Label>
+              <Select value={guestSelectedDeckId} onValueChange={setGuestSelectedDeckId}>
+                <SelectTrigger
+                  id="pvp-guest-deck"
+                  className="w-full h-11 text-xs border-game-line bg-game-bg text-game-text"
+                >
+                  <SelectValue placeholder="덱 선택" />
+                </SelectTrigger>
+                <SelectContent className="bg-game-card border-game-line">
+                  {allAvailableDecks.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>
+                      {d.name} {d.leaderCode ? `(${d.leaderCode})` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              onClick={handleGuestJoin}
+              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold h-11 border-0"
+            >
+              <Play className="h-4 w-4 fill-current" /> {t("simulator.joinRoom")}
+            </Button>
+          </div>
+          <Link
+            to="/simulator"
+            className="text-xs text-game-text-dim hover:text-game-text transition-colors flex items-center gap-1 mt-2"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> 로비로 돌아가기
+          </Link>
+        </div>
+      );
+    }
+  }
+
   if (loading || !gameState) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center gap-4">
@@ -439,7 +864,7 @@ function SimulatorMatchRoomPage() {
 
   // 선택된 손패 카드와 연결된 플레이 액션(코스트 선택지 포함)
   const selectedCardActions = selectedHandIid
-    ? p1AvailableActions.filter(
+    ? myAvailableActions.filter(
         (a) =>
           (a.type === "play_character" || a.type === "play_event" || a.type === "play_stage") &&
           a.iid === selectedHandIid,
@@ -447,13 +872,13 @@ function SimulatorMatchRoomPage() {
     : [];
 
   // 손패 외 보드 액션(부착/공격/턴종료/카운터 응답)
-  const boardActions = p1AvailableActions.filter(
+  const boardActions = myAvailableActions.filter(
     (a) => a.type !== "play_character" && a.type !== "play_event" && a.type !== "play_stage",
   );
 
   // 손패 카드별로 "낼 수 있는지" 빠르게 판단하기 위한 집합
   const playableHandIids = new Set(
-    p1AvailableActions
+    myAvailableActions
       .filter(
         (a) => a.type === "play_character" || a.type === "play_event" || a.type === "play_stage",
       )
@@ -645,11 +1070,11 @@ function SimulatorMatchRoomPage() {
         </svg>
 
         <div className="relative flex flex-col">
-          {/* ─ 상대(AI) 진영 ─ */}
+          {/* ─ 상대 진영 ─ */}
           <PlayerSide
-            state={p2State}
+            state={gameState.players[opponentPlayerId]}
             isOpponent
-            isActive={gameState.activePlayer === "p2"}
+            isActive={gameState.activePlayer === opponentPlayerId}
             attackerIids={attackerIids}
             targetIidsForSelected={targetIidsForSelected}
             selectedAttackerIid={selectedAttackerIid}
@@ -690,8 +1115,18 @@ function SimulatorMatchRoomPage() {
                     isMyTurn ? "bg-game-blue/20 text-game-blue" : "bg-game-loss/20 text-game-loss"
                   }`}
                 >
-                  {isMyTurn ? <User className="h-3.5 w-3.5" /> : <Cpu className="h-3.5 w-3.5" />}
-                  {isMyTurn ? t("simulator.myTurn") : t("simulator.aiTurn")}
+                  {isMyTurn ? (
+                    <User className="h-3.5 w-3.5" />
+                  ) : isPvp ? (
+                    <User className="h-3.5 w-3.5" />
+                  ) : (
+                    <Cpu className="h-3.5 w-3.5" />
+                  )}
+                  {isMyTurn
+                    ? t("simulator.myTurn")
+                    : isPvp
+                      ? t("simulator.opponent") + " 턴"
+                      : t("simulator.aiTurn")}
                 </span>
                 {isMyTurn && !isTerminalResult && (
                   <span className="text-game-text-dim hidden sm:inline">
@@ -702,9 +1137,9 @@ function SimulatorMatchRoomPage() {
             )}
           </div>
 
-          {/* ─ 내(P1) 진영 ─ */}
+          {/* ─ 내 진영 ─ */}
           <PlayerSide
-            state={p1State}
+            state={gameState.players[myPlayerId]}
             isOpponent={false}
             isActive={isMyTurn}
             selectedHandIid={selectedHandIid}
@@ -740,7 +1175,7 @@ function SimulatorMatchRoomPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
           <div
             className={`px-8 py-6 rounded-2xl border-2 shadow-2xl animate-banner text-center ${
-              activeTurnBanner.activePlayer === "p1"
+              activeTurnBanner.activePlayer === myPlayerId
                 ? "bg-game-blue/90 border-game-blue text-white"
                 : "bg-game-loss/90 border-game-loss text-white"
             }`}
@@ -758,7 +1193,7 @@ function SimulatorMatchRoomPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
           <div className="w-full max-w-md bg-game-card border border-game-line rounded-3xl p-6 shadow-2xl text-center space-y-4 animate-scale-in">
             <div className="flex justify-center">
-              {"winner" in terminalResult! && terminalResult!.winner === "p1" ? (
+              {"winner" in terminalResult! && terminalResult!.winner === myPlayerId ? (
                 <div className="relative">
                   <div className="absolute -inset-1 rounded-full bg-game-gold/30 blur-md animate-pulse" />
                   <div className="relative p-4 rounded-full bg-game-gold/10 text-game-gold border border-game-gold/30">
@@ -774,7 +1209,7 @@ function SimulatorMatchRoomPage() {
 
             <h2
               className={`text-4xl font-black tracking-tight ${
-                "winner" in terminalResult! && terminalResult!.winner === "p1"
+                "winner" in terminalResult! && terminalResult!.winner === myPlayerId
                   ? "text-game-gold drop-shadow"
                   : "text-game-loss"
               }`}
@@ -788,7 +1223,7 @@ function SimulatorMatchRoomPage() {
               <p>
                 {t("simulator.winner", {
                   winner:
-                    "winner" in terminalResult! && terminalResult!.winner === "p1"
+                    "winner" in terminalResult! && terminalResult!.winner === myPlayerId
                       ? t("simulator.me")
                       : t("simulator.opponent"),
                 })}
@@ -844,7 +1279,7 @@ function SimulatorMatchRoomPage() {
             {myMulliganTurn ? (
               <>
                 <div className="flex flex-wrap justify-center gap-2 py-2">
-                  {(p1State?.zones.hand ?? []).map((c) => {
+                  {(gameState.players[myPlayerId]?.zones.hand ?? []).map((c) => {
                     const m = getCardMeta(c.code);
                     return (
                       <div

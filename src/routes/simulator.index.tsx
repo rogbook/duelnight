@@ -84,6 +84,7 @@ function SimulatorIndexPage() {
   // 대국 관련 상태
   const [p1DeckId, setP1DeckId] = useState<string>("");
   const [p2DeckId, setP2DeckId] = useState<string>("");
+  const [pvpDeckId, setPvpDeckId] = useState<string>("");
   const [battleMode, setBattleMode] = useState<"manual" | "auto">("manual");
 
   // 덱 생성 관련 상태
@@ -435,8 +436,9 @@ function SimulatorIndexPage() {
         setP2DeckId(
           allAvailableDecks.length > 1 ? allAvailableDecks[1].id : allAvailableDecks[0].id,
         );
+      if (!pvpDeckId) setPvpDeckId(allAvailableDecks[0].id);
     }
-  }, [allAvailableDecks, p1DeckId, p2DeckId]);
+  }, [allAvailableDecks, p1DeckId, p2DeckId, pvpDeckId]);
 
   // 덱 삭제 뮤테이션
   const deleteDeckMutation = useMutation({
@@ -535,6 +537,54 @@ function SimulatorIndexPage() {
         mode: battleMode,
       },
     });
+  };
+
+  // PvP 대기방 생성
+  const handleCreatePvpRoom = async () => {
+    if (!user) {
+      toast.error("로그인이 필요한 서비스입니다.");
+      return;
+    }
+    if (!pvpDeckId) {
+      toast.error("대국에서 사용할 내 덱을 선택해 주세요.");
+      return;
+    }
+
+    const selectedDeck = allAvailableDecks.find((d) => d.id === pvpDeckId);
+    if (!selectedDeck) return;
+
+    const leaderCode = selectedDeck.leaderCode || selectedDeck.recipe?.leaderCode;
+    if (!leaderCode) {
+      toast.error("리더 카드가 설정되지 않은 덱입니다. 덱을 편집해 주세요.");
+      return;
+    }
+
+    const randSeed = "seed-" + Math.floor(Math.random() * 1000000);
+
+    try {
+      const { data, error } = await supabase
+        .from("simulator_matches")
+        .insert({
+          host_id: user.id,
+          seed: randSeed,
+          host_recipe: selectedDeck.recipe as any,
+          host_leader_code: leaderCode,
+          status: "waiting",
+          action_log: [] as any,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success("PvP 대기방이 생성되었습니다!");
+      navigate({
+        to: "/simulator/$id",
+        params: { id: data.id },
+      });
+    } catch (err: any) {
+      toast.error("PvP 대기방 생성 실패: " + err.message);
+    }
   };
 
   // 덱 편집 중인 경우 편집 화면을 렌더링
@@ -665,6 +715,47 @@ function SimulatorIndexPage() {
                 className="w-full h-11 text-xs font-bold flex items-center justify-center gap-2"
               >
                 <Play className="h-4 w-4 fill-current" /> 대국 시작하기
+              </Button>
+            </div>
+          </div>
+
+          {/* PvP 대진 설정 카드 */}
+          <div className="rounded-2xl border border-border bg-card/60 p-6 backdrop-blur-sm shadow-md mt-6">
+            <h2 className="text-base font-bold flex items-center gap-2 mb-4">
+              <Gamepad className="h-5 w-5 text-primary" /> {t("simulator.pvpSection")}
+            </h2>
+            <p className="text-xs text-muted-foreground mb-4">{t("simulator.pvpDesc")}</p>
+
+            <div className="space-y-4">
+              {/* 내 덱 선택 */}
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="pvp-deck-select"
+                  className="text-xs font-bold text-muted-foreground"
+                >
+                  {t("simulator.selectMyDeckPvp")}
+                </Label>
+                <Select value={pvpDeckId} onValueChange={setPvpDeckId}>
+                  <SelectTrigger id="pvp-deck-select" className="w-full h-10 text-xs">
+                    <SelectValue placeholder="덱 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allAvailableDecks.map((d) => (
+                      <SelectItem key={d.id} value={d.id}>
+                        {d.name} {d.leaderCode ? `(${d.leaderCode})` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* 대기방 생성 버튼 */}
+              <Button
+                onClick={handleCreatePvpRoom}
+                size="lg"
+                className="w-full h-11 text-xs font-bold flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border-0"
+              >
+                <Plus className="h-4 w-4" /> {t("simulator.createRoom")}
               </Button>
             </div>
           </div>
