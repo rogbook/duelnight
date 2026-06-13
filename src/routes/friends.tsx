@@ -66,9 +66,7 @@ function FriendsPage() {
     enabled: !!user,
     queryFn: async () => {
       try {
-        const { data, error } = await (supabase as any)
-          .from("friend_favorites")
-          .select("favorite_id");
+        const { data, error } = await supabase.from("friend_favorites").select("favorite_id");
         if (error) throw error;
         return ((data ?? []) as { favorite_id: string }[]).map((r) => r.favorite_id);
       } catch {
@@ -82,12 +80,12 @@ function FriendsPage() {
     if (!user) return;
     try {
       if (makeFav) {
-        const { error } = await (supabase as any)
+        const { error } = await supabase
           .from("friend_favorites")
           .insert({ user_id: user.id, favorite_id: favoriteId });
         if (error) throw error;
       } else {
-        const { error } = await (supabase as any)
+        const { error } = await supabase
           .from("friend_favorites")
           .delete()
           .eq("user_id", user.id)

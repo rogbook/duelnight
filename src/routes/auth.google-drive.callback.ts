@@ -54,7 +54,7 @@ export const Route = createFileRoute("/auth/google-drive/callback")({
           throw redirect({ to: "/cards/upload", search: { drive: "connected" } });
         } catch (err) {
           // redirect는 throw로 전파됨 — 그대로 다시 throw
-          if (err && typeof err === "object" && "isRedirect" in (err as any)) throw err;
+          if (err && typeof err === "object" && "isRedirect" in err) throw err;
           console.error("OAuth callback error:", err);
           throw redirect({ to: "/cards/upload", search: { error: "oauth_failed" } });
         }

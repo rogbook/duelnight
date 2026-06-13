@@ -72,7 +72,9 @@ const TargetRef = z.object({
 
 // choose_one은 자기 재귀라 explicit any로 한 곳에 격리.
 
-export const ActionSchema: z.ZodType<any> = z.discriminatedUnion("kind", [
+type EffectActionSchema = z.ZodType<EffectAction, z.ZodTypeDef, unknown>;
+
+export const ActionSchema: EffectActionSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("draw"), count: z.number().int().min(1).max(10) }),
   z.object({
     kind: z.literal("discard_hand"),

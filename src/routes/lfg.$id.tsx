@@ -473,7 +473,7 @@ function ContactDetails({
     queryKey: ["lfg-contact", postId],
     enabled: canView,
     queryFn: async () => {
-      const { data, error } = await (supabase as any).rpc("get_lfg_contact", { _post_id: postId });
+      const { data, error } = await supabase.rpc("get_lfg_contact", { _post_id: postId });
       if (error) throw error;
       const row = Array.isArray(data) && data.length > 0 ? data[0] : null;
       return row as { contact: string | null; kakao_link: string | null } | null;

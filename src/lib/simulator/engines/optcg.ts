@@ -17,6 +17,7 @@ import type {
 } from "../types";
 import { shuffle } from "../rng";
 import { applyEffect, type EffectContext } from "../dsl/interpreter";
+import type { CardEffect } from "../dsl/schema";
 
 const STARTING_HAND = 5;
 const STARTING_LIFE_FALLBACK = 5;
@@ -31,7 +32,7 @@ export const CARD_METADATA_CACHE: Record<
     counterValue: number;
     type: "leader" | "character" | "event" | "stage";
     colors: string[];
-    effects?: any[];
+    effects?: CardEffect[];
     imageUrl?: string | null;
   }
 > = {};
@@ -265,7 +266,7 @@ export const optcgEngine: ITcgEngine = {
         // 소환된 턴의 공격 제한 해제(Rush 키워드 검사)
         const meta = getCardMeta(attacker.code);
         const hasRush =
-          meta.effects?.some((e: any) => e.trigger === "on_play" && e.id === "rush") ||
+          meta.effects?.some((e) => e.trigger === "on_play" && e.id === "rush") ||
           attacker.counters.keyword_rush;
         const isSummonSickness =
           attacker.iid.startsWith(`${player}-c`) && !hasRush && attacker.counters.summon_sick === 1;
