@@ -35,6 +35,7 @@ export const CARD_METADATA_CACHE: Record<
     traits: string[];
     effects?: CardEffect[];
     imageUrl?: string | null;
+    effectText?: string | null;
   }
 > = {};
 
@@ -51,6 +52,7 @@ export function getCardMeta(code: string) {
       traits: [],
       effects: [],
       imageUrl: null,
+      effectText: null,
     }
   );
 }
