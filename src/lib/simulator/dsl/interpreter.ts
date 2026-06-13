@@ -141,7 +141,7 @@ function resolveTargetIids(
       }
       // color
       if (filter.color !== undefined && filter.color.length > 0) {
-        if (!meta.colors.some((col) => filter.color?.includes(col as any))) return false;
+        if (!meta.colors.some((col) => (filter.color as string[]).includes(col))) return false;
       }
       // trait
       if (filter.trait !== undefined && filter.trait.length > 0) {
@@ -150,7 +150,7 @@ function resolveTargetIids(
       }
       // type
       if (filter.type !== undefined && filter.type.length > 0) {
-        if (!filter.type.includes(meta.type as any)) return false;
+        if (!(filter.type as string[]).includes(meta.type)) return false;
       }
 
       return true;
@@ -513,7 +513,10 @@ for (const [kind, handler] of Object.entries(handlers)) {
   registerActionHandler(kind as EffectAction["kind"], handler);
 }
 
-function evaluateConditions(ctx: EffectContext, conditions: any[]): boolean {
+function evaluateConditions(
+  ctx: EffectContext,
+  conditions: NonNullable<CardEffect["conditions"]>,
+): boolean {
   const { state, controller } = ctx;
   const myPlayer = state.players[controller];
   const opp = controller === "p1" ? "p2" : "p1";
@@ -590,7 +593,7 @@ function evaluateConditions(ctx: EffectContext, conditions: any[]): boolean {
   return true;
 }
 
-function canPayCost(state: GameState, pid: PlayerId, cost: any): boolean {
+function canPayCost(state: GameState, pid: PlayerId, cost: CardEffect["cost"]): boolean {
   if (!cost) return true;
   const player = state.players[pid];
 
@@ -610,9 +613,9 @@ function canPayCost(state: GameState, pid: PlayerId, cost: any): boolean {
   return true;
 }
 
-function payCost(state: GameState, pid: PlayerId, cost: any): GameState {
+function payCost(state: GameState, pid: PlayerId, cost: CardEffect["cost"]): GameState {
   if (!cost) return state;
-  let nextState = { ...state };
+  const nextState = { ...state };
   const player = { ...nextState.players[pid] };
   const zones = { ...player.zones };
 
@@ -640,7 +643,7 @@ function payCost(state: GameState, pid: PlayerId, cost: any): GameState {
     player.donRested -= restedReturn;
     toReturn -= restedReturn;
 
-    player.donDeck += (activeReturn + restedReturn);
+    player.donDeck += activeReturn + restedReturn;
   }
 
   player.zones = zones;
@@ -666,7 +669,7 @@ export function applyEffect(ctx: EffectContext, effect: CardEffect): GameState {
           {
             turn: state.turn,
             player: ctx.controller,
-            type: "effect_condition_fail" as any,
+            type: "effect_condition_fail",
             payload: { effectId: effect.id, sourceIid: ctx.sourceIid },
           },
         ],
@@ -684,7 +687,7 @@ export function applyEffect(ctx: EffectContext, effect: CardEffect): GameState {
           {
             turn: state.turn,
             player: ctx.controller,
-            type: "effect_cost_fail" as any,
+            type: "effect_cost_fail",
             payload: { effectId: effect.id, sourceIid: ctx.sourceIid },
           },
         ],

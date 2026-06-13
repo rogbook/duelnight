@@ -309,7 +309,7 @@ export const optcgEngine: ITcgEngine = {
 
       // 턴 플래그 초기화
       const nextPlayers = { ...state.players };
-      
+
       // 양쪽 플레이어 카드에서 power_mod_turn을 초기화하는 헬퍼
       const cleanTurnModifiers = (u: CardInstance): CardInstance => {
         const nextCounters = { ...u.counters };
@@ -456,7 +456,7 @@ export const optcgEngine: ITcgEngine = {
         players: nextPlayers,
         log: [
           ...state.log,
-          { turn: state.turn, player: me, type: "play_event" as any, payload: { code: card.code } },
+          { turn: state.turn, player: me, type: "play_event", payload: { code: card.code } },
         ],
       };
 
@@ -513,7 +513,7 @@ export const optcgEngine: ITcgEngine = {
           {
             turn: state.turn,
             player: me,
-            type: "activate_main" as any,
+            type: "activate_main",
             payload: { code: sourceCard.code },
           },
         ],

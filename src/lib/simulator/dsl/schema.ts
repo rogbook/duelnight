@@ -165,78 +165,78 @@ export const ActionSchema: EffectActionSchema = z.discriminatedUnion("kind", [
       .min(2)
       .max(4),
   }),
- ]);
- 
- // 인터프리터에서 사용할 액션 표현형. 스키마는 any로 격리했지만 사용처는 정확한 유니온으로 다룬다.
- export type EffectAction =
-   | { kind: "draw"; count: number }
-   | {
-       kind: "discard_hand";
-       count: number;
-       who: "self" | "opponent";
-       choose: "random" | "owner_choice" | "opponent_choice";
-     }
-   | {
-       kind: "look_deck";
-       count: number;
-       then: { destination: "hand" | "deck_top" | "deck_bottom" | "graveyard" }[];
-     }
-   | {
-       kind: "search_deck";
-       filter: CardFilter;
-       count: number;
-       destination: "hand" | "deck_top" | "deck_bottom";
-       then_order: "any" | "shuffle";
-     }
-   | { kind: "ko_target"; filter?: CardFilter; count: number; target: TargetRefType }
-   | { kind: "return_to_hand"; filter?: CardFilter; count: number; target: TargetRefType }
-   | { kind: "rest_target"; count: number; target: TargetRefType }
-   | { kind: "active_target"; count: number; target: TargetRefType }
-   | {
-       kind: "power_modifier";
-       delta: number;
-       duration: "this_battle" | "this_turn" | "permanent";
-       target: TargetRefType;
-       scope: "single" | "all_matching";
-     }
-   | { kind: "attach_don"; count: number; target: TargetRefType; state: "active" | "rested" }
-   | { kind: "return_don_to_deck"; count: number; state: "active" | "rested" | "any" }
-   | {
-       kind: "gain_keyword";
-       keyword: "rush" | "blocker" | "double_attack" | "speed";
-       duration: "this_turn" | "permanent";
-       target: TargetRefType;
-     }
-   | {
-       kind: "look_life";
-       count: number;
-       then: { destination: "life_top" | "life_bottom" | "hand" }[];
-     }
-   | { kind: "add_to_life"; from: "hand" | "character_area"; count: number }
-   | { kind: "modify_damage"; delta: number }
-   | { kind: "choose_one"; options: EffectAction[][] };
- 
- export type TargetRefType = {
-   selector: z.infer<typeof TargetSelectorSchema>;
-   filter?: CardFilter;
-   iid?: string;
- };
- 
- // ── 조건 ─────────────────────────────────────────────────
- export const ConditionSchema = z
-   .object({
-     kind: z.enum([
-       "self_leader_name_is",
-       "self_leader_color_is",
-       "self_has_trait_in_play",
-       "opponent_character_count_at_least",
-       "self_life_at_most",
-       "self_don_active_at_least",
-       "self_leader_trait_has",
-     ]),
-     value: z.union([z.string(), z.number(), z.array(z.string())]).optional(),
-   })
-   .strict();
+]);
+
+// 인터프리터에서 사용할 액션 표현형. 스키마는 any로 격리했지만 사용처는 정확한 유니온으로 다룬다.
+export type EffectAction =
+  | { kind: "draw"; count: number }
+  | {
+      kind: "discard_hand";
+      count: number;
+      who: "self" | "opponent";
+      choose: "random" | "owner_choice" | "opponent_choice";
+    }
+  | {
+      kind: "look_deck";
+      count: number;
+      then: { destination: "hand" | "deck_top" | "deck_bottom" | "graveyard" }[];
+    }
+  | {
+      kind: "search_deck";
+      filter: CardFilter;
+      count: number;
+      destination: "hand" | "deck_top" | "deck_bottom";
+      then_order: "any" | "shuffle";
+    }
+  | { kind: "ko_target"; filter?: CardFilter; count: number; target: TargetRefType }
+  | { kind: "return_to_hand"; filter?: CardFilter; count: number; target: TargetRefType }
+  | { kind: "rest_target"; count: number; target: TargetRefType }
+  | { kind: "active_target"; count: number; target: TargetRefType }
+  | {
+      kind: "power_modifier";
+      delta: number;
+      duration: "this_battle" | "this_turn" | "permanent";
+      target: TargetRefType;
+      scope: "single" | "all_matching";
+    }
+  | { kind: "attach_don"; count: number; target: TargetRefType; state: "active" | "rested" }
+  | { kind: "return_don_to_deck"; count: number; state: "active" | "rested" | "any" }
+  | {
+      kind: "gain_keyword";
+      keyword: "rush" | "blocker" | "double_attack" | "speed";
+      duration: "this_turn" | "permanent";
+      target: TargetRefType;
+    }
+  | {
+      kind: "look_life";
+      count: number;
+      then: { destination: "life_top" | "life_bottom" | "hand" }[];
+    }
+  | { kind: "add_to_life"; from: "hand" | "character_area"; count: number }
+  | { kind: "modify_damage"; delta: number }
+  | { kind: "choose_one"; options: EffectAction[][] };
+
+export type TargetRefType = {
+  selector: z.infer<typeof TargetSelectorSchema>;
+  filter?: CardFilter;
+  iid?: string;
+};
+
+// ── 조건 ─────────────────────────────────────────────────
+export const ConditionSchema = z
+  .object({
+    kind: z.enum([
+      "self_leader_name_is",
+      "self_leader_color_is",
+      "self_has_trait_in_play",
+      "opponent_character_count_at_least",
+      "self_life_at_most",
+      "self_don_active_at_least",
+      "self_leader_trait_has",
+    ]),
+    value: z.union([z.string(), z.number(), z.array(z.string())]).optional(),
+  })
+  .strict();
 
 // ── 카드 단위 효과 ─────────────────────────────────────
 export const CardEffectSchema = z

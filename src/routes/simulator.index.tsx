@@ -40,6 +40,15 @@ import type { DeckRecipe } from "@/lib/simulator/types";
 type SimulatorDeck = Tables<"simulator_decks">;
 type CardRow = Tables<"cards">;
 
+// 덱빌더(decks)에서 가져오기용 — 필요한 컬럼 + deck_cards 조인 결과
+type ImportableDeck = {
+  id: string;
+  name: string;
+  leader: string | null;
+  game: string;
+  deck_cards: { card_code: string; quantity: number }[];
+};
+
 export const Route = createFileRoute("/simulator/")({
   head: () => {
     let locale = "ko";
@@ -87,7 +96,7 @@ function SimulatorIndexPage() {
   // 덱 가져오기 관련 상태
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importTab, setImportTab] = useState<"my_decks" | "text">("my_decks");
-  const [myDecksToSelect, setMyDecksToSelect] = useState<any[]>([]);
+  const [myDecksToSelect, setMyDecksToSelect] = useState<ImportableDeck[]>([]);
   const [selectedMyDeckId, setSelectedMyDeckId] = useState<string>("");
   const [textRecipe, setTextRecipe] = useState("");
   const [isImporting, setIsImporting] = useState(false);
@@ -148,9 +157,10 @@ function SimulatorIndexPage() {
     },
     importSummary: {
       ko: (applied: number, ignored: number) => `${applied}장 적용, ${ignored}줄 무시되었습니다.`,
-      en: (applied: number, ignored: number) => `${applied} cards applied, ${ignored} lines ignored.`,
+      en: (applied: number, ignored: number) =>
+        `${applied} cards applied, ${ignored} lines ignored.`,
       ja: (applied: number, ignored: number) => `${applied}枚適用、${ignored}行無視されました。`,
-    }
+    },
   };
 
   const t_importDeck = translations.importDeck[locale];
@@ -200,7 +210,7 @@ function SimulatorIndexPage() {
 
     setIsImporting(true);
     try {
-      const recipeCards = (selectedDeck.deck_cards ?? []).map((dc: any) => ({
+      const recipeCards = (selectedDeck.deck_cards ?? []).map((dc) => ({
         card_code: dc.card_code,
         quantity: dc.quantity,
       }));
@@ -283,11 +293,13 @@ function SimulatorIndexPage() {
 
       // 실제 존재하는 카드만 필터링
       const validCards = parsedCards.filter((pc) => cardTypeMap.has(pc.code));
-      ignoredCount += (parsedCards.length - validCards.length);
+      ignoredCount += parsedCards.length - validCards.length;
 
       // 리더 찾기
       let leaderCodeToUse: string | null = null;
-      const textLeader = validCards.find((vc) => vc.isLeaderText && cardTypeMap.get(vc.code) === "leader");
+      const textLeader = validCards.find(
+        (vc) => vc.isLeaderText && cardTypeMap.get(vc.code) === "leader",
+      );
       if (textLeader) {
         leaderCodeToUse = textLeader.code;
       } else {
@@ -704,7 +716,12 @@ function SimulatorIndexPage() {
                       className="h-9 text-xs"
                       disabled={isCreating}
                     />
-                    <Button type="submit" size="sm" className="h-9 text-xs shrink-0" disabled={isCreating}>
+                    <Button
+                      type="submit"
+                      size="sm"
+                      className="h-9 text-xs shrink-0"
+                      disabled={isCreating}
+                    >
                       <Plus className="mr-1 h-3.5 w-3.5" /> 생성
                     </Button>
                   </form>
@@ -864,7 +881,9 @@ function SimulatorIndexPage() {
                 ) : (
                   <div className="space-y-3">
                     <div className="space-y-1.5">
-                      <Label className="text-[11px] font-bold text-muted-foreground">{t_selectDeck}</Label>
+                      <Label className="text-[11px] font-bold text-muted-foreground">
+                        {t_selectDeck}
+                      </Label>
                       <Select value={selectedMyDeckId} onValueChange={setSelectedMyDeckId}>
                         <SelectTrigger className="w-full text-xs">
                           <SelectValue placeholder="가져올 덱 선택" />
