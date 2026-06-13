@@ -59,6 +59,7 @@ export const TriggerSchema = z.enum([
   "on_turn_start",
   "on_turn_end",
   "activate_main",
+  "main", // 이벤트의 【메인】 효과
   "counter",
   "passive",
 ]);
@@ -231,6 +232,7 @@ export const ConditionSchema = z
       "opponent_character_count_at_least",
       "self_life_at_most",
       "self_don_active_at_least",
+      "self_leader_trait_has",
     ]),
     value: z.union([z.string(), z.number(), z.array(z.string())]).optional(),
   })

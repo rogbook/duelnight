@@ -32,6 +32,7 @@ export const CARD_METADATA_CACHE: Record<
     counterValue: number;
     type: "leader" | "character" | "event" | "stage";
     colors: string[];
+    traits: string[];
     effects?: CardEffect[];
     imageUrl?: string | null;
   }
@@ -47,6 +48,7 @@ export function getCardMeta(code: string) {
       counterValue: 1000,
       type: "character" as const,
       colors: ["red"],
+      traits: [],
       effects: [],
       imageUrl: null,
     }
@@ -149,8 +151,9 @@ function buildPlayer(
 export function getBattlePower(card: CardInstance): number {
   const meta = getCardMeta(card.code);
   const donPower = card.attached.filter((t) => t.code === "DON!!").length * 1000;
-  const modPower = card.counters.power_mod ?? 0;
-  return (meta.power ?? 0) + donPower + modPower;
+  const modPowerTurn = card.counters.power_mod_turn ?? 0;
+  const modPowerPerm = card.counters.power_mod_perm ?? 0;
+  return (meta.power ?? 0) + donPower + modPowerTurn + modPowerPerm;
 }
 
 export const optcgEngine: ITcgEngine = {
@@ -235,8 +238,6 @@ export const optcgEngine: ITcgEngine = {
             actions.push({ type: "play_character", iid: card.iid, donToPay: meta.cost });
           } else if (meta.type === "event") {
             actions.push({ type: "play_event", iid: card.iid, donToPay: meta.cost });
-          } else if (meta.type === "stage") {
-            actions.push({ type: "play_stage", iid: card.iid, donToPay: meta.cost });
           }
         }
       }
@@ -308,9 +309,28 @@ export const optcgEngine: ITcgEngine = {
 
       // 턴 플래그 초기화
       const nextPlayers = { ...state.players };
+
+      // 양쪽 플레이어 카드에서 power_mod_turn을 초기화하는 헬퍼
+      const cleanTurnModifiers = (u: CardInstance): CardInstance => {
+        const nextCounters = { ...u.counters };
+        delete nextCounters.power_mod_turn;
+        const nextUnit = {
+          ...u,
+          counters: nextCounters,
+        };
+        nextUnit.power = getBattlePower(nextUnit);
+        return nextUnit;
+      };
+
+      // me 플레이어의 카드에서 power_mod_turn 제거 및 turnFlags 초기화
       nextPlayers[me] = {
         ...player,
         turnFlags: { activatedThisTurn: [], donAttachedThisTurn: 0 },
+        zones: {
+          ...player.zones,
+          primary: player.zones.primary.map(cleanTurnModifiers),
+          secondary: player.zones.secondary.map(cleanTurnModifiers),
+        },
       };
 
       // 다음 턴 플레이어 리소스 갱신 (DON!! 리셋 & 충전)
@@ -334,11 +354,17 @@ export const optcgEngine: ITcgEngine = {
       target.zones.secondary = target.zones.secondary.map(cleanAttachedDon);
 
       // 모든 아군 카드 활성 상태로 릴리즈
-      const refreshUnit = (u: CardInstance): CardInstance => ({
-        ...u,
-        rested: false,
-        counters: { ...u.counters, summon_sick: 0 },
-      });
+      const refreshUnit = (u: CardInstance): CardInstance => {
+        const nextCounters = { ...u.counters, summon_sick: 0 };
+        delete nextCounters.power_mod_turn;
+        const nextUnit = {
+          ...u,
+          rested: false,
+          counters: nextCounters,
+        };
+        nextUnit.power = getBattlePower(nextUnit);
+        return nextUnit;
+      };
       target.zones.primary = target.zones.primary.map(refreshUnit);
       target.zones.secondary = target.zones.secondary.map(refreshUnit);
 
@@ -407,6 +433,91 @@ export const optcgEngine: ITcgEngine = {
       }
 
       return nextState;
+    }
+
+    // 이벤트 카드 플레이
+    if (action.type === "play_event") {
+      const idx = player.zones.hand.findIndex((c) => c.iid === action.iid);
+      if (idx === -1) return state;
+
+      const nextHand = [...player.zones.hand];
+      const [card] = nextHand.splice(idx, 1);
+
+      const nextPlayers = { ...state.players };
+      nextPlayers[me] = {
+        ...player,
+        donActive: player.donActive - action.donToPay,
+        donRested: player.donRested + action.donToPay,
+        zones: { ...player.zones, hand: nextHand },
+      };
+
+      let nextState: GameState = {
+        ...state,
+        players: nextPlayers,
+        log: [
+          ...state.log,
+          { turn: state.turn, player: me, type: "play_event", payload: { code: card.code } },
+        ],
+      };
+
+      const meta = getCardMeta(card.code);
+      const mainEffect = meta.effects?.find((e) => e.trigger === "main");
+      if (mainEffect) {
+        const ctx: EffectContext = { state: nextState, controller: me, sourceIid: card.iid };
+        nextState = applyEffect(ctx, mainEffect);
+      }
+
+      // 이벤트 카드 효과 해결 후 트래시(graveyard)로 이동
+      const finalPlayer = nextState.players[me];
+      nextState.players[me] = {
+        ...finalPlayer,
+        zones: {
+          ...finalPlayer.zones,
+          graveyard: [...finalPlayer.zones.graveyard, card],
+        },
+      };
+
+      return nextState;
+    }
+
+    // 기동 효과 활성화 (Activate:Main)
+    if (action.type === "activate_main") {
+      const sourceIid = action.sourceIid;
+      const sourceCard = [...player.zones.primary, ...player.zones.secondary].find(
+        (c) => c.iid === sourceIid,
+      );
+      if (!sourceCard) return state;
+
+      const meta = getCardMeta(sourceCard.code);
+      const effect = meta.effects?.find((e) => e.trigger === "activate_main");
+      if (!effect) return state;
+
+      let nextState = state;
+      const ctx: EffectContext = { state: nextState, controller: me, sourceIid };
+      nextState = applyEffect(ctx, effect);
+
+      const nextPlayers = { ...nextState.players };
+      nextPlayers[me] = {
+        ...nextPlayers[me],
+        turnFlags: {
+          ...nextPlayers[me].turnFlags,
+          activatedThisTurn: [...nextPlayers[me].turnFlags.activatedThisTurn, sourceIid],
+        },
+      };
+
+      return {
+        ...nextState,
+        players: nextPlayers,
+        log: [
+          ...nextState.log,
+          {
+            turn: state.turn,
+            player: me,
+            type: "activate_main",
+            payload: { code: sourceCard.code },
+          },
+        ],
+      };
     }
 
     // DON!! 카드 부착
