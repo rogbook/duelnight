@@ -999,5 +999,12 @@ export const en = {
     mulliganKeep: "Keep this hand",
     mulliganRedraw: "Redraw",
     mulliganWait: "Opponent is deciding their mulligan...",
+    zoneLeader: "Leader",
+    zoneCharacter: "Character",
+    zoneStage: "Stage",
+    zoneLife: "Life",
+    zoneDon: "DON!!",
+    zoneDeck: "Deck",
+    zoneTrash: "Trash",
   },
 };
