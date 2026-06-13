@@ -337,6 +337,10 @@ function SimulatorMatchRoomPage() {
   const myCounterWindow =
     !!gameState?.pendingResponse && gameState.pendingResponse.defenderPlayer === "p1";
 
+  // 멀리건 단계: 게임 시작 시 손패 유지/교체 (전용 오버레이로만 처리, 하단 액션바 숨김)
+  const isMulliganPhase = gameState?.phase === "mulligan";
+  const myMulliganTurn = isMulliganPhase && isMyTurn && !isAutoPlaying;
+
   // P1 수동 가능 액션
   const p1AvailableActions = useMemo(
     () =>
@@ -829,6 +833,61 @@ function SimulatorMatchRoomPage() {
         </div>
       )}
 
+      {/* ── 멀리건 오버레이 (게임 시작, 자동 관전 모드 제외) ── */}
+      {!isTerminalResult && isMulliganPhase && !isAutoPlaying && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-md bg-game-card border border-game-line rounded-3xl p-6 shadow-2xl space-y-4 animate-scale-in">
+            <div className="text-center space-y-1">
+              <h2 className="text-xl font-black text-game-text">{t("simulator.mulliganTitle")}</h2>
+              <p className="text-xs text-game-text-dim">{t("simulator.mulliganDesc")}</p>
+            </div>
+            {myMulliganTurn ? (
+              <>
+                <div className="flex flex-wrap justify-center gap-2 py-2">
+                  {(p1State?.zones.hand ?? []).map((c) => {
+                    const m = getCardMeta(c.code);
+                    return (
+                      <div
+                        key={c.iid}
+                        className="w-16 overflow-hidden rounded-lg border border-game-line bg-game-bg p-1 text-center"
+                      >
+                        {m.imageUrl ? (
+                          <img
+                            src={displayImageSrc(m.imageUrl)}
+                            alt={m.name}
+                            className="w-full rounded"
+                          />
+                        ) : (
+                          <div className="py-3 text-[9px] text-game-text-mid">{m.name}</div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex gap-3 pt-1">
+                  <button
+                    onClick={() => handlePerformAction({ type: "mulligan", redraw: true })}
+                    className="flex-1 rounded-xl border border-game-line bg-game-bg py-3 text-xs font-black text-game-text transition-colors hover:bg-game-line-accent"
+                  >
+                    {t("simulator.mulliganRedraw")}
+                  </button>
+                  <button
+                    onClick={() => handlePerformAction({ type: "mulligan", redraw: false })}
+                    className="flex-1 rounded-xl bg-game-blue py-3 text-xs font-black text-white shadow-md transition-colors hover:bg-game-blue-deep"
+                  >
+                    {t("simulator.mulliganKeep")}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <p className="py-4 text-center text-xs text-game-text-dim">
+                {t("simulator.mulliganWait")}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ── 로그(접이식 / 모바일은 드로어) ── */}
       {isMobile ? (
         <Drawer open={logOpen} onOpenChange={setLogOpen}>
@@ -894,56 +953,59 @@ function SimulatorMatchRoomPage() {
       )}
 
       {/* ── 하단 고정 액션 바 ── */}
-      {!isTerminalResult && (selectedCardActions.length > 0 || boardActions.length > 0) && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-game-card/95 backdrop-blur border-t-2 border-game-blue/40 shadow-[0_-4px_20px_rgba(0,0,0,0.35)] pb-[env(safe-area-inset-bottom)]">
-          <div className="mx-auto w-full max-w-6xl px-3 py-2.5 space-y-2">
-            {/* 선택된 손패 카드 전용 액션 */}
-            {selectedCardActions.length > 0 && (
-              <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                <span className="text-[10px] font-bold text-game-blue shrink-0 flex items-center gap-1">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  {t("simulator.playLabel")}
-                </span>
-                {selectedCardActions.map((act, i) => (
+      {!isTerminalResult &&
+        !isMulliganPhase &&
+        (selectedCardActions.length > 0 || boardActions.length > 0) && (
+          <div className="fixed bottom-0 left-0 right-0 z-40 bg-game-card/95 backdrop-blur border-t-2 border-game-blue/40 shadow-[0_-4px_20px_rgba(0,0,0,0.35)] pb-[env(safe-area-inset-bottom)]">
+            <div className="mx-auto w-full max-w-6xl px-3 py-2.5 space-y-2">
+              {/* 선택된 손패 카드 전용 액션 */}
+              {selectedCardActions.length > 0 && (
+                <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                  <span className="text-[10px] font-bold text-game-blue shrink-0 flex items-center gap-1">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    {t("simulator.playLabel")}
+                  </span>
+                  {selectedCardActions.map((act, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handlePerformAction(act)}
+                      className="px-3 py-2 rounded-lg text-xs font-bold border shadow-sm min-h-10 whitespace-nowrap bg-game-win/10 text-game-win border-game-win/30 hover:bg-game-win hover:text-white transition-all duration-200"
+                    >
+                      {getActionLabel(act, gameState)}
+                    </button>
+                  ))}
                   <button
-                    key={i}
-                    onClick={() => handlePerformAction(act)}
-                    className="px-3 py-2 rounded-lg text-xs font-bold border shadow-sm min-h-10 whitespace-nowrap bg-game-win/10 text-game-win border-game-win/30 hover:bg-game-win hover:text-white transition-all duration-200"
+                    onClick={() => setSelectedHandIid(null)}
+                    className="px-2.5 py-2 rounded-lg text-xs font-bold border border-game-line text-game-text-dim hover:bg-game-line-accent hover:text-game-text transition-all shrink-0"
                   >
-                    {getActionLabel(act, gameState)}
+                    {t("simulator.cancel")}
                   </button>
-                ))}
-                <button
-                  onClick={() => setSelectedHandIid(null)}
-                  className="px-2.5 py-2 rounded-lg text-xs font-bold border border-game-line text-game-text-dim hover:bg-game-line-accent hover:text-game-text transition-all shrink-0"
-                >
-                  {t("simulator.cancel")}
-                </button>
-              </div>
-            )}
+                </div>
+              )}
 
-            {/* 보드 액션 */}
-            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
-              {boardActions.map((act, i) => {
-                const isCounterOrBlock = act.type === "play_counter" || act.type === "use_blocker";
-                return (
-                  <button
-                    key={i}
-                    onClick={() => handlePerformAction(act)}
-                    className={`px-3 py-2 rounded-lg text-xs font-bold border shadow-sm min-h-10 whitespace-nowrap transition-all duration-200 ${
-                      isCounterOrBlock && myCounterWindow
-                        ? "bg-game-blue text-white border-game-blue shadow-[0_0_15px_rgba(55,138,221,0.6)] animate-pulse"
-                        : getActionColorClass(act.type)
-                    }`}
-                  >
-                    {getActionLabel(act, gameState)}
-                  </button>
-                );
-              })}
+              {/* 보드 액션 */}
+              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+                {boardActions.map((act, i) => {
+                  const isCounterOrBlock =
+                    act.type === "play_counter" || act.type === "use_blocker";
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => handlePerformAction(act)}
+                      className={`px-3 py-2 rounded-lg text-xs font-bold border shadow-sm min-h-10 whitespace-nowrap transition-all duration-200 ${
+                        isCounterOrBlock && myCounterWindow
+                          ? "bg-game-blue text-white border-game-blue shadow-[0_0_15px_rgba(55,138,221,0.6)] animate-pulse"
+                          : getActionColorClass(act.type)
+                      }`}
+                    >
+                      {getActionLabel(act, gameState)}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* ── 카드 확대 미리보기 모달 / Drawer ── */}
       {selectedCardForPreview &&
