@@ -107,7 +107,17 @@ function convertAll(): void {
   const script = path.resolve(process.cwd(), "scripts", "digimon-convert.ps1");
   const r = spawnSync(
     "powershell.exe",
-    ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", script, "-SrcDir", SRC_DIR, "-OutDir", OUT_DIR],
+    [
+      "-NoProfile",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-File",
+      script,
+      "-SrcDir",
+      SRC_DIR,
+      "-OutDir",
+      OUT_DIR,
+    ],
     { stdio: "inherit" },
   );
   if (r.status !== 0) throw new Error("PowerShell 변환 실패");
@@ -183,7 +193,10 @@ async function run() {
   console.log(`   업로드 ${up.uploaded}, URL갱신 ${up.updated}, 실패 ${up.fail.length}`);
   if (up.fail.length) console.log("   실패 예:", up.fail.slice(0, 10));
 
-  const reportPath = path.join(TMP, `report-${new Date().toISOString().replaceAll(/[:.]/g, "-")}.json`);
+  const reportPath = path.join(
+    TMP,
+    `report-${new Date().toISOString().replaceAll(/[:.]/g, "-")}.json`,
+  );
   fs.writeFileSync(
     reportPath,
     JSON.stringify({ targets: targets.length, download: dl, upload: up }, null, 2),

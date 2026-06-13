@@ -67,7 +67,10 @@ function parsePage(html: string): Scraped[] {
 
     const fields: Record<string, string> = {};
     for (const m of it.matchAll(/<dt[^>]*>([^<]*)<\/dt>\s*<dd[^>]*>([\s\S]*?)<\/dd>/g)) {
-      fields[m[1].trim()] = m[2].replace(/<[^>]+>/g, "").replace(/&\w+;/g, "").trim();
+      fields[m[1].trim()] = m[2]
+        .replace(/<[^>]+>/g, "")
+        .replace(/&\w+;/g, "")
+        .trim();
     }
     out.push({
       code: nameLine[1].trim(),
@@ -86,7 +89,10 @@ async function fetchCategory(category: string): Promise<Scraped[]> {
   const all = new Map<string, Scraped>();
   for (let page = 1; page <= MAX_PAGES; page++) {
     const url = `${BASE}/index.php?mid=cardlist&category=${category}&page=${page}`;
-    const res = await fetch(url, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(20000) });
+    const res = await fetch(url, {
+      headers: { "User-Agent": UA },
+      signal: AbortSignal.timeout(20000),
+    });
     if (!res.ok) throw new Error(`페이지 ${page} HTTP ${res.status}`);
     const cards = parsePage(await res.text());
     const before = all.size;
@@ -115,7 +121,12 @@ function toCardRow(s: Scraped, setCode: string) {
     attribute: dash(f["속성"]),
     rarity: s.rarity,
     effect: textTop ?? textBottom ?? security,
-    traits: traits ? traits.split("/").map((t) => t.trim()).filter(Boolean) : [],
+    traits: traits
+      ? traits
+          .split("/")
+          .map((t) => t.trim())
+          .filter(Boolean)
+      : [],
     extra: {
       form: dash(f["형태"]),
       category: s.category,
@@ -168,27 +179,39 @@ async function run() {
   const info = src?.fields["입수 정보"] ?? "";
   const setMatch = info.match(/(부스터 팩|스타트 덱|테마 부스터)?\s*([^[]+)\[([A-Z]+-\d+)\]/);
   const setCode = setMatch
-    ? `${setMatch[3]} ${(setMatch[1] ?? "").trim()} ${setMatch[2].trim()}`.replace(/\s+/g, " ").trim()
+    ? `${setMatch[3]} ${(setMatch[1] ?? "").trim()} ${setMatch[2].trim()}`
+        .replace(/\s+/g, " ")
+        .trim()
     : `category-${category}`;
   console.log(`세트명: ${setCode}`);
 
   const codes = scraped.map((s) => s.code);
   const existing = new Set<string>();
   for (let i = 0; i < codes.length; i += 500) {
-    const { data, error } = await db.from("cards").select("code").in("code", codes.slice(i, i + 500));
+    const { data, error } = await db
+      .from("cards")
+      .select("code")
+      .in("code", codes.slice(i, i + 500));
     if (error) throw new Error(`기존 코드 조회 실패: ${error.message}`);
     for (const r of data ?? []) existing.add(r.code as string);
   }
   const newOnes = scraped.filter((s) => !existing.has(s.code));
   console.log(`DB에 이미 있음: ${existing.size}장 (건너뜀) / 신규 추가 대상: ${newOnes.length}장`);
   if (!execute) {
-    console.log("dry-run. 신규 예시:", newOnes.slice(0, 8).map((s) => `${s.code} ${s.name}`));
+    console.log(
+      "dry-run. 신규 예시:",
+      newOnes.slice(0, 8).map((s) => `${s.code} ${s.name}`),
+    );
     return;
   }
   if (newOnes.length === 0) return console.log("추가할 카드 없음(이미 완료).");
 
   // 세트 등록(없으면)
-  const { data: setRow } = await db.from("card_sets").select("id").eq("name", setCode).maybeSingle();
+  const { data: setRow } = await db
+    .from("card_sets")
+    .select("id")
+    .eq("name", setCode)
+    .maybeSingle();
   if (!setRow) {
     const { error } = await db.from("card_sets").insert({ name: setCode, game: "dtcg" });
     if (error) console.error("card_sets 추가 실패(무시):", error.message);
@@ -220,8 +243,17 @@ async function run() {
   console.log("B. JPEG 변환...");
   const conv = spawnSync(
     "powershell.exe",
-    ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
-      path.resolve("scripts", "digimon-convert.ps1"), "-SrcDir", srcDir, "-OutDir", outDir],
+    [
+      "-NoProfile",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-File",
+      path.resolve("scripts", "digimon-convert.ps1"),
+      "-SrcDir",
+      srcDir,
+      "-OutDir",
+      outDir,
+    ],
     { stdio: "inherit" },
   );
   if (conv.status !== 0) throw new Error("변환 실패");
@@ -253,7 +285,11 @@ async function run() {
   fs.mkdirSync(TMP, { recursive: true });
   fs.writeFileSync(
     path.join(TMP, `report-${category}-${Date.now()}.json`),
-    JSON.stringify({ setCode, scraped: scraped.length, existing: existing.size, added: ok, dlFail, fail }, null, 2),
+    JSON.stringify(
+      { setCode, scraped: scraped.length, existing: existing.size, added: ok, dlFail, fail },
+      null,
+      2,
+    ),
   );
 }
 
