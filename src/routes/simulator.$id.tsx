@@ -135,7 +135,7 @@ function SimulatorMatchRoomPage() {
 
         const { data: cardRows, error } = await supabase
           .from("cards")
-          .select("code, name, cost, power, counter, type, colors, effects, image_url")
+          .select("code, name, cost, power, counter, type, colors, effects, image_url, traits")
           .in("code", allCodes);
 
         if (error) throw error;
@@ -148,6 +148,7 @@ function SimulatorMatchRoomPage() {
             counterValue: row.counter ?? 0,
             type: row.type as any,
             colors: row.colors ?? [],
+            traits: row.traits ?? [],
             effects: (row.effects as any) ?? [],
             imageUrl: row.image_url ?? null,
           };

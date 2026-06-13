@@ -12,6 +12,7 @@ import {
   Search,
   Check,
   Info,
+  Copy,
 } from "lucide-react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -69,7 +70,7 @@ function SimulatorIndexPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
 
   // 대국 관련 상태
   const [p1DeckId, setP1DeckId] = useState<string>("");
@@ -82,6 +83,287 @@ function SimulatorIndexPage() {
 
   // 덱 편집 관련 상태
   const [editingDeckId, setEditingDeckId] = useState<string | null>(null);
+
+  // 덱 가져오기 관련 상태
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importTab, setImportTab] = useState<"my_decks" | "text">("my_decks");
+  const [myDecksToSelect, setMyDecksToSelect] = useState<any[]>([]);
+  const [selectedMyDeckId, setSelectedMyDeckId] = useState<string>("");
+  const [textRecipe, setTextRecipe] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
+
+  // i18n
+  const locale = language === "ja" ? "ja" : language === "en" ? "en" : "ko";
+
+  const translations = {
+    importDeck: {
+      ko: "덱 가져오기 / 임포트",
+      en: "Import Deck",
+      ja: "デッキ取り込み",
+    },
+    importFromMyDecks: {
+      ko: "내 덱 빌더에서 가져오기",
+      en: "Import from My Decks",
+      ja: "マイデッキから取り込む",
+    },
+    importFromText: {
+      ko: "텍스트 임포트",
+      en: "Text Import",
+      ja: "テキストインポート",
+    },
+    pasteRecipeHere: {
+      ko: "여기에 덱 레시피를 붙여넣으세요...",
+      en: "Paste your deck recipe here...",
+      ja: "ここにデッキレシピを貼り付けてください...",
+    },
+    importBtn: {
+      ko: "가져오기",
+      en: "Import",
+      ja: "取り込む",
+    },
+    noLeaderAlert: {
+      ko: "리더 카드가 설정되지 않은 덱은 가져올 수 없습니다.",
+      en: "Decks without a leader cannot be imported.",
+      ja: "リーダーカードが設定されていないデッキは取り込めません。",
+    },
+    copyRecipe: {
+      ko: "레시피 복사",
+      en: "Copy Recipe",
+      ja: "レシピコピー",
+    },
+    recipeCopied: {
+      ko: "레시피가 클립보드에 복사되었습니다.",
+      en: "Recipe copied to clipboard.",
+      ja: "レシピがクリップボードにコピーされました。",
+    },
+    selectDeck: {
+      ko: "덱 선택",
+      en: "Select Deck",
+      ja: "デッキ選択",
+    },
+    close: {
+      ko: "닫기",
+      en: "Close",
+      ja: "閉じる",
+    },
+    importSummary: {
+      ko: (applied: number, ignored: number) => `${applied}장 적용, ${ignored}줄 무시되었습니다.`,
+      en: (applied: number, ignored: number) => `${applied} cards applied, ${ignored} lines ignored.`,
+      ja: (applied: number, ignored: number) => `${applied}枚適用、${ignored}行無視されました。`,
+    }
+  };
+
+  const t_importDeck = translations.importDeck[locale];
+  const t_importFromMyDecks = translations.importFromMyDecks[locale];
+  const t_importFromText = translations.importFromText[locale];
+  const t_pasteRecipeHere = translations.pasteRecipeHere[locale];
+  const t_importBtn = translations.importBtn[locale];
+  const t_noLeaderAlert = translations.noLeaderAlert[locale];
+  const t_copyRecipe = translations.copyRecipe[locale];
+  const t_recipeCopied = translations.recipeCopied[locale];
+  const t_selectDeck = translations.selectDeck[locale];
+  const t_close = translations.close[locale];
+  const t_importSummary = translations.importSummary[locale];
+
+  // 내 덱 목록 로드
+  useEffect(() => {
+    if (isImportModalOpen && user) {
+      const fetchMyDecks = async () => {
+        const { data, error } = await supabase
+          .from("decks")
+          .select("id, name, leader, game, deck_cards(card_code, quantity)")
+          .eq("user_id", user.id)
+          .eq("game", "optcg");
+        if (error) {
+          toast.error("내 덱 로드 실패: " + error.message);
+        } else {
+          setMyDecksToSelect(data ?? []);
+          if (data && data.length > 0) {
+            setSelectedMyDeckId(data[0].id);
+          }
+        }
+      };
+      fetchMyDecks();
+    }
+  }, [isImportModalOpen, user]);
+
+  // 내 덱 가져오기 실행
+  const handleImportFromMyDecks = async () => {
+    if (!selectedMyDeckId) return;
+    const selectedDeck = myDecksToSelect.find((d) => d.id === selectedMyDeckId);
+    if (!selectedDeck) return;
+
+    if (!selectedDeck.leader) {
+      toast.error(t_noLeaderAlert);
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      const recipeCards = (selectedDeck.deck_cards ?? []).map((dc: any) => ({
+        card_code: dc.card_code,
+        quantity: dc.quantity,
+      }));
+
+      const recipeObj = {
+        game: "optcg",
+        leaderCode: selectedDeck.leader,
+        cards: recipeCards,
+      };
+
+      const { error } = await supabase.from("simulator_decks").insert({
+        user_id: user!.id,
+        name: `[가져옴] ${selectedDeck.name}`,
+        game: "optcg",
+        leader_code: selectedDeck.leader,
+        recipe: recipeObj,
+        is_public: false,
+      });
+
+      if (error) throw error;
+
+      toast.success("덱이 성공적으로 복사되어 가져왔습니다.");
+      setIsImportModalOpen(false);
+      qc.invalidateQueries({ queryKey: ["simulator-decks"] });
+    } catch (err: any) {
+      toast.error("덱 가져오기 실패: " + err.message);
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  // 텍스트 임포트 실행
+  const handleImportFromText = async () => {
+    if (!textRecipe.trim()) {
+      toast.error("레시피 텍스트를 입력해 주세요.");
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      const lines = textRecipe.split("\n");
+      const parsedCards: { code: string; qty: number; isLeaderText: boolean }[] = [];
+      let ignoredCount = 0;
+
+      const lineRegex = /^\s*(\d+)\s*x?\s*([A-Za-z0-9-]+)/i;
+
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        const match = line.match(lineRegex);
+        if (match) {
+          const qty = parseInt(match[1], 10);
+          const code = match[2].toUpperCase();
+          const isLeaderText = line.toLowerCase().includes("leader");
+          parsedCards.push({ code, qty, isLeaderText });
+        } else {
+          ignoredCount++;
+        }
+      }
+
+      if (parsedCards.length === 0) {
+        toast.error("분석된 카드가 없습니다. 줄 형식을 확인해 주세요.");
+        setIsImporting(false);
+        return;
+      }
+
+      // 카드 유효성 및 타입 조회를 위해 cards 테이블 쿼리
+      const uniqueCodes = Array.from(new Set(parsedCards.map((c) => c.code)));
+      const { data: cardRows, error: dbError } = await supabase
+        .from("cards")
+        .select("code, type")
+        .eq("game", "optcg")
+        .in("code", uniqueCodes);
+
+      if (dbError) throw dbError;
+
+      const cardTypeMap = new Map<string, string>();
+      for (const r of cardRows ?? []) {
+        cardTypeMap.set(r.code, r.type);
+      }
+
+      // 실제 존재하는 카드만 필터링
+      const validCards = parsedCards.filter((pc) => cardTypeMap.has(pc.code));
+      ignoredCount += (parsedCards.length - validCards.length);
+
+      // 리더 찾기
+      let leaderCodeToUse: string | null = null;
+      const textLeader = validCards.find((vc) => vc.isLeaderText && cardTypeMap.get(vc.code) === "leader");
+      if (textLeader) {
+        leaderCodeToUse = textLeader.code;
+      } else {
+        const dbLeader = validCards.find((vc) => cardTypeMap.get(vc.code) === "leader");
+        if (dbLeader) {
+          leaderCodeToUse = dbLeader.code;
+        }
+      }
+
+      if (!leaderCodeToUse) {
+        toast.error("리더 카드가 포함되지 않았거나 인식되지 않았습니다.");
+        setIsImporting(false);
+        return;
+      }
+
+      const finalLeaderCode = leaderCodeToUse;
+      const deckCardsList = validCards
+        .filter((vc) => vc.code !== finalLeaderCode)
+        .map((vc) => ({
+          card_code: vc.code,
+          quantity: vc.qty,
+        }));
+
+      const recipeObj = {
+        game: "optcg",
+        leaderCode: finalLeaderCode,
+        cards: deckCardsList,
+      };
+
+      const appliedTotal = deckCardsList.reduce((sum, c) => sum + c.quantity, 0);
+
+      const { error } = await supabase.from("simulator_decks").insert({
+        user_id: user!.id,
+        name: `[임포트] 텍스트 덱 (${new Date().toLocaleDateString()})`,
+        game: "optcg",
+        leader_code: finalLeaderCode,
+        recipe: recipeObj,
+        is_public: false,
+      });
+
+      if (error) throw error;
+
+      toast.success(t_importSummary(appliedTotal, ignoredCount));
+      setIsImportModalOpen(false);
+      setTextRecipe("");
+      qc.invalidateQueries({ queryKey: ["simulator-decks"] });
+    } catch (err: any) {
+      toast.error("임포트 실패: " + err.message);
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  // 텍스트 익스포트 복사
+  const handleCopyRecipe = async (d: SimulatorDeck) => {
+    const r = d.recipe as Json & DeckRecipe;
+    const leader = d.leader_code || r?.leaderCode;
+    const cards = (r?.cards || []) as { card_code: string; quantity: number }[];
+
+    if (!leader) {
+      toast.error("리더 카드가 설정되지 않아 복사할 수 없습니다.");
+      return;
+    }
+
+    let text = `1x${leader} (Leader)\n`;
+    for (const c of cards) {
+      text += `${c.quantity}x${c.card_code}\n`;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(t_recipeCopied);
+    } catch (err: any) {
+      toast.error("복사 실패: " + err.message);
+    }
+  };
 
   // 사용자 시뮬레이터 덱 쿼리
   const { data: userDecks = [], refetch: refetchDecks } = useQuery<SimulatorDeck[]>({
@@ -413,18 +695,28 @@ function SimulatorIndexPage() {
 
             {user ? (
               <div className="space-y-4">
-                <form onSubmit={handleCreateDeck} className="flex gap-2">
-                  <Input
-                    placeholder="새 덱 이름 입력..."
-                    value={newDeckName}
-                    onChange={(e) => setNewDeckName(e.target.value)}
-                    className="h-9 text-xs"
-                    disabled={isCreating}
-                  />
-                  <Button type="submit" size="sm" className="h-9 text-xs" disabled={isCreating}>
-                    <Plus className="mr-1 h-3.5 w-3.5" /> 생성
+                <div className="flex gap-2">
+                  <form onSubmit={handleCreateDeck} className="flex-1 flex gap-2">
+                    <Input
+                      placeholder="새 덱 이름 입력..."
+                      value={newDeckName}
+                      onChange={(e) => setNewDeckName(e.target.value)}
+                      className="h-9 text-xs"
+                      disabled={isCreating}
+                    />
+                    <Button type="submit" size="sm" className="h-9 text-xs shrink-0" disabled={isCreating}>
+                      <Plus className="mr-1 h-3.5 w-3.5" /> 생성
+                    </Button>
+                  </form>
+                  <Button
+                    onClick={() => setIsImportModalOpen(true)}
+                    variant="outline"
+                    size="sm"
+                    className="h-9 text-xs shrink-0 font-bold"
+                  >
+                    <Sparkles className="mr-1 h-3.5 w-3.5 text-yellow-500" /> {t_importDeck}
                   </Button>
-                </form>
+                </div>
 
                 {userDecks.length === 0 ? (
                   <div className="py-8 text-center rounded-xl border border-dashed border-border bg-muted/10">
@@ -451,6 +743,13 @@ function SimulatorIndexPage() {
                             </span>
                           </div>
                           <div className="flex items-center gap-1 shrink-0 ml-2">
+                            <button
+                              onClick={() => handleCopyRecipe(d)}
+                              title={t_copyRecipe}
+                              className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                            </button>
                             <button
                               onClick={() => setEditingDeckId(d.id)}
                               title="덱 편집"
@@ -513,6 +812,105 @@ function SimulatorIndexPage() {
           </div>
         </div>
       </div>
+
+      {/* 덱 가져오기 모달 */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-card w-full max-w-md rounded-2xl border border-border p-6 shadow-xl space-y-4 animate-in fade-in zoom-in-95 duration-150 text-foreground">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <h3 className="text-sm font-bold flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-yellow-500" /> {t_importDeck}
+              </h3>
+              <button
+                onClick={() => {
+                  setIsImportModalOpen(false);
+                  setTextRecipe("");
+                }}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {t_close}
+              </button>
+            </div>
+
+            <div className="flex border-b border-border text-xs">
+              <button
+                onClick={() => setImportTab("my_decks")}
+                className={`flex-1 pb-2 font-bold transition-colors border-b-2 ${
+                  importTab === "my_decks"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {t_importFromMyDecks}
+              </button>
+              <button
+                onClick={() => setImportTab("text")}
+                className={`flex-1 pb-2 font-bold transition-colors border-b-2 ${
+                  importTab === "text"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {t_importFromText}
+              </button>
+            </div>
+
+            {importTab === "my_decks" ? (
+              <div className="space-y-4 py-2">
+                {myDecksToSelect.length === 0 ? (
+                  <p className="text-xs text-center py-6 text-muted-foreground">
+                    가져올 수 있는 덱 빌더의 OPTCG 덱이 없습니다.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-[11px] font-bold text-muted-foreground">{t_selectDeck}</Label>
+                      <Select value={selectedMyDeckId} onValueChange={setSelectedMyDeckId}>
+                        <SelectTrigger className="w-full text-xs">
+                          <SelectValue placeholder="가져올 덱 선택" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {myDecksToSelect.map((d) => (
+                            <SelectItem key={d.id} value={d.id}>
+                              {d.name} {d.leader ? `(${d.leader})` : `(리더 없음)`}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <Button
+                      onClick={handleImportFromMyDecks}
+                      className="w-full text-xs font-bold"
+                      disabled={isImporting}
+                    >
+                      {t_importBtn}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3 py-2">
+                <textarea
+                  value={textRecipe}
+                  onChange={(e) => setTextRecipe(e.target.value)}
+                  placeholder={`예:\n1xOP01-001 (Leader)\n4xOP01-002\n4xOP01-003\n\n${t_pasteRecipeHere}`}
+                  rows={8}
+                  className="w-full text-xs p-3 rounded-lg border border-border bg-card resize-none focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
+                />
+
+                <Button
+                  onClick={handleImportFromText}
+                  className="w-full text-xs font-bold"
+                  disabled={isImporting}
+                >
+                  {t_importBtn}
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
