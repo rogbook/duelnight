@@ -93,6 +93,7 @@ DB 변경 여부: (있으면 Claude 요청 사항 명시)
 ## 5. 참고 문서
 
 - [docs/OPERATIONS_PLAN.md](./docs/OPERATIONS_PLAN.md) — 운영 방향 결정사항 (서버·비용·플랫폼 전략)
+- [docs/OPERATIONS_AUTOMATION_PLAN.md](./docs/OPERATIONS_AUTOMATION_PLAN.md) — 운영 자동화 로드맵 (모니터링·백업·CI·보안·비용 감시)
 - [docs/DEPLOY_PROCESS_INDEPENDENT.md](./docs/DEPLOY_PROCESS_INDEPENDENT.md) — 독립 배포 상세 가이드
 - [docs/IMAGE_MIGRATION_GUIDE.md](./docs/IMAGE_MIGRATION_GUIDE.md) — 이미지 이관 상세
 - [docs/REALTIME_TESTING_GUIDE.md](./docs/REALTIME_TESTING_GUIDE.md) — 실시간 테스트 환경
